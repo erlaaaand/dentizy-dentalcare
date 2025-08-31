@@ -1,12 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Appointment } from './entities/appointment.entity';
+import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Patient } from '../patients/entities/patient.entity';
 import { User } from '../users/entities/user.entity';
+import { UserRole } from 'src/roles/entities/role.entity';
 import { NotificationsService } from '../notifications/notifications.service';
+import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -57,16 +59,31 @@ export class AppointmentsService {
         });
 
         const savedAppointment = await this.appointmentRepository.save(newAppointment);
-        
+
         await this.notificationsService.scheduleAppointmentReminder(savedAppointment)
 
         return this.appointmentRepository.save(newAppointment);
     }
 
-    findAll(): Promise<Appointment[]> {
-        return this.appointmentRepository.find({
-            relations: ['patient', 'doctor'], // Tampilkan juga data pasien dan dokternya
-        });
+    async findAll(user: User, queryDto: FindAppointmentsQueryDto): Promise<Appointment[]> {
+        const queryBuilder = this.appointmentRepository.createQueryBuilder('appointment')
+            .leftJoinAndSelect('appointment.patient', 'patient')
+            .leftJoinAndSelect('appointment.doctor', 'doctor');
+
+        // --- INTI LOGIKA OTORISASI ---
+        // Cek apakah user yang request adalah seorang dokter
+        const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
+
+        if (isDoctor) {
+            // Jika dokter, tambahkan filter WHERE untuk hanya menampilkan janji temu miliknya
+            queryBuilder.where('appointment.doctor_id = :doctorId', { doctorId: user.id });
+        }
+        // Jika bukan dokter (misalnya staf), tidak ada filter tambahan, jadi semua data akan tampil.
+        // --- AKHIR LOGIKA OTORISASI ---
+
+        // Di sini kita bisa tambahkan logika untuk filter & paginasi dari queryDto nanti
+
+        return await queryBuilder.getMany();
     }
 
     async findOne(id: number): Promise<Appointment> {
@@ -79,6 +96,19 @@ export class AppointmentsService {
             throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
         }
         return appointment;
+    }
+
+    async complete(id: number): Promise<Appointment> {
+        const appointment = await this.findOne(id);
+        appointment.status = AppointmentStatus.SELESAI;
+        return this.appointmentRepository.save(appointment);
+    }
+
+    async cancel(id: number): Promise<Appointment> {
+        const appointment = await this.findOne(id);
+        appointment.status = AppointmentStatus.DIBATALKAN;
+        await this.notificationsService.cancelRemindersFor(appointment.id);
+        return this.appointmentRepository.save(appointment);
     }
 
     async update(id: number, updateAppointmentDto: UpdateAppointmentDto): Promise<Appointment> {

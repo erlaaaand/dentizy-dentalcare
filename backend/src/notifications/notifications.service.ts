@@ -7,6 +7,9 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 
 @Injectable()
 export class NotificationsService {
+    cancelRemindersFor(id: number) {
+        throw new Error('Method not implemented.');
+    }
     private readonly logger = new Logger(NotificationsService.name);
 
     constructor(

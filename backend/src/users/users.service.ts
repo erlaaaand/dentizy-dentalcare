@@ -51,6 +51,14 @@ export class UsersService {
         return user;
     }
 
+    async findOneByUsername(username: string): Promise<User | null> {
+        const user = await this.userRepository.findOne({
+            where: { username },
+            relations: ['roles'], // Sertakan roles agar bisa dicek saat login
+        });
+        return user;
+    }
+
     async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
         const { roles: roleIds, ...userData } = updateUserDto;
         const user = await this.findOne(id);

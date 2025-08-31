@@ -10,9 +10,16 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { MedicalRecordsModule } from './medical_records/medical_records.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { SeederModule } from './seeder/seeder.module';
+import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
     TypeOrmModule.forRoot({
       type: 'mysql', // atau 'mysql'
       host: 'localhost',
@@ -30,6 +37,8 @@ import { ScheduleModule } from '@nestjs/schedule';
     MedicalRecordsModule,
     NotificationsModule,
     ScheduleModule.forRoot(),
+    SeederModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
