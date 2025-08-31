@@ -30,4 +30,4 @@ import { MedicalRecordsModule } from './medical_records/medical_records.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
