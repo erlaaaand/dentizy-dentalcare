@@ -1,4 +1,4 @@
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { AppointmentStatus } from '../entities/appointment.entity';
 
 export class CreateAppointmentDto {
@@ -10,12 +10,15 @@ export class CreateAppointmentDto {
     @IsNumber()
     doctor_id: number;
 
+    @IsNotEmpty()
+    @IsDateString() // Validasi bahwa input adalah string tanggal (contoh: "2025-09-15")
+    tanggal_janji: string;
+
+    @IsNotEmpty()
+    @IsString() // Validasi jam, bisa lebih spesifik dengan Regex jika perlu
+    jam_janji: string; // contoh: "09:00:00"
+
     @IsOptional()
     @IsEnum(AppointmentStatus)
     status?: AppointmentStatus;
-
-    // Anda bisa tambahkan properti lain sesuai kebutuhan
-    @IsNotEmpty()
-    @IsString()
-    tanggal_janji: string; // contoh: "2025-12-25"
 }

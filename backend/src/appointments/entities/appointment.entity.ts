@@ -36,6 +36,9 @@ export class Appointment {
     @Column()
     tanggal_janji: Date;
 
+    @Column({ type: 'time' }) // Kolom untuk menyimpan jam
+    jam_janji: string;
+
     @Column({ type: 'text', nullable: true })
     keluhan: string;
 

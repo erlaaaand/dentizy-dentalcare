@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Appointment } from './entities/appointment.entity';
@@ -19,7 +19,7 @@ export class AppointmentsService {
     ) { }
 
     async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
-        const { patient_id, doctor_id } = createAppointmentDto;
+        const { patient_id, doctor_id, tanggal_janji, jam_janji } = createAppointmentDto;
 
         // Validasi apakah pasien ada
         const patient = await this.patientRepository.findOneBy({ id: patient_id });
@@ -33,6 +33,20 @@ export class AppointmentsService {
             throw new NotFoundException(`Dokter dengan ID #${doctor_id} tidak ditemukan`);
         }
         // Anda bisa tambahkan validasi role dokter di sini
+
+        const existingAppointment = await this.appointmentRepository.findOne({
+            where: {
+                doctor_id: doctor_id,
+                tanggal_janji: new Date(tanggal_janji),
+                jam_janji: jam_janji,
+            },
+        });
+
+        if (existingAppointment) {
+            throw new ConflictException(
+                `Dokter sudah memiliki janji temu di tanggal dan jam tersebut.`,
+            );
+        }
 
         const newAppointment = this.appointmentRepository.create({
             ...createAppointmentDto,
