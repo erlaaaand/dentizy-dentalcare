@@ -3,6 +3,7 @@ import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dto/login.dto';
+import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
@@ -36,5 +37,15 @@ export class AuthService {
         return {
             access_token: this.jwtService.sign(payload),
         };
+    }
+
+    async register(registerUserDto: RegisterUserDto) {
+        // Kita gunakan method `create` dari UsersService yang sudah ada
+        // Method ini sudah menangani hashing password dan relasi role
+        const newUser = await this.usersService.create(registerUserDto);
+
+        // Kita tidak mengembalikan password di respons
+        const { password, ...result } = newUser;
+        return result;
     }
 }
