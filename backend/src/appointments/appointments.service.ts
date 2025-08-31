@@ -6,6 +6,7 @@ import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { Patient } from '../patients/entities/patient.entity';
 import { User } from '../users/entities/user.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class AppointmentsService {
@@ -16,6 +17,7 @@ export class AppointmentsService {
         private readonly patientRepository: Repository<Patient>,
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
@@ -53,6 +55,10 @@ export class AppointmentsService {
             patient,
             doctor,
         });
+
+        const savedAppointment = await this.appointmentRepository.save(newAppointment);
+        
+        await this.notificationsService.scheduleAppointmentReminder(savedAppointment)
 
         return this.appointmentRepository.save(newAppointment);
     }
