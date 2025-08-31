@@ -8,6 +8,8 @@ import { RolesModule } from './roles/roles.module';
 import { PatientsModule } from './patients/patients.module';
 import { AppointmentsModule } from './appointments/appointments.module';
 import { MedicalRecordsModule } from './medical_records/medical_records.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -26,6 +28,8 @@ import { MedicalRecordsModule } from './medical_records/medical_records.module';
     PatientsModule,
     AppointmentsModule,
     MedicalRecordsModule,
+    NotificationsModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService],
