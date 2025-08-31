@@ -57,36 +57,58 @@ export class AppointmentsService {
             patient,
             doctor,
         });
-
         const savedAppointment = await this.appointmentRepository.save(newAppointment);
-
-        await this.notificationsService.scheduleAppointmentReminder(savedAppointment)
-
-        return this.appointmentRepository.save(newAppointment);
+        await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
+        return savedAppointment;
     }
 
-    async findAll(user: User, queryDto: FindAppointmentsQueryDto): Promise<Appointment[]> {
+    async findAll(user: User, queryDto: FindAppointmentsQueryDto) {
+        const { doctorId, date, status, page = 1, limit = 10 } = queryDto;
+        const skip = (page - 1) * limit;
+
         const queryBuilder = this.appointmentRepository.createQueryBuilder('appointment')
             .leftJoinAndSelect('appointment.patient', 'patient')
             .leftJoinAndSelect('appointment.doctor', 'doctor');
 
-        // --- INTI LOGIKA OTORISASI ---
-        // Cek apakah user yang request adalah seorang dokter
+        // --- LOGIKA OTORISASI (Tetap ada) ---
         const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
-
         if (isDoctor) {
-            // Jika dokter, tambahkan filter WHERE untuk hanya menampilkan janji temu miliknya
-            queryBuilder.where('appointment.doctor_id = :doctorId', { doctorId: user.id });
+            queryBuilder.where('appointment.doctor_id = :authDoctorId', { authDoctorId: user.id });
         }
-        // Jika bukan dokter (misalnya staf), tidak ada filter tambahan, jadi semua data akan tampil.
-        // --- AKHIR LOGIKA OTORISASI ---
 
-        // Di sini kita bisa tambahkan logika untuk filter & paginasi dari queryDto nanti
+        // --- LOGIKA FILTER BARU ---
+        if (doctorId) {
+            // Jika user adalah staf, mereka bisa memfilter berdasarkan doctorId.
+            // Jika user adalah dokter, kondisi ini akan menambahkan filter tambahan, 
+            // namun otorisasi di atas sudah memastikan mereka hanya bisa melihat jadwalnya.
+            queryBuilder.andWhere('appointment.doctor_id = :doctorId', { doctorId });
+        }
 
-        return await queryBuilder.getMany();
+        if (date) {
+            queryBuilder.andWhere('appointment.tanggal_janji = :date', { date });
+        }
+
+        if (status) {
+            queryBuilder.andWhere('appointment.status = :status', { status });
+        }
+
+        // --- LOGIKA PAGINASI BARU ---
+        queryBuilder.orderBy('appointment.tanggal_janji', 'DESC')
+            .addOrderBy('appointment.jam_janji', 'ASC')
+            .skip(skip)
+            .take(limit);
+
+        const [appointments, total] = await queryBuilder.getManyAndCount();
+
+        return {
+            data: appointments,
+            count: total,
+            page,
+            limit,
+        };
     }
 
-    async findOne(id: number): Promise<Appointment> {
+    async findOne(id: number, user: User): Promise<Appointment> {
         const appointment = await this.appointmentRepository.findOne({
             where: { id },
             relations: ['patient', 'doctor', 'medical_record'],
@@ -98,27 +120,41 @@ export class AppointmentsService {
         return appointment;
     }
 
-    async complete(id: number): Promise<Appointment> {
-        const appointment = await this.findOne(id);
+    async complete(id: number, user: User): Promise<Appointment> {
+        const appointment = await this.findOne(id, user);
+        // PENYEMPURNAAN: Validasi alur status
+        if (appointment.status !== AppointmentStatus.DIJADWALKAN) {
+            throw new ConflictException(`Hanya janji temu yang 'dijadwalkan' yang bisa diselesaikan.`);
+        }
         appointment.status = AppointmentStatus.SELESAI;
         return this.appointmentRepository.save(appointment);
     }
 
-    async cancel(id: number): Promise<Appointment> {
-        const appointment = await this.findOne(id);
+    async cancel(id: number, user: User): Promise<Appointment> {
+        const appointment = await this.findOne(id, user);
+        // PENYEMPURNAAN: Validasi alur status
+        if (appointment.status === AppointmentStatus.SELESAI) {
+            throw new ConflictException(`Janji temu yang sudah 'selesai' tidak bisa dibatalkan.`);
+        }
         appointment.status = AppointmentStatus.DIBATALKAN;
-        await this.notificationsService.cancelRemindersFor(appointment.id);
+        // PERBAIKAN BUG: Nonaktifkan pemanggilan fungsi yang belum ada
+        // TODO: Implementasikan logika untuk membatalkan notifikasi
+        // await this.notificationsService.cancelRemindersFor(appointment.id);
         return this.appointmentRepository.save(appointment);
     }
 
     async update(id: number, updateAppointmentDto: UpdateAppointmentDto): Promise<Appointment> {
-        const appointment = await this.findOne(id);
+        // Untuk keamanan, sebaiknya findOne juga menyertakan user, tapi karena hanya staf
+        // yang bisa mengakses ini, kita bisa biarkan untuk saat ini.
+        const appointment = await this.appointmentRepository.findOneBy({ id });
+        if (!appointment) throw new NotFoundException('Appointment not found');
         Object.assign(appointment, updateAppointmentDto);
         return this.appointmentRepository.save(appointment);
     }
 
     async remove(id: number): Promise<void> {
-        const appointment = await this.findOne(id);
+        const appointment = await this.appointmentRepository.findOneBy({ id });
+        if (!appointment) throw new NotFoundException('Appointment not found');
         await this.appointmentRepository.remove(appointment);
     }
 }
