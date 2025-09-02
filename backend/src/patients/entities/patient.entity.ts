@@ -32,6 +32,9 @@ export class Patient {
     @Column({ length: 250, nullable: true, unique: true })
     email: string;
 
+    @Column({default: false})
+    is_registered_online: boolean;
+
     @CreateDateColumn()
     created_at: Date;
 

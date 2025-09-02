@@ -58,7 +58,11 @@ export class AppointmentsService {
             doctor,
         });
         const savedAppointment = await this.appointmentRepository.save(newAppointment);
-        await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
+
+        if (savedAppointment.patient.email && savedAppointment.patient.is_registered_online) {
+            await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
+        }
+        
         return savedAppointment;
     }
 
