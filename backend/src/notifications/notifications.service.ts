@@ -4,7 +4,7 @@ import { LessThanOrEqual, Repository } from 'typeorm';
 import { Notification, NotificationStatus, NotificationType } from './entities/notification.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
-
+import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class NotificationsService {
     cancelRemindersFor(id: number) {
@@ -15,12 +15,14 @@ export class NotificationsService {
     constructor(
         @InjectRepository(Notification)
         private readonly notificationRepository: Repository<Notification>,
+        private readonly mailerService: MailerService,
     ) { }
 
     /**
      * Fungsi ini dipanggil oleh modul lain (misal: AppointmentsService)
      * untuk membuat jadwal pengingat.
      */
+
     async scheduleAppointmentReminder(appointment: Appointment): Promise<void> {
         // Atur pengingat untuk dikirim 1 hari sebelum janji temu
         const sendAt = new Date(appointment.created_at); // Asumsi kolom tanggal janji ada di appointment
@@ -61,8 +63,25 @@ export class NotificationsService {
         for (const notif of notificationsToSend) {
             this.logger.log(`Mengirim pengingat untuk janji temu #${notif.appointment_id}...`);
 
-            // --- Di sinilah logika pengiriman email Anda berada ---
-            // Contoh: await this.emailService.sendReminder(notif.appointment.patient.email, ...);
+            try {
+                await this.mailerService.sendMail({
+                    to: notif.appointment.patient.email, // Asumsi pasien punya email
+                    subject: `Pengingat Janji Temu di Klinik Dentizy`,
+                    html: `
+            <h3>Halo, ${notif.appointment.patient.nama_lengkap}!</h3>
+            <p>Ini adalah pengingat untuk janji temu Anda besok.</p>
+            <p>Detail Janji Temu:</p>
+            <ul>
+              <li>Tanggal: ${notif.appointment.tanggal_janji}</li>
+              <li>Jam: ${notif.appointment.jam_janji}</li>
+            </ul>
+            <p>Terima kasih.</p>
+          `,
+                });
+            } catch (error) {
+                notif.status = NotificationStatus.FAILED;
+                this.logger.error(`Gagal mengirim pengingat untuk janji temu #${notif.appointment_id}`, error.stack);
+            }
 
             // Setelah email terkirim, update statusnya
             notif.status = NotificationStatus.SENT;

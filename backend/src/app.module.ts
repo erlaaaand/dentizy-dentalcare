@@ -12,7 +12,8 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SeederModule } from './seeder/seeder.module';
 import { AuthModule } from './auth/auth.module';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -29,6 +30,24 @@ import { ConfigModule } from '@nestjs/config';
       database: 'dentizy_db',
       autoLoadEntities: true,
       synchronize: true, // PENTING: Hanya untuk development
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('EMAIL_HOST'),
+          port: configService.get<string>('EMAIL_PORT'),
+          secure: configService.get<string>('EMAIL_SECURE') == "true",
+          auth: {
+            user: configService.get<string>('EMAIL_USER'),
+            pass: configService.get<string>('EMAIL_PASS'),
+          },
+        },
+        defaults: {
+          from: `"Klinik Dentizy" <${configService.get<string>('EMAIL_USER')}>`
+        },
+      }),
     }),
     UsersModule,
     RolesModule,

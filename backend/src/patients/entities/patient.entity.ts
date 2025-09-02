@@ -29,6 +29,9 @@ export class Patient {
     @Column({ type: 'text', nullable: true })
     alamat: string;
 
+    @Column({ length: 250, nullable: true, unique: true })
+    email: string;
+
     @CreateDateColumn()
     created_at: Date;
 
