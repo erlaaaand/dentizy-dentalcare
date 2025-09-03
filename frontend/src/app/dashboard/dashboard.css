@@ -1,0 +1,19 @@
+.sidebar-transition {
+    transition: width 0.3s ease-in-out;
+}
+
+.dropdown-menu {
+    display: none;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.notification-panel {
+    display: none;
+}
+
+.notification-panel.show {
+    display: block;
+}
