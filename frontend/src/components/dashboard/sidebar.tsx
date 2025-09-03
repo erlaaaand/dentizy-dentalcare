@@ -2,13 +2,13 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 interface NavigationItem {
     id: string
     label: string
     href: string
     icon: React.ReactElement
-    active?: boolean
 }
 
 const navigationItems: NavigationItem[] = [
@@ -16,7 +16,6 @@ const navigationItems: NavigationItem[] = [
         id: 'dashboard',
         label: 'Dashboard',
         href: '/dashboard',
-        active: true,
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
@@ -83,9 +82,18 @@ const navigationItems: NavigationItem[] = [
 
 export default function Sidebar() {
     const [isMinimized, setIsMinimized] = useState(false)
+    const pathname = usePathname()
 
     const toggleSidebar = () => {
         setIsMinimized(!isMinimized)
+    }
+
+    // Function to check if current path matches navigation item
+    const isActiveRoute = (href: string) => {
+        if (href === '/dashboard') {
+            return pathname === '/dashboard'
+        }
+        return pathname.startsWith(href)
     }
 
     return (
@@ -137,29 +145,33 @@ export default function Sidebar() {
             {/* Main Navigation */}
             <nav className="flex-1 p-4">
                 <ul className="space-y-2">
-                    {navigationItems.map((item) => (
-                        <li key={item.id}>
-                            <Link
-                                href={item.href}
-                                className={`flex items-center p-3 rounded-lg transition-colors relative group ${item.active
-                                    ? 'bg-blue-600 text-white'
-                                    : 'hover:bg-gray-700'
-                                    } ${isMinimized ? 'justify-center' : 'space-x-3'}`}
-                            >
-                                {item.icon}
-                                {!isMinimized && (
-                                    <span className="transition-all duration-300 ease-in-out">
-                                        {item.label}
-                                    </span>
-                                )}
-                                {isMinimized && (
-                                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                                        {item.label}
-                                    </div>
-                                )}
-                            </Link>
-                        </li>
-                    ))}
+                    {navigationItems.map((item) => {
+                        const isActive = isActiveRoute(item.href)
+
+                        return (
+                            <li key={item.id}>
+                                <Link
+                                    href={item.href}
+                                    className={`flex items-center p-3 rounded-lg transition-colors relative group ${isActive
+                                            ? 'bg-blue-600 text-white'
+                                            : 'hover:bg-gray-700'
+                                        } ${isMinimized ? 'justify-center' : 'space-x-3'}`}
+                                >
+                                    {item.icon}
+                                    {!isMinimized && (
+                                        <span className="transition-all duration-300 ease-in-out">
+                                            {item.label}
+                                        </span>
+                                    )}
+                                    {isMinimized && (
+                                        <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-sm rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                                            {item.label}
+                                        </div>
+                                    )}
+                                </Link>
+                            </li>
+                        )
+                    })}
                 </ul>
             </nav>
 
