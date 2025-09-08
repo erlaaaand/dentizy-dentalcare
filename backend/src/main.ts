@@ -1,18 +1,31 @@
+// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { SeederService } from './seeder/seeder.service';
 import { Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Ambil instance SeederService dan jalankan method seed()
-  const seeder = app.get(SeederService);
-  await seeder.seed();
+  // Sebaiknya nonaktifkan Swagger di production
+  if (process.env.NODE_ENV !== 'production') {
+    const config = new DocumentBuilder()
+      .setTitle('API Docs')
+      .setDescription('Daftar API di aplikasi ini')
+      .setVersion('1.0')
+      .addBearerAuth() // Tambahkan ini jika pakai autentikasi JWT
+      .build();
+
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api-docs', app, document);
+  }
 
   app.enableCors();
 
-  await app.listen(3000);
-  Logger.log(`Aplikasi berjalan di: ${await app.getUrl()}`);
+  // Gunakan environment variable untuk port agar lebih fleksibel
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+
+  Logger.log(`🚀 Aplikasi berjalan di: ${await app.getUrl()}`);
 }
 bootstrap();
