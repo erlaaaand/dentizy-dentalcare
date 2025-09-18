@@ -6,6 +6,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '../roles/entities/role.entity';
 import * as bcrypt from 'bcrypt';
+import { FindUsersQueryDto } from './dto/find-users-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -24,20 +25,32 @@ export class UsersService {
             throw new NotFoundException('Satu atau lebih role tidak ditemukan');
         }
 
-        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = this.userRepository.create({
             ...userData,
-            password: hashedPassword, // Simpan password yang sudah di-hash
+            password: hashedPassword,
             roles,
         });
 
         return this.userRepository.save(newUser);
     }
 
-    findAll(): Promise<User[]> {
-        return this.userRepository.find({ relations: ['roles'] });
+    /**
+     * Mengambil daftar pengguna, dengan kemampuan filter berdasarkan peran.
+     * @param query - Objek yang mungkin berisi filter 'role'.
+     */
+    async findAll(query: FindUsersQueryDto): Promise<User[]> {
+        const queryBuilder = this.userRepository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.roles', 'role');
+
+        // Jika ada parameter 'role' di query, tambahkan filter
+        if (query.role) {
+            queryBuilder.where('role.name = :roleName', { roleName: query.role });
+        }
+
+        const users = await queryBuilder.getMany();
+        return users;
     }
 
     async findOne(id: number): Promise<User> {
@@ -54,7 +67,7 @@ export class UsersService {
     async findOneByUsername(username: string): Promise<User | null> {
         const user = await this.userRepository.findOne({
             where: { username },
-            relations: ['roles'], // Sertakan roles agar bisa dicek saat login
+            relations: ['roles'],
         });
         return user;
     }
@@ -63,7 +76,6 @@ export class UsersService {
         const { roles: roleIds, ...userData } = updateUserDto;
         const user = await this.findOne(id);
 
-        // Jika ada roles baru yang dikirim, update relasinya
         if (roleIds) {
             const roles = await this.roleRepository.findBy({ id: In(roleIds) });
             if (roles.length !== roleIds.length) {

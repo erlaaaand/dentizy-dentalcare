@@ -9,6 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { UserRole } from 'src/roles/entities/role.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class AppointmentsService {
@@ -62,7 +63,7 @@ export class AppointmentsService {
         if (savedAppointment.patient.email && savedAppointment.patient.is_registered_online) {
             await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
         }
-        
+
         return savedAppointment;
     }
 
@@ -70,39 +71,42 @@ export class AppointmentsService {
         const { doctorId, date, status, page = 1, limit = 10 } = queryDto;
         const skip = (page - 1) * limit;
 
-        const queryBuilder = this.appointmentRepository.createQueryBuilder('appointment')
-            .leftJoinAndSelect('appointment.patient', 'patient')
-            .leftJoinAndSelect('appointment.doctor', 'doctor');
+        // --- PERBAIKAN LOGIKA FILTER TANGGAL ---
+        let dateFilter = {};
+        if (date) {
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0); // Set ke awal hari
 
-        // --- LOGIKA OTORISASI (Tetap ada) ---
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999); // Set ke akhir hari
+
+            dateFilter = { tanggal_janji: Between(startDate, endDate) };
+        }
+        // --- AKHIR PERBAIKAN ---
+
+        const whereConditions: any = { ...dateFilter };
+
         const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
         if (isDoctor) {
-            queryBuilder.where('appointment.doctor_id = :authDoctorId', { authDoctorId: user.id });
-        }
-
-        // --- LOGIKA FILTER BARU ---
-        if (doctorId) {
-            // Jika user adalah staf, mereka bisa memfilter berdasarkan doctorId.
-            // Jika user adalah dokter, kondisi ini akan menambahkan filter tambahan, 
-            // namun otorisasi di atas sudah memastikan mereka hanya bisa melihat jadwalnya.
-            queryBuilder.andWhere('appointment.doctor_id = :doctorId', { doctorId });
-        }
-
-        if (date) {
-            queryBuilder.andWhere('appointment.tanggal_janji = :date', { date });
+            whereConditions.doctor = { id: user.id };
+        } else if (doctorId) {
+            whereConditions.doctor = { id: doctorId };
         }
 
         if (status) {
-            queryBuilder.andWhere('appointment.status = :status', { status });
+            whereConditions.status = status;
         }
 
-        // --- LOGIKA PAGINASI BARU ---
-        queryBuilder.orderBy('appointment.tanggal_janji', 'DESC')
-            .addOrderBy('appointment.jam_janji', 'ASC')
-            .skip(skip)
-            .take(limit);
-
-        const [appointments, total] = await queryBuilder.getManyAndCount();
+        const [appointments, total] = await this.appointmentRepository.findAndCount({
+            where: whereConditions,
+            relations: ['patient', 'doctor'],
+            order: {
+                tanggal_janji: 'DESC',
+                jam_janji: 'ASC'
+            },
+            take: limit,
+            skip: skip,
+        });
 
         return {
             data: appointments,
