@@ -1,255 +1,293 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Appointment } from '@/types/api';
+import { completeAppointment, cancelAppointment } from '@/lib/api/appointmentService';
+import { formatDate, formatTime } from '@/lib/utils';
 
-type Appointment = {
-    id: number;
-    patient_id: number;
-    doctor_id: number;
-    status: 'dijadwalkan' | 'selesai' | 'dibatalkan';
-    created_at: string;
-    updated_at: string;
-    tanggal_janji: string;
-    keluhan?: string;
-    jam_janji: string;
-    patient_name?: string;
-    doctor_name?: string;
-    treatment?: string;
-};
-
-type DetailAppointmentModalProps = {
-    appointment: Appointment | null;
+type ModalProps = {
     isOpen: boolean;
     onClose: () => void;
+    appointment: Appointment;
+    onActionSuccess: () => void;
 };
 
-export default function DetailAppointmentModal({ appointment, isOpen, onClose }: DetailAppointmentModalProps) {
-    if (!isOpen || !appointment) return null;
+export default function DetailAppointmentModal({ isOpen, onClose, appointment, onActionSuccess }: ModalProps) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [isVisible, setIsVisible] = useState(false);
+    const [showContent, setShowContent] = useState(false);
 
-    const getStatusClass = (status: string) => {
-        switch (status) {
-            case 'selesai': return 'bg-green-100 text-green-800 border-green-200';
-            case 'dijadwalkan': return 'bg-blue-100 text-blue-800 border-blue-200';
-            case 'dibatalkan': return 'bg-red-100 text-red-800 border-red-200';
-            default: return 'bg-gray-100 text-gray-800 border-gray-200';
-        }
-    };
-
-    const getStatusLabel = (status: string) => {
-        switch (status) {
-            case 'selesai': return 'Selesai';
-            case 'dijadwalkan': return 'Dijadwalkan';
-            case 'dibatalkan': return 'Dibatalkan';
-            default: return status;
-        }
-    };
-
-    const formatDateTime = (dateString: string) => {
-        try {
-            return new Date(dateString).toLocaleString('id-ID', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit'
-            });
-        } catch {
-            return dateString;
-        }
-    };
-
-    const formatDate = (dateString: string) => {
-        try {
-            return new Date(dateString).toLocaleDateString('id-ID', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                weekday: 'long'
-            });
-        } catch {
-            return dateString;
-        }
-    };
-
-    const formatTime = (timeString: string) => {
-        try {
-            if (timeString.includes(':')) {
-                return timeString.substring(0, 5);
-            }
-            return timeString;
-        } catch {
-            return timeString;
-        }
-    };
-
-    // Close modal when clicking outside
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
-    };
-
-    // Close modal with Escape key
-    React.useEffect(() => {
-        const handleEscape = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                onClose();
-            }
-        };
-
+    useEffect(() => {
         if (isOpen) {
-            document.addEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'hidden';
+            setIsVisible(true);
+            // Delay untuk animasi masuk yang smooth
+            setTimeout(() => setShowContent(true), 50);
+            // Reset states
+            setError(null);
+            setIsSubmitting(false);
+        } else if (isVisible) {
+            // Animasi keluar
+            setShowContent(false);
+            setTimeout(() => setIsVisible(false), 300);
         }
+    }, [isOpen, isVisible]);
 
+    // Cleanup saat unmount
+    useEffect(() => {
         return () => {
-            document.removeEventListener('keydown', handleEscape);
-            document.body.style.overflow = 'unset';
+            setIsVisible(false);
+            setShowContent(false);
         };
-    }, [isOpen, onClose]);
+    }, []);
+
+    if (!isVisible) return null;
+
+    const handleComplete = async () => {
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            await completeAppointment(appointment.id);
+            onActionSuccess();
+            handleClose();
+        } catch (err) {
+            setError('Gagal menandai janji temu sebagai selesai.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleCancel = async () => {
+        if (!confirm('Apakah Anda yakin ingin membatalkan janji temu ini?')) return;
+        setIsSubmitting(true);
+        setError(null);
+        try {
+            await cancelAppointment(appointment.id);
+            onActionSuccess();
+            handleClose();
+        } catch (err) {
+            setError('Gagal membatalkan janji temu.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleClose = () => {
+        setShowContent(false);
+        setTimeout(() => onClose(), 300);
+    };
+
+    // Fungsi untuk menentukan warna status yang selaras
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'dijadwalkan':
+                return 'bg-blue-50 text-blue-700 border-blue-200';
+            case 'selesai':
+                return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            case 'dibatalkan':
+                return 'bg-red-50 text-red-700 border-red-200';
+            default:
+                return 'bg-slate-50 text-slate-700 border-slate-200';
+        }
+    };
+
+    // Komponen Loading Spinner yang reusable
+    const LoadingSpinner = ({ className = "h-4 w-4" }: { className?: string }) => (
+        <svg className={`animate-spin ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+    );
 
     return (
-        <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4"
-            onClick={handleBackdropClick}
+        <div 
+            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-300 ease-in-out ${
+                showContent 
+                    ? 'bg-slate-900/60 backdrop-blur-sm' 
+                    : 'bg-slate-900/0 backdrop-blur-none'
+            }`} 
+            onClick={handleClose}
         >
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                        Detail Janji Temu
-                    </h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-6">
-                    {/* Status Badge */}
-                    <div className="flex justify-center">
-                        <span className={`inline-flex px-4 py-2 text-sm font-semibold rounded-full border ${getStatusClass(appointment.status)}`}>
-                            {getStatusLabel(appointment.status)}
-                        </span>
+            <div 
+                className={`bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transition-all duration-300 ease-out transform ${
+                    showContent 
+                        ? 'scale-100 opacity-100 translate-y-0' 
+                        : 'scale-95 opacity-0 translate-y-4'
+                }`} 
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header dengan gradient yang lebih subtle */}
+                <div className="px-6 py-5 bg-gradient-to-r from-slate-50 via-blue-50 to-slate-50 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-xl font-bold text-slate-800">Detail Janji Temu</h2>
+                            <p className="text-sm text-slate-600 mt-0.5">ID: {appointment.id}</p>
+                        </div>
+                        <button 
+                            onClick={handleClose} 
+                            className="text-slate-400 hover:text-slate-600 transition-colors duration-200 rounded-full p-2 hover:bg-slate-100 group"
+                            aria-label="Tutup modal"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 group-hover:rotate-90 transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-
-                    {/* Main Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    ID Janji Temu
-                                </label>
-                                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                    #{appointment.id}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nama Pasien
-                                </label>
-                                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                    {appointment.patient_name || `ID Pasien: ${appointment.patient_id}`}
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Nama Dokter
-                                </label>
-                                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                    {appointment.doctor_name || `ID Dokter: ${appointment.doctor_id}`}
-                                </p>
+                </div>
+                
+                {/* Content dengan spacing yang konsisten */}
+                <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Pasien */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 hover:border-slate-300/60 transition-colors duration-200">
+                            <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Pasien</label>
+                                    <p className="text-lg font-semibold text-slate-800 leading-tight">{appointment.patient.nama_lengkap}</p>
+                                </div>
                             </div>
                         </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Tanggal Janji
-                                </label>
-                                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                    {formatDate(appointment.tanggal_janji)}
-                                </p>
+                        
+                        {/* No. Rekam Medis */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 hover:border-slate-300/60 transition-colors duration-200">
+                            <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0 w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">No. Rekam Medis</label>
+                                    <p className="text-sm font-medium text-slate-700 font-mono bg-slate-100 px-2 py-1 rounded mt-1 inline-block">{appointment.patient.nomor_rekam_medis}</p>
+                                </div>
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Jam Janji
-                                </label>
-                                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                    {formatTime(appointment.jam_janji)} WIB
-                                </p>
+                        </div>
+                        
+                        {/* Dokter */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 hover:border-slate-300/60 transition-colors duration-200">
+                            <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0 w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Dokter</label>
+                                    <p className="text-lg font-semibold text-slate-800 leading-tight">{appointment.doctor.nama_lengkap}</p>
+                                </div>
                             </div>
-
-                            {appointment.treatment && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Perawatan
-                                    </label>
-                                    <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md">
-                                        {appointment.treatment}
+                        </div>
+                        
+                        {/* Jadwal */}
+                        <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60 hover:border-slate-300/60 transition-colors duration-200">
+                            <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0 w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div className="flex-1">
+                                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Jadwal</label>
+                                    <p className="text-lg font-semibold text-slate-800 leading-tight">
+                                        {formatDate(appointment.tanggal_janji)}
+                                    </p>
+                                    <p className="text-sm text-amber-600 font-medium">
+                                        {formatTime(appointment.jam_janji)}
                                     </p>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Keluhan */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Keluhan
-                        </label>
-                        <div className="text-sm text-gray-900 bg-gray-50 p-3 rounded-md min-h-[80px]">
-                            {appointment.keluhan || 'Tidak ada keluhan yang dicatat'}
-                        </div>
-                    </div>
-
-                    {/* Timestamps */}
-                    <div className="border-t border-gray-200 pt-4 space-y-3">
-                        <h3 className="text-sm font-medium text-gray-700">Informasi Sistem</h3>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="text-gray-500">Dibuat pada:</span>
-                                <br />
-                                <span className="text-gray-900">{formatDateTime(appointment.created_at)}</span>
-                            </div>
-                            <div>
-                                <span className="text-gray-500">Terakhir diperbarui:</span>
-                                <br />
-                                <span className="text-gray-900">{formatDateTime(appointment.updated_at)}</span>
                             </div>
                         </div>
                     </div>
+                    
+                    {/* Keluhan - Full Width */}
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/60">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 w-10 h-10 bg-violet-100 rounded-full flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Keluhan</label>
+                                <p className="text-slate-700 mt-2 leading-relaxed">
+                                    {appointment.keluhan || <span className="text-slate-400 italic">Tidak ada keluhan tercatat</span>}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Status */}
+                    <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Status Janji Temu</label>
+                                <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold mt-2 border ${getStatusColor(appointment.status)}`}>
+                                    <div className={`w-2 h-2 rounded-full mr-2 ${
+                                        appointment.status.toLowerCase() === 'dijadwalkan' ? 'bg-blue-500' :
+                                        appointment.status.toLowerCase() === 'selesai' ? 'bg-emerald-500' :
+                                        appointment.status.toLowerCase() === 'dibatalkan' ? 'bg-red-500' : 'bg-slate-500'
+                                    }`}></div>
+                                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {/* Error Message */}
+                    {error && (
+                        <div className="bg-red-50 border border-red-200 p-4 rounded-xl animate-pulse">
+                            <div className="flex items-start space-x-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p className="text-red-700 text-sm font-medium">{error}</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-
-                {/* Footer */}
-                <div className="flex justify-end space-x-3 p-6 border-t border-gray-200 bg-gray-50">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                
+                {/* Footer Actions */}
+                <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-200 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                    <button 
+                        onClick={handleClose} 
+                        className="px-6 py-2.5 text-slate-600 bg-white border border-slate-300 rounded-xl hover:bg-slate-50 hover:border-slate-400 transition-all duration-200 font-medium shadow-sm flex items-center justify-center min-w-[100px]"
+                        disabled={isSubmitting}
                     >
                         Tutup
                     </button>
-
+                    
                     {appointment.status === 'dijadwalkan' && (
-                        <button
-                            onClick={() => {
-                                // TODO: Implementasi edit appointment
-                                console.log('Edit appointment:', appointment.id);
-                            }}
-                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                        >
-                            Edit Janji
-                        </button>
+                        <>
+                            <button
+                                onClick={handleCancel}
+                                disabled={isSubmitting}
+                                className="px-6 py-2.5 bg-white text-red-600 border border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm flex items-center justify-center min-w-[120px]"
+                            >
+                                {isSubmitting ? <LoadingSpinner className="h-4 w-4 mr-2" /> : 
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                }
+                                Batalkan
+                            </button>
+                            <button
+                                onClick={handleComplete}
+                                disabled={isSubmitting}
+                                className="px-6 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-sm flex items-center justify-center min-w-[120px]"
+                            >
+                                {isSubmitting ? <LoadingSpinner className="h-4 w-4 mr-2" /> : 
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                }
+                                Selesai
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
