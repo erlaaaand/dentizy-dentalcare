@@ -138,4 +138,3 @@ export const deleteAppointment = async (id: number): Promise<void> => {
     throw error;
   }
 };
-

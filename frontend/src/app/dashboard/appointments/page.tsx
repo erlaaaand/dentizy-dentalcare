@@ -3,8 +3,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AppointmentFilters from './components/AppointmentsFilters';
 import AppointmentsTable from './components/AppointmentsTable';
-// import CreateAppointmentModal from './components/CreateAppointmentModal';
 import DetailAppointmentModal from './components/DetailAppointmentModal';
+import CreateAppointmentModal from './components/CreateAppointmentModal';
 import { getAppointments } from '@/lib/api/appointmentService';
 import { getUsers } from '@/lib/api/userService';
 import type { Appointment as ApiAppointment } from '@/types/api';
@@ -141,6 +141,14 @@ export default function AppointmentsPage() {
                         </p>
                     </div>
                 </div>
+                <div className="mt-4">
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-indigo-50 transition"
+                    >
+                        + Buat Janji Temu Baru
+                    </button>
+                </div>
             </header>
 
             <AppointmentFilters doctors={doctors} onFilterChange={handleFilterChange} />
@@ -164,6 +172,17 @@ export default function AppointmentsPage() {
                     onClose={() => setIsDetailModalOpen(false)}
                     appointment={selectedAppointment}
                     onActionSuccess={handleActionSuccess}
+                />
+            )}
+
+            {/* CreateAppointmentModal */}
+            {isCreateModalOpen && (
+                <CreateAppointmentModal
+                    isOpen={isCreateModalOpen}
+                    onClose={() => setIsCreateModalOpen(false)}
+                    onCreateSuccess={handleCreateSuccess}
+                    doctors={doctors}
+                    scheduledPatientIds={scheduledPatientIds} // Gunakan useMemo di sini
                 />
             )}
         </>
