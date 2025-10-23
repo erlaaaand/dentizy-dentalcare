@@ -23,7 +23,7 @@ export class Patient {
     nama_lengkap: string;
 
     // Anda bisa menambahkan kolom lain sesuai kebutuhan, misal:
-    @Column()
+    @Column({ type: 'date', nullable: true })
     tanggal_lahir: Date;
 
     @Column({ type: 'text', nullable: true })
@@ -31,6 +31,12 @@ export class Patient {
 
     @Column({ length: 250, nullable: true, unique: true })
     email: string;
+
+    @Column({ length: 20, nullable:true})
+    no_hp: string;
+
+    @Column({ type: 'enum', enum: ['L', 'P'], nullable: true })
+    jenis_kelamin: 'L' | 'P';
 
     @Column({default: false})
     is_registered_online: boolean;
