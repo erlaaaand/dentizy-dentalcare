@@ -37,7 +37,6 @@ const notifications: Notification[] = [
 export default function Header() {
     const [showNotifications, setShowNotifications] = useState(false)
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
-    const [searchTerm, setSearchTerm] = useState('')
 
     const notificationRef = useRef<HTMLDivElement>(null)
     const profileRef = useRef<HTMLDivElement>(null)
@@ -50,10 +49,6 @@ export default function Header() {
     const toggleProfileDropdown = () => {
         setShowProfileDropdown(!showProfileDropdown)
         setShowNotifications(false)
-    }
-
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchTerm(e.target.value)
     }
 
     // Close dropdowns when clicking outside
