@@ -1,6 +1,13 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import { 
+    Injectable, 
+    NotFoundException, 
+    ConflictException, 
+    ForbiddenException,
+    BadRequestException,
+    Logger 
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -9,10 +16,11 @@ import { User } from '../users/entities/user.entity';
 import { UserRole } from 'src/roles/entities/role.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
-import { Between } from 'typeorm';
 
 @Injectable()
 export class AppointmentsService {
+    private readonly logger = new Logger(AppointmentsService.name);
+
     constructor(
         @InjectRepository(Appointment)
         private readonly appointmentRepository: Repository<Appointment>,
@@ -23,158 +31,373 @@ export class AppointmentsService {
         private readonly notificationsService: NotificationsService,
     ) { }
 
+    /**
+     * Buat appointment baru
+     */
     async create(createAppointmentDto: CreateAppointmentDto): Promise<Appointment> {
         const { patient_id, doctor_id, tanggal_janji, jam_janji } = createAppointmentDto;
 
-        const patient = await this.patientRepository.findOneBy({ id: patient_id });
-        if (!patient) {
-            throw new NotFoundException(`Pasien dengan ID #${patient_id} tidak ditemukan`);
+        try {
+            // 1. VALIDASI: Patient ada atau tidak
+            const patient = await this.patientRepository.findOneBy({ id: patient_id });
+            if (!patient) {
+                throw new NotFoundException(`Pasien dengan ID #${patient_id} tidak ditemukan`);
+            }
+
+            //  2. VALIDASI: Doctor ada atau tidak
+            const doctor = await this.userRepository.findOne({
+                where: { id: doctor_id },
+                relations: ['roles'],
+            });
+
+            if (!doctor) {
+                throw new NotFoundException(`Dokter dengan ID #${doctor_id} tidak ditemukan`);
+            }
+
+            //  3. VALIDASI: User adalah dokter atau kepala klinik
+            const isDokter = doctor.roles.some(role => role.name === UserRole.DOKTER);
+            const isKepalaKlinik = doctor.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+
+            if (!isDokter && !isKepalaKlinik) {
+                throw new ForbiddenException(
+                    `User dengan ID #${doctor_id} bukan dokter atau kepala klinik`
+                );
+            }
+
+            //  4. VALIDASI: Tanggal tidak boleh di masa lalu
+            const appointmentDate = new Date(tanggal_janji);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (appointmentDate < today) {
+                throw new BadRequestException('Tanggal janji temu tidak boleh di masa lalu');
+            }
+
+            //  5. CEK: Bentrok jadwal atau tidak
+            const existingAppointment = await this.appointmentRepository.findOne({
+                where: {
+                    doctor_id: doctor_id,
+                    tanggal_janji: appointmentDate,
+                    jam_janji: jam_janji,
+                    status: AppointmentStatus.DIJADWALKAN, // Hanya cek yang masih dijadwalkan
+                },
+            });
+
+            if (existingAppointment) {
+                throw new ConflictException(
+                    `Dokter sudah memiliki janji temu di tanggal ${tanggal_janji} jam ${jam_janji}`
+                );
+            }
+
+            //  6. BUAT APPOINTMENT BARU
+            const newAppointment = this.appointmentRepository.create({
+                ...createAppointmentDto,
+                tanggal_janji: appointmentDate,
+                patient,
+                doctor,
+            });
+
+            const savedAppointment = await this.appointmentRepository.save(newAppointment);
+
+            //  7. JADWALKAN REMINDER (jika pasien punya email)
+            if (savedAppointment.patient.email && savedAppointment.patient.is_registered_online) {
+                try {
+                    await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
+                    this.logger.log(`Reminder scheduled for appointment #${savedAppointment.id}`);
+                } catch (error) {
+                    this.logger.error('Failed to schedule reminder:', error);
+                    // Tidak throw error, karena appointment sudah tersimpan
+                }
+            }
+
+            this.logger.log(` Appointment created: #${savedAppointment.id}`);
+
+            return savedAppointment;
+
+        } catch (error) {
+            if (
+                error instanceof NotFoundException ||
+                error instanceof ForbiddenException ||
+                error instanceof ConflictException ||
+                error instanceof BadRequestException
+            ) {
+                throw error;
+            }
+
+            this.logger.error('Error creating appointment:', error);
+            throw new BadRequestException('Gagal membuat janji temu');
         }
-
-        const doctor = await this.userRepository.findOne({
-            where: { id: doctor_id },
-            relations: ['roles'],
-        });
-        
-        if (!doctor) {
-            throw new NotFoundException(`Dokter dengan ID #${doctor_id} tidak ditemukan`);
-        }
-
-        // 🔥 IMPLEMENTASI: Validasi role dokter
-        const isDokter = doctor.roles.some(role => role.name === UserRole.DOKTER);
-        const isKepalaKlinik = doctor.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
-        
-        if (!isDokter && !isKepalaKlinik) {
-            throw new ForbiddenException(`User dengan ID #${doctor_id} bukan dokter atau kepala klinik.`);
-        }
-
-        const existingAppointment = await this.appointmentRepository.findOne({
-            where: {
-                doctor_id: doctor_id,
-                tanggal_janji: new Date(tanggal_janji),
-                jam_janji: jam_janji,
-            },
-        });
-
-        if (existingAppointment) {
-            throw new ConflictException(
-                `Dokter sudah memiliki janji temu di tanggal dan jam tersebut.`,
-            );
-        }
-
-        const newAppointment = this.appointmentRepository.create({
-            ...createAppointmentDto,
-            patient,
-            doctor,
-        });
-        const savedAppointment = await this.appointmentRepository.save(newAppointment);
-
-        if (savedAppointment.patient.email && savedAppointment.patient.is_registered_online) {
-            await this.notificationsService.scheduleAppointmentReminder(savedAppointment);
-        }
-
-        return savedAppointment;
     }
 
+    /**
+     * Ambil daftar appointments dengan filter
+     */
     async findAll(user: User, queryDto: FindAppointmentsQueryDto) {
         const { doctorId, date, status, page = 1, limit = 10 } = queryDto;
         const skip = (page - 1) * limit;
 
-        let dateFilter = {};
-        if (date) {
-            const startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
+        try {
+            //  BUILD QUERY dengan QueryBuilder untuk performa lebih baik
+            const queryBuilder = this.appointmentRepository
+                .createQueryBuilder('appointment')
+                .leftJoinAndSelect('appointment.patient', 'patient')
+                .leftJoinAndSelect('appointment.doctor', 'doctor')
+                .leftJoinAndSelect('doctor.roles', 'doctorRoles');
 
-            const endDate = new Date(date);
-            endDate.setHours(23, 59, 59, 999);
+            //  FILTER BY DATE
+            if (date) {
+                const startDate = new Date(date);
+                startDate.setHours(0, 0, 0, 0);
 
-            dateFilter = { tanggal_janji: Between(startDate, endDate) };
+                const endDate = new Date(date);
+                endDate.setHours(23, 59, 59, 999);
+
+                queryBuilder.andWhere(
+                    'appointment.tanggal_janji BETWEEN :startDate AND :endDate',
+                    { startDate, endDate }
+                );
+            }
+
+            //  AUTHORIZATION: Dokter hanya bisa lihat appointmentnya sendiri
+            const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
+            const isKepalaKlinik = user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+
+            if (isDoctor && !isKepalaKlinik) {
+                queryBuilder.andWhere('appointment.doctor_id = :userId', { userId: user.id });
+            } else if (doctorId) {
+                // Kepala Klinik atau Staf bisa filter by doctor
+                queryBuilder.andWhere('appointment.doctor_id = :doctorId', { doctorId });
+            }
+
+            //  FILTER BY STATUS
+            if (status) {
+                queryBuilder.andWhere('appointment.status = :status', { status });
+            }
+
+            //  ORDER & PAGINATION
+            queryBuilder
+                .orderBy('appointment.tanggal_janji', 'DESC')
+                .addOrderBy('appointment.jam_janji', 'ASC')
+                .take(limit)
+                .skip(skip);
+
+            const [appointments, total] = await queryBuilder.getManyAndCount();
+
+            this.logger.log(`📋 Retrieved ${appointments.length}/${total} appointments`);
+
+            return {
+                data: appointments,
+                count: total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            };
+
+        } catch (error) {
+            this.logger.error('Error fetching appointments:', error);
+            throw new BadRequestException('Gagal mengambil daftar janji temu');
         }
-
-        const whereConditions: any = { ...dateFilter };
-
-        const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
-        const isKepalaKlinik = user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
-        
-        // Dokter hanya bisa lihat appointmentnya sendiri
-        // Kepala Klinik bisa lihat semua appointment atau filter by doctorId
-        if (isDoctor && !isKepalaKlinik) {
-            whereConditions.doctor = { id: user.id };
-        } else if (doctorId) {
-            whereConditions.doctor = { id: doctorId };
-        }
-
-        if (status) {
-            whereConditions.status = status;
-        }
-
-        const [appointments, total] = await this.appointmentRepository.findAndCount({
-            where: whereConditions,
-            relations: ['patient', 'doctor'],
-            order: {
-                tanggal_janji: 'DESC',
-                jam_janji: 'ASC'
-            },
-            take: limit,
-            skip: skip,
-        });
-
-        return {
-            data: appointments,
-            count: total,
-            page,
-            limit,
-        };
     }
 
+    /**
+     * Ambil appointment by ID
+     */
     async findOne(id: number, user: User): Promise<Appointment> {
-        const appointment = await this.appointmentRepository.findOne({
-            where: { id },
-            relations: ['patient', 'doctor', 'medical_record'],
-        });
+        try {
+            const appointment = await this.appointmentRepository.findOne({
+                where: { id },
+                relations: ['patient', 'doctor', 'doctor.roles', 'medical_record'],
+            });
 
-        if (!appointment) {
-            throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
+            if (!appointment) {
+                throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
+            }
+
+            //  AUTHORIZATION: Dokter hanya bisa lihat appointmentnya sendiri
+            const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
+            const isKepalaKlinik = user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+
+            if (isDoctor && !isKepalaKlinik && appointment.doctor_id !== user.id) {
+                throw new ForbiddenException('Anda tidak memiliki akses ke janji temu ini');
+            }
+
+            return appointment;
+
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof ForbiddenException) {
+                throw error;
+            }
+
+            this.logger.error(`Error finding appointment ID ${id}:`, error);
+            throw new BadRequestException('Gagal mengambil data janji temu');
         }
-        return appointment;
     }
 
+    /**
+     * Selesaikan appointment
+     */
     async complete(id: number, user: User): Promise<Appointment> {
-        const appointment = await this.findOne(id, user);
-        
-        if (appointment.status !== AppointmentStatus.DIJADWALKAN) {
-            throw new ConflictException(`Hanya janji temu yang 'dijadwalkan' yang bisa diselesaikan.`);
+        try {
+            const appointment = await this.findOne(id, user);
+
+            //  VALIDASI: Status harus DIJADWALKAN
+            if (appointment.status !== AppointmentStatus.DIJADWALKAN) {
+                throw new ConflictException(
+                    `Hanya janji temu yang berstatus 'dijadwalkan' yang bisa diselesaikan. Status saat ini: ${appointment.status}`
+                );
+            }
+
+            // AUTHORIZATION: Hanya dokter yang menangani yang bisa complete
+            const isKepalaKlinik = user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+            
+            if (!isKepalaKlinik && appointment.doctor_id !== user.id) {
+                throw new ForbiddenException('Hanya dokter yang menangani yang bisa menyelesaikan janji temu ini');
+            }
+
+            appointment.status = AppointmentStatus.SELESAI;
+            const updated = await this.appointmentRepository.save(appointment);
+
+            this.logger.log(`Appointment #${id} completed by user #${user.id}`);
+
+            return updated;
+
+        } catch (error) {
+            if (
+                error instanceof NotFoundException ||
+                error instanceof ConflictException ||
+                error instanceof ForbiddenException
+            ) {
+                throw error;
+            }
+
+            this.logger.error(`Error completing appointment ID ${id}:`, error);
+            throw new BadRequestException('Gagal menyelesaikan janji temu');
         }
-        
-        appointment.status = AppointmentStatus.SELESAI;
-        return this.appointmentRepository.save(appointment);
     }
 
+    /**
+     * Batalkan appointment
+     */
     async cancel(id: number, user: User): Promise<Appointment> {
-        const appointment = await this.findOne(id, user);
-        
-        if (appointment.status === AppointmentStatus.SELESAI) {
-            throw new ConflictException(`Janji temu yang sudah 'selesai' tidak bisa dibatalkan.`);
+        try {
+            const appointment = await this.findOne(id, user);
+
+            // VALIDASI: Appointment yang sudah selesai tidak bisa dibatalkan
+            if (appointment.status === AppointmentStatus.SELESAI) {
+                throw new ConflictException('Janji temu yang sudah selesai tidak bisa dibatalkan');
+            }
+
+            // VALIDASI: Jangan batalkan appointment yang sudah dibatalkan
+            if (appointment.status === AppointmentStatus.DIBATALKAN) {
+                throw new ConflictException('Janji temu ini sudah dibatalkan sebelumnya');
+            }
+
+            appointment.status = AppointmentStatus.DIBATALKAN;
+
+            // BATALKAN REMINDER
+            try {
+                await this.notificationsService.cancelRemindersFor(appointment.id);
+                this.logger.log(`Reminders cancelled for appointment #${appointment.id}`);
+            } catch (error) {
+                this.logger.error('Failed to cancel reminders:', error);
+                // Tidak throw error, karena pembatalan tetap dilanjutkan
+            }
+
+            const updated = await this.appointmentRepository.save(appointment);
+
+            this.logger.log(`❌ Appointment #${id} cancelled by user #${user.id}`);
+
+            return updated;
+
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof ConflictException) {
+                throw error;
+            }
+
+            this.logger.error(`Error cancelling appointment ID ${id}:`, error);
+            throw new BadRequestException('Gagal membatalkan janji temu');
         }
-        
-        appointment.status = AppointmentStatus.DIBATALKAN;
-        
-        // 🔥 IMPLEMENTASI: Batalkan notifikasi yang terjadwal
-        await this.notificationsService.cancelRemindersFor(appointment.id);
-        
-        return this.appointmentRepository.save(appointment);
     }
 
+    /**
+     * Update appointment
+     */
     async update(id: number, updateAppointmentDto: UpdateAppointmentDto): Promise<Appointment> {
-        const appointment = await this.appointmentRepository.findOneBy({ id });
-        if (!appointment) throw new NotFoundException('Appointment not found');
-        Object.assign(appointment, updateAppointmentDto);
-        return this.appointmentRepository.save(appointment);
+        try {
+            const appointment = await this.appointmentRepository.findOne({
+                where: { id },
+                relations: ['patient', 'doctor'],
+            });
+
+            if (!appointment) {
+                throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
+            }
+
+            // VALIDASI: Jangan update appointment yang sudah selesai atau dibatalkan
+            if (appointment.status === AppointmentStatus.SELESAI) {
+                throw new ConflictException('Tidak bisa mengubah janji temu yang sudah selesai');
+            }
+
+            if (appointment.status === AppointmentStatus.DIBATALKAN) {
+                throw new ConflictException('Tidak bisa mengubah janji temu yang sudah dibatalkan');
+            }
+
+            Object.assign(appointment, updateAppointmentDto);
+            const updated = await this.appointmentRepository.save(appointment);
+
+            this.logger.log(`Appointment #${id} updated`);
+
+            return updated;
+
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof ConflictException) {
+                throw error;
+            }
+
+            this.logger.error(`Error updating appointment ID ${id}:`, error);
+            throw new BadRequestException('Gagal mengupdate janji temu');
+        }
     }
 
+    /**
+     * Hapus appointment
+     */
     async remove(id: number): Promise<void> {
-        const appointment = await this.appointmentRepository.findOneBy({ id });
-        if (!appointment) throw new NotFoundException('Appointment not found');
-        await this.appointmentRepository.remove(appointment);
+        try {
+            const appointment = await this.appointmentRepository.findOne({
+                where: { id },
+                relations: ['medical_record'],
+            });
+
+            if (!appointment) {
+                throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
+            }
+
+            // VALIDASI: Jangan hapus appointment yang sudah ada rekam medis
+            if (appointment.medical_record) {
+                throw new ConflictException(
+                    'Tidak bisa menghapus janji temu yang sudah memiliki rekam medis'
+                );
+            }
+
+            // BATALKAN REMINDER jika ada
+            try {
+                await this.notificationsService.cancelRemindersFor(appointment.id);
+            } catch (error) {
+                this.logger.error('Failed to cancel reminders:', error);
+            }
+
+            await this.appointmentRepository.remove(appointment);
+
+            this.logger.log(`Appointment #${id} deleted`);
+
+        } catch (error) {
+            if (error instanceof NotFoundException || error instanceof ConflictException) {
+                throw error;
+            }
+
+            this.logger.error(`Error deleting appointment ID ${id}:`, error);
+            throw new BadRequestException('Gagal menghapus janji temu');
+        }
     }
 }

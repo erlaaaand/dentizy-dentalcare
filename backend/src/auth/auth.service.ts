@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, Logger } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -7,45 +7,146 @@ import { RegisterUserDto } from './dto/register-user.dto';
 
 @Injectable()
 export class AuthService {
+    private readonly logger = new Logger(AuthService.name);
+
     constructor(
         private readonly usersService: UsersService,
         private readonly jwtService: JwtService,
     ) { }
 
+    /**
+     * Validasi username dan password
+     */
     async validateUser(username: string, pass: string): Promise<any> {
-        const user = await this.usersService.findOneByUsername(username); // Anda perlu membuat method ini di UsersService
-        if (user && user.password && await bcrypt.compare(pass, user.password)) {
+        try {
+            const user = await this.usersService.findOneByUsername(username);
+            
+            if (!user) {
+                // SECURITY: Jangan beri tahu user tidak ada, untuk prevent user enumeration
+                this.logger.warn(`Login attempt for non-existent user: ${username}`);
+                return null;
+            }
+
+            if (!user.password) {
+                this.logger.error(`User ${username} has no password set`);
+                return null;
+            }
+
+            const isPasswordValid = await bcrypt.compare(pass, user.password);
+            
+            if (!isPasswordValid) {
+                this.logger.warn(`Failed login attempt for user: ${username}`);
+                return null;
+            }
+
             // Jangan kembalikan password
             const { password, ...result } = user;
+            this.logger.log(`✅ Successful login for user: ${username}`);
             return result;
+            
+        } catch (error) {
+            this.logger.error(`Error validating user ${username}:`, error);
+            return null;
         }
-        return null;
     }
 
+    /**
+     * Login dan generate JWT token
+     */
     async login(loginDto: LoginDto) {
         const user = await this.validateUser(loginDto.username, loginDto.password);
+        
         if (!user) {
-            throw new UnauthorizedException('Kredensial tidak valid');
+            // SECURITY: Generic error message
+            throw new UnauthorizedException('Username atau password salah');
         }
 
         const payload = {
             username: user.username,
-            sub: user.id, // 'sub' adalah standar untuk subject (ID unik)
-            roles: user.roles.map((role) => role.name), // Ambil nama perannya
+            sub: user.id,
+            roles: user.roles.map((role) => role.name),
+        };
+
+        const accessToken = this.jwtService.sign(payload);
+
+        this.logger.log(`✅ Token generated for user: ${user.username}`);
+
+        return {
+            access_token: accessToken,
+            user: {
+                id: user.id,
+                username: user.username,
+                nama_lengkap: user.nama_lengkap,
+                roles: user.roles.map((role) => role.name),
+            },
+        };
+    }
+
+    /**
+     * Register user baru (hanya bisa dilakukan oleh KEPALA_KLINIK)
+     */
+    async register(registerUserDto: RegisterUserDto) {
+        try {
+            // CEK: Username sudah ada atau belum
+            const existingUser = await this.usersService.findOneByUsername(registerUserDto.username);
+            
+            if (existingUser) {
+                throw new ConflictException(`Username "${registerUserDto.username}" sudah digunakan`);
+            }
+
+            // Buat user baru (password akan di-hash di UsersService)
+            const newUser = await this.usersService.create(registerUserDto);
+
+            // Jangan kembalikan password
+            const { password, ...result } = newUser;
+            
+            this.logger.log(`✅ New user registered: ${newUser.username}`);
+            
+            return {
+                message: 'User berhasil didaftarkan',
+                user: result,
+            };
+            
+        } catch (error) {
+            if (error instanceof ConflictException) {
+                throw error;
+            }
+            
+            this.logger.error('Error registering user:', error);
+            throw new Error('Gagal mendaftarkan user');
+        }
+    }
+
+    /**
+     * FITUR BARU: Verify token (untuk middleware atau frontend)
+     */
+    async verifyToken(token: string) {
+        try {
+            const decoded = this.jwtService.verify(token);
+            return decoded;
+        } catch (error) {
+            throw new UnauthorizedException('Token tidak valid atau sudah kadaluarsa');
+        }
+    }
+
+    /**
+     * FITUR BARU: Refresh token (opsional, untuk extend session)
+     */
+    async refreshToken(userId: number) {
+        const user = await this.usersService.findOne(userId);
+        
+        if (!user) {
+            throw new UnauthorizedException('User tidak ditemukan');
+        }
+
+        const payload = {
+            username: user.username,
+            sub: user.id,
+            roles: user.roles.map((role) => role.name),
         };
 
         return {
             access_token: this.jwtService.sign(payload),
         };
-    }
-
-    async register(registerUserDto: RegisterUserDto) {
-        // Kita gunakan method `create` dari UsersService yang sudah ada
-        // Method ini sudah menangani hashing password dan relasi role
-        const newUser = await this.usersService.create(registerUserDto);
-
-        // Kita tidak mengembalikan password di respons
-        const { password, ...result } = newUser;
-        return result;
     }
 }

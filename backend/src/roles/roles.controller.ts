@@ -1,34 +1,58 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { 
+  Controller, 
+  Get, 
+  Post, 
+  Body, 
+  Patch, 
+  Param, 
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  ValidationPipe
+} from '@nestjs/common';
 import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from './entities/role.entity';
 
 @Controller('roles')
+@UseGuards(AuthGuard('jwt'), RolesGuard) // ✅ KRITIS: Protect roles endpoint
 export class RolesController {
     constructor(private readonly rolesService: RolesService) { }
 
     @Post()
-    create(@Body() createRoleDto: CreateRoleDto) {
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya kepala klinik yang bisa buat role baru
+    create(@Body(ValidationPipe) createRoleDto: CreateRoleDto) {
         return this.rolesService.create(createRoleDto);
     }
 
     @Get()
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Staf perlu lihat roles untuk assign ke user
     findAll() {
         return this.rolesService.findAll();
     }
 
     @Get(':id')
-    findOne(@Param('id') id: string) {
-        return this.rolesService.findOne(+id);
+    @Roles(UserRole.KEPALA_KLINIK)
+    findOne(@Param('id', ParseIntPipe) id: number) {
+        return this.rolesService.findOne(id);
     }
 
     @Patch(':id')
-    update(@Param('id') id: string, @Body() updateRoleDto: UpdateRoleDto) {
-        return this.rolesService.update(+id, updateRoleDto);
+    @Roles(UserRole.KEPALA_KLINIK)
+    update(
+        @Param('id', ParseIntPipe) id: number, 
+        @Body(ValidationPipe) updateRoleDto: UpdateRoleDto
+    ) {
+        return this.rolesService.update(id, updateRoleDto);
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
-        return this.rolesService.remove(+id);
+    @Roles(UserRole.KEPALA_KLINIK)
+    remove(@Param('id', ParseIntPipe) id: number) {
+        return this.rolesService.remove(id);
     }
 }
