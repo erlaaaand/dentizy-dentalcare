@@ -10,6 +10,7 @@ import {
     ManyToOne,
     JoinColumn,
     OneToOne,
+    Index,
 } from 'typeorm';
 
 export enum AppointmentStatus {
@@ -19,30 +20,37 @@ export enum AppointmentStatus {
 }
 
 @Entity('appointments')
+// ✅ Composite indexes untuk query yang sering digunakan
+@Index('idx_appointment_doctor_date', ['doctor_id', 'tanggal_janji', 'status'])
+@Index('idx_appointment_patient_date', ['patient_id', 'tanggal_janji'])
 export class Appointment {
     @PrimaryGeneratedColumn()
     id: number;
 
     @Column()
+    @Index('idx_appointment_patient') // Index untuk filter by patient
     patient_id: number;
 
     @Column()
+    @Index('idx_appointment_doctor') // Index untuk filter by doctor
     doctor_id: number;
 
     @Column({ type: 'enum', enum: AppointmentStatus, default: AppointmentStatus.DIJADWALKAN })
+    @Index('idx_appointment_status') // Index untuk filter by status
     status: AppointmentStatus;
 
-    // Anda bisa menambahkan kolom lain, misal:
     @Column()
+    @Index('idx_appointment_tanggal') // Index untuk filter & sort by date
     tanggal_janji: Date;
 
-    @Column({ type: 'time' }) // Kolom untuk menyimpan jam
+    @Column({ type: 'time' })
     jam_janji: string;
 
     @Column({ type: 'text', nullable: true })
     keluhan: string;
 
     @CreateDateColumn()
+    @Index('idx_appointment_created_at') // Index untuk sorting
     created_at: Date;
 
     @UpdateDateColumn()
@@ -52,7 +60,7 @@ export class Appointment {
     @JoinColumn({ name: 'patient_id' })
     patient: Patient;
 
-    @ManyToOne(() => User) // Asumsi relasi ke user (dokter)
+    @ManyToOne(() => User)
     @JoinColumn({ name: 'doctor_id' })
     doctor: User;
 

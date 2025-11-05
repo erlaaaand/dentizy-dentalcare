@@ -7,6 +7,7 @@ import {
   UpdateDateColumn,
   ManyToMany,
   JoinTable,
+  Index,
 } from 'typeorm';
 
 @Entity('users')
@@ -15,15 +16,18 @@ export class User {
   id: number;
 
   @Column({ length: 250 })
+  @Index('idx_user_nama') // Index untuk pencarian by nama
   nama_lengkap: string;
 
   @Column({ length: 50, unique: true })
+  @Index('idx_user_username') // Index untuk login (search by username)
   username: string;
 
-  @Column({ length: 255 }) // Panjang disarankan lebih besar untuk menampung hash
+  @Column({ length: 255 })
   password: string;
 
   @CreateDateColumn()
+  @Index('idx_user_created_at') // Index untuk sorting
   created_at: Date;
 
   @UpdateDateColumn()
@@ -33,7 +37,7 @@ export class User {
     cascade: true,
   })
   @JoinTable({
-    name: 'users_roles', // Tabel pivot sesuai ERD
+    name: 'users_roles',
     joinColumn: {
       name: 'user_id',
       referencedColumnName: 'id',

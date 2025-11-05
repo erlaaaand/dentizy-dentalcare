@@ -16,6 +16,8 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
+import { LoggingInterceptor } from './common/interceptors/logging/logging.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 @Module({
   imports: [
@@ -99,6 +101,16 @@ import { CacheModule } from '@nestjs/cache-manager';
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    // ✅ Global logging interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    // ✅ Global exception filter
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
   ],
 })
