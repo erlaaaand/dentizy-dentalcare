@@ -10,52 +10,50 @@ import { GetUser } from '../auth/decorators/get-user.decorator';
 import { User } from '../users/entities/user.entity';
 
 @Controller('medical-records')
-@UseGuards(AuthGuard('jwt'), RolesGuard) // TAMBAHAN: Lindungi semua endpoint
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class MedicalRecordsController {
     constructor(private readonly medicalRecordsService: MedicalRecordsService) { }
 
     @Post()
-    @Roles(UserRole.DOKTER, UserRole.STAF) // TAMBAHAN: Hanya Dokter & Staf yang boleh
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     create(
         @Body(ValidationPipe) createMedicalRecordDto: CreateMedicalRecordDto,
-        @GetUser() user: User, // PERBAIKAN: Ambil data user yang login
+        @GetUser() user: User,
     ) {
-        // PERBAIKAN: Teruskan user ke service
         return this.medicalRecordsService.create(createMedicalRecordDto, user);
     }
 
     @Get()
-    @Roles(UserRole.DOKTER, UserRole.STAF)
-    findAll(@GetUser() user: User) { // PERBAIKAN: Ambil & teruskan user
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    findAll(@GetUser() user: User) {
         return this.medicalRecordsService.findAll(user);
     }
 
     @Get('by-appointment/:appointmentId')
-    @Roles(UserRole.DOKTER, UserRole.STAF)
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     findByAppointmentId(@Param('appointmentId', ParseIntPipe) appointmentId: number) {
-        // Method ini di service belum memiliki otorisasi, bisa ditambahkan nanti
         return this.medicalRecordsService.findByAppointmentId(appointmentId);
     }
 
     @Get(':id')
-    @Roles(UserRole.DOKTER, UserRole.STAF)
-    findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) { // PERBAIKAN
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.medicalRecordsService.findOne(id, user);
     }
 
     @Patch(':id')
-    @Roles(UserRole.DOKTER, UserRole.STAF)
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     update(
         @Param('id', ParseIntPipe) id: number,
         @Body(ValidationPipe) updateMedicalRecordDto: UpdateMedicalRecordDto,
-        @GetUser() user: User, // PERBAIKAN
+        @GetUser() user: User,
     ) {
         return this.medicalRecordsService.update(id, updateMedicalRecordDto, user);
     }
 
     @Delete(':id')
-    @Roles(UserRole.STAF) // Hanya staf (admin) yang boleh menghapus rekam medis
-    remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) { // PERBAIKAN
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK (punya hak hapus juga)
+    remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.medicalRecordsService.remove(id, user);
     }
 }

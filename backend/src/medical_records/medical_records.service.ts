@@ -22,58 +22,78 @@ export class MedicalRecordsService {
         private readonly appointmentRepository: Repository<Appointment>,
     ) { }
 
-    findByAppointmentId(appointmentId: number) {
-        throw new Error('Method not implemented.');
+    async findByAppointmentId(appointmentId: number): Promise<MedicalRecord | null> {
+        const record = await this.medicalRecordRepository.findOne({
+            where: { appointment_id: appointmentId },
+            relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
+        });
+        return record;
     }
-    
+
     async create(createMedicalRecordDto: CreateMedicalRecordDto, user: User): Promise<MedicalRecord> {
         const { appointment_id } = createMedicalRecordDto;
 
-        const appointment = await this.appointmentRepository.findOneBy({ id: appointment_id });
+        // Ambil appointment dengan relasi
+        const appointment = await this.appointmentRepository.findOne({
+            where: { id: appointment_id },
+            relations: ['doctor', 'patient'],
+        });
+
         if (!appointment) {
             throw new NotFoundException(`Janji temu dengan ID #${appointment_id} tidak ditemukan`);
         }
 
         const isDoctor = user.roles.some((role) => role.name === UserRole.DOKTER);
+        const isKepalaKlinik = user.roles.some((role) => role.name === UserRole.KEPALA_KLINIK);
         const isStaf = user.roles.some((role) => role.name === UserRole.STAF);
 
-        // Otorisasi: Jika user adalah dokter, ia harus dokter yang menangani janji temu ini.
+        // Otorisasi: Dokter harus menangani janji temu ini, Kepala Klinik bisa akses semua
         if (isDoctor && appointment.doctor_id !== user.id) {
             throw new ForbiddenException('Anda tidak berhak mengisi rekam medis untuk janji temu ini.');
         }
-        // Jika user adalah staf, ia diizinkan.
 
-        // Validasi Logika Bisnis: Janji temu harus sudah selesai.
-        if (appointment.status !== AppointmentStatus.SELESAI) {
-            throw new ConflictException(`Rekam medis hanya bisa dibuat untuk janji temu yang sudah 'selesai'.`);
+        // Validasi: Appointment harus sudah dijadwalkan (belum selesai/dibatalkan)
+        if (appointment.status === AppointmentStatus.DIBATALKAN) {
+            throw new ConflictException(`Rekam medis tidak bisa dibuat untuk janji temu yang dibatalkan.`);
         }
 
+        // Cek apakah sudah ada rekam medis
         const existingRecord = await this.medicalRecordRepository.findOneBy({ appointment_id });
         if (existingRecord) {
             throw new ConflictException(`Janji temu ini sudah memiliki rekam medis.`);
         }
 
+        // Buat rekam medis baru
         const newRecord = this.medicalRecordRepository.create({
             ...createMedicalRecordDto,
-            user_id_staff: user.id, // Catat siapa yang membuat/mengisi
+            user_id_staff: user.id,
         });
-        return this.medicalRecordRepository.save(newRecord);
+        const savedRecord = await this.medicalRecordRepository.save(newRecord);
+
+        // 🔥 FITUR BARU: Otomatis tandai appointment sebagai SELESAI
+        if (appointment.status !== AppointmentStatus.SELESAI) {
+            appointment.status = AppointmentStatus.SELESAI;
+            await this.appointmentRepository.save(appointment);
+        }
+
+        return savedRecord;
     }
 
-    async findAll(user: User /*, queryDto: FindRecordsDto */): Promise<MedicalRecord[]> {
+    async findAll(user: User): Promise<MedicalRecord[]> {
         const queryBuilder = this.medicalRecordRepository
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.appointment', 'appointment')
-            .leftJoinAndSelect('appointment.patient', 'patient');
+            .leftJoinAndSelect('appointment.patient', 'patient')
+            .leftJoinAndSelect('appointment.doctor', 'doctor');
 
         const isDoctor = user.roles.some((role) => role.name === UserRole.DOKTER);
+        const isKepalaKlinik = user.roles.some((role) => role.name === UserRole.KEPALA_KLINIK);
 
-        // Otorisasi: Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani.
-        if (isDoctor) {
+        // Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani
+        // Kepala Klinik bisa melihat semua rekam medis
+        if (isDoctor && !isKepalaKlinik) {
             queryBuilder.where('appointment.doctor_id = :doctorId', { doctorId: user.id });
         }
-
-        // Nanti bisa ditambahkan filter berdasarkan queryDto
 
         return queryBuilder.getMany();
     }
@@ -87,8 +107,10 @@ export class MedicalRecordsService {
             .where('record.id = :id', { id });
 
         const isDoctor = user.roles.some((role) => role.name === UserRole.DOKTER);
+        const isKepalaKlinik = user.roles.some((role) => role.name === UserRole.KEPALA_KLINIK);
 
-        if (isDoctor) {
+        // Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani
+        if (isDoctor && !isKepalaKlinik) {
             queryBuilder.andWhere('appointment.doctor_id = :doctorId', { doctorId: user.id });
         }
 
@@ -101,10 +123,19 @@ export class MedicalRecordsService {
     }
 
     async update(id: number, updateMedicalRecordDto: UpdateMedicalRecordDto, user: User): Promise<MedicalRecord> {
-        // Dengan memanggil findOne, kita sudah otomatis melakukan pengecekan hak akses
         const record = await this.findOne(id, user);
+        
         Object.assign(record, updateMedicalRecordDto);
-        return this.medicalRecordRepository.save(record);
+        const updatedRecord = await this.medicalRecordRepository.save(record);
+
+        // 🔥 FITUR BARU: Saat update rekam medis, pastikan appointment tetap selesai
+        const appointment = await this.appointmentRepository.findOneBy({ id: record.appointment_id });
+        if (appointment && appointment.status !== AppointmentStatus.SELESAI) {
+            appointment.status = AppointmentStatus.SELESAI;
+            await this.appointmentRepository.save(appointment);
+        }
+
+        return updatedRecord;
     }
 
     async remove(id: number, user: User): Promise<void> {

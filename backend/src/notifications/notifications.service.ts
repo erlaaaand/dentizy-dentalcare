@@ -5,11 +5,9 @@ import { Notification, NotificationStatus, NotificationType } from './entities/n
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailerService } from '@nestjs-modules/mailer';
+
 @Injectable()
 export class NotificationsService {
-    cancelRemindersFor(id: number) {
-        throw new Error('Method not implemented.');
-    }
     private readonly logger = new Logger(NotificationsService.name);
 
     constructor(
@@ -19,14 +17,30 @@ export class NotificationsService {
     ) { }
 
     /**
-     * Fungsi ini dipanggil oleh modul lain (misal: AppointmentsService)
-     * untuk membuat jadwal pengingat.
+     * 🔥 IMPLEMENTASI: Membatalkan semua notifikasi yang terjadwal untuk appointment tertentu
      */
+    async cancelRemindersFor(appointmentId: number): Promise<void> {
+        const pendingNotifications = await this.notificationRepository.find({
+            where: {
+                appointment_id: appointmentId,
+                status: NotificationStatus.PENDING,
+            },
+        });
+
+        if (pendingNotifications.length > 0) {
+            // Update status menjadi FAILED atau bisa dibuat status baru CANCELLED
+            for (const notif of pendingNotifications) {
+                notif.status = NotificationStatus.FAILED; // Atau buat enum CANCELLED jika perlu
+                await this.notificationRepository.save(notif);
+            }
+            
+            this.logger.log(`Membatalkan ${pendingNotifications.length} notifikasi untuk appointment #${appointmentId}`);
+        }
+    }
 
     async scheduleAppointmentReminder(appointment: Appointment): Promise<void> {
-        // Atur pengingat untuk dikirim 1 hari sebelum janji temu
-        const sendAt = new Date(appointment.created_at); // Asumsi kolom tanggal janji ada di appointment
-        sendAt.setDate(sendAt.getDate() - 1);
+        const sendAt = new Date(appointment.tanggal_janji);
+        sendAt.setDate(sendAt.getDate() - 1); // 1 hari sebelum
 
         const newNotification = this.notificationRepository.create({
             appointment_id: appointment.id,
@@ -39,10 +53,6 @@ export class NotificationsService {
         this.logger.log(`Pengingat dijadwalkan untuk janji temu #${appointment.id}`);
     }
 
-    /**
-     * Fungsi CRON JOB.
-     * Akan berjalan setiap menit untuk memeriksa apakah ada pengingat yang harus dikirim.
-     */
     @Cron(CronExpression.EVERY_MINUTE)
     async handleCronSendReminders() {
         this.logger.log('Menjalankan tugas pengecekan pengingat...');
@@ -65,36 +75,32 @@ export class NotificationsService {
 
             try {
                 await this.mailerService.sendMail({
-                    to: notif.appointment.patient.email, // Asumsi pasien punya email
+                    to: notif.appointment.patient.email,
                     subject: `Pengingat Janji Temu di Klinik Dentizy`,
                     html: `
-            <h3>Halo, ${notif.appointment.patient.nama_lengkap}!</h3>
-            <p>Ini adalah pengingat untuk janji temu Anda besok.</p>
-            <p>Detail Janji Temu:</p>
-            <ul>
-              <li>Tanggal: ${notif.appointment.tanggal_janji}</li>
-              <li>Jam: ${notif.appointment.jam_janji}</li>
-            </ul>
-            <p>Terima kasih.</p>
-          `,
+                        <h3>Halo, ${notif.appointment.patient.nama_lengkap}!</h3>
+                        <p>Ini adalah pengingat untuk janji temu Anda besok.</p>
+                        <p>Detail Janji Temu:</p>
+                        <ul>
+                            <li>Tanggal: ${notif.appointment.tanggal_janji}</li>
+                            <li>Jam: ${notif.appointment.jam_janji}</li>
+                        </ul>
+                        <p>Terima kasih.</p>
+                    `,
                 });
+
+                notif.status = NotificationStatus.SENT;
+                notif.sent_at = new Date();
+                this.logger.log(`Pengingat untuk janji temu #${notif.appointment_id} berhasil dikirim.`);
             } catch (error) {
                 notif.status = NotificationStatus.FAILED;
                 this.logger.error(`Gagal mengirim pengingat untuk janji temu #${notif.appointment_id}`, error.stack);
             }
 
-            // Setelah email terkirim, update statusnya
-            notif.status = NotificationStatus.SENT;
-            notif.sent_at = new Date();
             await this.notificationRepository.save(notif);
-
-            this.logger.log(`Pengingat untuk janji temu #${notif.appointment_id} berhasil dikirim.`);
         }
     }
 
-    /**
-     * Fungsi sederhana untuk melihat semua notifikasi (untuk admin)
-     */
     findAll(): Promise<Notification[]> {
         return this.notificationRepository.find();
     }

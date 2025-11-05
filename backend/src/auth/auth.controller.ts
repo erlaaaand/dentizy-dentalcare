@@ -17,8 +17,8 @@ export class AuthController {
     }
 
     @Post('register')
-    @UseGuards(AuthGuard('jwt'), RolesGuard) // Lindungi endpoint ini
-    @Roles(UserRole.DOKTER) // Hanya user dengan peran DOKTER yang bisa mengakses
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya Kepala Klinik yang bisa membuat akun
     async register(@Body(ValidationPipe) registerUserDto: RegisterUserDto) {
         return this.authService.register(registerUserDto);
     }

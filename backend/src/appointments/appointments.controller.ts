@@ -1,6 +1,3 @@
-// backend/src/appointments/appointments.controller.ts
-
-// TAMBAHAN: Impor ParseIntPipe untuk validasi parameter ID
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, ParseIntPipe, ValidationPipe } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
@@ -19,27 +16,25 @@ export class AppointmentsController {
     constructor(private readonly appointmentsService: AppointmentsService) { }
 
     @Post()
-    @Roles(UserRole.STAF)
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     create(@Body(ValidationPipe) createAppointmentDto: CreateAppointmentDto) {
         return this.appointmentsService.create(createAppointmentDto);
     }
 
     @Post(':id/complete')
-    @Roles(UserRole.DOKTER)
-    // PENYEMPURNAAN: Teruskan user untuk potensi validasi di service
+    @Roles(UserRole.DOKTER, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     complete(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.appointmentsService.complete(id, user);
     }
 
     @Post(':id/cancel')
-    @Roles(UserRole.STAF, UserRole.DOKTER)
-    // PENYEMPURNAAN: Teruskan user untuk potensi validasi di service
+    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     cancel(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.appointmentsService.cancel(id, user);
     }
 
     @Get()
-    @Roles(UserRole.STAF, UserRole.DOKTER)
+    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     findAll(
         @GetUser() user: User,
         @Query(ValidationPipe) queryDto: FindAppointmentsQueryDto
@@ -48,14 +43,13 @@ export class AppointmentsController {
     }
 
     @Get(':id')
-    @Roles(UserRole.STAF, UserRole.DOKTER)
-    // PENYEMPURNAAN: Gunakan ParseIntPipe dan teruskan user
+    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.appointmentsService.findOne(id, user);
     }
 
     @Patch(':id')
-    @Roles(UserRole.STAF)
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     update(
         @Param('id', ParseIntPipe) id: number,
         @Body(ValidationPipe) updateAppointmentDto: UpdateAppointmentDto
@@ -64,8 +58,7 @@ export class AppointmentsController {
     }
 
     @Delete(':id')
-    @Roles(UserRole.STAF)
-    // PENYEMPURNAAN: Gunakan ParseIntPipe
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.appointmentsService.remove(id);
     }

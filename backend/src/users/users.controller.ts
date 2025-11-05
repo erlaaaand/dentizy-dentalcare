@@ -9,40 +9,36 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../roles/entities/role.entity';
 
 @Controller('users')
-@UseGuards(AuthGuard('jwt'), RolesGuard) // Lindungi semua endpoint di controller ini
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
-    // Endpoint POST /users tidak diubah, tapi kita bisa batasi aksesnya
     @Post()
-    @Roles(UserRole.STAF) // Hanya staf yang bisa membuat pengguna baru secara langsung
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
     create(@Body(ValidationPipe) createUserDto: CreateUserDto) {
         return this.usersService.create(createUserDto);
     }
 
-    // --- PERBAIKAN DI SINI ---
-    // Hanya ada SATU method findAll
     @Get()
-    @Roles(UserRole.STAF, UserRole.DOKTER) // Hanya staf yang boleh melihat daftar semua pengguna
+    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK)
     findAll(@Query(ValidationPipe) query: FindUsersQueryDto) {
-        // Teruskan query ke service. Jika tidak ada query, 'query' akan menjadi objek kosong.
         return this.usersService.findAll(query);
     }
 
     @Get(':id')
-    @Roles(UserRole.STAF) // Hanya staf yang boleh melihat detail pengguna lain
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
     findOne(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.findOne(id);
     }
 
     @Patch(':id')
-    @Roles(UserRole.STAF) // Hanya staf yang boleh mengupdate pengguna lain
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
     update(@Param('id', ParseIntPipe) id: number, @Body(ValidationPipe) updateUserDto: UpdateUserDto) {
         return this.usersService.update(id, updateUserDto);
     }
 
     @Delete(':id')
-    @Roles(UserRole.STAF) // Hanya staf yang boleh menghapus pengguna
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.usersService.remove(id);
     }
