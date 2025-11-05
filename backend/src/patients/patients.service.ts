@@ -28,7 +28,7 @@ export class PatientsService {
      */
     async create(createPatientDto: CreatePatientDto): Promise<Patient> {
         let attempts = 0;
-        let lastError: Error;
+        let lastError: Error = new Error('Unknown error occurred');
 
         while (attempts < this.MAX_RETRY_ATTEMPTS) {
             attempts++;
