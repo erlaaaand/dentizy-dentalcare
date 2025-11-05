@@ -9,7 +9,6 @@ import { MailerService } from '@nestjs-modules/mailer';
 @Injectable()
 export class NotificationsService {
     private readonly logger = new Logger(NotificationsService.name);
-    private isProcessing = false; // ✅ FIX: Simple lock untuk prevent race condition
 
     constructor(
         @InjectRepository(Notification)
@@ -85,31 +84,28 @@ export class NotificationsService {
     }
 
     /**
-     * ✅ FIX: Cron job dengan locking mechanism
+     * ✅ FIX: Cron job dengan database-level locking
      * Jalan setiap 1 menit untuk cek notifikasi yang harus dikirim
      */
     @Cron(CronExpression.EVERY_MINUTE)
     async handleCronSendReminders() {
-        // ✅ FIX: Check if already processing
-        if (this.isProcessing) {
-            this.logger.warn('⚠️ Previous cron job still running, skipping...');
-            return;
-        }
-
-        this.isProcessing = true;
         const startTime = Date.now();
 
         try {
             this.logger.debug('🔍 Checking for pending reminders...');
 
-            const notificationsToSend = await this.notificationRepository.find({
-                where: {
-                    status: NotificationStatus.PENDING,
-                    send_at: LessThanOrEqual(new Date()),
-                },
-                relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
-                take: 50, // ✅ Limit untuk prevent overload
-            });
+            // ✅ FIX: Use pessimistic lock untuk prevent duplicate processing
+            const notificationsToSend = await this.notificationRepository
+                .createQueryBuilder('notification')
+                .leftJoinAndSelect('notification.appointment', 'appointment')
+                .leftJoinAndSelect('appointment.patient', 'patient')
+                .leftJoinAndSelect('appointment.doctor', 'doctor')
+                .where('notification.status = :status', { status: NotificationStatus.PENDING })
+                .andWhere('notification.send_at <= :now', { now: new Date() })
+                .orderBy('notification.send_at', 'ASC')
+                .take(50) // Limit untuk prevent overload
+                .setLock('pessimistic_write') // ✅ CRITICAL: Database-level lock
+                .getMany();
 
             if (notificationsToSend.length === 0) {
                 this.logger.debug('✅ No reminders to send');
@@ -121,16 +117,34 @@ export class NotificationsService {
             let successCount = 0;
             let failCount = 0;
 
-            // ✅ Process notifications sequentially untuk avoid rate limiting
+            // Process notifications sequentially
             for (const notif of notificationsToSend) {
                 try {
+                    // ✅ Double-check status (in case another instance processed it)
+                    const currentNotif = await this.notificationRepository.findOne({
+                        where: { id: notif.id },
+                    });
+
+                    if (!currentNotif || currentNotif.status !== NotificationStatus.PENDING) {
+                        this.logger.warn(`⚠️ Notification #${notif.id} already processed, skipping...`);
+                        continue;
+                    }
+
+                    // ✅ Mark as processing immediately
+                    await this.notificationRepository.update(
+                        { id: notif.id },
+                        { status: NotificationStatus.SENT, sent_at: new Date() }
+                    );
+
                     // Validate patient email
                     if (!notif.appointment?.patient?.email) {
                         this.logger.warn(
-                            `⚠️ No email for appointment #${notif.appointment_id}, marking as failed`
+                            `⚠️ No email for appointment #${notif.appointment_id}`
                         );
-                        notif.status = NotificationStatus.FAILED;
-                        await this.notificationRepository.save(notif);
+                        await this.notificationRepository.update(
+                            { id: notif.id },
+                            { status: NotificationStatus.FAILED }
+                        );
                         failCount++;
                         continue;
                     }
@@ -182,11 +196,6 @@ export class NotificationsService {
                         `,
                     });
 
-                    // Update status
-                    notif.status = NotificationStatus.SENT;
-                    notif.sent_at = new Date();
-                    await this.notificationRepository.save(notif);
-
                     successCount++;
                     this.logger.log(`✅ Reminder sent for appointment #${notif.appointment_id}`);
 
@@ -194,8 +203,11 @@ export class NotificationsService {
                     await new Promise(resolve => setTimeout(resolve, 100));
 
                 } catch (error) {
-                    notif.status = NotificationStatus.FAILED;
-                    await this.notificationRepository.save(notif);
+                    // Rollback status if email failed
+                    await this.notificationRepository.update(
+                        { id: notif.id },
+                        { status: NotificationStatus.FAILED }
+                    );
                     failCount++;
 
                     this.logger.error(
@@ -212,8 +224,6 @@ export class NotificationsService {
 
         } catch (error) {
             this.logger.error('❌ Error in cron job:', error);
-        } finally {
-            this.isProcessing = false; // ✅ Release lock
         }
     }
 

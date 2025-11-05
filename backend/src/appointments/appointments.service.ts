@@ -70,35 +70,51 @@ export class AppointmentsService {
             }
 
             // ✅ FIX: Validasi jam kerja (08:00 - 17:00)
-            const [hours, minutes] = jam_janji.split(':').map(Number);
+            const [hours, minutes, seconds] = jam_janji.split(':').map(Number);
             if (hours < 8 || hours >= 17) {
                 throw new BadRequestException('Jam janji harus antara 08:00 - 17:00');
             }
 
-            // ✅ FIX: Cek bentrok jadwal dengan buffer time (30 menit)
-            const appointmentTime = new Date(appointmentDate);
-            appointmentTime.setHours(hours, minutes, 0, 0);
+            // ✅ FIX: Cek bentrok jadwal dengan buffer time (30 menit) - FIXED VERSION
+            const appointmentDateTime = new Date(appointmentDate);
+            appointmentDateTime.setHours(hours, minutes, seconds || 0, 0);
 
-            const bufferStart = new Date(appointmentTime);
-            bufferStart.setMinutes(bufferStart.getMinutes() - 30);
+            // Hitung buffer start dan end dalam menit
+            const appointmentMinutes = hours * 60 + minutes;
+            const bufferStartMinutes = Math.max(0, appointmentMinutes - 30);
+            const bufferEndMinutes = Math.min(24 * 60 - 1, appointmentMinutes + 30);
 
-            const bufferEnd = new Date(appointmentTime);
-            bufferEnd.setMinutes(bufferEnd.getMinutes() + 30);
+            // Convert kembali ke format HH:mm:ss
+            const bufferStartHours = Math.floor(bufferStartMinutes / 60);
+            const bufferStartMins = bufferStartMinutes % 60;
+            const bufferStartTime = `${bufferStartHours.toString().padStart(2, '0')}:${bufferStartMins.toString().padStart(2, '0')}:00`;
+
+            const bufferEndHours = Math.floor(bufferEndMinutes / 60);
+            const bufferEndMins = bufferEndMinutes % 60;
+            const bufferEndTime = `${bufferEndHours.toString().padStart(2, '0')}:${bufferEndMins.toString().padStart(2, '0')}:00`;
+
+            this.logger.debug(`Checking conflict for ${jam_janji} with buffer ${bufferStartTime} - ${bufferEndTime}`);
 
             const conflictingAppointment = await queryRunner.manager
                 .createQueryBuilder(Appointment, 'appointment')
                 .where('appointment.doctor_id = :doctor_id', { doctor_id })
-                .andWhere('appointment.tanggal_janji = :tanggal_janji', { tanggal_janji: appointmentDate })
-                .andWhere('appointment.status = :status', { status: AppointmentStatus.DIJADWALKAN })
-                .andWhere(`TIME(CONCAT(appointment.tanggal_janji, ' ', appointment.jam_janji)) BETWEEN :bufferStart AND :bufferEnd`, {
-                    bufferStart: jam_janji,
-                    bufferEnd: jam_janji,
+                .andWhere('appointment.tanggal_janji = :tanggal_janji', { 
+                    tanggal_janji: appointmentDate 
                 })
+                .andWhere('appointment.status = :status', { 
+                    status: AppointmentStatus.DIJADWALKAN 
+                })
+                .andWhere('appointment.jam_janji BETWEEN :bufferStart AND :bufferEnd', {
+                    bufferStart: bufferStartTime,
+                    bufferEnd: bufferEndTime,
+                })
+                // ✅ Tambahan: Lock untuk prevent race condition
+                .setLock('pessimistic_write')
                 .getOne();
 
             if (conflictingAppointment) {
                 throw new ConflictException(
-                    `Dokter sudah memiliki janji temu di waktu yang berdekatan. Silakan pilih jam lain.`
+                    `Dokter sudah memiliki janji temu di waktu yang berdekatan (${conflictingAppointment.jam_janji}). Silakan pilih jam lain.`
                 );
             }
 

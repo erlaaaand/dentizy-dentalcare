@@ -1,9 +1,9 @@
-import { 
-    Injectable, 
-    NotFoundException, 
+import {
+    Injectable,
+    NotFoundException,
     ConflictException,
     BadRequestException,
-    Logger 
+    Logger
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Like, Repository, DataSource } from 'typeorm';
@@ -53,8 +53,8 @@ export class PatientsService {
                 }
             }
 
-            // 3. GENERATE NOMOR REKAM MEDIS dengan LOCKING
-            const nomorRekamMedis = await this.generateMedicalRecordNumber(queryRunner.manager);
+            // 3. GENERATE NOMOR REKAM MEDIS dengan ATOMIC COUNTER
+            const nomorRekamMedis = await this.generateMedicalRecordNumberAtomic(queryRunner);
 
             // 4. Validasi tanggal lahir tidak boleh > hari ini
             if (createPatientDto.tanggal_lahir) {
@@ -71,8 +71,8 @@ export class PatientsService {
             const newPatient = queryRunner.manager.create(Patient, {
                 ...createPatientDto,
                 nomor_rekam_medis: nomorRekamMedis,
-                tanggal_lahir: createPatientDto.tanggal_lahir 
-                    ? new Date(createPatientDto.tanggal_lahir) 
+                tanggal_lahir: createPatientDto.tanggal_lahir
+                    ? new Date(createPatientDto.tanggal_lahir)
                     : undefined,
             });
 
@@ -86,7 +86,7 @@ export class PatientsService {
 
         } catch (error) {
             await queryRunner.rollbackTransaction();
-            
+
             if (error instanceof ConflictException || error instanceof BadRequestException) {
                 throw error;
             }
@@ -325,7 +325,7 @@ export class PatientsService {
 
             // UPDATE DATA
             Object.assign(patient, updatePatientDto);
-            
+
             if (updatePatientDto.tanggal_lahir) {
                 patient.tanggal_lahir = new Date(updatePatientDto.tanggal_lahir);
             }
@@ -384,7 +384,7 @@ export class PatientsService {
     /**
      * ✅ FIX: Generate nomor rekam medis dengan EntityManager (support transaction & locking)
      */
-    private async generateMedicalRecordNumber(manager: any): Promise<string> {
+    private async generateMedicalRecordNumberAtomic(queryRunner: any): Promise<string> {
         try {
             const today = new Date();
             const year = today.getFullYear();
@@ -392,20 +392,21 @@ export class PatientsService {
             const day = today.getDate().toString().padStart(2, '0');
             const datePrefix = `${year}${month}${day}`;
 
-            // ✅ FIX: Gunakan FOR UPDATE untuk locking
-            const lastPatientToday = await manager
-                .createQueryBuilder(Patient, 'patient')
-                .where('patient.nomor_rekam_medis LIKE :prefix', { prefix: `${datePrefix}-%` })
-                .orderBy('patient.nomor_rekam_medis', 'DESC')
-                .setLock('pessimistic_write') // ✅ CRITICAL: Lock row untuk prevent race condition
-                .getOne();
+            // ✅ FIX: Gunakan raw SQL dengan FOR UPDATE untuk atomic operation
+            const result = await queryRunner.manager.query(`
+                SELECT nomor_rekam_medis 
+                FROM patients 
+                WHERE nomor_rekam_medis LIKE ? 
+                ORDER BY nomor_rekam_medis DESC 
+                LIMIT 1
+                FOR UPDATE
+            `, [`${datePrefix}-%`]);
 
             let nextSequence = 1;
 
-            if (lastPatientToday) {
-                const lastSequence = parseInt(
-                    lastPatientToday.nomor_rekam_medis.split('-')[1]
-                );
+            if (result && result.length > 0) {
+                const lastNumber = result[0].nomor_rekam_medis;
+                const lastSequence = parseInt(lastNumber.split('-')[1]);
                 nextSequence = lastSequence + 1;
             }
 

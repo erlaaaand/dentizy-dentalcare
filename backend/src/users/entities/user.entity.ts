@@ -9,6 +9,7 @@ import {
   JoinTable,
   Index,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity('users')
 export class User {
@@ -24,6 +25,7 @@ export class User {
   username: string;
 
   @Column({ length: 255 })
+  @Exclude()
   password: string;
 
   @CreateDateColumn()

@@ -43,13 +43,20 @@ async function bootstrap() {
     app.enableCors({
       origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, Postman, etc.)
-        if (!origin) return callback(null, true);
+        if (!origin && nodeEnv !== 'production') {
+            return callback(null, true);
+        }
+
+        if (!origin) {
+            return callback(new Error('Origin header required'));
+        }
         
         if (allowedOrigins.includes(origin)) {
-          callback(null, true);
+            callback(null, true);
+
         } else {
-          logger.warn(`⚠️ CORS blocked request from origin: ${origin}`);
-          callback(new Error('Not allowed by CORS'));
+            logger.warn(`⚠️ CORS blocked: ${origin}`);
+            callback(new Error('Not allowed by CORS'));
         }
       },
       credentials: true,

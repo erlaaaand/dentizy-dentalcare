@@ -151,20 +151,21 @@ export class MedicalRecordsService {
     }
 
     async update(id: number, updateMedicalRecordDto: UpdateMedicalRecordDto, user: User): Promise<MedicalRecord> {
+    return await this.dataSource.transaction(async manager => {
         const record = await this.findOne(id, user);
         
         Object.assign(record, updateMedicalRecordDto);
-        const updatedRecord = await this.medicalRecordRepository.save(record);
+        const updatedRecord = await manager.save(record);
 
-        // 🔥 FITUR BARU: Saat update rekam medis, pastikan appointment tetap selesai
-        const appointment = await this.appointmentRepository.findOneBy({ id: record.appointment_id });
+        const appointment = await manager.findOneBy(Appointment, { id: record.appointment_id });
         if (appointment && appointment.status !== AppointmentStatus.SELESAI) {
             appointment.status = AppointmentStatus.SELESAI;
-            await this.appointmentRepository.save(appointment);
+            await manager.save(appointment);
         }
 
         return updatedRecord;
-    }
+    });
+}
 
     async remove(id: number, user: User): Promise<void> {
         const record = await this.findOne(id, user);

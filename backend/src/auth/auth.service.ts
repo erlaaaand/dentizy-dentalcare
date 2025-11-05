@@ -8,6 +8,8 @@ import { RegisterUserDto } from './dto/register-user.dto';
 @Injectable()
 export class AuthService {
     private readonly logger = new Logger(AuthService.name);
+    // ✅ Dummy hash for timing attack prevention
+    private readonly DUMMY_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
     constructor(
         private readonly usersService: UsersService,
@@ -15,27 +17,25 @@ export class AuthService {
     ) { }
 
     /**
-     * Validasi username dan password
+     * ✅ FIX: Validasi username dan password dengan timing attack prevention
      */
     async validateUser(username: string, pass: string): Promise<any> {
         try {
             const user = await this.usersService.findOneByUsername(username);
             
-            if (!user) {
-                // SECURITY: Jangan beri tahu user tidak ada, untuk prevent user enumeration
-                this.logger.warn(`Login attempt for non-existent user: ${username}`);
+            // ✅ FIX: Always perform bcrypt.compare untuk prevent timing attack
+            const passwordToCheck = user?.password || this.DUMMY_HASH;
+            const isPasswordValid = await bcrypt.compare(pass, passwordToCheck);
+
+            // Validate both user existence and password
+            if (!user || !isPasswordValid) {
+                // SECURITY: Generic error log untuk prevent user enumeration
+                this.logger.warn(`Failed login attempt for: ${username}`);
                 return null;
             }
 
             if (!user.password) {
                 this.logger.error(`User ${username} has no password set`);
-                return null;
-            }
-
-            const isPasswordValid = await bcrypt.compare(pass, user.password);
-            
-            if (!isPasswordValid) {
-                this.logger.warn(`Failed login attempt for user: ${username}`);
                 return null;
             }
 
