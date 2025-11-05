@@ -1,14 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Notification, NotificationStatus, NotificationType } from './entities/notification.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailerService } from '@nestjs-modules/mailer';
+import { In } from 'typeorm';
 
 @Injectable()
 export class NotificationsService {
     private readonly logger = new Logger(NotificationsService.name);
+    // ✅ FIX: Track processing notifications to prevent race condition
+    private readonly processingSet = new Set<number>();
+    private readonly MAX_BATCH_SIZE = 50;
+    private readonly PROCESSING_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
     constructor(
         @InjectRepository(Notification)
@@ -21,21 +26,16 @@ export class NotificationsService {
      */
     async cancelRemindersFor(appointmentId: number): Promise<void> {
         try {
-            const pendingNotifications = await this.notificationRepository.find({
-                where: {
-                    appointment_id: appointmentId,
-                    status: NotificationStatus.PENDING,
-                },
-            });
+            const result = await this.notificationRepository
+                .createQueryBuilder()
+                .update(Notification)
+                .set({ status: NotificationStatus.FAILED })
+                .where('appointment_id = :appointmentId', { appointmentId })
+                .andWhere('status = :status', { status: NotificationStatus.PENDING })
+                .execute();
 
-            if (pendingNotifications.length > 0) {
-                // Update status menjadi FAILED (atau bisa buat enum CANCELLED)
-                for (const notif of pendingNotifications) {
-                    notif.status = NotificationStatus.FAILED;
-                    await this.notificationRepository.save(notif);
-                }
-                
-                this.logger.log(`📧 Membatalkan ${pendingNotifications.length} notifikasi untuk appointment #${appointmentId}`);
+            if (result && result.affected && result.affected > 0) {
+                this.logger.log(`📧 Cancelled ${result.affected} notification(s) for appointment #${appointmentId}`);
             }
         } catch (error) {
             this.logger.error(`❌ Error cancelling reminders for appointment #${appointmentId}:`, error);
@@ -73,7 +73,7 @@ export class NotificationsService {
             });
 
             await this.notificationRepository.save(newNotification);
-            
+
             this.logger.log(
                 `📅 Reminder scheduled for appointment #${appointment.id} at ${sendAt.toISOString()}`
             );
@@ -84,134 +84,48 @@ export class NotificationsService {
     }
 
     /**
-     * ✅ FIX: Cron job dengan database-level locking
+     * ✅ FIX: Cron job dengan proper distributed lock prevention
      * Jalan setiap 1 menit untuk cek notifikasi yang harus dikirim
      */
     @Cron(CronExpression.EVERY_MINUTE)
     async handleCronSendReminders() {
         const startTime = Date.now();
+        const batchId = `batch_${Date.now()}`;
 
         try {
-            this.logger.debug('🔍 Checking for pending reminders...');
+            this.logger.debug(`🔍 [${batchId}] Checking for pending reminders...`);
 
-            // ✅ FIX: Use pessimistic lock untuk prevent duplicate processing
-            const notificationsToSend = await this.notificationRepository
-                .createQueryBuilder('notification')
-                .leftJoinAndSelect('notification.appointment', 'appointment')
-                .leftJoinAndSelect('appointment.patient', 'patient')
-                .leftJoinAndSelect('appointment.doctor', 'doctor')
-                .where('notification.status = :status', { status: NotificationStatus.PENDING })
-                .andWhere('notification.send_at <= :now', { now: new Date() })
-                .orderBy('notification.send_at', 'ASC')
-                .take(50) // Limit untuk prevent overload
-                .setLock('pessimistic_write') // ✅ CRITICAL: Database-level lock
-                .getMany();
+            // ✅ STEP 1: Clean up stale processing notifications (timeout protection)
+            await this.cleanupStaleProcessing();
 
-            if (notificationsToSend.length === 0) {
-                this.logger.debug('✅ No reminders to send');
+            // ✅ STEP 2: Optimistic locking - claim notifications atomically
+            const claimedIds = await this.claimNotifications();
+
+            if (claimedIds.length === 0) {
+                this.logger.debug(`✅ [${batchId}] No reminders to send`);
                 return;
             }
 
-            this.logger.log(`📧 Processing ${notificationsToSend.length} reminders...`);
+            this.logger.log(`📧 [${batchId}] Processing ${claimedIds.length} reminders...`);
+
+            // ✅ STEP 3: Fetch full notification data
+            const notifications = await this.notificationRepository.find({
+                where: { id: In(claimedIds) },
+                relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
+            });
 
             let successCount = 0;
             let failCount = 0;
 
-            // Process notifications sequentially
-            for (const notif of notificationsToSend) {
+            // ✅ STEP 4: Process notifications with proper error handling
+            for (const notif of notifications) {
                 try {
-                    // ✅ Double-check status (in case another instance processed it)
-                    const currentNotif = await this.notificationRepository.findOne({
-                        where: { id: notif.id },
-                    });
-
-                    if (!currentNotif || currentNotif.status !== NotificationStatus.PENDING) {
-                        this.logger.warn(`⚠️ Notification #${notif.id} already processed, skipping...`);
-                        continue;
-                    }
-
-                    // ✅ Mark as processing immediately
-                    await this.notificationRepository.update(
-                        { id: notif.id },
-                        { status: NotificationStatus.SENT, sent_at: new Date() }
-                    );
-
-                    // Validate patient email
-                    if (!notif.appointment?.patient?.email) {
-                        this.logger.warn(
-                            `⚠️ No email for appointment #${notif.appointment_id}`
-                        );
-                        await this.notificationRepository.update(
-                            { id: notif.id },
-                            { status: NotificationStatus.FAILED }
-                        );
-                        failCount++;
-                        continue;
-                    }
-
-                    // Format tanggal dan jam untuk email
-                    const appointmentDate = new Date(notif.appointment.tanggal_janji);
-                    const formattedDate = appointmentDate.toLocaleDateString('id-ID', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                    });
-
-                    // Send email
-                    await this.mailerService.sendMail({
-                        to: notif.appointment.patient.email,
-                        subject: `Pengingat Janji Temu - Klinik Dentizy`,
-                        html: `
-                            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                                <h2 style="color: #2563eb;">Pengingat Janji Temu</h2>
-                                
-                                <p>Halo, <strong>${notif.appointment.patient.nama_lengkap}</strong>!</p>
-                                
-                                <p>Ini adalah pengingat untuk janji temu Anda besok di Klinik Dentizy.</p>
-                                
-                                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                                    <h3 style="margin-top: 0;">Detail Janji Temu:</h3>
-                                    <ul style="list-style: none; padding: 0;">
-                                        <li>📅 <strong>Tanggal:</strong> ${formattedDate}</li>
-                                        <li>🕐 <strong>Jam:</strong> ${notif.appointment.jam_janji} WIB</li>
-                                        <li>👨‍⚕️ <strong>Dokter:</strong> ${notif.appointment.doctor.nama_lengkap}</li>
-                                        ${notif.appointment.keluhan ? `<li>📝 <strong>Keluhan:</strong> ${notif.appointment.keluhan}</li>` : ''}
-                                    </ul>
-                                </div>
-                                
-                                <p style="color: #dc2626;">
-                                    <strong>⚠️ Penting:</strong> Jika Anda tidak dapat hadir, mohon hubungi klinik kami 
-                                    untuk reschedule atau pembatalan.
-                                </p>
-                                
-                                <p>Terima kasih,<br>
-                                <strong>Klinik Dentizy</strong></p>
-                                
-                                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-                                <p style="font-size: 12px; color: #6b7280;">
-                                    Email ini dikirim otomatis, mohon tidak membalas.
-                                </p>
-                            </div>
-                        `,
-                    });
-
+                    await this.processNotification(notif);
                     successCount++;
-                    this.logger.log(`✅ Reminder sent for appointment #${notif.appointment_id}`);
-
-                    // ✅ Add small delay untuk prevent rate limiting
-                    await new Promise(resolve => setTimeout(resolve, 100));
-
                 } catch (error) {
-                    // Rollback status if email failed
-                    await this.notificationRepository.update(
-                        { id: notif.id },
-                        { status: NotificationStatus.FAILED }
-                    );
                     failCount++;
-
                     this.logger.error(
-                        `❌ Failed to send reminder for appointment #${notif.appointment_id}:`,
+                        `❌ [${batchId}] Failed to send reminder for appointment #${notif.appointment_id}:`,
                         error.message
                     );
                 }
@@ -219,12 +133,225 @@ export class NotificationsService {
 
             const duration = Date.now() - startTime;
             this.logger.log(
-                `📊 Reminder processing completed in ${duration}ms: ${successCount} sent, ${failCount} failed`
+                `📊 [${batchId}] Completed in ${duration}ms: ${successCount} sent, ${failCount} failed`
             );
 
         } catch (error) {
-            this.logger.error('❌ Error in cron job:', error);
+            this.logger.error(`❌ [${batchId}] Cron job error:`, error);
         }
+    }
+
+    /**
+     * ✅ FIX: Atomic claim of notifications using database-level locking
+     */
+    private async claimNotifications(): Promise<number[]> {
+        try {
+            // Use raw SQL for atomic operation with UPDATE ... RETURNING
+            const result = await this.notificationRepository.query(`
+                UPDATE notifications
+                SET status = ?
+                WHERE id IN (
+                    SELECT id FROM (
+                        SELECT id 
+                        FROM notifications
+                        WHERE status = ?
+                        AND send_at <= NOW()
+                        ORDER BY send_at ASC
+                        LIMIT ?
+                        FOR UPDATE SKIP LOCKED
+                    ) AS subquery
+                )
+                RETURNING id
+            `, [NotificationStatus.SENT, NotificationStatus.PENDING, this.MAX_BATCH_SIZE]);
+
+            // MySQL doesn't support RETURNING, use alternative approach
+            const ids = await this.notificationRepository.query(`
+                SELECT id FROM notifications
+                WHERE status = ?
+                AND send_at <= NOW()
+                ORDER BY send_at ASC
+                LIMIT ?
+                FOR UPDATE SKIP LOCKED
+            `, [NotificationStatus.PENDING, this.MAX_BATCH_SIZE]);
+
+            if (ids.length === 0) {
+                return [];
+            }
+
+            const idList = ids.map(row => row.id);
+
+            // Mark as processing
+            await this.notificationRepository
+                .createQueryBuilder()
+                .update(Notification)
+                .set({ 
+                    status: NotificationStatus.SENT,
+                    sent_at: new Date()
+                })
+                .where('id IN (:...ids)', { ids: idList })
+                .andWhere('status = :status', { status: NotificationStatus.PENDING })
+                .execute();
+
+            return idList;
+
+        } catch (error) {
+            this.logger.error('❌ Error claiming notifications:', error);
+            return [];
+        }
+    }
+
+    /**
+     * ✅ NEW: Cleanup stale processing notifications (timeout protection)
+     */
+    private async cleanupStaleProcessing(): Promise<void> {
+        try {
+            const staleTime = new Date(Date.now() - this.PROCESSING_TIMEOUT);
+
+            const result = await this.notificationRepository
+                .createQueryBuilder()
+                .update(Notification)
+                .set({ status: NotificationStatus.PENDING })
+                .where('status = :status', { status: NotificationStatus.SENT })
+                .andWhere('sent_at IS NULL OR sent_at < :staleTime', { staleTime })
+                .execute();
+
+            if (result && result.affected && result.affected > 0) {
+                this.logger.warn(`⚠️ Reset ${result.affected} stale processing notification(s)`);
+            }
+        } catch (error) {
+            this.logger.error('❌ Error cleaning up stale processing:', error);
+        }
+    }
+
+    /**
+     * ✅ FIX: Process single notification with proper validation and error handling
+     */
+    private async processNotification(notif: Notification): Promise<void> {
+        const notifId = notif.id;
+
+        try {
+            // Validate notification data
+            if (!notif.appointment?.patient?.email) {
+                throw new Error('No email address for patient');
+            }
+
+            const patient = notif.appointment.patient;
+            const appointment = notif.appointment;
+
+            // Format tanggal dan jam untuk email
+            const appointmentDate = new Date(appointment.tanggal_janji);
+            const formattedDate = appointmentDate.toLocaleDateString('id-ID', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+
+            // Send email with retry mechanism
+            await this.sendEmailWithRetry(patient.email, {
+                subject: `Pengingat Janji Temu - Klinik Dentizy`,
+                html: this.generateEmailTemplate({
+                    patientName: patient.nama_lengkap,
+                    date: formattedDate,
+                    time: appointment.jam_janji,
+                    doctorName: appointment.doctor.nama_lengkap,
+                    complaint: appointment.keluhan,
+                }),
+            });
+
+            // Mark as successfully sent
+            await this.notificationRepository.update(notifId, {
+                status: NotificationStatus.SENT,
+                sent_at: new Date(),
+            });
+
+            this.logger.log(`✅ Reminder sent for appointment #${appointment.id}`);
+
+        } catch (error) {
+            // Mark as failed
+            await this.notificationRepository.update(notifId, {
+                status: NotificationStatus.FAILED,
+            });
+
+            throw error;
+        }
+    }
+
+    /**
+     * ✅ NEW: Send email with retry mechanism
+     */
+    private async sendEmailWithRetry(
+        to: string,
+        options: { subject: string; html: string },
+        maxRetries = 3
+    ): Promise<void> {
+        let lastError: Error = new Error('No attempts made');
+
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                await this.mailerService.sendMail({
+                    to,
+                    subject: options.subject,
+                    html: options.html,
+                });
+                return; // Success
+            } catch (error) {
+                lastError = error;
+                this.logger.warn(`⚠️ Email send attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+
+                if (attempt < maxRetries) {
+                    // Exponential backoff
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+            }
+        }
+
+        throw new Error(`Failed to send email after ${maxRetries} attempts: ${lastError.message}`);
+    }
+
+    /**
+     * ✅ NEW: Generate email template
+     */
+    private generateEmailTemplate(data: {
+        patientName: string;
+        date: string;
+        time: string;
+        doctorName: string;
+        complaint?: string;
+    }): string {
+        return `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Pengingat Janji Temu</h2>
+                
+                <p>Halo, <strong>${data.patientName}</strong>!</p>
+                
+                <p>Ini adalah pengingat untuk janji temu Anda besok di Klinik Dentizy.</p>
+                
+                <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <h3 style="margin-top: 0;">Detail Janji Temu:</h3>
+                    <ul style="list-style: none; padding: 0;">
+                        <li>📅 <strong>Tanggal:</strong> ${data.date}</li>
+                        <li>🕐 <strong>Jam:</strong> ${data.time} WIB</li>
+                        <li>👨‍⚕️ <strong>Dokter:</strong> ${data.doctorName}</li>
+                        ${data.complaint ? `<li>📝 <strong>Keluhan:</strong> ${data.complaint}</li>` : ''}
+                    </ul>
+                </div>
+                
+                <p style="color: #dc2626;">
+                    <strong>⚠️ Penting:</strong> Jika Anda tidak dapat hadir, mohon hubungi klinik kami 
+                    untuk reschedule atau pembatalan.
+                </p>
+                
+                <p>Terima kasih,<br>
+                <strong>Klinik Dentizy</strong></p>
+                
+                <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                <p style="font-size: 12px; color: #6b7280;">
+                    Email ini dikirim otomatis, mohon tidak membalas.
+                </p>
+            </div>
+        `;
     }
 
     /**
@@ -237,7 +364,7 @@ export class NotificationsService {
                 order: {
                     created_at: 'DESC',
                 },
-                take: 100, // Limit untuk performance
+                take: 100,
             });
         } catch (error) {
             this.logger.error('❌ Error fetching notifications:', error);

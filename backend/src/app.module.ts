@@ -18,23 +18,26 @@ import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LoggingInterceptor } from './common/interceptors/logging/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { envValidationSchema } from './config/env.validation'; // ✅ Import validation schema
+import { envValidationSchema } from './config/env.validation';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
+
+// ✅ FIX: Import HealthController
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
     // ✅ Config Module dengan validasi
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'], // ✅ Support multiple env files
+      envFilePath: ['.env.local', '.env'],
       cache: true,
-      validationSchema: envValidationSchema, // ✅ Validate environment variables
+      validationSchema: envValidationSchema,
       validationOptions: {
-        allowUnknown: true, // Allow extra env vars
-        abortEarly: false,  // Show all validation errors
+        allowUnknown: true,
+        abortEarly: false,
       },
-      load: [databaseConfig, jwtConfig], // ✅ Load typed configurations
+      load: [databaseConfig, jwtConfig],
     }),
 
     // ✅ Throttling untuk rate limiting
@@ -70,14 +73,12 @@ import jwtConfig from './config/jwt.config';
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: configService.get('NODE_ENV') !== 'production', // ⚠️ PENTING
+        synchronize: configService.get('NODE_ENV') !== 'production',
         logging: configService.get('NODE_ENV') === 'development',
-        // ✅ Connection pooling untuk performa
         extra: {
           connectionLimit: 10,
           connectTimeout: 60000,
         },
-        // ✅ Retry logic
         retryAttempts: 3,
         retryDelay: 3000,
       }),
@@ -114,7 +115,8 @@ import jwtConfig from './config/jwt.config';
     SeederModule,
     AuthModule,
   ],
-  controllers: [AppController],
+  // ✅ FIX: Add HealthController here
+  controllers: [AppController, HealthController],
   providers: [
     AppService,
     // ✅ Global rate limiting guard

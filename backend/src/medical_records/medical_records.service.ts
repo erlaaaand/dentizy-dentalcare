@@ -7,6 +7,7 @@ import { UpdateMedicalRecordDto } from './dto/update-medical_record.dto';
 import { Appointment, AppointmentStatus } from '../appointments/entities/appointment.entity';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from '../roles/entities/role.entity';
+import { Logger } from '@nestjs/common';
 
 @Injectable()
 export class MedicalRecordsService {
@@ -16,6 +17,7 @@ export class MedicalRecordsService {
         @InjectRepository(Appointment)
         private readonly appointmentRepository: Repository<Appointment>,
         private readonly dataSource: DataSource,
+        private readonly logger = new Logger(MedicalRecordsService.name)
     ) { }
 
     async findByAppointmentId(appointmentId: number, user: User): Promise<MedicalRecord | null> {
@@ -112,18 +114,43 @@ export class MedicalRecordsService {
             .createQueryBuilder('record')
             .leftJoinAndSelect('record.appointment', 'appointment')
             .leftJoinAndSelect('appointment.patient', 'patient')
-            .leftJoinAndSelect('appointment.doctor', 'doctor');
+            .leftJoinAndSelect('appointment.doctor', 'doctor')
+            .leftJoinAndSelect('doctor.roles', 'doctorRoles');
 
         const isDoctor = user.roles.some((role) => role.name === UserRole.DOKTER);
         const isKepalaKlinik = user.roles.some((role) => role.name === UserRole.KEPALA_KLINIK);
+        const isStaf = user.roles.some((role) => role.name === UserRole.STAF);
 
-        // Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani
-        // Kepala Klinik bisa melihat semua rekam medis
-        if (isDoctor && !isKepalaKlinik) {
-            queryBuilder.where('appointment.doctor_id = :doctorId', { doctorId: user.id });
+        // Authorization filtering
+        if (!isKepalaKlinik) {
+            if (isDoctor) {
+                // Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani
+                // atau yang ia buat sendiri
+                queryBuilder.andWhere(
+                    '(appointment.doctor_id = :doctorId OR record.user_id_staff = :doctorId)',
+                    { doctorId: user.id }
+                );
+            } else if (isStaf) {
+                // Staf bisa melihat semua rekam medis yang tidak dibatalkan
+                queryBuilder.andWhere(
+                    'appointment.status != :cancelled',
+                    { cancelled: AppointmentStatus.DIBATALKAN }
+                );
+            }
         }
 
-        return queryBuilder.getMany();
+        // Add ordering
+        queryBuilder.orderBy('record.created_at', 'DESC');
+
+        const records = await queryBuilder.getMany();
+
+        // ✅ AUDIT: Log access
+        this.logger.log(
+            `User ${user.id} (${user.roles.map(r => r.name).join(', ')}) ` +
+            `accessed ${records.length} medical record(s)`
+        );
+
+        return records;
     }
 
     async findOne(id: number, user: User): Promise<MedicalRecord> {
@@ -132,40 +159,113 @@ export class MedicalRecordsService {
             .leftJoinAndSelect('record.appointment', 'appointment')
             .leftJoinAndSelect('appointment.patient', 'patient')
             .leftJoinAndSelect('appointment.doctor', 'doctor')
+            .leftJoinAndSelect('doctor.roles', 'doctorRoles')
             .where('record.id = :id', { id });
 
         const isDoctor = user.roles.some((role) => role.name === UserRole.DOKTER);
         const isKepalaKlinik = user.roles.some((role) => role.name === UserRole.KEPALA_KLINIK);
+        const isStaf = user.roles.some((role) => role.name === UserRole.STAF);
 
-        // Dokter hanya bisa melihat rekam medis dari janji temu yang ia tangani
-        if (isDoctor && !isKepalaKlinik) {
-            queryBuilder.andWhere('appointment.doctor_id = :doctorId', { doctorId: user.id });
+        // ✅ FIX: More granular access control
+        if (!isKepalaKlinik) {
+            if (isDoctor) {
+                // Doctor can see records they created OR from their appointments
+                queryBuilder.andWhere(
+                    '(appointment.doctor_id = :userId OR record.user_id_staff = :userId)',
+                    { userId: user.id }
+                );
+            } else if (isStaf) {
+                // Staff can see records they created OR any active records (for administrative purposes)
+                queryBuilder.andWhere(
+                    '(record.user_id_staff = :userId OR appointment.status != :cancelled)',
+                    { userId: user.id, cancelled: AppointmentStatus.DIBATALKAN }
+                );
+            } else {
+                // Unknown role - deny access
+                throw new ForbiddenException('Anda tidak memiliki akses ke rekam medis');
+            }
         }
 
         const record = await queryBuilder.getOne();
 
         if (!record) {
-            throw new NotFoundException(`Rekam medis dengan ID #${id} tidak ditemukan atau Anda tidak memiliki akses.`);
+            throw new NotFoundException(
+                `Rekam medis dengan ID #${id} tidak ditemukan atau Anda tidak memiliki akses.`
+            );
         }
+
         return record;
     }
 
     async update(id: number, updateMedicalRecordDto: UpdateMedicalRecordDto, user: User): Promise<MedicalRecord> {
-    return await this.dataSource.transaction(async manager => {
-        const record = await this.findOne(id, user);
-        
-        Object.assign(record, updateMedicalRecordDto);
-        const updatedRecord = await manager.save(record);
+        return await this.dataSource.transaction(async manager => {
+            // Fetch record with proper relations
+            const record = await manager.findOne(MedicalRecord, {
+                where: { id },
+                relations: ['appointment', 'appointment.doctor', 'appointment.doctor.roles'],
+            });
 
-        const appointment = await manager.findOneBy(Appointment, { id: record.appointment_id });
-        if (appointment && appointment.status !== AppointmentStatus.SELESAI) {
-            appointment.status = AppointmentStatus.SELESAI;
-            await manager.save(appointment);
-        }
+            if (!record) {
+                throw new NotFoundException(`Rekam medis dengan ID #${id} tidak ditemukan`);
+            }
 
-        return updatedRecord;
-    });
-}
+            // ✅ FIX: Comprehensive authorization check
+            const isKepalaKlinik = user.roles.some(r => r.name === UserRole.KEPALA_KLINIK);
+            const isStaf = user.roles.some(r => r.name === UserRole.STAF);
+            const isDokter = user.roles.some(r => r.name === UserRole.DOKTER);
+
+            if (!isKepalaKlinik) {
+                const isCreator = record.user_id_staff === user.id;
+                const isAppointmentDoctor = record.appointment.doctor_id === user.id;
+
+                if (isDokter) {
+                    // Doctor must be either creator or appointment doctor
+                    if (!isCreator && !isAppointmentDoctor) {
+                        throw new ForbiddenException(
+                            'Anda hanya bisa mengubah rekam medis yang Anda buat atau dari pasien Anda'
+                        );
+                    }
+                } else if (isStaf) {
+                    // Staff must be creator
+                    if (!isCreator) {
+                        throw new ForbiddenException(
+                            'Anda hanya bisa mengubah rekam medis yang Anda buat'
+                        );
+                    }
+                } else {
+                    // Unknown role
+                    throw new ForbiddenException('Anda tidak memiliki akses untuk mengubah rekam medis');
+                }
+            }
+
+            // ✅ VALIDATION: Check if appointment is still valid for updates
+            const appointment = record.appointment;
+
+            if (appointment.status === AppointmentStatus.DIBATALKAN) {
+                throw new ConflictException('Tidak dapat mengubah rekam medis dari janji temu yang dibatalkan');
+            }
+
+            // ✅ AUDIT: Log who is updating what
+            this.logger.log(
+                `User ${user.id} (${user.roles.map(r => r.name).join(', ')}) ` +
+                `updating medical record #${id} (created by user ${record.user_id_staff})`
+            );
+
+            // Update record
+            Object.assign(record, updateMedicalRecordDto);
+            const updatedRecord = await manager.save(record);
+
+            // Ensure appointment status is SELESAI if it has medical record
+            if (appointment.status !== AppointmentStatus.SELESAI) {
+                appointment.status = AppointmentStatus.SELESAI;
+                await manager.save(appointment);
+
+                this.logger.log(`Appointment #${appointment.id} status updated to SELESAI`);
+            }
+
+            return updatedRecord;
+        });
+    }
 
     async remove(id: number, user: User): Promise<void> {
         const record = await this.findOne(id, user);

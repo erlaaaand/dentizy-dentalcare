@@ -9,6 +9,7 @@ import { User } from '../users/entities/user.entity';
 import { UserRole } from 'src/roles/entities/role.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { FindAppointmentsQueryDto } from './dto/find-appointments-query.dto';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class AppointmentsService {
@@ -62,6 +63,8 @@ export class AppointmentsService {
 
             // 4. VALIDASI: Tanggal tidak boleh di masa lalu
             const appointmentDate = new Date(tanggal_janji);
+            appointmentDate.setHours(0, 0, 0, 0);
+
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -71,50 +74,59 @@ export class AppointmentsService {
 
             // ✅ FIX: Validasi jam kerja (08:00 - 17:00)
             const [hours, minutes, seconds] = jam_janji.split(':').map(Number);
-            if (hours < 8 || hours >= 17) {
-                throw new BadRequestException('Jam janji harus antara 08:00 - 17:00');
+
+            if (hours < 8 || hours >= 17 || (hours === 16 && minutes > 30)) {
+                throw new BadRequestException('Jam janji harus antara 08:00 - 16:30');
             }
 
-            // ✅ FIX: Cek bentrok jadwal dengan buffer time (30 menit) - FIXED VERSION
+            // ✅ FIX: Cek bentrok jadwal dengan buffer time (30 menit) - IMPROVED VERSION
             const appointmentDateTime = new Date(appointmentDate);
             appointmentDateTime.setHours(hours, minutes, seconds || 0, 0);
 
-            // Hitung buffer start dan end dalam menit
-            const appointmentMinutes = hours * 60 + minutes;
-            const bufferStartMinutes = Math.max(0, appointmentMinutes - 30);
-            const bufferEndMinutes = Math.min(24 * 60 - 1, appointmentMinutes + 30);
+            // Calculate buffer window using Date objects (more reliable)
+            const BUFFER_MINUTES = 30;
+            const bufferStart = new Date(appointmentDateTime.getTime() - BUFFER_MINUTES * 60 * 1000);
+            const bufferEnd = new Date(appointmentDateTime.getTime() + BUFFER_MINUTES * 60 * 1000);
 
-            // Convert kembali ke format HH:mm:ss
-            const bufferStartHours = Math.floor(bufferStartMinutes / 60);
-            const bufferStartMins = bufferStartMinutes % 60;
-            const bufferStartTime = `${bufferStartHours.toString().padStart(2, '0')}:${bufferStartMins.toString().padStart(2, '0')}:00`;
+            // Extract time components safely
+            const bufferStartTime = this.formatTimeString(bufferStart);
+            const bufferEndTime = this.formatTimeString(bufferEnd);
 
-            const bufferEndHours = Math.floor(bufferEndMinutes / 60);
-            const bufferEndMins = bufferEndMinutes % 60;
-            const bufferEndTime = `${bufferEndHours.toString().padStart(2, '0')}:${bufferEndMins.toString().padStart(2, '0')}:00`;
+            this.logger.debug(`Checking conflict for ${jam_janji}`);
+            this.logger.debug(`Buffer window: ${bufferStartTime} - ${bufferEndTime}`);
 
-            this.logger.debug(`Checking conflict for ${jam_janji} with buffer ${bufferStartTime} - ${bufferEndTime}`);
-
+            // ✅ FIX: Better conflict detection query
             const conflictingAppointment = await queryRunner.manager
                 .createQueryBuilder(Appointment, 'appointment')
                 .where('appointment.doctor_id = :doctor_id', { doctor_id })
-                .andWhere('appointment.tanggal_janji = :tanggal_janji', { 
-                    tanggal_janji: appointmentDate 
+                .andWhere('appointment.tanggal_janji = :tanggal_janji', {
+                    tanggal_janji: appointmentDate
                 })
-                .andWhere('appointment.status = :status', { 
-                    status: AppointmentStatus.DIJADWALKAN 
+                .andWhere('appointment.status = :status', {
+                    status: AppointmentStatus.DIJADWALKAN
                 })
-                .andWhere('appointment.jam_janji BETWEEN :bufferStart AND :bufferEnd', {
-                    bufferStart: bufferStartTime,
-                    bufferEnd: bufferEndTime,
-                })
-                // ✅ Tambahan: Lock untuk prevent race condition
-                .setLock('pessimistic_write')
+                .andWhere(
+                    new Brackets((qb) => {
+                        // Check if new appointment overlaps with existing ones
+                        qb.where('appointment.jam_janji BETWEEN :bufferStart AND :bufferEnd', {
+                            bufferStart: bufferStartTime,
+                            bufferEnd: bufferEndTime,
+                        })
+                            // OR if existing appointment overlaps with new one
+                            .orWhere(
+                                `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) 
+                         BETWEEN -1800 AND 1800`,
+                                { requestedTime: jam_janji }
+                            );
+                    })
+                )
+                .setLock('pessimistic_write') // Lock untuk prevent race condition
                 .getOne();
 
             if (conflictingAppointment) {
                 throw new ConflictException(
-                    `Dokter sudah memiliki janji temu di waktu yang berdekatan (${conflictingAppointment.jam_janji}). Silakan pilih jam lain.`
+                    `Dokter sudah memiliki janji temu di waktu yang berdekatan (${conflictingAppointment.jam_janji}). ` +
+                    `Silakan pilih waktu minimal 30 menit sebelum atau sesudah.`
                 );
             }
 
@@ -161,6 +173,29 @@ export class AppointmentsService {
         } finally {
             await queryRunner.release();
         }
+    }
+
+    private formatTimeString(date: Date): string {
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const seconds = date.getSeconds().toString().padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    private hasTimeConflict(
+        time1: string,
+        time2: string,
+        bufferMinutes: number = 30
+    ): boolean {
+        const [h1, m1] = time1.split(':').map(Number);
+        const [h2, m2] = time2.split(':').map(Number);
+
+        const minutes1 = h1 * 60 + m1;
+        const minutes2 = h2 * 60 + m2;
+
+        const diff = Math.abs(minutes1 - minutes2);
+
+        return diff < bufferMinutes;
     }
 
     /**

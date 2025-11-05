@@ -33,36 +33,48 @@ async function bootstrap() {
     app.use(helmet({
       contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
       crossOriginEmbedderPolicy: nodeEnv === 'production',
+      crossOriginResourcePolicy: { policy: "cross-origin" },
     }));
 
-    // ✅ 2. CORS Configuration (Dynamic based on environment)
+    // ✅ 2. IMPROVED CORS Configuration
     const allowedOrigins = nodeEnv === 'production' 
       ? [frontendUrl] // Production: strict origin
-      : [frontendUrl, 'http://localhost:3001', 'http://localhost:3000']; // Development: allow multiple
+      : [frontendUrl, 'http://localhost:3001', 'http://localhost:3000']; // Development
 
     app.enableCors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
-        if (!origin && nodeEnv !== 'production') {
-            return callback(null, true);
-        }
-
+        // ✅ FIX: Stricter origin checking
+        
+        // In production, ALWAYS require origin header
         if (!origin) {
-            return callback(new Error('Origin header required'));
+          if (nodeEnv === 'production') {
+            logger.error(`🚫 CORS blocked: Missing origin header (Production mode)`);
+            return callback(new Error('Origin header required in production'));
+          }
+          
+          // Development: Allow no-origin (e.g., Postman, curl)
+          logger.debug(`⚠️ No origin header - allowing (Development mode only)`);
+          return callback(null, true);
         }
         
+        // Check if origin is in whitelist
         if (allowedOrigins.includes(origin)) {
-            callback(null, true);
-
+          logger.debug(`✅ CORS allowed: ${origin}`);
+          callback(null, true);
         } else {
-            logger.warn(`⚠️ CORS blocked: ${origin}`);
-            callback(new Error('Not allowed by CORS'));
+          // ✅ FIX: Log with proper error level and detailed info
+          logger.error(`🚫 CORS blocked: ${origin} not in whitelist`);
+          logger.error(`Allowed origins: ${allowedOrigins.join(', ')}`);
+          callback(new Error(`Origin ${origin} not allowed by CORS policy`));
         }
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+      exposedHeaders: ['X-Total-Count', 'X-Page-Number'],
       maxAge: 3600, // Cache preflight request for 1 hour
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
     });
 
     // ✅ 3. GLOBAL VALIDATION PIPE
@@ -74,6 +86,10 @@ async function bootstrap() {
         enableImplicitConversion: true,
       },
       disableErrorMessages: nodeEnv === 'production', // Hide detailed errors in production
+      validationError: {
+        target: false, // Don't expose target object
+        value: false,  // Don't expose submitted values in production
+      },
     }));
 
     // ✅ 4. SWAGGER (hanya untuk development)
@@ -102,6 +118,8 @@ async function bootstrap() {
       SwaggerModule.setup('api-docs', app, document, {
         swaggerOptions: {
           persistAuthorization: true,
+          displayRequestDuration: true,
+          filter: true,
         },
       });
       
@@ -115,7 +133,12 @@ async function bootstrap() {
       logger.log('✅ Database connection successful');
     } catch (error) {
       logger.error('❌ Database connection failed:', error.message);
-      throw new Error('Cannot connect to database. Please check your configuration.');
+      
+      if (nodeEnv === 'production') {
+        throw new Error('Cannot connect to database. Please check your configuration.');
+      } else {
+        logger.warn('⚠️ Continuing without database in development mode');
+      }
     }
 
     // ✅ 6. DATABASE SEEDING (hanya di development)
@@ -131,21 +154,33 @@ async function bootstrap() {
     }
 
     // ✅ 7. GRACEFUL SHUTDOWN HANDLERS
-    process.on('SIGTERM', async () => {
-      logger.warn('⚠️ SIGTERM signal received: closing HTTP server');
-      await app.close();
-      logger.log('✅ Application closed gracefully');
-      process.exit(0);
+    const gracefulShutdown = async (signal: string) => {
+      logger.warn(`⚠️ ${signal} signal received: closing HTTP server`);
+      
+      try {
+        await app.close();
+        logger.log('✅ Application closed gracefully');
+        process.exit(0);
+      } catch (error) {
+        logger.error('❌ Error during shutdown:', error);
+        process.exit(1);
+      }
+    };
+
+    process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+    process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+
+    // ✅ 8. UNHANDLED REJECTION HANDLER
+    process.on('unhandledRejection', (reason, promise) => {
+      logger.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+      
+      if (nodeEnv === 'production') {
+        // In production, restart the application
+        gracefulShutdown('UNHANDLED_REJECTION');
+      }
     });
 
-    process.on('SIGINT', async () => {
-      logger.warn('⚠️ SIGINT signal received: closing HTTP server');
-      await app.close();
-      logger.log('✅ Application closed gracefully');
-      process.exit(0);
-    });
-
-    // ✅ 8. START SERVER
+    // ✅ 9. START SERVER
     await app.listen(port);
 
     logger.log(`
@@ -158,6 +193,7 @@ async function bootstrap() {
 ║   📡 URL:          http://localhost:${port}${' '.repeat(22)}║
 ${nodeEnv !== 'production' ? `║   📖 API Docs:     http://localhost:${port}/api-docs${' '.repeat(14)}║` : ''}
 ║   🔐 CORS Origin:  ${frontendUrl.padEnd(35)}║
+║   🏥 Health:       http://localhost:${port}/health${' '.repeat(19)}║
 ║                                                       ║
 ╚═══════════════════════════════════════════════════════╝
     `);
@@ -165,6 +201,10 @@ ${nodeEnv !== 'production' ? `║   📖 API Docs:     http://localhost:${port}/
     if (nodeEnv === 'production') {
       logger.warn('⚠️ Running in PRODUCTION mode');
       logger.warn('⚠️ Make sure all environment variables are properly set');
+      logger.warn('⚠️ CORS is strictly enforced');
+    } else {
+      logger.log('🛠️ Running in DEVELOPMENT mode');
+      logger.log('🔓 CORS is relaxed for local development');
     }
 
   } catch (error) {

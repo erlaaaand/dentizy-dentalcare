@@ -6,7 +6,7 @@ import {
     Logger
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository, DataSource } from 'typeorm';
+import { Repository, DataSource } from 'typeorm';
 import { Patient } from './entities/patient.entity';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
@@ -15,91 +15,129 @@ import { SearchPatientDto } from './dto/search-patient.dto';
 @Injectable()
 export class PatientsService {
     private readonly logger = new Logger(PatientsService.name);
+    private readonly MAX_RETRY_ATTEMPTS = 5;
 
     constructor(
         @InjectRepository(Patient)
         private readonly patientRepository: Repository<Patient>,
-        private readonly dataSource: DataSource, // ✅ Inject DataSource untuk transaction
+        private readonly dataSource: DataSource,
     ) { }
 
     /**
-     * ✅ FIX: Buat pasien dengan transaction untuk avoid race condition
+     * ✅ FIX: Buat pasien dengan transaction dan retry mechanism
      */
     async create(createPatientDto: CreatePatientDto): Promise<Patient> {
-        const queryRunner = this.dataSource.createQueryRunner();
-        await queryRunner.connect();
-        await queryRunner.startTransaction();
+        let attempts = 0;
+        let lastError: Error;
 
-        try {
-            // 1. CEK: NIK sudah ada atau belum (jika diisi)
-            if (createPatientDto.nik) {
-                const existingPatientByNik = await queryRunner.manager.findOne(Patient, {
-                    where: { nik: createPatientDto.nik }
+        while (attempts < this.MAX_RETRY_ATTEMPTS) {
+            attempts++;
+            const queryRunner = this.dataSource.createQueryRunner();
+            
+            try {
+                await queryRunner.connect();
+                await queryRunner.startTransaction();
+
+                // 1. CEK: NIK sudah ada atau belum (jika diisi)
+                if (createPatientDto.nik) {
+                    const existingPatientByNik = await queryRunner.manager.findOne(Patient, {
+                        where: { nik: createPatientDto.nik }
+                    });
+
+                    if (existingPatientByNik) {
+                        throw new ConflictException(`Pasien dengan NIK ${createPatientDto.nik} sudah terdaftar`);
+                    }
+                }
+
+                // 2. CEK: Email sudah ada atau belum (jika diisi)
+                if (createPatientDto.email) {
+                    const existingPatientByEmail = await queryRunner.manager.findOne(Patient, {
+                        where: { email: createPatientDto.email }
+                    });
+
+                    if (existingPatientByEmail) {
+                        throw new ConflictException(`Pasien dengan email ${createPatientDto.email} sudah terdaftar`);
+                    }
+                }
+
+                // 3. GENERATE NOMOR REKAM MEDIS dengan ATOMIC COUNTER
+                const nomorRekamMedis = await this.generateMedicalRecordNumberAtomic(queryRunner);
+
+                // 4. Validasi tanggal lahir tidak boleh > hari ini
+                if (createPatientDto.tanggal_lahir) {
+                    const birthDate = new Date(createPatientDto.tanggal_lahir);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    if (birthDate > today) {
+                        throw new BadRequestException('Tanggal lahir tidak boleh di masa depan');
+                    }
+                }
+
+                // 5. BUAT PASIEN BARU
+                const newPatient = queryRunner.manager.create(Patient, {
+                    ...createPatientDto,
+                    nomor_rekam_medis: nomorRekamMedis,
+                    tanggal_lahir: createPatientDto.tanggal_lahir
+                        ? new Date(createPatientDto.tanggal_lahir)
+                        : undefined,
                 });
 
-                if (existingPatientByNik) {
-                    throw new ConflictException(`Pasien dengan NIK ${createPatientDto.nik} sudah terdaftar`);
+                const savedPatient = await queryRunner.manager.save(newPatient);
+
+                await queryRunner.commitTransaction();
+
+                this.logger.log(`✅ Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`);
+
+                return savedPatient;
+
+            } catch (error) {
+                await queryRunner.rollbackTransaction();
+                lastError = error;
+
+                // Don't retry on validation errors
+                if (error instanceof ConflictException || error instanceof BadRequestException) {
+                    throw error;
                 }
-            }
 
-            // 2. CEK: Email sudah ada atau belum (jika diisi)
-            if (createPatientDto.email) {
-                const existingPatientByEmail = await queryRunner.manager.findOne(Patient, {
-                    where: { email: createPatientDto.email }
-                });
-
-                if (existingPatientByEmail) {
-                    throw new ConflictException(`Pasien dengan email ${createPatientDto.email} sudah terdaftar`);
+                // Retry on deadlock or lock timeout
+                if (this.isRetryableError(error) && attempts < this.MAX_RETRY_ATTEMPTS) {
+                    const backoffTime = Math.min(100 * Math.pow(2, attempts - 1), 1000);
+                    this.logger.warn(`⚠️ Retry attempt ${attempts}/${this.MAX_RETRY_ATTEMPTS} after ${backoffTime}ms`);
+                    await new Promise(resolve => setTimeout(resolve, backoffTime));
+                    continue;
                 }
+
+                this.logger.error('❌ Error creating patient:', error);
+                throw new BadRequestException('Gagal mendaftarkan pasien baru');
+            } finally {
+                await queryRunner.release();
             }
-
-            // 3. GENERATE NOMOR REKAM MEDIS dengan ATOMIC COUNTER
-            const nomorRekamMedis = await this.generateMedicalRecordNumberAtomic(queryRunner);
-
-            // 4. Validasi tanggal lahir tidak boleh > hari ini
-            if (createPatientDto.tanggal_lahir) {
-                const birthDate = new Date(createPatientDto.tanggal_lahir);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                if (birthDate > today) {
-                    throw new BadRequestException('Tanggal lahir tidak boleh di masa depan');
-                }
-            }
-
-            // 5. BUAT PASIEN BARU
-            const newPatient = queryRunner.manager.create(Patient, {
-                ...createPatientDto,
-                nomor_rekam_medis: nomorRekamMedis,
-                tanggal_lahir: createPatientDto.tanggal_lahir
-                    ? new Date(createPatientDto.tanggal_lahir)
-                    : undefined,
-            });
-
-            const savedPatient = await queryRunner.manager.save(newPatient);
-
-            await queryRunner.commitTransaction();
-
-            this.logger.log(`✅ Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`);
-
-            return savedPatient;
-
-        } catch (error) {
-            await queryRunner.rollbackTransaction();
-
-            if (error instanceof ConflictException || error instanceof BadRequestException) {
-                throw error;
-            }
-
-            this.logger.error('❌ Error creating patient:', error);
-            throw new BadRequestException('Gagal mendaftarkan pasien baru');
-        } finally {
-            await queryRunner.release();
         }
+
+        // If all retries failed
+        this.logger.error(`❌ Failed to create patient after ${this.MAX_RETRY_ATTEMPTS} attempts:`, lastError);
+        throw new BadRequestException('Gagal mendaftarkan pasien baru setelah beberapa percobaan');
     }
 
     /**
-     * ✅ FIX: Ambil semua pasien dengan pagination
+     * ✅ FIX: Check if error is retryable (deadlock, lock timeout)
+     */
+    private isRetryableError(error: any): boolean {
+        const retryableCodes = [
+            'ER_LOCK_DEADLOCK',
+            'ER_LOCK_WAIT_TIMEOUT',
+            '40001', // Serialization failure
+            '40P01', // Deadlock detected (PostgreSQL)
+        ];
+
+        return retryableCodes.some(code => 
+            error.code === code || error.message?.includes(code)
+        );
+    }
+
+    /**
+     * Ambil semua pasien dengan pagination
      */
     async findAll(query: SearchPatientDto): Promise<any> {
         try {
@@ -144,7 +182,7 @@ export class PatientsService {
     }
 
     /**
-     * ✅ NEW: Search patients dengan multiple criteria
+     * Search patients dengan multiple criteria
      */
     async search(query: SearchPatientDto): Promise<any> {
         try {
@@ -199,9 +237,6 @@ export class PatientsService {
         }
     }
 
-    /**
-     * Ambil pasien by ID
-     */
     async findOne(id: number): Promise<Patient> {
         try {
             const patient = await this.patientRepository.findOne({
@@ -225,9 +260,6 @@ export class PatientsService {
         }
     }
 
-    /**
-     * Cari pasien by nomor rekam medis
-     */
     async findByMedicalRecordNumber(nomorRekamMedis: string): Promise<Patient> {
         try {
             const patient = await this.patientRepository.findOne({
@@ -253,9 +285,6 @@ export class PatientsService {
         }
     }
 
-    /**
-     * Cari pasien by NIK
-     */
     async findByNik(nik: string): Promise<Patient> {
         try {
             const patient = await this.patientRepository.findOne({
@@ -279,9 +308,6 @@ export class PatientsService {
         }
     }
 
-    /**
-     * Update pasien
-     */
     async update(id: number, updatePatientDto: UpdatePatientDto): Promise<Patient> {
         try {
             const patient = await this.patientRepository.findOneBy({ id });
@@ -346,9 +372,6 @@ export class PatientsService {
         }
     }
 
-    /**
-     * Hapus pasien
-     */
     async remove(id: number): Promise<void> {
         try {
             const patient = await this.patientRepository.findOne({
@@ -382,32 +405,47 @@ export class PatientsService {
     }
 
     /**
-     * ✅ FIX: Generate nomor rekam medis dengan EntityManager (support transaction & locking)
+     * ✅ FIX: Generate nomor rekam medis dengan proper atomic operation
+     * Using QueryBuilder for better performance and safety
      */
     private async generateMedicalRecordNumberAtomic(queryRunner: any): Promise<string> {
-        try {
-            const today = new Date();
-            const year = today.getFullYear();
-            const month = (today.getMonth() + 1).toString().padStart(2, '0');
-            const day = today.getDate().toString().padStart(2, '0');
-            const datePrefix = `${year}${month}${day}`;
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        const datePrefix = `${year}${month}${day}`;
 
-            // ✅ FIX: Gunakan raw SQL dengan FOR UPDATE untuk atomic operation
-            const result = await queryRunner.manager.query(`
-                SELECT nomor_rekam_medis 
-                FROM patients 
-                WHERE nomor_rekam_medis LIKE ? 
-                ORDER BY nomor_rekam_medis DESC 
-                LIMIT 1
-                FOR UPDATE
-            `, [`${datePrefix}-%`]);
+        try {
+            // ✅ FIX: Use proper query builder with parameter binding
+            const result = await queryRunner.manager
+                .createQueryBuilder(Patient, 'patient')
+                .select('patient.nomor_rekam_medis', 'nomor_rekam_medis')
+                .where('patient.nomor_rekam_medis LIKE :pattern', { 
+                    pattern: `${datePrefix}-%` 
+                })
+                .orderBy('patient.nomor_rekam_medis', 'DESC')
+                .limit(1)
+                .setLock('pessimistic_write') // Lock the row
+                .getRawOne();
 
             let nextSequence = 1;
 
-            if (result && result.length > 0) {
-                const lastNumber = result[0].nomor_rekam_medis;
-                const lastSequence = parseInt(lastNumber.split('-')[1]);
-                nextSequence = lastSequence + 1;
+            if (result && result.nomor_rekam_medis) {
+                const lastNumber = result.nomor_rekam_medis;
+                const parts = lastNumber.split('-');
+                
+                if (parts.length === 2 && parts[0] === datePrefix) {
+                    const lastSequence = parseInt(parts[1], 10);
+                    
+                    if (!isNaN(lastSequence)) {
+                        nextSequence = lastSequence + 1;
+                    }
+                }
+            }
+
+            // Ensure sequence doesn't exceed 999 per day
+            if (nextSequence > 999) {
+                throw new Error('Maximum patient registrations per day exceeded (999)');
             }
 
             const sequenceString = nextSequence.toString().padStart(3, '0');

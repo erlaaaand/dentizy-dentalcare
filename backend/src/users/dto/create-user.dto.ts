@@ -1,4 +1,5 @@
 import { IsArray, IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
+import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../shared/validators/password.validator';
 
 export class CreateUserDto {
     @IsNotEmpty()
@@ -11,7 +12,8 @@ export class CreateUserDto {
 
     @IsNotEmpty()
     @IsString()
-    @MinLength(8, { message: 'Password minimal 8 karakter' })
+    @MinLength(PASSWORD_MIN_LENGTH, { message: `Password minimal ${PASSWORD_MIN_LENGTH} karakter` })
+    @IsStrongPassword() // ✅ Using centralized validator
     password: string;
 
     @IsNotEmpty()
