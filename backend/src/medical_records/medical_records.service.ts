@@ -17,9 +17,10 @@ export class MedicalRecordsService {
         @InjectRepository(Appointment)
         private readonly appointmentRepository: Repository<Appointment>,
         private readonly dataSource: DataSource,
-        private readonly logger = new Logger(MedicalRecordsService.name)
     ) { }
-
+    
+    private readonly logger = new Logger(MedicalRecordsService.name)
+    
     async findByAppointmentId(appointmentId: number, user: User): Promise<MedicalRecord | null> {
         const record = await this.medicalRecordRepository.findOne({
             where: { appointment_id: appointmentId },

@@ -4,11 +4,11 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { SeederService } from './seeder/seeder.service';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import helmet from 'helmet';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
   try {
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -128,7 +128,7 @@ async function bootstrap() {
 
     // ✅ 5. DATABASE CONNECTION TEST
     try {
-      const dataSource = app.get('DataSource');
+      const dataSource = app.get(DataSource);
       await dataSource.query('SELECT 1');
       logger.log('✅ Database connection successful');
     } catch (error) {

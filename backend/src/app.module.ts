@@ -21,9 +21,8 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { envValidationSchema } from './config/env.validation';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
-
-// ✅ FIX: Import HealthController
 import { HealthController } from './health/health.controller';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
