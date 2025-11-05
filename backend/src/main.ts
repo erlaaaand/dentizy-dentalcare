@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { SeederService } from './seeder/seeder.service'; 
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -21,6 +22,10 @@ async function bootstrap() {
   }
 
   app.enableCors();
+
+  const seeder = app.get(SeederService);
+  await seeder.seed();
+  Logger.log('✅ Database seeding completed');
 
   // Gunakan environment variable untuk port agar lebih fleksibel
   const port = process.env.PORT || 3000;

@@ -4,6 +4,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
 export enum UserRole {
   DOKTER = 'dokter',
   STAF = 'staf',
+  KEPALA_KLINIK = 'kepala_klinik'
 }
 
 @Entity('roles')
