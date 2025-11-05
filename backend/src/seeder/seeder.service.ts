@@ -21,190 +21,278 @@ export class SeederService {
     ) { }
 
     async seed() {
-        this.logger.log('Memulai proses seeding database...');
+        this.logger.log('📦 Memulai proses seeding database...');
 
-        // 1. Seed Roles (jika kosong)
-        if (await this.roleRepo.count() === 0) {
+        try {
+            // 1. Seed Roles (jika kosong)
             await this.seedRoles();
-        }
 
-        // 2. Seed Users (jika kosong)
-        if (await this.userRepo.count() === 0) {
+            // 2. Seed Users (jika kosong)
             await this.seedUsers();
-        }
 
-        // 3. Seed Patients (jika kosong)
-        if (await this.patientRepo.count() === 0) {
+            // 3. Seed Patients (jika kosong)
             await this.seedPatients();
-        }
 
-        // 4. Seed Appointments (jika kosong)
-        if (await this.appointmentRepo.count() === 0) {
+            // 4. Seed Appointments (jika kosong)
             await this.seedAppointments();
-        }
 
-        this.logger.log('Seeding selesai.');
+            this.logger.log('✅ Seeding completed successfully');
+        } catch (error) {
+            this.logger.error('❌ Seeding failed:', error);
+            throw error;
+        }
     }
 
+    /**
+     * ✅ FIX: Idempotent role seeding
+     */
     private async seedRoles() {
-        this.logger.log('Seeding tabel roles...');
-        await this.roleRepo.save([
-            { name: UserRole.DOKTER, description: 'Akses untuk dokter' },
-            { name: UserRole.STAF, description: 'Akses untuk staf administrasi' },
-            { name: UserRole.KEPALA_KLINIK, description: 'Akses untuk kepala klinik' }
-        ]);
-    }
-
-    private async seedUsers() {
-        this.logger.log('Seeding tabel users...');
-        const kepalaKlinikRole = await this.roleRepo.findOneBy({ name: UserRole.KEPALA_KLINIK });
-        const dokterRole = await this.roleRepo.findOneBy({ name: UserRole.DOKTER });
-        const stafRole = await this.roleRepo.findOneBy({ name: UserRole.STAF });
-
-        if (!dokterRole || !stafRole || !kepalaKlinikRole) {
-            this.logger.error('Role Dokter, Kepala Klinik atau Staf tidak ditemukan. Seeding users dibatalkan.');
-            return;
-        }
-
-        const hashedPassword = await bcrypt.hash('password123', 10);
-
-        // Hapus `as Partial<User>[]` dan pastikan `roles` selalu array
-        await this.userRepo.save([
-            {
-                nama_lengkap: 'Dr. Anisa Putri',
-                username: 'anisa.putri',
-                password: hashedPassword,
-                roles: [dokterRole], // Langsung assign array
-            },
-            {
-                nama_lengkap: 'Budi Santoso',
-                username: 'budi.staf',
-                password: hashedPassword,
-                roles: [stafRole], // Langsung assign array
-            },
-            {
-                nama_lengkap: 'Siti Rahma',
-                username: 'siti.kepala',
-                password: hashedPassword,
-                roles: [kepalaKlinikRole], // Langsung assign array
+        try {
+            const existingRoles = await this.roleRepo.find();
+            
+            if (existingRoles.length > 0) {
+                this.logger.log('⏭️  Roles already exist, skipping...');
+                return;
             }
-        ]);
+
+            this.logger.log('📝 Seeding roles...');
+
+            const roles = [
+                { name: UserRole.DOKTER, description: 'Akses untuk dokter gigi' },
+                { name: UserRole.STAF, description: 'Akses untuk staf administrasi' },
+                { name: UserRole.KEPALA_KLINIK, description: 'Akses penuh untuk kepala klinik' }
+            ];
+
+            await this.roleRepo.save(roles);
+            this.logger.log('✅ Roles seeded successfully');
+        } catch (error) {
+            this.logger.error('❌ Error seeding roles:', error);
+            throw error;
+        }
     }
 
+    /**
+     * ✅ FIX: Idempotent user seeding dengan error handling
+     */
+    private async seedUsers() {
+        try {
+            const existingUsers = await this.userRepo.find();
+            
+            if (existingUsers.length > 0) {
+                this.logger.log('⏭️  Users already exist, skipping...');
+                return;
+            }
+
+            this.logger.log('👥 Seeding users...');
+
+            const kepalaKlinikRole = await this.roleRepo.findOneBy({ name: UserRole.KEPALA_KLINIK });
+            const dokterRole = await this.roleRepo.findOneBy({ name: UserRole.DOKTER });
+            const stafRole = await this.roleRepo.findOneBy({ name: UserRole.STAF });
+
+            if (!dokterRole || !stafRole || !kepalaKlinikRole) {
+                throw new Error('Roles not found. Please run role seeding first.');
+            }
+
+            const hashedPassword = await bcrypt.hash('password123', 10);
+
+            const users = [
+                {
+                    nama_lengkap: 'Dr. Anisa Putri',
+                    username: 'anisa.putri',
+                    password: hashedPassword,
+                    roles: [dokterRole],
+                },
+                {
+                    nama_lengkap: 'Budi Santoso',
+                    username: 'budi.staf',
+                    password: hashedPassword,
+                    roles: [stafRole],
+                },
+                {
+                    nama_lengkap: 'Siti Rahma',
+                    username: 'siti.kepala',
+                    password: hashedPassword,
+                    roles: [kepalaKlinikRole],
+                },
+                {
+                    nama_lengkap: 'Dr. Bambang Wijaya',
+                    username: 'bambang.dokter',
+                    password: hashedPassword,
+                    roles: [dokterRole],
+                },
+            ];
+
+            await this.userRepo.save(users);
+            this.logger.log('✅ Users seeded successfully');
+        } catch (error) {
+            this.logger.error('❌ Error seeding users:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * ✅ FIX: Idempotent patient seeding dengan auto-generate MRN
+     */
     private async seedPatients() {
-        this.logger.log('Seeding tabel patients...');
+        try {
+            const existingPatients = await this.patientRepo.find();
+            
+            if (existingPatients.length > 0) {
+                this.logger.log('⏭️  Patients already exist, skipping...');
+                return;
+            }
 
-        const patients = [
-            {
-                nama_lengkap: 'Andi Wijaya',
-                nik: '1234567890123456',
-                nomor_rekam_medis: '20250831-001',
-                tanggal_lahir: new Date('1990-04-12'),
-                jenis_kelamin: 'L' as 'L' | 'P',
-                alamat: 'Jl. Melati No. 12, Bandung',
-                email: 'andi.wijaya@example.com',
-                no_hp: '081234567890',
-                is_registered_online: 1,
-            },
-            {
-                nama_lengkap: 'Dewi Anggraini',
-                nik: '0987654321098765',
-                nomor_rekam_medis: '20250831-002',
-                tanggal_lahir: new Date('1992-09-25'),
-                jenis_kelamin: 'P' as 'L' | 'P',
-                alamat: 'Jl. Kenanga No. 8, Jakarta',
-                email: 'dewi.anggraini@example.com',
-                no_hp: '081298765432',
-                is_registered_online: 1,
-            },
-            {
-                nama_lengkap: 'Rizki Pratama',
-                nik: '3216549870123456',
-                nomor_rekam_medis: '20250831-003',
-                tanggal_lahir: new Date('1988-12-05'),
-                jenis_kelamin: 'L' as 'L' | 'P',
-                alamat: 'Jl. Anggrek No. 3, Surabaya',
-                email: 'rizki.pratama@example.com',
-                no_hp: '081355512345',
-                is_registered_online: 0,
-            },
-            {
-                nama_lengkap: 'Siti Rahmawati',
-                nik: '6543210987654321',
-                nomor_rekam_medis: '20250831-004',
-                tanggal_lahir: new Date('1995-01-15'),
-                jenis_kelamin: 'P' as 'L' | 'P',
-                alamat: 'Jl. Merpati No. 20, Medan',
-                email: 'siti.rahmawati@example.com',
-                no_hp: '081244478901',
-                is_registered_online: 1,
-            },
-            {
-                nama_lengkap: 'Budi Santoso',
-                nik: '5678901234567890',
-                nomor_rekam_medis: '20250831-005',
-                tanggal_lahir: new Date('1987-07-09'),
-                jenis_kelamin: 'L' as 'L' | 'P',
-                alamat: 'Jl. Mawar No. 5, Yogyakarta',
-                email: 'budi.santoso@example.com',
-                no_hp: '081377765432',
-                is_registered_online: 0,
-            },
-        ];
+            this.logger.log('👤 Seeding patients...');
 
-        await this.patientRepo.save(patients as any);
+            const today = new Date();
+            const datePrefix = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, '0')}${today.getDate().toString().padStart(2, '0')}`;
 
-        this.logger.log('✅ Tabel patients berhasil di-seed.');
+            const patients = [
+                {
+                    nama_lengkap: 'Andi Wijaya',
+                    nik: '3201012345678901',
+                    nomor_rekam_medis: `${datePrefix}-001`,
+                    tanggal_lahir: new Date('1990-04-12'),
+                    jenis_kelamin: 'L' as 'L' | 'P',
+                    alamat: 'Jl. Melati No. 12, Bandung',
+                    email: 'andi.wijaya@example.com',
+                    no_hp: '081234567890',
+                    is_registered_online: true,
+                },
+                {
+                    nama_lengkap: 'Dewi Anggraini',
+                    nik: '3201012345678902',
+                    nomor_rekam_medis: `${datePrefix}-002`,
+                    tanggal_lahir: new Date('1992-09-25'),
+                    jenis_kelamin: 'P' as 'L' | 'P',
+                    alamat: 'Jl. Kenanga No. 8, Jakarta',
+                    email: 'dewi.anggraini@example.com',
+                    no_hp: '081298765432',
+                    is_registered_online: true,
+                },
+                {
+                    nama_lengkap: 'Rizki Pratama',
+                    nik: '3201012345678903',
+                    nomor_rekam_medis: `${datePrefix}-003`,
+                    tanggal_lahir: new Date('1988-12-05'),
+                    jenis_kelamin: 'L' as 'L' | 'P',
+                    alamat: 'Jl. Anggrek No. 3, Surabaya',
+                    email: 'rizki.pratama@example.com',
+                    no_hp: '081355512345',
+                    is_registered_online: false,
+                },
+                {
+                    nama_lengkap: 'Siti Rahmawati',
+                    nik: '3201012345678904',
+                    nomor_rekam_medis: `${datePrefix}-004`,
+                    tanggal_lahir: new Date('1995-01-15'),
+                    jenis_kelamin: 'P' as 'L' | 'P',
+                    alamat: 'Jl. Merpati No. 20, Medan',
+                    email: 'siti.rahmawati@example.com',
+                    no_hp: '081244478901',
+                    is_registered_online: true,
+                },
+                {
+                    nama_lengkap: 'Budi Santoso',
+                    nik: '3201012345678905',
+                    nomor_rekam_medis: `${datePrefix}-005`,
+                    tanggal_lahir: new Date('1987-07-09'),
+                    jenis_kelamin: 'L' as 'L' | 'P',
+                    alamat: 'Jl. Mawar No. 5, Yogyakarta',
+                    email: 'budi.santoso@example.com',
+                    no_hp: '081377765432',
+                    is_registered_online: false,
+                },
+            ];
+
+            await this.patientRepo.save(patients);
+            this.logger.log('✅ Patients seeded successfully');
+        } catch (error) {
+            this.logger.error('❌ Error seeding patients:', error);
+            throw error;
+        }
     }
 
+    /**
+     * ✅ FIX: Dynamic appointment dates (relative to today)
+     */
     private async seedAppointments() {
         try {
-            this.logger.log('📅 Seeding tabel appointments...');
+            const existingAppointments = await this.appointmentRepo.find();
+            
+            if (existingAppointments.length > 0) {
+                this.logger.log('⏭️  Appointments already exist, skipping...');
+                return;
+            }
+
+            this.logger.log('📅 Seeding appointments...');
 
             const dokter = await this.userRepo.findOne({
                 where: { username: 'anisa.putri' },
                 relations: ['roles']
             });
-            const patient1 = await this.patientRepo.findOneBy({ nik: '1234567890123456' });
-            const patient2 = await this.patientRepo.findOneBy({ nik: '0987654321098765' });
 
-            if (!dokter || !patient1 || !patient2) {
-                this.logger.error('❌ Dokter atau Pasien tidak ditemukan. Seeding appointments dibatalkan.');
-                return;
+            const patient1 = await this.patientRepo.findOneBy({ nik: '3201012345678901' });
+            const patient2 = await this.patientRepo.findOneBy({ nik: '3201012345678902' });
+            const patient3 = await this.patientRepo.findOneBy({ nik: '3201012345678903' });
+
+            if (!dokter || !patient1 || !patient2 || !patient3) {
+                throw new Error('Doctor or patients not found. Please run user and patient seeding first.');
             }
 
-            // ✅ CARA 1: Simpan dengan ID eksplisit
-            const appointment1 = await this.appointmentRepo.save({
-                patient_id: patient1.id,  // ✅ Gunakan ID langsung
-                doctor_id: dokter.id,     // ✅ Gunakan ID langsung
-                tanggal_janji: new Date('2025-09-01'),
-                jam_janji: '09:00:00',
-                status: AppointmentStatus.SELESAI,
-                keluhan: 'Gigi berlubang',
-            });
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
 
-            await this.appointmentRepo.save({
-                patient_id: patient2.id,  // ✅ Gunakan ID langsung
-                doctor_id: dokter.id,     // ✅ Gunakan ID langsung
-                tanggal_janji: new Date('2025-09-01'),
-                jam_janji: '10:00:00',
-                status: AppointmentStatus.DIJADWALKAN,
-                keluhan: 'Scaling rutin',
-            });
+            // ✅ FIX: Create appointments with dynamic dates
+            const appointments = [
+                // Appointment kemarin (sudah selesai)
+                {
+                    patient_id: patient1.id,
+                    doctor_id: dokter.id,
+                    tanggal_janji: new Date(today.getTime() - 24 * 60 * 60 * 1000), // Yesterday
+                    jam_janji: '09:00:00',
+                    status: AppointmentStatus.SELESAI,
+                    keluhan: 'Gigi berlubang di geraham kiri',
+                },
+                // Appointment besok (dijadwalkan)
+                {
+                    patient_id: patient2.id,
+                    doctor_id: dokter.id,
+                    tanggal_janji: new Date(today.getTime() + 24 * 60 * 60 * 1000), // Tomorrow
+                    jam_janji: '10:00:00',
+                    status: AppointmentStatus.DIJADWALKAN,
+                    keluhan: 'Scaling rutin',
+                },
+                // Appointment lusa (dijadwalkan)
+                {
+                    patient_id: patient3.id,
+                    doctor_id: dokter.id,
+                    tanggal_janji: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
+                    jam_janji: '14:00:00',
+                    status: AppointmentStatus.DIJADWALKAN,
+                    keluhan: 'Pemeriksaan rutin',
+                },
+            ];
 
-            // Seed medical record
+            const savedAppointments = await this.appointmentRepo.save(appointments);
+            this.logger.log('✅ Appointments seeded successfully');
+
+            // Seed medical record untuk appointment yang sudah selesai
+            const completedAppointment = savedAppointments[0];
+            
             await this.medicalRecordRepo.save({
-                appointment_id: appointment1.id,  // ✅ Gunakan ID langsung
+                appointment_id: completedAppointment.id,
                 user_id_staff: dokter.id,
-                subjektif: 'Pasien mengeluh sakit gigi',
-                objektif: 'Terdapat karies pada gigi geraham',
-                assessment: 'Gigi berlubang ringan',
-                plan: 'Penambalan komposit',
+                subjektif: 'Pasien mengeluh sakit gigi sejak 3 hari yang lalu, terutama saat makan dan minum dingin',
+                objektif: 'Terdapat karies profunda pada gigi 36 (geraham pertama bawah kiri), tidak ada pembengkakan gusi',
+                assessment: 'Karies profunda gigi 36, perlu perawatan saluran akar (root canal treatment)',
+                plan: 'Rencana: 1) Foto rontgen panoramik, 2) Perawatan saluran akar 3 kali kunjungan, 3) Crown restoration setelah perawatan selesai',
             });
 
-            this.logger.log('✅ Appointments berhasil di-seed');
+            this.logger.log('✅ Medical records seeded successfully');
+
         } catch (error) {
-            this.logger.error('❌ Error saat seed appointments:', error);
+            this.logger.error('❌ Error seeding appointments:', error);
             throw error;
         }
     }

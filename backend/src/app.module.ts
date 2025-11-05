@@ -18,27 +18,44 @@ import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { LoggingInterceptor } from './common/interceptors/logging/logging.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { envValidationSchema } from './config/env.validation'; // ✅ Import validation schema
+import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
 
 @Module({
   imports: [
     // ✅ Config Module dengan validasi
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath: ['.env.local', '.env'], // ✅ Support multiple env files
       cache: true,
+      validationSchema: envValidationSchema, // ✅ Validate environment variables
+      validationOptions: {
+        allowUnknown: true, // Allow extra env vars
+        abortEarly: false,  // Show all validation errors
+      },
+      load: [databaseConfig, jwtConfig], // ✅ Load typed configurations
     }),
 
     // ✅ Throttling untuk rate limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 60 detik
-      limit: 100, // 100 request per menit per IP
-    }]),
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [{
+        ttl: configService.get<number>('THROTTLE_TTL', 60000),
+        limit: configService.get<number>('THROTTLE_LIMIT', 100),
+      }],
+    }),
 
     // ✅ Caching global
-    CacheModule.register({
+    CacheModule.registerAsync({
       isGlobal: true,
-      ttl: 300, // 5 menit default
-      max: 100, // Max 100 items
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        ttl: configService.get<number>('CACHE_TTL', 300),
+        max: configService.get<number>('CACHE_MAX', 100),
+      }),
     }),
 
     // ✅ Database dengan connection pooling
@@ -47,11 +64,11 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         type: 'mysql',
-        host: configService.get('DB_HOST', 'localhost'),
-        port: configService.get('DB_PORT', 3306),
-        username: configService.get('DB_USERNAME', 'root'),
-        password: configService.get('DB_PASSWORD', ''),
-        database: configService.get('DB_NAME', 'dentizy_db'),
+        host: configService.get('DB_HOST'),
+        port: configService.get('DB_PORT'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
         autoLoadEntities: true,
         synchronize: configService.get('NODE_ENV') !== 'production', // ⚠️ PENTING
         logging: configService.get('NODE_ENV') === 'development',
@@ -60,6 +77,9 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
           connectionLimit: 10,
           connectTimeout: 60000,
         },
+        // ✅ Retry logic
+        retryAttempts: 3,
+        retryDelay: 3000,
       }),
     }),
 

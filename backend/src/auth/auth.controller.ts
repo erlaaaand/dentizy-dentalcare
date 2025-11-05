@@ -1,12 +1,13 @@
 import { Controller, Post, Body, ValidationPipe, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { RegisterUserDto } from './dto/register-user.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from './guards/roles.guard';
-import { Roles } from './decorators/roles.decorator';
-import { UserRole } from '../roles/entities/role.entity';
+import { GetUser } from './decorators/get-user.decorator';
+import { User } from '../users/entities/user.entity';
 
+/**
+ * ✅ FIX: Remove register endpoint (use UsersController instead)
+ */
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) { }
@@ -16,10 +17,20 @@ export class AuthController {
         return this.authService.login(loginDto);
     }
 
-    @Post('register')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(UserRole.KEPALA_KLINIK) // Hanya Kepala Klinik yang bisa membuat akun
-    async register(@Body(ValidationPipe) registerUserDto: RegisterUserDto) {
-        return this.authService.register(registerUserDto);
+    /**
+     * ✅ NEW: Refresh token endpoint
+     */
+    @Post('refresh')
+    @UseGuards(AuthGuard('jwt'))
+    async refresh(@GetUser() user: User) {
+        return this.authService.refreshToken(user.id);
+    }
+
+    /**
+     * ✅ NEW: Verify token endpoint
+     */
+    @Post('verify')
+    async verify(@Body('token') token: string) {
+        return this.authService.verifyToken(token);
     }
 }

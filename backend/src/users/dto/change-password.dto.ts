@@ -9,9 +9,9 @@ export class ChangePasswordDto {
     @IsString()
     @MinLength(8, { message: 'Password baru minimal 8 karakter' })
     @Matches(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/,
         {
-            message: 'Password harus mengandung huruf besar, huruf kecil, dan angka'
+            message: 'Password harus mengandung: huruf besar, huruf kecil, angka, dan karakter khusus (@$!%*?&#)'
         }
     )
     newPassword: string;

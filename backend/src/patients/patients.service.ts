@@ -6,10 +6,11 @@ import {
     Logger 
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Like, Repository } from 'typeorm';
+import { Like, Repository, DataSource } from 'typeorm';
 import { Patient } from './entities/patient.entity';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
+import { SearchPatientDto } from './dto/search-patient.dto';
 
 @Injectable()
 export class PatientsService {
@@ -18,16 +19,21 @@ export class PatientsService {
     constructor(
         @InjectRepository(Patient)
         private readonly patientRepository: Repository<Patient>,
+        private readonly dataSource: DataSource, // ✅ Inject DataSource untuk transaction
     ) { }
 
     /**
-     * Buat pasien baru dengan nomor rekam medis otomatis
+     * ✅ FIX: Buat pasien dengan transaction untuk avoid race condition
      */
     async create(createPatientDto: CreatePatientDto): Promise<Patient> {
+        const queryRunner = this.dataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
         try {
             // 1. CEK: NIK sudah ada atau belum (jika diisi)
             if (createPatientDto.nik) {
-                const existingPatientByNik = await this.patientRepository.findOne({
+                const existingPatientByNik = await queryRunner.manager.findOne(Patient, {
                     where: { nik: createPatientDto.nik }
                 });
 
@@ -38,7 +44,7 @@ export class PatientsService {
 
             // 2. CEK: Email sudah ada atau belum (jika diisi)
             if (createPatientDto.email) {
-                const existingPatientByEmail = await this.patientRepository.findOne({
+                const existingPatientByEmail = await queryRunner.manager.findOne(Patient, {
                     where: { email: createPatientDto.email }
                 });
 
@@ -47,41 +53,63 @@ export class PatientsService {
                 }
             }
 
-            // 3. GENERATE NOMOR REKAM MEDIS
-            const nomorRekamMedis = await this.generateMedicalRecordNumber();
+            // 3. GENERATE NOMOR REKAM MEDIS dengan LOCKING
+            const nomorRekamMedis = await this.generateMedicalRecordNumber(queryRunner.manager);
 
-            // 4. BUAT PASIEN BARU
-            const newPatient = this.patientRepository.create({
+            // 4. Validasi tanggal lahir tidak boleh > hari ini
+            if (createPatientDto.tanggal_lahir) {
+                const birthDate = new Date(createPatientDto.tanggal_lahir);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (birthDate > today) {
+                    throw new BadRequestException('Tanggal lahir tidak boleh di masa depan');
+                }
+            }
+
+            // 5. BUAT PASIEN BARU
+            const newPatient = queryRunner.manager.create(Patient, {
                 ...createPatientDto,
                 nomor_rekam_medis: nomorRekamMedis,
+                tanggal_lahir: createPatientDto.tanggal_lahir 
+                    ? new Date(createPatientDto.tanggal_lahir) 
+                    : undefined,
             });
 
-            const savedPatient = await this.patientRepository.save(newPatient);
+            const savedPatient = await queryRunner.manager.save(newPatient);
 
-            this.logger.log(`Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`);
+            await queryRunner.commitTransaction();
+
+            this.logger.log(`✅ Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`);
 
             return savedPatient;
 
         } catch (error) {
-            if (error instanceof ConflictException) {
+            await queryRunner.rollbackTransaction();
+            
+            if (error instanceof ConflictException || error instanceof BadRequestException) {
                 throw error;
             }
 
-            this.logger.error('Error creating patient:', error);
+            this.logger.error('❌ Error creating patient:', error);
             throw new BadRequestException('Gagal mendaftarkan pasien baru');
+        } finally {
+            await queryRunner.release();
         }
     }
 
     /**
-     * Ambil semua pasien
+     * ✅ FIX: Ambil semua pasien dengan pagination
      */
-    async findAll(): Promise<Patient[]> {
+    async findAll(query: SearchPatientDto): Promise<any> {
         try {
-            const patients = await this.patientRepository.find({
+            const { page = 1, limit = 10 } = query;
+            const skip = (page - 1) * limit;
+
+            const [patients, total] = await this.patientRepository.findAndCount({
                 order: {
                     created_at: 'DESC',
                 },
-                // Bisa tambahkan select untuk optimize
                 select: [
                     'id',
                     'nomor_rekam_medis',
@@ -92,16 +120,82 @@ export class PatientsService {
                     'email',
                     'no_hp',
                     'created_at'
-                ]
+                ],
+                take: limit,
+                skip: skip,
             });
 
-            this.logger.log(`Retrieved ${patients.length} patients`);
+            this.logger.log(`📋 Retrieved ${patients.length}/${total} patients (page ${page})`);
 
-            return patients;
+            return {
+                data: patients,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit),
+                },
+            };
 
         } catch (error) {
-            this.logger.error('Error fetching patients:', error);
+            this.logger.error('❌ Error fetching patients:', error);
             throw new BadRequestException('Gagal mengambil daftar pasien');
+        }
+    }
+
+    /**
+     * ✅ NEW: Search patients dengan multiple criteria
+     */
+    async search(query: SearchPatientDto): Promise<any> {
+        try {
+            const { search, page = 1, limit = 10 } = query;
+            const skip = (page - 1) * limit;
+
+            if (!search || search.trim().length < 3) {
+                throw new BadRequestException('Kata kunci pencarian minimal 3 karakter');
+            }
+
+            const queryBuilder = this.patientRepository
+                .createQueryBuilder('patient')
+                .select([
+                    'patient.id',
+                    'patient.nomor_rekam_medis',
+                    'patient.nik',
+                    'patient.nama_lengkap',
+                    'patient.tanggal_lahir',
+                    'patient.jenis_kelamin',
+                    'patient.email',
+                    'patient.no_hp',
+                ])
+                .where('patient.nama_lengkap LIKE :search', { search: `%${search}%` })
+                .orWhere('patient.nik LIKE :search', { search: `%${search}%` })
+                .orWhere('patient.nomor_rekam_medis LIKE :search', { search: `%${search}%` })
+                .orWhere('patient.email LIKE :search', { search: `%${search}%` })
+                .orderBy('patient.nama_lengkap', 'ASC')
+                .take(limit)
+                .skip(skip);
+
+            const [patients, total] = await queryBuilder.getManyAndCount();
+
+            this.logger.log(`🔍 Found ${patients.length}/${total} patients for "${search}"`);
+
+            return {
+                data: patients,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    totalPages: Math.ceil(total / limit),
+                },
+            };
+
+        } catch (error) {
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
+
+            this.logger.error('❌ Error searching patients:', error);
+            throw new BadRequestException('Gagal mencari pasien');
         }
     }
 
@@ -112,7 +206,7 @@ export class PatientsService {
         try {
             const patient = await this.patientRepository.findOne({
                 where: { id },
-                relations: ['appointments'], // Include appointments untuk history
+                relations: ['appointments'],
             });
 
             if (!patient) {
@@ -126,13 +220,13 @@ export class PatientsService {
                 throw error;
             }
 
-            this.logger.error(`Error finding patient ID ${id}:`, error);
+            this.logger.error(`❌ Error finding patient ID ${id}:`, error);
             throw new BadRequestException('Gagal mengambil data pasien');
         }
     }
 
     /**
-     * FITUR BARU: Cari pasien by nomor rekam medis
+     * Cari pasien by nomor rekam medis
      */
     async findByMedicalRecordNumber(nomorRekamMedis: string): Promise<Patient> {
         try {
@@ -154,13 +248,13 @@ export class PatientsService {
                 throw error;
             }
 
-            this.logger.error(`Error finding patient by medical record number:`, error);
+            this.logger.error(`❌ Error finding patient by medical record number:`, error);
             throw new BadRequestException('Gagal mencari pasien');
         }
     }
 
     /**
-     * FITUR BARU: Cari pasien by NIK
+     * Cari pasien by NIK
      */
     async findByNik(nik: string): Promise<Patient> {
         try {
@@ -180,40 +274,7 @@ export class PatientsService {
                 throw error;
             }
 
-            this.logger.error(`Error finding patient by NIK:`, error);
-            throw new BadRequestException('Gagal mencari pasien');
-        }
-    }
-
-    /**
-     * FITUR BARU: Search pasien by nama (partial match)
-     */
-    async searchByName(name: string): Promise<Patient[]> {
-        try {
-            if (!name || name.trim().length < 3) {
-                throw new BadRequestException('Nama minimal 3 karakter');
-            }
-
-            const patients = await this.patientRepository.find({
-                where: {
-                    nama_lengkap: Like(`%${name}%`)
-                },
-                take: 20, // Limit hasil untuk performa
-                order: {
-                    nama_lengkap: 'ASC'
-                }
-            });
-
-            this.logger.log(`Found ${patients.length} patients matching "${name}"`);
-
-            return patients;
-
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-
-            this.logger.error('Error searching patients:', error);
+            this.logger.error(`❌ Error finding patient by NIK:`, error);
             throw new BadRequestException('Gagal mencari pasien');
         }
     }
@@ -223,14 +284,13 @@ export class PatientsService {
      */
     async update(id: number, updatePatientDto: UpdatePatientDto): Promise<Patient> {
         try {
-            // 1. CEK: Pasien ada atau tidak
             const patient = await this.patientRepository.findOneBy({ id });
 
             if (!patient) {
                 throw new NotFoundException(`Pasien dengan ID #${id} tidak ditemukan`);
             }
 
-            // 2. CEK: Jika update NIK, pastikan tidak duplicate
+            // CEK: Jika update NIK, pastikan tidak duplicate
             if (updatePatientDto.nik && updatePatientDto.nik !== patient.nik) {
                 const existingPatient = await this.patientRepository.findOne({
                     where: { nik: updatePatientDto.nik }
@@ -241,7 +301,7 @@ export class PatientsService {
                 }
             }
 
-            // 3. CEK: Jika update email, pastikan tidak duplicate
+            // CEK: Jika update email, pastikan tidak duplicate
             if (updatePatientDto.email && updatePatientDto.email !== patient.email) {
                 const existingPatient = await this.patientRepository.findOne({
                     where: { email: updatePatientDto.email }
@@ -252,20 +312,36 @@ export class PatientsService {
                 }
             }
 
-            // 4. UPDATE DATA
+            // Validasi tanggal lahir
+            if (updatePatientDto.tanggal_lahir) {
+                const birthDate = new Date(updatePatientDto.tanggal_lahir);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (birthDate > today) {
+                    throw new BadRequestException('Tanggal lahir tidak boleh di masa depan');
+                }
+            }
+
+            // UPDATE DATA
             Object.assign(patient, updatePatientDto);
+            
+            if (updatePatientDto.tanggal_lahir) {
+                patient.tanggal_lahir = new Date(updatePatientDto.tanggal_lahir);
+            }
+
             const updatedPatient = await this.patientRepository.save(patient);
 
-            this.logger.log(`Patient updated: #${id} - ${updatedPatient.nama_lengkap}`);
+            this.logger.log(`✅ Patient updated: #${id} - ${updatedPatient.nama_lengkap}`);
 
             return updatedPatient;
 
         } catch (error) {
-            if (error instanceof NotFoundException || error instanceof ConflictException) {
+            if (error instanceof NotFoundException || error instanceof ConflictException || error instanceof BadRequestException) {
                 throw error;
             }
 
-            this.logger.error(`Error updating patient ID ${id}:`, error);
+            this.logger.error(`❌ Error updating patient ID ${id}:`, error);
             throw new BadRequestException('Gagal mengupdate data pasien');
         }
     }
@@ -293,24 +369,22 @@ export class PatientsService {
 
             await this.patientRepository.remove(patient);
 
-            this.logger.log(`Patient deleted: #${id} - ${patient.nama_lengkap}`);
+            this.logger.log(`🗑️ Patient deleted: #${id} - ${patient.nama_lengkap}`);
 
         } catch (error) {
             if (error instanceof NotFoundException || error instanceof ConflictException) {
                 throw error;
             }
 
-            this.logger.error(`Error deleting patient ID ${id}:`, error);
+            this.logger.error(`❌ Error deleting patient ID ${id}:`, error);
             throw new BadRequestException('Gagal menghapus pasien');
         }
     }
 
     /**
-     * Generate nomor rekam medis otomatis
-     * Format: YYYYMMDD-XXX
-     * Contoh: 20250831-001
+     * ✅ FIX: Generate nomor rekam medis dengan EntityManager (support transaction & locking)
      */
-    private async generateMedicalRecordNumber(): Promise<string> {
+    private async generateMedicalRecordNumber(manager: any): Promise<string> {
         try {
             const today = new Date();
             const year = today.getFullYear();
@@ -318,16 +392,17 @@ export class PatientsService {
             const day = today.getDate().toString().padStart(2, '0');
             const datePrefix = `${year}${month}${day}`;
 
-            // Cari nomor terakhir hari ini
-            const lastPatientToday = await this.patientRepository.findOne({
-                where: { nomor_rekam_medis: Like(`${datePrefix}-%`) },
-                order: { nomor_rekam_medis: 'DESC' },
-            });
+            // ✅ FIX: Gunakan FOR UPDATE untuk locking
+            const lastPatientToday = await manager
+                .createQueryBuilder(Patient, 'patient')
+                .where('patient.nomor_rekam_medis LIKE :prefix', { prefix: `${datePrefix}-%` })
+                .orderBy('patient.nomor_rekam_medis', 'DESC')
+                .setLock('pessimistic_write') // ✅ CRITICAL: Lock row untuk prevent race condition
+                .getOne();
 
             let nextSequence = 1;
 
             if (lastPatientToday) {
-                // Ambil sequence dari nomor terakhir
                 const lastSequence = parseInt(
                     lastPatientToday.nomor_rekam_medis.split('-')[1]
                 );
@@ -337,12 +412,12 @@ export class PatientsService {
             const sequenceString = nextSequence.toString().padStart(3, '0');
             const nomorRekamMedis = `${datePrefix}-${sequenceString}`;
 
-            this.logger.log(`Generated medical record number: ${nomorRekamMedis}`);
+            this.logger.log(`📋 Generated medical record number: ${nomorRekamMedis}`);
 
             return nomorRekamMedis;
 
         } catch (error) {
-            this.logger.error('Error generating medical record number:', error);
+            this.logger.error('❌ Error generating medical record number:', error);
             throw new Error('Gagal generate nomor rekam medis');
         }
     }

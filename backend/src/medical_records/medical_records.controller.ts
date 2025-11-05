@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ValidationPipe, ParseIntPipe } from '@nestjs/common';
+import { 
+    Controller, 
+    Get, 
+    Post, 
+    Body, 
+    Patch, 
+    Param, 
+    Delete, 
+    UseGuards, 
+    ValidationPipe, 
+    ParseIntPipe 
+} from '@nestjs/common';
 import { MedicalRecordsService } from './medical_records.service';
 import { CreateMedicalRecordDto } from './dto/create-medical_record.dto';
 import { UpdateMedicalRecordDto } from './dto/update-medical_record.dto';
@@ -15,7 +26,7 @@ export class MedicalRecordsController {
     constructor(private readonly medicalRecordsService: MedicalRecordsService) { }
 
     @Post()
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
     create(
         @Body(ValidationPipe) createMedicalRecordDto: CreateMedicalRecordDto,
         @GetUser() user: User,
@@ -24,25 +35,31 @@ export class MedicalRecordsController {
     }
 
     @Get()
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
     findAll(@GetUser() user: User) {
         return this.medicalRecordsService.findAll(user);
     }
 
+    /**
+     * ✅ FIX: Pass user untuk authorization check
+     */
     @Get('by-appointment/:appointmentId')
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
-    findByAppointmentId(@Param('appointmentId', ParseIntPipe) appointmentId: number) {
-        return this.medicalRecordsService.findByAppointmentId(appointmentId);
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
+    findByAppointmentId(
+        @Param('appointmentId', ParseIntPipe) appointmentId: number,
+        @GetUser() user: User // ✅ FIX: Tambah @GetUser()
+    ) {
+        return this.medicalRecordsService.findByAppointmentId(appointmentId, user);
     }
 
     @Get(':id')
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
     findOne(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.medicalRecordsService.findOne(id, user);
     }
 
     @Patch(':id')
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK
+    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
     update(
         @Param('id', ParseIntPipe) id: number,
         @Body(ValidationPipe) updateMedicalRecordDto: UpdateMedicalRecordDto,
@@ -52,7 +69,7 @@ export class MedicalRecordsController {
     }
 
     @Delete(':id')
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Tambah KEPALA_KLINIK (punya hak hapus juga)
+    @Roles(UserRole.KEPALA_KLINIK) // ✅ FIX: Hanya kepala klinik yang bisa hapus
     remove(@Param('id', ParseIntPipe) id: number, @GetUser() user: User) {
         return this.medicalRecordsService.remove(id, user);
     }

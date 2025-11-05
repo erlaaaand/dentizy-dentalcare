@@ -1,12 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { Throttle } from '@nestjs/throttler';
 
 /**
- * Health Check Controller
- * Endpoint untuk monitoring status aplikasi dan dependencies
+ * ✅ FIX: Tambah rate limiting untuk prevent DDoS
  */
 @Controller('health')
+@Throttle({ default: { limit: 10, ttl: 60000 } }) // Max 10 requests per minute
 export class HealthController {
     constructor(
         @InjectDataSource()
@@ -14,8 +15,7 @@ export class HealthController {
     ) { }
 
     /**
-     * Basic health check - cek apakah aplikasi running
-     * GET /health
+     * Basic health check
      */
     @Get()
     check() {
@@ -28,8 +28,7 @@ export class HealthController {
     }
 
     /**
-     * Detailed health check - cek status database
-     * GET /health/details
+     * Detailed health check
      */
     @Get('details')
     async checkDetails() {
@@ -78,10 +77,6 @@ export class HealthController {
         };
     }
 
-    /**
-     * Liveness probe - untuk Kubernetes/Docker health check
-     * GET /health/live
-     */
     @Get('live')
     liveness() {
         return {
@@ -90,14 +85,9 @@ export class HealthController {
         };
     }
 
-    /**
-     * Readiness probe - cek apakah app siap menerima traffic
-     * GET /health/ready
-     */
     @Get('ready')
     async readiness() {
         try {
-            // Cek koneksi database
             await this.dataSource.query('SELECT 1');
             
             return {
