@@ -19,28 +19,26 @@ export class AuthService {
     ) { }
 
     /**
-     * ✅ FIX: Validasi username dan password dengan comprehensive timing attack prevention
+     * ✅ CORRECT: Validasi username dan password dengan proper variable declarations
      */
     async validateUser(username: string, pass: string): Promise<any> {
         const startTime = Date.now();
-        let user = null;
-        let isPasswordValid = false;
 
         try {
-            // Fetch user
+            // ✅ CORRECT: Fetch user dengan const
             const user = await this.usersService.findOneByUsername(username);
             
-            // ✅ FIX: Always perform bcrypt.compare untuk prevent timing attack
+            // ✅ CORRECT: Always perform bcrypt.compare untuk prevent timing attack
             const passwordToCheck = user?.password || this.DUMMY_HASH;
-            isPasswordValid = await bcrypt.compare(pass, passwordToCheck);
+            const isPasswordValid = await bcrypt.compare(pass, passwordToCheck);
 
-            // ✅ FIX: Ensure minimum response time BEFORE checking credentials
+            // ✅ Ensure minimum response time BEFORE checking credentials
             await this.ensureMinimumResponseTime(startTime);
 
             // Validate both user existence and password
             if (!user || !isPasswordValid) {
                 // SECURITY: Generic error log untuk prevent user enumeration
-                this.logger.warn(`Failed login attempt`); // No username in log
+                this.logger.warn(`Failed login attempt`);
                 return null;
             }
 
@@ -55,7 +53,7 @@ export class AuthService {
             return result;
             
         } catch (error) {
-            // ✅ FIX: Ensure timing even on error
+            // ✅ Ensure timing even on error
             await this.ensureMinimumResponseTime(startTime);
             
             this.logger.error(`Error validating user:`, error.message);
@@ -64,7 +62,7 @@ export class AuthService {
     }
 
     /**
-     * ✅ NEW: Ensure minimum response time to prevent timing attacks
+     * ✅ Ensure minimum response time to prevent timing attacks
      */
     private async ensureMinimumResponseTime(startTime: number): Promise<void> {
         const elapsed = Date.now() - startTime;
@@ -109,7 +107,7 @@ export class AuthService {
                 },
             };
         } catch (error) {
-            // ✅ FIX: Ensure consistent response time even on error
+            // ✅ Ensure consistent response time even on error
             await this.ensureMinimumResponseTime(startTime);
             throw error;
         }
@@ -151,7 +149,7 @@ export class AuthService {
     }
 
     /**
-     * FITUR BARU: Verify token (untuk middleware atau frontend)
+     * Verify token (untuk middleware atau frontend)
      */
     async verifyToken(token: string) {
         try {
@@ -163,7 +161,7 @@ export class AuthService {
     }
 
     /**
-     * FITUR BARU: Refresh token (opsional, untuk extend session)
+     * Refresh token (opsional, untuk extend session)
      */
     async refreshToken(userId: number) {
         try {

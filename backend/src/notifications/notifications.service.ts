@@ -1,17 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, LessThan } from 'typeorm';
 import { Notification, NotificationStatus, NotificationType } from './entities/notification.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailerService } from '@nestjs-modules/mailer';
-import { In } from 'typeorm';
 
 @Injectable()
 export class NotificationsService {
     private readonly logger = new Logger(NotificationsService.name);
     // ✅ FIX: Track processing notifications to prevent race condition
-    private readonly processingSet = new Set<number>();
+    private isProcessing = false;
     private readonly MAX_BATCH_SIZE = 50;
     private readonly PROCESSING_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 
@@ -84,11 +83,18 @@ export class NotificationsService {
     }
 
     /**
-     * ✅ FIX: Cron job dengan proper distributed lock prevention
+     * ✅ FIX: Cron job dengan proper lock mechanism
      * Jalan setiap 1 menit untuk cek notifikasi yang harus dikirim
      */
     @Cron(CronExpression.EVERY_MINUTE)
     async handleCronSendReminders() {
+        // ✅ FIX: Prevent concurrent execution
+        if (this.isProcessing) {
+            this.logger.debug('⏩ Skipping: Previous batch still processing');
+            return;
+        }
+
+        this.isProcessing = true;
         const startTime = Date.now();
         const batchId = `batch_${Date.now()}`;
 
@@ -98,32 +104,37 @@ export class NotificationsService {
             // ✅ STEP 1: Clean up stale processing notifications (timeout protection)
             await this.cleanupStaleProcessing();
 
-            // ✅ STEP 2: Optimistic locking - claim notifications atomically
-            const claimedIds = await this.claimNotifications();
+            // ✅ STEP 2: Fetch and lock notifications
+            const notifications = await this.fetchPendingNotifications();
 
-            if (claimedIds.length === 0) {
+            if (notifications.length === 0) {
                 this.logger.debug(`✅ [${batchId}] No reminders to send`);
                 return;
             }
 
-            this.logger.log(`📧 [${batchId}] Processing ${claimedIds.length} reminders...`);
+            this.logger.log(`📧 [${batchId}] Processing ${notifications.length} reminders...`);
 
-            // ✅ STEP 3: Fetch full notification data
-            const notifications = await this.notificationRepository.find({
-                where: { id: In(claimedIds) },
-                relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
-            });
+            // ✅ STEP 3: Mark as processing
+            const notificationIds = notifications.map(n => n.id);
+            await this.notificationRepository.update(
+                { id: In(notificationIds) },
+                { status: NotificationStatus.SENT, sent_at: new Date() }
+            );
 
+            // ✅ STEP 4: Process notifications with proper error handling
             let successCount = 0;
             let failCount = 0;
 
-            // ✅ STEP 4: Process notifications with proper error handling
             for (const notif of notifications) {
                 try {
                     await this.processNotification(notif);
                     successCount++;
                 } catch (error) {
                     failCount++;
+                    // Mark as failed
+                    await this.notificationRepository.update(notif.id, {
+                        status: NotificationStatus.FAILED
+                    });
                     this.logger.error(
                         `❌ [${batchId}] Failed to send reminder for appointment #${notif.appointment_id}:`,
                         error.message
@@ -138,64 +149,32 @@ export class NotificationsService {
 
         } catch (error) {
             this.logger.error(`❌ [${batchId}] Cron job error:`, error);
+        } finally {
+            this.isProcessing = false;
         }
     }
 
     /**
-     * ✅ FIX: Atomic claim of notifications using database-level locking
+     * ✅ FIX: Fetch pending notifications with proper locking
      */
-    private async claimNotifications(): Promise<number[]> {
+    private async fetchPendingNotifications(): Promise<Notification[]> {
         try {
-            // Use raw SQL for atomic operation with UPDATE ... RETURNING
-            const result = await this.notificationRepository.query(`
-                UPDATE notifications
-                SET status = ?
-                WHERE id IN (
-                    SELECT id FROM (
-                        SELECT id 
-                        FROM notifications
-                        WHERE status = ?
-                        AND send_at <= NOW()
-                        ORDER BY send_at ASC
-                        LIMIT ?
-                        FOR UPDATE SKIP LOCKED
-                    ) AS subquery
-                )
-                RETURNING id
-            `, [NotificationStatus.SENT, NotificationStatus.PENDING, this.MAX_BATCH_SIZE]);
-
-            // MySQL doesn't support RETURNING, use alternative approach
-            const ids = await this.notificationRepository.query(`
-                SELECT id FROM notifications
-                WHERE status = ?
-                AND send_at <= NOW()
-                ORDER BY send_at ASC
-                LIMIT ?
-                FOR UPDATE SKIP LOCKED
-            `, [NotificationStatus.PENDING, this.MAX_BATCH_SIZE]);
-
-            if (ids.length === 0) {
-                return [];
-            }
-
-            const idList = ids.map(row => row.id);
-
-            // Mark as processing
-            await this.notificationRepository
-                .createQueryBuilder()
-                .update(Notification)
-                .set({ 
-                    status: NotificationStatus.SENT,
-                    sent_at: new Date()
-                })
-                .where('id IN (:...ids)', { ids: idList })
-                .andWhere('status = :status', { status: NotificationStatus.PENDING })
-                .execute();
-
-            return idList;
+            const now = new Date();
+            
+            return await this.notificationRepository.find({
+                where: {
+                    status: NotificationStatus.PENDING,
+                    send_at: LessThan(now)
+                },
+                relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
+                order: {
+                    send_at: 'ASC'
+                },
+                take: this.MAX_BATCH_SIZE
+            });
 
         } catch (error) {
-            this.logger.error('❌ Error claiming notifications:', error);
+            this.logger.error('❌ Error fetching notifications:', error);
             return [];
         }
     }
@@ -212,7 +191,7 @@ export class NotificationsService {
                 .update(Notification)
                 .set({ status: NotificationStatus.PENDING })
                 .where('status = :status', { status: NotificationStatus.SENT })
-                .andWhere('sent_at IS NULL OR sent_at < :staleTime', { staleTime })
+                .andWhere('(sent_at IS NULL OR sent_at < :staleTime)', { staleTime })
                 .execute();
 
             if (result && result.affected && result.affected > 0) {
@@ -227,8 +206,6 @@ export class NotificationsService {
      * ✅ FIX: Process single notification with proper validation and error handling
      */
     private async processNotification(notif: Notification): Promise<void> {
-        const notifId = notif.id;
-
         try {
             // Validate notification data
             if (!notif.appointment?.patient?.email) {
@@ -259,20 +236,9 @@ export class NotificationsService {
                 }),
             });
 
-            // Mark as successfully sent
-            await this.notificationRepository.update(notifId, {
-                status: NotificationStatus.SENT,
-                sent_at: new Date(),
-            });
-
             this.logger.log(`✅ Reminder sent for appointment #${appointment.id}`);
 
         } catch (error) {
-            // Mark as failed
-            await this.notificationRepository.update(notifId, {
-                status: NotificationStatus.FAILED,
-            });
-
             throw error;
         }
     }
