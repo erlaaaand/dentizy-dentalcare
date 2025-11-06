@@ -1,29 +1,51 @@
 import api from './axiosInstance';
 
 // --- Tipe Data (DTO) ---
-// Mencerminkan DTO di backend untuk konsistensi data
-
 interface CreatePatientDto {
   nama_lengkap: string;
   nik?: string;
   email?: string;
-  // Tambahkan properti lain jika ada, misal: tanggal_lahir, alamat
+  no_hp?: string;
+  tanggal_lahir?: string;
+  jenis_kelamin?: 'L' | 'P';
+  alamat?: string;
 }
 
 interface UpdatePatientDto {
   nama_lengkap?: string;
   nik?: string;
   email?: string;
+  no_hp?: string;
+  tanggal_lahir?: string;
+  jenis_kelamin?: 'L' | 'P';
+  alamat?: string;
+}
+
+interface SearchPatientDto {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// ✅ Tipe response dari backend (dengan pagination)
+interface PaginatedPatientsResponse {
+  data: any[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
 }
 
 // --- Fungsi-fungsi API ---
 
 /**
- * Mengambil semua data pasien dari backend.
+ * Mengambil semua data pasien dari backend (dengan pagination).
  */
-export const getAllPatients = async () => {
+export const getAllPatients = async (params?: SearchPatientDto): Promise<PaginatedPatientsResponse> => {
   try {
-    const response = await api.get('/patients');
+    const response = await api.get('/patients', { params });
     return response.data;
   } catch (error) {
     console.error('Gagal mengambil data pasien:', error);
@@ -32,8 +54,20 @@ export const getAllPatients = async () => {
 };
 
 /**
+ * Search pasien dengan keyword
+ */
+export const searchPatients = async (params: SearchPatientDto): Promise<PaginatedPatientsResponse> => {
+  try {
+    const response = await api.get('/patients/search', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Gagal mencari pasien:', error);
+    throw error;
+  }
+};
+
+/**
  * Mengambil satu data pasien berdasarkan ID.
- * @param id - ID dari pasien.
  */
 export const getPatientById = async (id: number) => {
   try {
@@ -46,8 +80,33 @@ export const getPatientById = async (id: number) => {
 };
 
 /**
+ * Mengambil pasien berdasarkan nomor rekam medis
+ */
+export const getPatientByMedicalRecord = async (number: string) => {
+  try {
+    const response = await api.get(`/patients/by-medical-record/${number}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Gagal mengambil pasien dengan no RM ${number}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Mengambil pasien berdasarkan NIK
+ */
+export const getPatientByNik = async (nik: string) => {
+  try {
+    const response = await api.get(`/patients/by-nik/${nik}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Gagal mengambil pasien dengan NIK ${nik}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Mendaftarkan pasien baru ke sistem.
- * @param data - Data untuk pasien baru.
  */
 export const createPatient = async (data: CreatePatientDto) => {
   try {
@@ -61,8 +120,6 @@ export const createPatient = async (data: CreatePatientDto) => {
 
 /**
  * Mengupdate data pasien yang sudah ada.
- * @param id - ID pasien yang akan diupdate.
- * @param data - Data yang akan diubah.
  */
 export const updatePatient = async (id: number, data: UpdatePatientDto) => {
   try {
@@ -76,7 +133,6 @@ export const updatePatient = async (id: number, data: UpdatePatientDto) => {
 
 /**
  * Menghapus data pasien dari sistem.
- * @param id - ID pasien yang akan dihapus.
  */
 export const deletePatient = async (id: number) => {
   try {
