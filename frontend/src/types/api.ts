@@ -1,24 +1,13 @@
 // ============================================
-// PATIENT TYPES
+// BASE TYPES
 // ============================================
-export interface Patient {
-    id: number;
-    nomor_rekam_medis: string;
-    nik?: string;
-    nama_lengkap: string;
-    tanggal_lahir?: Date | string;
-    alamat?: string;
-    email?: string;
-    no_hp?: string;
-    jenis_kelamin?: 'L' | 'P';
-    is_registered_online: boolean;
-    created_at: Date | string;
-    updated_at: Date | string;
-    appointments?: Appointment[];
-}
+export type ID = number;
+export type ISODateString = string; // Format: YYYY-MM-DD
+export type ISODateTimeString = string; // Format: YYYY-MM-DDTHH:mm:ss
+export type TimeString = string; // Format: HH:mm:ss
 
 // ============================================
-// USER & ROLE TYPES
+// ENUMS
 // ============================================
 export enum UserRole {
     DOKTER = 'dokter',
@@ -26,70 +15,17 @@ export enum UserRole {
     KEPALA_KLINIK = 'kepala_klinik'
 }
 
-export interface Role {
-    id: number;
-    name: UserRole;
-    description?: string;
-}
-
-export interface User {
-    id: number;
-    nama_lengkap: string;
-    username: string;
-    created_at: Date | string;
-    updated_at: Date | string;
-    roles: Role[];
-}
-
-// Doctor is just a User with specific role
-export type Doctor = User;
-
-// ============================================
-// APPOINTMENT TYPES
-// ============================================
 export enum AppointmentStatus {
     DIJADWALKAN = 'dijadwalkan',
     SELESAI = 'selesai',
     DIBATALKAN = 'dibatalkan'
 }
 
-export interface Appointment {
-    id: number;
-    patient_id: number;
-    doctor_id: number;
-    status: AppointmentStatus | 'dijadwalkan' | 'selesai' | 'dibatalkan';
-    tanggal_janji: Date | string;
-    jam_janji: string; // Format: HH:mm:ss
-    keluhan?: string;
-    created_at: Date | string;
-    updated_at: Date | string;
-    // Relations
-    patient: Patient;
-    doctor: Doctor;
-    medical_record?: MedicalRecord;
+export enum Gender {
+    MALE = 'L',
+    FEMALE = 'P'
 }
 
-// ============================================
-// MEDICAL RECORD TYPES
-// ============================================
-export interface MedicalRecord {
-    id: number;
-    appointment_id: number;
-    user_id_staff?: number;
-    // SOAP Format
-    subjektif?: string;  // (S) Subjective
-    objektif?: string;   // (O) Objective
-    assessment?: string; // (A) Assessment/Diagnosis
-    plan?: string;       // (P) Plan/Treatment
-    created_at: Date | string;
-    updated_at: Date | string;
-    // Relations
-    appointment: Appointment;
-}
-
-// ============================================
-// NOTIFICATION TYPES
-// ============================================
 export enum NotificationType {
     EMAIL_REMINDER = 'email_reminder',
     SMS_REMINDER = 'sms_reminder',
@@ -102,16 +38,77 @@ export enum NotificationStatus {
     FAILED = 'failed'
 }
 
+// ============================================
+// ENTITY TYPES
+// ============================================
+export interface Role {
+    id: ID;
+    name: UserRole;
+    description?: string;
+}
+
+export interface User {
+    id: ID;
+    nama_lengkap: string;
+    username: string;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
+    roles: Role[];
+}
+
+export interface Patient {
+    id: ID;
+    nomor_rekam_medis: string;
+    nik?: string;
+    nama_lengkap: string;
+    tanggal_lahir?: ISODateString;
+    alamat?: string;
+    email?: string;
+    no_hp?: string;
+    jenis_kelamin?: Gender;
+    is_registered_online: boolean;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
+    appointments?: Appointment[];
+}
+
+export interface Appointment {
+    id: ID;
+    patient_id: ID;
+    doctor_id: ID;
+    status: AppointmentStatus;
+    tanggal_janji: ISODateString;
+    jam_janji: TimeString;
+    keluhan?: string;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
+    patient: Patient;
+    doctor: User;
+    medical_record?: MedicalRecord;
+}
+
+export interface MedicalRecord {
+    id: ID;
+    appointment_id: ID;
+    user_id_staff?: ID;
+    subjektif?: string;
+    objektif?: string;
+    assessment?: string;
+    plan?: string;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
+    appointment: Appointment;
+}
+
 export interface Notification {
-    id: number;
-    appointment_id: number;
+    id: ID;
+    appointment_id: ID;
     type: NotificationType;
     status: NotificationStatus;
-    send_at?: Date | string;
-    sent_at?: Date | string;
-    created_at: Date | string;
-    updated_at: Date | string;
-    // Relations
+    send_at?: ISODateTimeString;
+    sent_at?: ISODateTimeString;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
     appointment: Appointment;
 }
 
@@ -130,11 +127,17 @@ export interface PaginatedResponse<T> {
     pagination: PaginationMeta;
 }
 
-export interface ApiResponse<T> {
+export interface ApiResponse<T = unknown> {
     success: boolean;
     data?: T;
     message?: string;
     error?: string;
+}
+
+export interface ApiError {
+    message: string;
+    statusCode?: number;
+    errors?: Record<string, string[]>;
 }
 
 // ============================================
@@ -150,33 +153,33 @@ export interface LoginDto {
 export interface LoginResponse {
     access_token: string;
     user: {
-        id: number;
+        id: ID;
         username: string;
         nama_lengkap: string;
-        roles: string[];
+        roles: UserRole[];
     };
 }
 
 // Appointment DTOs
 export interface CreateAppointmentDto {
-    patient_id: number;
-    doctor_id: number;
-    tanggal_janji: string; // Format: YYYY-MM-DD
-    jam_janji: string;     // Format: HH:mm:ss
+    patient_id: ID;
+    doctor_id: ID;
+    tanggal_janji: ISODateString;
+    jam_janji: TimeString;
     keluhan?: string;
 }
 
 export interface UpdateAppointmentDto {
-    status?: 'dijadwalkan' | 'selesai' | 'dibatalkan';
-    tanggal_janji?: string;
-    jam_janji?: string;
+    status?: AppointmentStatus;
+    tanggal_janji?: ISODateString;
+    jam_janji?: TimeString;
     keluhan?: string;
 }
 
-export interface FindAppointmentsQueryDto {
-    doctorId?: number | string;
-    date?: string;
-    status?: 'dijadwalkan' | 'selesai' | 'dibatalkan' | '';
+export interface AppointmentFilters {
+    doctorId?: ID;
+    date?: ISODateString;
+    status?: AppointmentStatus | '';
     page?: number;
     limit?: number;
 }
@@ -187,22 +190,14 @@ export interface CreatePatientDto {
     nik?: string;
     email?: string;
     no_hp?: string;
-    tanggal_lahir?: string;
-    jenis_kelamin?: 'L' | 'P';
+    tanggal_lahir?: ISODateString;
+    jenis_kelamin?: Gender;
     alamat?: string;
 }
 
-export interface UpdatePatientDto {
-    nama_lengkap?: string;
-    nik?: string;
-    email?: string;
-    no_hp?: string;
-    tanggal_lahir?: string;
-    jenis_kelamin?: 'L' | 'P';
-    alamat?: string;
-}
+export interface UpdatePatientDto extends Partial<CreatePatientDto> {}
 
-export interface SearchPatientDto {
+export interface PatientSearchParams {
     search?: string;
     page?: number;
     limit?: number;
@@ -210,33 +205,28 @@ export interface SearchPatientDto {
 
 // Medical Record DTOs
 export interface CreateMedicalRecordDto {
-    appointment_id: number;
-    user_id_staff: number;
+    appointment_id: ID;
+    user_id_staff: ID;
     subjektif?: string;
     objektif?: string;
     assessment?: string;
     plan?: string;
 }
 
-export interface UpdateMedicalRecordDto {
-    subjektif?: string;
-    objektif?: string;
-    assessment?: string;
-    plan?: string;
-}
+export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> {}
 
 // User DTOs
 export interface CreateUserDto {
     nama_lengkap: string;
     username: string;
     password: string;
-    roles: number[]; // Array of role IDs
+    roles: ID[];
 }
 
 export interface UpdateUserDto {
     nama_lengkap?: string;
     username?: string;
-    roles?: number[];
+    roles?: ID[];
 }
 
 export interface ChangePasswordDto {
@@ -249,6 +239,14 @@ export interface ResetPasswordDto {
     newPassword: string;
 }
 
-export interface FindUsersQueryDto {
+export interface UserFilters {
     role?: UserRole;
 }
+
+// ============================================
+// UTILITY TYPES
+// ============================================
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+export type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
+export type Nullable<T> = T | null;
+export type Optional<T> = T | undefined;
