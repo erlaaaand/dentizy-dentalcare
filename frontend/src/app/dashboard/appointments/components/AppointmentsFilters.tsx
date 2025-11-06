@@ -12,8 +12,6 @@ import {
     Clock,
     CheckCircle2,
     XCircle,
-    Pause,
-    PlayCircle
 } from 'lucide-react';
 
 // --- Komponen Dropdown Kustom ---
@@ -89,7 +87,6 @@ function CustomSelect({ options, value, onChange, placeholder, icon }: CustomSel
 
         let top = rect.bottom + window.scrollY + 8;
         
-        // Jika tidak cukup ruang di bawah, tampilkan di atas
         if (spaceBelow < dropdownMaxHeight && spaceAbove > spaceBelow) {
             top = rect.top + window.scrollY - dropdownMaxHeight - 8;
         }
@@ -184,13 +181,12 @@ function CustomSelect({ options, value, onChange, placeholder, icon }: CustomSel
     );
 }
 
-// --- Komponen Filter Utama (Di sini perbaikannya) ---
+// ✅ FIXED: Tipe Doctor yang konsisten dengan backend
 type Doctor = {
     id: number;
-    nama_lengkap: string; // Sesuaikan dengan tipe data dari backend
+    nama_lengkap: string;
 };
 
-// --- Komponen Filter Utama ---
 type FilterProps = {
     doctors: Doctor[];
     onFilterChange: (filters: { date: string; doctorId: string; status: string }) => void;
@@ -217,12 +213,12 @@ export default function AppointmentFilters({ doctors, onFilterChange }: FilterPr
 
     const hasActiveFilters = filters.date || filters.doctorId || filters.status;
 
+    // ✅ FIXED: Gunakan `nama_lengkap` dengan fallback untuk keamanan
     const doctorOptions: Option[] = [
         { value: '', label: 'Semua Dokter', icon: <User className="w-4 h-4 text-gray-400" /> },
-        // Gunakan `nama_lengkap` dari props `doctors`
         ...doctors.map(doc => ({ 
             value: doc.id.toString(), 
-            label: doc.nama_lengkap, 
+            label: doc.nama_lengkap || `Dokter ${doc.id}`, // Fallback jika nama tidak ada
             icon: <User className="w-4 h-4 text-blue-500" />
         }))
     ];
@@ -256,10 +252,6 @@ export default function AppointmentFilters({ doctors, onFilterChange }: FilterPr
         switch (status) {
             case 'dijadwalkan':
                 return 'bg-amber-100 text-amber-700';
-            case 'berlangsung':
-                return 'bg-blue-100 text-blue-700';
-            case 'ditunda':
-                return 'bg-orange-100 text-orange-700';
             case 'selesai':
                 return 'bg-green-100 text-green-700';
             case 'dibatalkan':

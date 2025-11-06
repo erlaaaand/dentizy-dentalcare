@@ -30,10 +30,11 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
-    // Fetch patients
+    // ✅ FIXED: Fetch patients dengan error handling yang lebih baik
     const fetchPatients = async () => {
         setIsLoading(true);
         setError(null);
+        
         try {
             const params = {
                 page: pagination.page,
@@ -41,18 +42,28 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
                 ...(searchQuery && { search: searchQuery })
             };
 
-            const data = searchQuery 
+            const response = searchQuery 
                 ? await searchPatients(params)
                 : await getAllPatients(params);
 
-            setPatients(data.data || []);
+            // ✅ FIXED: Validasi response structure
+            if (!response) {
+                throw new Error('Invalid response from server');
+            }
+
+            const patientData = response.data || [];
+            const paginationData = response.pagination || {};
+
+            setPatients(Array.isArray(patientData) ? patientData : []);
             setPagination(prev => ({
                 ...prev,
-                total: data.pagination?.total || 0,
-                totalPages: data.pagination?.totalPages || 0
+                total: paginationData.total || 0,
+                totalPages: paginationData.totalPages || 0
             }));
-        } catch (err) {
-            setError('Gagal memuat data pasien.');
+        } catch (err: any) {
+            const errorMessage = err.message || 'Gagal memuat data pasien.';
+            setError(errorMessage);
+            setPatients([]);
             console.error('Error fetching patients:', err);
         } finally {
             setIsLoading(false);
@@ -64,16 +75,19 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
         fetchPatients();
     }, [pagination.page, pagination.limit]);
 
-    // Search dengan debounce
+    // ✅ FIXED: Search dengan debounce yang lebih baik
     useEffect(() => {
         if (searchTimeout) {
             clearTimeout(searchTimeout);
         }
 
         const timeout = setTimeout(() => {
-            setPagination(prev => ({ ...prev, page: 1 })); // Reset ke halaman 1
-            fetchPatients();
-        }, 500); // 500ms debounce
+            if (pagination.page !== 1) {
+                setPagination(prev => ({ ...prev, page: 1 }));
+            } else {
+                fetchPatients();
+            }
+        }, 500);
 
         setSearchTimeout(timeout);
 
@@ -85,13 +99,16 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
     const formatDate = (dateString?: string) => {
         if (!dateString) return '-';
         try {
-            return new Date(dateString).toLocaleDateString('id-ID', {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return '-';
+            
+            return date.toLocaleDateString('id-ID', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
         } catch {
-            return dateString;
+            return '-';
         }
     };
 
@@ -101,6 +118,7 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
     };
 
     const handlePageChange = (newPage: number) => {
+        if (newPage < 1 || newPage > pagination.totalPages) return;
         setPagination(prev => ({ ...prev, page: newPage }));
     };
 
@@ -108,19 +126,36 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
         return (pagination.page - 1) * pagination.limit + index + 1;
     };
 
+    // ✅ FIXED: Loading state yang lebih informatif
     if (isLoading && patients.length === 0) {
         return (
-            <div className="flex justify-center items-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Memuat data pasien...</span>
+            <div className="flex flex-col justify-center items-center p-12 bg-white rounded-lg">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+                <span className="text-gray-600 font-medium">Memuat data pasien...</span>
+                <span className="text-gray-400 text-sm mt-1">Mohon tunggu sebentar</span>
             </div>
         );
     }
 
-    if (error) {
+    // ✅ FIXED: Error state dengan retry option
+    if (error && patients.length === 0) {
         return (
-            <div className="text-red-500 p-4 bg-red-50 rounded-lg border border-red-200">
-                {error}
+            <div className="text-center p-8 bg-red-50 rounded-lg border border-red-200">
+                <div className="flex flex-col items-center gap-4">
+                    <svg className="w-12 h-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                        <p className="text-red-800 font-semibold mb-1">{error}</p>
+                        <p className="text-red-600 text-sm">Silakan coba lagi atau hubungi administrator jika masalah berlanjut.</p>
+                    </div>
+                    <button
+                        onClick={fetchPatients}
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                        Coba Lagi
+                    </button>
+                </div>
             </div>
         );
     }
@@ -136,22 +171,53 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
                         placeholder="Cari pasien (nama, NIK, no. rekam medis, email)..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isLoading}
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                     />
+                    {isLoading && searchQuery && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                        </div>
+                    )}
                 </div>
-                <span className="text-sm text-gray-600">
-                    Total: {pagination.total} pasien
-                </span>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-600">
+                        Total: <span className="font-semibold">{pagination.total}</span> pasien
+                    </span>
+                </div>
             </div>
+
+            {/* Error Banner (if error but still has data) */}
+            {error && patients.length > 0 && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg text-sm">
+                    ⚠️ {error}
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 {patients.length === 0 ? (
-                    <div className="text-gray-500 p-8 text-center">
-                        {searchQuery 
-                            ? `Tidak ada pasien ditemukan dengan kata kunci "${searchQuery}"`
-                            : 'Tidak ada data pasien ditemukan'
-                        }
+                    <div className="text-center p-12">
+                        <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            {searchQuery ? 'Tidak ada pasien ditemukan' : 'Belum ada data pasien'}
+                        </h3>
+                        <p className="text-gray-500">
+                            {searchQuery 
+                                ? `Tidak ada pasien yang cocok dengan pencarian "${searchQuery}"`
+                                : 'Silakan tambahkan pasien baru untuk memulai'
+                            }
+                        </p>
+                        {searchQuery && (
+                            <button
+                                onClick={() => setSearchQuery('')}
+                                className="mt-4 px-4 py-2 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                                Hapus pencarian
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <>
@@ -236,7 +302,10 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
                         {/* Pagination */}
                         <div className="p-4 flex justify-between items-center border-t border-gray-200">
                             <span className="text-sm text-gray-700">
-                                Menampilkan {getRowNumber(0)} - {getRowNumber(patients.length - 1)} dari {pagination.total} data
+                                Menampilkan{' '}
+                                <span className="font-medium">{getRowNumber(0)}</span> -{' '}
+                                <span className="font-medium">{getRowNumber(patients.length - 1)}</span> dari{' '}
+                                <span className="font-medium">{pagination.total}</span> data
                             </span>
                             <div className="flex items-center space-x-2">
                                 <button 
@@ -246,8 +315,8 @@ export default function PatientsTable({ onDetailClick }: PatientsTableProps) {
                                     Sebelumnya
                                 </button>
                                 
-                                <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-lg">
-                                    Halaman {pagination.page} dari {pagination.totalPages}
+                                <span className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-lg font-medium">
+                                    Halaman {pagination.page} dari {pagination.totalPages || 1}
                                 </span>
                                 
                                 <button 

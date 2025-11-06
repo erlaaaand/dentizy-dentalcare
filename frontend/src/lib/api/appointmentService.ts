@@ -3,9 +3,9 @@ import { Appointment } from '@/types/api';
 
 // --- Tipe Data DTO ---
 interface FindAppointmentsQuery {
-  doctorId?: number | string; // Izinkan string agar bisa menerima '' dari form
+  doctorId?: number | string;
   date?: string;
-  status?: 'dijadwalkan' | 'selesai' | 'dibatalkan' | ''; // Izinkan string kosong
+  status?: 'dijadwalkan' | 'selesai' | 'dibatalkan' | '';
   page?: number;
   limit?: number;
 }
@@ -36,29 +36,45 @@ interface PaginatedAppointments {
 // --- Fungsi-fungsi API ---
 
 /**
- * Mengambil daftar janji temu dengan filter dan paginasi.
- * @param params - Objek berisi filter dan paginasi.
+ * ✅ FIXED: Mengambil daftar janji temu dengan filter yang lebih baik
  */
 export const getAppointments = async (params: FindAppointmentsQuery = {}): Promise<PaginatedAppointments> => {
   try {
-    // --- PERBAIKAN DI SINI ---
-    // Buat objek baru untuk menampung parameter yang aktif saja
-    const activeParams: { [key: string]: any } = {};
+    // Buat objek baru untuk menampung parameter yang valid
+    const cleanParams: { [key: string]: any } = {};
 
-    // Iterasi melalui parameter yang diterima
+    // Hanya tambahkan parameter yang memiliki nilai valid
     Object.entries(params).forEach(([key, value]) => {
-      // Hanya tambahkan parameter ke request jika nilainya tidak kosong
+      // Abaikan nilai null, undefined, atau string kosong
       if (value !== null && value !== undefined && value !== '') {
-        activeParams[key] = value;
+        // Konversi doctorId menjadi number jika berupa string
+        if (key === 'doctorId' && typeof value === 'string') {
+          const numValue = parseInt(value, 10);
+          if (!isNaN(numValue)) {
+            cleanParams[key] = numValue;
+          }
+        } else {
+          cleanParams[key] = value;
+        }
       }
     });
-    // --- AKHIR PERBAIKAN ---
 
-    const response = await api.get('/appointments', { params: activeParams }); // Gunakan parameter yang sudah dibersihkan
-    return response.data;
-  } catch (error) {
+    const response = await api.get('/appointments', { params: cleanParams });
+    
+    // ✅ FIXED: Validasi response structure
+    if (!response.data) {
+      throw new Error('Invalid response structure');
+    }
+
+    return {
+      data: response.data.data || [],
+      count: response.data.count || 0,
+      page: response.data.page || params.page || 1,
+      limit: response.data.limit || params.limit || 10
+    };
+  } catch (error: any) {
     console.error('Gagal mengambil data janji temu:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Gagal memuat data janji temu');
   }
 };
 
@@ -69,22 +85,34 @@ export const getAppointmentById = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.get(`/appointments/${id}`);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Gagal mengambil janji temu dengan ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || `Gagal memuat detail janji temu`);
   }
 };
 
 /**
- * Membuat janji temu baru.
+ * ✅ FIXED: Membuat janji temu baru dengan validasi lebih baik
  */
 export const createAppointment = async (data: CreateAppointmentDto): Promise<Appointment> => {
   try {
-    const response = await api.post('/appointments', data);
+    // Validasi data sebelum dikirim
+    if (!data.patient_id || !data.doctor_id || !data.tanggal_janji || !data.jam_janji) {
+      throw new Error('Data janji temu tidak lengkap');
+    }
+
+    // Pastikan format jam sesuai (HH:mm:ss)
+    const formattedData = {
+      ...data,
+      jam_janji: data.jam_janji.includes(':00') ? data.jam_janji : `${data.jam_janji}:00`
+    };
+
+    const response = await api.post('/appointments', formattedData);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Gagal membuat janji temu:', error);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.message || 'Gagal membuat janji temu';
+    throw new Error(errorMessage);
   }
 };
 
@@ -95,9 +123,9 @@ export const completeAppointment = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.post(`/appointments/${id}/complete`);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Gagal menyelesaikan janji temu dengan ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Gagal menyelesaikan janji temu');
   }
 };
 
@@ -108,9 +136,9 @@ export const cancelAppointment = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.post(`/appointments/${id}/cancel`);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Gagal membatalkan janji temu dengan ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Gagal membatalkan janji temu');
   }
 };
 
@@ -121,9 +149,9 @@ export const updateAppointment = async (id: number, data: UpdateAppointmentDto):
   try {
     const response = await api.patch(`/appointments/${id}`, data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Gagal mengupdate janji temu dengan ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Gagal mengupdate janji temu');
   }
 };
 
@@ -133,8 +161,8 @@ export const updateAppointment = async (id: number, data: UpdateAppointmentDto):
 export const deleteAppointment = async (id: number): Promise<void> => {
   try {
     await api.delete(`/appointments/${id}`);
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Gagal menghapus janji temu dengan ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Gagal menghapus janji temu');
   }
 };

@@ -23,62 +23,65 @@ export default function AppointmentsPage() {
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [selectedAppointment, setSelectedAppointment] = useState<ApiAppointment | null>(null);
 
-    // ✅ PENTING: useMemo untuk mencegah infinite loop di CreateAppointmentModal
+    // ✅ FIXED: useMemo untuk scheduledPatientIds dengan dependency yang tepat
     const scheduledPatientIds = useMemo(() => {
-        // Hanya ambil pasien yang statusnya 'dijadwalkan' untuk hari ini atau masa depan
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
         return appointments
             .filter(appointment => {
-                // Filter hanya appointment yang dijadwalkan dan belum lewat
+                // Filter hanya appointment yang dijadwalkan
                 if (appointment.status !== 'dijadwalkan') return false;
 
-                const appointmentDate = new Date(appointment.tanggal_janji);
-                appointmentDate.setHours(0, 0, 0, 0);
-
-                return appointmentDate >= today;
+                try {
+                    const appointmentDate = new Date(appointment.tanggal_janji);
+                    appointmentDate.setHours(0, 0, 0, 0);
+                    
+                    // Hanya appointment hari ini atau masa depan
+                    return appointmentDate >= today;
+                } catch {
+                    return false;
+                }
             })
             .map(appointment => appointment.patient?.id)
-            .filter((id): id is number => id !== undefined);
-    }, [appointments]);
-
-    // Alternative: Callback function untuk mendapatkan scheduled patient IDs
-    const getScheduledPatientIds = useCallback(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        return appointments
-            .filter(appointment => {
-                if (appointment.status !== 'dijadwalkan') return false;
-
-                const appointmentDate = new Date(appointment.tanggal_janji);
-                appointmentDate.setHours(0, 0, 0, 0);
-
-                return appointmentDate >= today;
-            })
-            .map(appointment => appointment.patient?.id)
-            .filter((id): id is number => id !== undefined);
-    }, [appointments]);
+            .filter((id): id is number => id !== undefined && id !== null);
+    }, [appointments]); // Hanya depend pada appointments
 
     const handleSelectAppointment = (appointment: ApiAppointment) => {
         setSelectedAppointment(appointment);
         setIsDetailModalOpen(true);
     };
 
+    // ✅ FIXED: fetchData dengan error handling yang lebih baik
     const fetchData = useCallback(async () => {
         setIsLoading(true);
         setError(null);
+        
         try {
-            const params = { ...filters, page: pagination.page, limit: pagination.limit };
+            const params = { 
+                ...filters, 
+                page: pagination.page, 
+                limit: pagination.limit 
+            };
+            
             const response = await getAppointments(params);
 
-            setAppointments(response.data);
-            setPagination(prev => ({ ...prev, total: response.count }));
+            // Validasi response
+            if (!response || !Array.isArray(response.data)) {
+                throw new Error('Invalid response format');
+            }
 
-        } catch (err) {
-            setError('Gagal memuat data janji temu.');
-            console.error(err);
+            setAppointments(response.data);
+            setPagination(prev => ({ 
+                ...prev, 
+                total: response.count || 0 
+            }));
+
+        } catch (err: any) {
+            const errorMessage = err.message || 'Gagal memuat data janji temu.';
+            setError(errorMessage);
+            setAppointments([]);
+            console.error('Error fetching appointments:', err);
         } finally {
             setIsLoading(false);
         }
@@ -88,13 +91,22 @@ export default function AppointmentsPage() {
         fetchData();
     }, [fetchData]);
 
+    // ✅ FIXED: Fetch doctors dengan error handling
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
                 const doctorData = await getUsers('dokter');
+                
+                // Validasi response
+                if (!Array.isArray(doctorData)) {
+                    throw new Error('Invalid doctor data format');
+                }
+                
                 setDoctors(doctorData);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Gagal memuat data dokter:", error);
+                setDoctors([]);
+                // Optionally show a toast notification here
             }
         };
 
@@ -112,24 +124,17 @@ export default function AppointmentsPage() {
 
     const handleCreateSuccess = () => {
         setIsCreateModalOpen(false);
-        fetchData(); // Refresh data setelah appointment baru dibuat
+        fetchData();
     };
 
     const handleActionSuccess = () => {
         setIsDetailModalOpen(false);
-        fetchData(); // Refresh data setelah action di detail modal
+        fetchData();
     };
-
-    // Debug: Log untuk memantau perubahan scheduledPatientIds
-    useEffect(() => {
-        if (process.env.NODE_ENV === 'development') {
-            console.log('Scheduled Patient IDs:', scheduledPatientIds);
-            console.log('Total scheduled patients:', scheduledPatientIds.length);
-        }
-    }, [scheduledPatientIds]);
 
     return (
         <>
+            {/* Header */}
             <header className="bg-gradient-to-r from-indigo-500 via-blue-500 to-purple-500 shadow-lg rounded-2xl p-6 mb-6">
                 <div className="flex items-center justify-between">
                     <div>
@@ -144,15 +149,27 @@ export default function AppointmentsPage() {
                 <div className="mt-4">
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-indigo-50 transition"
+                        disabled={doctors.length === 0}
+                        className="px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-indigo-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={doctors.length === 0 ? 'Tidak ada dokter tersedia' : 'Buat janji temu baru'}
                     >
                         + Buat Janji Temu Baru
                     </button>
+                    {doctors.length === 0 && (
+                        <p className="text-indigo-100 text-sm mt-2">
+                            ⚠️ Tidak ada dokter tersedia. Hubungi administrator.
+                        </p>
+                    )}
                 </div>
             </header>
 
-            <AppointmentFilters doctors={doctors} onFilterChange={handleFilterChange} />
+            {/* Filters */}
+            <AppointmentFilters 
+                doctors={doctors} 
+                onFilterChange={handleFilterChange} 
+            />
 
+            {/* Table */}
             <div className="mt-6">
                 <AppointmentsTable
                     appointments={appointments}
@@ -165,24 +182,27 @@ export default function AppointmentsPage() {
                 />
             </div>
 
-            {/* DetailAppointmentModal */}
+            {/* Detail Modal */}
             {selectedAppointment && (
                 <DetailAppointmentModal
                     isOpen={isDetailModalOpen}
-                    onClose={() => setIsDetailModalOpen(false)}
+                    onClose={() => {
+                        setIsDetailModalOpen(false);
+                        setSelectedAppointment(null);
+                    }}
                     appointment={selectedAppointment}
                     onActionSuccess={handleActionSuccess}
                 />
             )}
 
-            {/* CreateAppointmentModal */}
+            {/* Create Modal */}
             {isCreateModalOpen && (
                 <CreateAppointmentModal
                     isOpen={isCreateModalOpen}
                     onClose={() => setIsCreateModalOpen(false)}
                     onCreateSuccess={handleCreateSuccess}
                     doctors={doctors}
-                    scheduledPatientIds={scheduledPatientIds} // Gunakan useMemo di sini
+                    scheduledPatientIds={scheduledPatientIds}
                 />
             )}
         </>

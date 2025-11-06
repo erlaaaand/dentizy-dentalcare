@@ -37,6 +37,7 @@ export default function CreateAppointmentModal({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [patients, setPatients] = useState<Patient[]>([]);
+    const [isLoadingPatients, setIsLoadingPatients] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
@@ -52,12 +53,17 @@ export default function CreateAppointmentModal({
     }, [isOpen]);
 
     const fetchPatients = async () => {
+        setIsLoadingPatients(true);
         try {
-            const data = await getAllPatients();
-            setPatients(data.data || data); // Handle both paginated and non-paginated responses
-        } catch (err) {
+            const response = await getAllPatients();
+            // ✅ FIXED: Handle both paginated and non-paginated responses
+            const patientData = response.data || response;
+            setPatients(Array.isArray(patientData) ? patientData : []);
+        } catch (err: any) {
             console.error('Failed to fetch patients', err);
-            setError('Gagal memuat data pasien');
+            setError(err.message || 'Gagal memuat data pasien');
+        } finally {
+            setIsLoadingPatients(false);
         }
     };
 
@@ -70,25 +76,34 @@ export default function CreateAppointmentModal({
             return;
         }
 
+        // ✅ FIXED: Validasi tanggal tidak boleh di masa lalu
+        const selectedDate = new Date(tanggalJanji);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < today) {
+            setError('Tanggal janji tidak boleh di masa lalu');
+            return;
+        }
+
         setIsSubmitting(true);
         setError(null);
 
         try {
-            // ✅ Format data sesuai backend DTO
-            await createAppointment({
+            // ✅ FIXED: Format data sesuai backend DTO dengan validasi
+            const appointmentData = {
                 patient_id: Number(patientId),
                 doctor_id: Number(doctorId),
-                tanggal_janji: tanggalJanji, // Format: YYYY-MM-DD
-                jam_janji: jamJanji + ':00', // Tambah detik: HH:mm:ss
-                keluhan: keluhan || undefined
-            });
+                tanggal_janji: tanggalJanji,
+                jam_janji: jamJanji.includes(':') ? jamJanji : `${jamJanji}:00`,
+                keluhan: keluhan.trim() || undefined
+            };
 
+            await createAppointment(appointmentData);
             onCreateSuccess();
             onClose();
         } catch (err: any) {
-            const errorMessage = err.response?.data?.message || 
-                               err.message || 
-                               'Gagal membuat janji temu';
+            const errorMessage = err.message || 'Gagal membuat janji temu';
             setError(errorMessage);
             console.error('Error creating appointment:', err);
         } finally {
@@ -98,9 +113,14 @@ export default function CreateAppointmentModal({
 
     if (!isOpen) return null;
 
-    // Filter pasien
-    const availablePatients = patients.filter(p => !scheduledPatientIds.includes(p.id));
-    const scheduledPatients = patients.filter(p => scheduledPatientIds.includes(p.id));
+    // ✅ FIXED: Filter pasien dengan pengecekan yang lebih aman
+    const availablePatients = patients.filter(p => 
+        p && p.id && !scheduledPatientIds.includes(p.id)
+    );
+    
+    const scheduledPatients = patients.filter(p => 
+        p && p.id && scheduledPatientIds.includes(p.id)
+    );
 
     // Get today's date for min date validation
     const today = new Date().toISOString().split('T')[0];
@@ -116,6 +136,13 @@ export default function CreateAppointmentModal({
                     </div>
                 )}
 
+                {isLoadingPatients && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 text-blue-700 rounded flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-700"></div>
+                        <span>Memuat data pasien...</span>
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Pasien */}
                     <div>
@@ -126,9 +153,12 @@ export default function CreateAppointmentModal({
                             value={patientId}
                             onChange={(e) => setPatientId(Number(e.target.value))}
                             required
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isLoadingPatients}
+                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                         >
-                            <option value="" disabled>Pilih Pasien</option>
+                            <option value="" disabled>
+                                {isLoadingPatients ? 'Memuat...' : 'Pilih Pasien'}
+                            </option>
                             
                             {availablePatients.length > 0 && (
                                 <optgroup label="✓ Tersedia">
@@ -155,9 +185,14 @@ export default function CreateAppointmentModal({
                                 </optgroup>
                             )}
                         </select>
-                        {availablePatients.length === 0 && patients.length > 0 && (
+                        {availablePatients.length === 0 && patients.length > 0 && !isLoadingPatients && (
                             <p className="text-sm text-amber-600 mt-1">
                                 ⚠️ Semua pasien sudah memiliki janji temu aktif
+                            </p>
+                        )}
+                        {patients.length === 0 && !isLoadingPatients && (
+                            <p className="text-sm text-gray-500 mt-1">
+                                Tidak ada data pasien. Silakan tambahkan pasien terlebih dahulu.
                             </p>
                         )}
                     </div>
@@ -195,6 +230,9 @@ export default function CreateAppointmentModal({
                             min={today}
                             className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Minimal tanggal hari ini
+                        </p>
                     </div>
 
                     {/* Jam */}
@@ -209,11 +247,11 @@ export default function CreateAppointmentModal({
                             required
                             min="08:00"
                             max="16:30"
-                            step="1800" // 30 menit interval
+                            step="1800"
                             className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                            Jam kerja klinik: 08:00 - 16:30
+                            Jam kerja klinik: 08:00 - 16:30 (interval 30 menit)
                         </p>
                     </div>
 
@@ -248,7 +286,7 @@ export default function CreateAppointmentModal({
                         <button
                             type="submit"
                             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                            disabled={isSubmitting || availablePatients.length === 0}
+                            disabled={isSubmitting || availablePatients.length === 0 || isLoadingPatients}
                         >
                             {isSubmitting && (
                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
