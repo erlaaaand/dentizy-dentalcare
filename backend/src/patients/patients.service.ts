@@ -189,10 +189,6 @@ export class PatientsService {
             const { search, page = 1, limit = 10 } = query;
             const skip = (page - 1) * limit;
 
-            if (!search || search.trim().length < 3) {
-                throw new BadRequestException('Kata kunci pencarian minimal 3 karakter');
-            }
-
             const queryBuilder = this.patientRepository
                 .createQueryBuilder('patient')
                 .select([
