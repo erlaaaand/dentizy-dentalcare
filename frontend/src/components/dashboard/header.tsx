@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+import { logout, getCurrentUser } from '@/lib/api/authService'
 
 interface Notification {
     id: string
@@ -35,11 +37,20 @@ const notifications: Notification[] = [
 ]
 
 export default function Header() {
+    const router = useRouter()
     const [showNotifications, setShowNotifications] = useState(false)
     const [showProfileDropdown, setShowProfileDropdown] = useState(false)
+    const [currentUser, setCurrentUser] = useState<any>(null)
+    const [isLoggingOut, setIsLoggingOut] = useState(false)
 
     const notificationRef = useRef<HTMLDivElement>(null)
     const profileRef = useRef<HTMLDivElement>(null)
+
+    // Load user info
+    useEffect(() => {
+        const user = getCurrentUser()
+        setCurrentUser(user)
+    }, [])
 
     const toggleNotifications = () => {
         setShowNotifications(!showNotifications)
@@ -49,6 +60,19 @@ export default function Header() {
     const toggleProfileDropdown = () => {
         setShowProfileDropdown(!showProfileDropdown)
         setShowNotifications(false)
+    }
+
+    const handleLogout = async () => {
+        if (!confirm('Apakah Anda yakin ingin keluar?')) return
+
+        try {
+            setIsLoggingOut(true)
+            logout()
+        } catch (error) {
+            console.error('Logout error:', error)
+            // Force logout anyway
+            logout()
+        }
     }
 
     // Close dropdowns when clicking outside
@@ -83,12 +107,36 @@ export default function Header() {
         }
     }, [])
 
+    // Get user initials
+    const getUserInitials = () => {
+        if (!currentUser?.nama_lengkap) return '?'
+        const names = currentUser.nama_lengkap.split(' ')
+        if (names.length >= 2) {
+            return `${names[0][0]}${names[1][0]}`.toUpperCase()
+        }
+        return currentUser.nama_lengkap.substring(0, 2).toUpperCase()
+    }
+
+    // Get user role display
+    const getUserRole = () => {
+        if (!currentUser?.roles || currentUser.roles.length === 0) return 'User'
+        const role = currentUser.roles[0]
+        const roleMap: { [key: string]: string } = {
+            'kepala_klinik': 'Kepala Klinik',
+            'dokter': 'Dokter',
+            'staf': 'Staf'
+        }
+        return roleMap[role] || role
+    }
+
     return (
         <header className="bg-white shadow-sm border-b border-gray-200 p-6">
             <div className="flex items-center justify-between">
                 {/* Page Title */}
                 <div className="min-w-0 flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900">Halo, dr. Erland!</h1>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        Halo, {currentUser?.nama_lengkap || 'User'}!
+                    </h1>
                     <p className="text-gray-600 mt-1">Selamat datang kembali di dashboard Dentizy</p>
                 </div>
 
@@ -161,9 +209,10 @@ export default function Header() {
                             className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                             aria-label="Menu profil"
                             aria-expanded={showProfileDropdown}
+                            disabled={isLoggingOut}
                         >
-                            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                                <span className="text-sm font-medium text-white">EA</span>
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
+                                <span className="text-sm font-medium text-white">{getUserInitials()}</span>
                             </div>
                             <svg className={`w-4 h-4 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd"
@@ -174,25 +223,65 @@ export default function Header() {
 
                         {/* Profile Dropdown Menu */}
                         {showProfileDropdown && (
-                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
+                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
                                 <div className="p-4 border-b border-gray-200">
-                                    <p className="text-sm font-medium text-gray-900">dr. Erland Agustian</p>
-                                    <p className="text-xs text-gray-500">erland@dentizy.com</p>
+                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                        {currentUser?.nama_lengkap || 'User'}
+                                    </p>
+                                    <p className="text-xs text-gray-500 truncate">
+                                        {currentUser?.username || '-'}
+                                    </p>
+                                    <p className="text-xs text-blue-600 mt-1">{getUserRole()}</p>
                                 </div>
                                 <div className="py-2">
-                                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                                        Profil Saya
+                                    <button 
+                                        onClick={() => router.push('/dashboard/profile')}
+                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                            </svg>
+                                            <span>Profil Saya</span>
+                                        </div>
                                     </button>
-                                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                                        Pengaturan
-                                    </button>
-                                    <button className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors">
-                                        Bantuan
+                                    <button 
+                                        onClick={() => router.push('/dashboard/settings')}
+                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            </svg>
+                                            <span>Pengaturan</span>
+                                        </div>
                                     </button>
                                 </div>
                                 <div className="border-t border-gray-200">
-                                    <button className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                                        Keluar
+                                    <button 
+                                        onClick={handleLogout}
+                                        disabled={isLoggingOut}
+                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <div className="flex items-center space-x-2">
+                                            {isLoggingOut ? (
+                                                <>
+                                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                    </svg>
+                                                    <span>Keluar...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                                    </svg>
+                                                    <span>Keluar</span>
+                                                </>
+                                            )}
+                                        </div>
                                     </button>
                                 </div>
                             </div>
