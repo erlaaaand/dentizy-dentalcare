@@ -35,6 +35,9 @@ export class User {
   @UpdateDateColumn()
   updated_at: Date;
 
+  @Column({ type: 'text', nullable: true })
+  profile_photo: string;
+
   @ManyToMany(() => Role, (role) => role.users, {
     cascade: true,
   })
