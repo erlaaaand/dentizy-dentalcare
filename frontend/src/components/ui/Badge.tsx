@@ -5,6 +5,7 @@ interface BadgeProps {
     children: React.ReactNode;
     variant?: 'default' | 'success' | 'error' | 'warning' | 'info';
     className?: string;
+    text?: string;
 }
 
 const badgeVariants = {
