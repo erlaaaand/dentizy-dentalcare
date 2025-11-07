@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Sidebar from '@/components/dashboard/sidebar'
 import Header from '@/components/dashboard/header'
+import Footer from '@/components/dashboard/footer'
 import AuthGuard from '@/components/AuthGuard';
 
 export const metadata: Metadata = {
@@ -23,6 +24,7 @@ export default function DashboardLayout({
           <section className="flex-1 overflow-y-auto p-6">
             {children}
           </section>
+          <Footer />
         </main>
       </div>
     </AuthGuard>
