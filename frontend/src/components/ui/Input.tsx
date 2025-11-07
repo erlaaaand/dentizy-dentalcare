@@ -1,52 +1,40 @@
-import React, { SelectHTMLAttributes, forwardRef } from 'react';
+import React, { InputHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 
-export interface SelectOption {
-    value: string | number;
-    label: string;
-    disabled?: boolean;
-}
-
-export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: string;
     error?: string;
     hint?: string;
-    options: SelectOption[];
-    placeholder?: string;
+    leftIcon?: React.ReactNode;
+    rightIcon?: React.ReactNode;
     containerClassName?: string;
-    onChange?: (value: string) => void;
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(
+const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
             label,
             error,
             hint,
-            options,
-            placeholder,
+            leftIcon,
+            rightIcon,
             className,
             containerClassName,
             id,
+            type = 'text',
             disabled,
             required,
-            onChange,
-            value,
             ...props
         },
         ref
     ) => {
-        const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
-
-        const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-            onChange?.(e.target.value);
-        };
+        const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
 
         return (
             <div className={cn('w-full', containerClassName)}>
                 {label && (
                     <label
-                        htmlFor={selectId}
+                        htmlFor={inputId}
                         className={cn(
                             'block text-sm font-medium text-gray-700 mb-1',
                             disabled && 'text-gray-400'
@@ -58,50 +46,42 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 )}
 
                 <div className="relative">
-                    <select
+                    {leftIcon && (
+                        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            {leftIcon}
+                        </div>
+                    )}
+
+                    <input
                         ref={ref}
-                        id={selectId}
+                        id={inputId}
+                        type={type}
                         disabled={disabled}
-                        value={value}
-                        onChange={handleChange}
                         className={cn(
-                            'w-full px-4 py-2 border rounded-lg transition-colors appearance-none',
+                            'w-full px-4 py-2 border rounded-lg transition-colors',
                             'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
-                            'bg-white cursor-pointer',
+                            'placeholder:text-gray-400',
+                            leftIcon && 'pl-10',
+                            rightIcon && 'pr-10',
                             error && 'border-red-500 focus:ring-red-500',
                             disabled && 'bg-gray-100 cursor-not-allowed opacity-60',
                             !error && !disabled && 'border-gray-300',
                             className
                         )}
                         aria-invalid={!!error}
-                        aria-describedby={error ? `${selectId}-error` : hint ? `${selectId}-hint` : undefined}
+                        aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
                         {...props}
-                    >
-                        {placeholder && (
-                            <option value="" disabled>
-                                {placeholder}
-                            </option>
-                        )}
-                        {options.map((option) => (
-                            <option
-                                key={option.value}
-                                value={option.value}
-                                disabled={option.disabled}
-                            >
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                    />
 
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </div>
+                    {rightIcon && (
+                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                            {rightIcon}
+                        </div>
+                    )}
                 </div>
 
                 {error && (
-                    <p id={`${selectId}-error`} className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <p id={`${inputId}-error`} className="mt-1 text-sm text-red-600 flex items-center gap-1">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path
                                 fillRule="evenodd"
@@ -114,7 +94,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 )}
 
                 {hint && !error && (
-                    <p id={`${selectId}-hint`} className="mt-1 text-sm text-gray-500">
+                    <p id={`${inputId}-hint`} className="mt-1 text-sm text-gray-500">
                         {hint}
                     </p>
                 )}
@@ -123,6 +103,6 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
     }
 );
 
-Select.displayName = 'Select';
+Input.displayName = 'Input';
 
-export default Select;
+export default Input;
