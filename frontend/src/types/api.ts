@@ -110,6 +110,7 @@ export interface MedicalRecord {
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
     appointment: Appointment;
+    user_staff?: User;
 }
 
 export interface Notification {

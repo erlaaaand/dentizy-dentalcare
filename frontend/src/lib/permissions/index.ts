@@ -1,4 +1,4 @@
-import { UserRole } from '@/lib/store/authStore';
+import { UserRole } from '@/types/api';
 
 export type Permission = 
   | 'appointments:view:all'
