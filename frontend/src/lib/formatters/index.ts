@@ -186,6 +186,27 @@ export function getInitials(name: string | null | undefined): string {
     .slice(0, 2);
 }
 
+export function getGenderLabel(gender: string | null | undefined): string {
+  if (!gender) return '-';
+
+  const normalized = gender.trim().toLowerCase();
+
+  switch (normalized) {
+    case 'l':
+    case 'male':
+    case 'laki-laki':
+      return 'Laki-laki';
+
+    case 'p':
+    case 'female':
+    case 'perempuan':
+      return 'Perempuan';
+
+    default:
+      return '-';
+  }
+}
+
 /**
  * Format file size
  */

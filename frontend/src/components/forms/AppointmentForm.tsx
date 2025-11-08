@@ -1,231 +1,333 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Appointment, Patient } from '@/types/api';
-import { Calendar, Clock, User, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Appointment, Patient, User, AppointmentStatus } from '@/types/api';
+import { useAuthStore } from '@/lib/store/authStore';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Button from '@/components/ui/Button';
+import { Calendar, Clock, User as UserIcon, FileText, Stethoscope } from 'lucide-react';
 
 interface AppointmentFormData {
   patient_id: string;
+  doctor_id?: string;
   tanggal_janji: string;
   jam_janji: string;
   keluhan: string;
-  status: 'dijadwalkan' | 'selesai' | 'dibatalkan';
-  catatan?: string;
+  status?: AppointmentStatus;
 }
 
 interface AppointmentFormProps {
   initialData?: Appointment;
-  patients?: Patient[];
-  onSubmit: (data: AppointmentFormData) => void | Promise<void>;
+  patients: Patient[];
+  doctors: User[];
+  onSubmit: (data: any) => void | Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
 
 export function AppointmentForm({
   initialData,
-  patients = [],
+  patients,
+  doctors,
   onSubmit,
   onCancel,
   isLoading = false,
 }: AppointmentFormProps) {
+  const { user, isDokter, isStaf, isKepalaKlinik } = useAuthStore();
+
   const [formData, setFormData] = useState<AppointmentFormData>({
     patient_id: initialData?.patient_id?.toString() || '',
+    doctor_id: initialData?.doctor_id?.toString() || user?.id.toString() || '',
     tanggal_janji: initialData?.tanggal_janji
       ? new Date(initialData.tanggal_janji).toISOString().split('T')[0]
       : '',
     jam_janji: initialData?.jam_janji || '',
     keluhan: initialData?.keluhan || '',
-    status: initialData?.status || 'dijadwalkan',
+    status: initialData?.status || AppointmentStatus.DIJADWALKAN,
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof AppointmentFormData, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof AppointmentFormData, boolean>>>({});
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  // Auto-set doctor for dokter role
+  useEffect(() => {
+    if (isDokter() && user && !formData.doctor_id) {
+      setFormData(prev => ({ ...prev, doctor_id: user.id.toString() }));
+    }
+  }, [isDokter, user]);
 
-    if (errors[name as keyof AppointmentFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+  const handleChange = (field: keyof AppointmentFormData, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
     }
   };
 
   const handleBlur = (field: keyof AppointmentFormData) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
+    setTouched(prev => ({ ...prev, [field]: true }));
+    validateField(field);
   };
 
-  const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof AppointmentFormData, string>> = {};
+  const validateField = (field: keyof AppointmentFormData) => {
+    const newErrors = { ...errors };
 
-    if (!formData.patient_id) newErrors.patient_id = 'Pasien harus dipilih';
-    if (!formData.tanggal_janji) newErrors.tanggal_janji = 'Tanggal janji harus diisi';
-    if (!formData.jam_janji) newErrors.jam_janji = 'Jam janji harus diisi';
-    if (!formData.keluhan || formData.keluhan.trim().length < 10)
-      newErrors.keluhan = 'Keluhan minimal 10 karakter';
+    switch (field) {
+      case 'patient_id':
+        if (!formData.patient_id) {
+          newErrors.patient_id = 'Pasien harus dipilih';
+        } else {
+          delete newErrors.patient_id;
+        }
+        break;
+
+      case 'doctor_id':
+        if (!formData.doctor_id && (isStaf() || isKepalaKlinik())) {
+          newErrors.doctor_id = 'Dokter harus dipilih';
+        } else {
+          delete newErrors.doctor_id;
+        }
+        break;
+
+      case 'tanggal_janji':
+        if (!formData.tanggal_janji) {
+          newErrors.tanggal_janji = 'Tanggal janji harus diisi';
+        } else {
+          const selectedDate = new Date(formData.tanggal_janji);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          if (!initialData && selectedDate < today) {
+            newErrors.tanggal_janji = 'Tanggal janji tidak boleh di masa lalu';
+          } else {
+            delete newErrors.tanggal_janji;
+          }
+        }
+        break;
+
+      case 'jam_janji':
+        if (!formData.jam_janji) {
+          newErrors.jam_janji = 'Jam janji harus diisi';
+        } else {
+          delete newErrors.jam_janji;
+        }
+        break;
+
+      case 'keluhan':
+        if (!formData.keluhan || formData.keluhan.trim().length < 10) {
+          newErrors.keluhan = 'Keluhan minimal 10 karakter';
+        } else if (formData.keluhan.length > 500) {
+          newErrors.keluhan = 'Keluhan maksimal 500 karakter';
+        } else {
+          delete newErrors.keluhan;
+        }
+        break;
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setTouched({
-      patient_id: true,
-      tanggal_janji: true,
-      jam_janji: true,
-      keluhan: true,
-      status: true,
+  const validate = (): boolean => {
+    const fields: (keyof AppointmentFormData)[] = [
+      'patient_id',
+      'tanggal_janji',
+      'jam_janji',
+      'keluhan',
+    ];
+
+    if (isStaf() || isKepalaKlinik()) {
+      fields.push('doctor_id');
+    }
+
+    const allTouched = fields.reduce((acc, field) => {
+      acc[field] = true;
+      return acc;
+    }, {} as Partial<Record<keyof AppointmentFormData, boolean>>);
+
+    setTouched(allTouched);
+
+    let isValid = true;
+    fields.forEach(field => {
+      if (!validateField(field)) {
+        isValid = false;
+      }
     });
 
-    if (!validate()) return;
-    await onSubmit(formData);
+    return isValid;
   };
 
-  const showError = (field: keyof AppointmentFormData) => touched[field] && errors[field];
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validate()) {
+      return;
+    }
+
+    const submitData = {
+      patient_id: parseInt(formData.patient_id),
+      doctor_id: parseInt(formData.doctor_id || user?.id.toString() || '0'),
+      tanggal_janji: formData.tanggal_janji,
+      jam_janji: formData.jam_janji.includes(':00')
+        ? formData.jam_janji
+        : `${formData.jam_janji}:00`,
+      keluhan: formData.keluhan.trim(),
+      status: formData.status,
+    };
+
+    await onSubmit(submitData);
+  };
+
+  const showError = (field: keyof AppointmentFormData) =>
+    touched[field] ? errors[field] : undefined;
+
+  const patientOptions = patients.map(p => ({
+    value: p.id.toString(),
+    label: `${p.nama_lengkap} - ${p.nomor_rekam_medis}`,
+  }));
+
+  const doctorOptions = doctors.map(d => ({
+    value: d.id.toString(),
+    label: d.nama_lengkap,
+  }));
 
   const statusOptions = [
-    { value: 'dijadwalkan', label: 'Dijadwalkan' },
-    { value: 'selesai', label: 'Selesai' },
-    { value: 'dibatalkan', label: 'Dibatalkan' },
+    { value: AppointmentStatus.DIJADWALKAN, label: 'Dijadwalkan' },
+    { value: AppointmentStatus.SELESAI, label: 'Selesai' },
+    { value: AppointmentStatus.DIBATALKAN, label: 'Dibatalkan' },
   ];
+
+  // Get today's date for min attribute
+  const today = new Date().toISOString().split('T')[0];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Pasien */}
-      <div>
-        <label htmlFor="patient_id" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-          <User className="w-5 h-5 text-blue-600" />
-          Pasien <span className="text-red-500">*</span>
-        </label>
-        <select
-          id="patient_id"
-          name="patient_id"
-          value={formData.patient_id}
-          onChange={handleChange}
-          onBlur={() => handleBlur('patient_id')}
-          className={`w-full px-4 py-3 border rounded-lg ${showError('patient_id') ? 'border-red-500' : 'border-gray-300'
-            }`}
-          disabled={isLoading || !!initialData}
-        >
-          <option value="">Pilih Pasien</option>
-          {patients.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.nama_lengkap} - {p.nomor_rekam_medis}
-            </option>
-          ))}
-        </select>
-        {showError('patient_id') && <p className="text-sm text-red-600 mt-1">{errors.patient_id}</p>}
-      </div>
+      <Select
+        label="Pasien"
+        placeholder="Pilih Pasien"
+        options={patientOptions}
+        value={formData.patient_id}
+        onChange={value => handleChange('patient_id', value)}
+        error={showError('patient_id')}
+        required
+        disabled={isLoading || !!initialData}
+        containerClassName="w-full"
+      />
+
+      {/* Dokter - Only show for staff and kepala klinik */}
+      {(isStaf() || isKepalaKlinik()) && (
+        <Select
+          label="Dokter"
+          placeholder="Pilih Dokter"
+          options={doctorOptions}
+          value={formData.doctor_id}
+          onChange={value => handleChange('doctor_id', value)}
+          error={showError('doctor_id')}
+          required
+          disabled={isLoading}
+          containerClassName="w-full"
+        />
+      )}
 
       {/* Tanggal & Jam */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label htmlFor="tanggal_janji" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <Calendar className="w-5 h-5 text-green-600" />
-            Tanggal <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="date"
-            id="tanggal_janji"
-            name="tanggal_janji"
-            value={formData.tanggal_janji}
-            onChange={handleChange}
-            onBlur={() => handleBlur('tanggal_janji')}
-            min={new Date().toISOString().split('T')[0]}
-            className={`w-full px-4 py-3 border rounded-lg ${showError('tanggal_janji') ? 'border-red-500' : 'border-gray-300'
-              }`}
-            disabled={isLoading}
-          />
-          {showError('tanggal_janji') && <p className="text-sm text-red-600 mt-1">{errors.tanggal_janji}</p>}
-        </div>
+        <Input
+          type="date"
+          label="Tanggal"
+          value={formData.tanggal_janji}
+          onChange={e => handleChange('tanggal_janji', e.target.value)}
+          onBlur={() => handleBlur('tanggal_janji')}
+          min={!initialData ? today : undefined}
+          error={showError('tanggal_janji')}
+          required
+          disabled={isLoading}
+          leftIcon={<Calendar className="w-5 h-5 text-gray-400" />}
+        />
 
-        <div>
-          <label htmlFor="jam_janji" className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <Clock className="w-5 h-5 text-purple-600" />
-            Jam <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="time"
-            id="jam_janji"
-            name="jam_janji"
-            value={formData.jam_janji}
-            onChange={handleChange}
-            onBlur={() => handleBlur('jam_janji')}
-            className={`w-full px-4 py-3 border rounded-lg ${showError('jam_janji') ? 'border-red-500' : 'border-gray-300'
-              }`}
-            disabled={isLoading}
-          />
-          {showError('jam_janji') && <p className="text-sm text-red-600 mt-1">{errors.jam_janji}</p>}
-        </div>
+        <Input
+          type="time"
+          label="Jam"
+          value={formData.jam_janji}
+          onChange={e => handleChange('jam_janji', e.target.value)}
+          onBlur={() => handleBlur('jam_janji')}
+          error={showError('jam_janji')}
+          required
+          disabled={isLoading}
+          leftIcon={<Clock className="w-5 h-5 text-gray-400" />}
+        />
       </div>
 
       {/* Keluhan */}
-      <div>
-        <label htmlFor="keluhan" className="block text-sm font-medium text-gray-700 mb-2">
-          Keluhan <span className="text-red-500">*</span>
-        </label>
-        <textarea
-          id="keluhan"
-          name="keluhan"
-          value={formData.keluhan}
-          onChange={handleChange}
-          onBlur={() => handleBlur('keluhan')}
-          rows={4}
-          className={`w-full px-4 py-3 border rounded-lg ${showError('keluhan') ? 'border-red-500' : 'border-gray-300'
-            }`}
-          placeholder="Jelaskan keluhan pasien..."
-          disabled={isLoading}
-        />
-        {showError('keluhan') && <p className="text-sm text-red-600 mt-1">{errors.keluhan}</p>}
-      </div>
+      <Textarea
+        label="Keluhan"
+        value={formData.keluhan}
+        onChange={e => handleChange('keluhan', e.target.value)}
+        onBlur={() => handleBlur('keluhan')}
+        rows={4}
+        placeholder="Jelaskan keluhan pasien..."
+        error={showError('keluhan')}
+        required
+        disabled={isLoading}
+        maxLength={500}
+        showCharCount
+      />
 
-      {/* Status */}
-      <div>
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
+      {/* Status - Only show when editing */}
+      {initialData && (
+        <Select
+          label="Status"
+          options={statusOptions}
           value={formData.status}
-          onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+          onChange={value => handleChange('status', value as AppointmentStatus)}
           disabled={isLoading}
-        >
-          {statusOptions.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-      </div>
+          containerClassName="w-full"
+        />
+      )}
+
+      {/* Info Box for Dokter */}
+      {isDokter() && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <Stethoscope className="w-5 h-5 text-blue-600 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-blue-900">
+                Janji temu akan otomatis terdaftar atas nama Anda
+              </p>
+              <p className="text-sm text-blue-700 mt-1">
+                Dokter: {user?.nama_lengkap}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 pt-4 border-t">
-        <button
+        <Button
           type="button"
+          variant="ghost"
           onClick={onCancel}
           disabled={isLoading}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
+          className="flex-1"
         >
           Batal
-        </button>
-        <button
+        </Button>
+        <Button
           type="submit"
+          variant="primary"
           disabled={isLoading}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center gap-2"
+          loading={isLoading}
+          className="flex-1"
         >
-          {isLoading ? (
-            <>
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Menyimpan...</span>
-            </>
-          ) : (
-            <span>{initialData ? 'Update Janji Temu' : 'Buat Janji Temu'}</span>
-          )}
-        </button>
+          {initialData ? 'Update Janji Temu' : 'Buat Janji Temu'}
+        </Button>
       </div>
     </form>
   );

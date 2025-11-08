@@ -27,16 +27,18 @@ interface UpdateAppointmentDto {
 
 // --- Tipe Data Respons Paginasi ---
 interface PaginatedAppointments {
-    data: Appointment[];
-    count: number;
-    page: number;
-    limit: number;
+  data: Appointment[];
+  count: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 // --- Fungsi-fungsi API ---
 
 /**
- * ✅ FIXED: Mengambil daftar janji temu dengan filter yang lebih baik
+ * ✅ FIXED: Mengambil daftar janji temu dengan filter
+ * Backend structure: { data, count, page, limit, totalPages }
  */
 export const getAppointments = async (params: FindAppointmentsQuery = {}): Promise<PaginatedAppointments> => {
   try {
@@ -60,17 +62,14 @@ export const getAppointments = async (params: FindAppointmentsQuery = {}): Promi
     });
 
     const response = await api.get('/appointments', { params: cleanParams });
-    
-    // ✅ FIXED: Validasi response structure
-    if (!response.data) {
-      throw new Error('Invalid response structure');
-    }
 
+    // ✅ Backend returns: { data, count, page, limit, totalPages }
     return {
       data: response.data.data || [],
       count: response.data.count || 0,
       page: response.data.page || params.page || 1,
-      limit: response.data.limit || params.limit || 10
+      limit: response.data.limit || params.limit || 10,
+      totalPages: response.data.totalPages || 0
     };
   } catch (error: any) {
     console.error('Gagal mengambil data janji temu:', error);
@@ -79,11 +78,13 @@ export const getAppointments = async (params: FindAppointmentsQuery = {}): Promi
 };
 
 /**
- * Mengambil satu data janji temu berdasarkan ID.
+ * ✅ Mengambil satu data janji temu berdasarkan ID
+ * Backend: GET /appointments/:id
  */
 export const getAppointmentById = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.get(`/appointments/${id}`);
+    // Backend returns appointment object directly
     return response.data;
   } catch (error: any) {
     console.error(`Gagal mengambil janji temu dengan ID ${id}:`, error);
@@ -92,7 +93,8 @@ export const getAppointmentById = async (id: number): Promise<Appointment> => {
 };
 
 /**
- * ✅ FIXED: Membuat janji temu baru dengan validasi lebih baik
+ * ✅ FIXED: Membuat janji temu baru
+ * Backend: POST /appointments
  */
 export const createAppointment = async (data: CreateAppointmentDto): Promise<Appointment> => {
   try {
@@ -108,6 +110,7 @@ export const createAppointment = async (data: CreateAppointmentDto): Promise<App
     };
 
     const response = await api.post('/appointments', formattedData);
+    // Backend returns appointment object directly
     return response.data;
   } catch (error: any) {
     console.error('Gagal membuat janji temu:', error);
@@ -117,11 +120,13 @@ export const createAppointment = async (data: CreateAppointmentDto): Promise<App
 };
 
 /**
- * Mengubah status janji temu menjadi 'selesai'.
+ * ✅ Mengubah status janji temu menjadi 'selesai'
+ * Backend: POST /appointments/:id/complete
  */
 export const completeAppointment = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.post(`/appointments/${id}/complete`);
+    // Backend returns appointment object directly
     return response.data;
   } catch (error: any) {
     console.error(`Gagal menyelesaikan janji temu dengan ID ${id}:`, error);
@@ -130,11 +135,13 @@ export const completeAppointment = async (id: number): Promise<Appointment> => {
 };
 
 /**
- * Mengubah status janji temu menjadi 'dibatalkan'.
+ * ✅ Mengubah status janji temu menjadi 'dibatalkan'
+ * Backend: POST /appointments/:id/cancel
  */
 export const cancelAppointment = async (id: number): Promise<Appointment> => {
   try {
     const response = await api.post(`/appointments/${id}/cancel`);
+    // Backend returns appointment object directly
     return response.data;
   } catch (error: any) {
     console.error(`Gagal membatalkan janji temu dengan ID ${id}:`, error);
@@ -143,11 +150,18 @@ export const cancelAppointment = async (id: number): Promise<Appointment> => {
 };
 
 /**
- * Mengupdate data janji temu.
+ * ✅ FIXED: Mengupdate data janji temu
+ * Backend: PATCH /appointments/:id (bukan PUT!)
  */
 export const updateAppointment = async (id: number, data: UpdateAppointmentDto): Promise<Appointment> => {
   try {
+    // Pastikan format jam sesuai jika ada
+    if (data.jam_janji && !data.jam_janji.includes(':00')) {
+      data.jam_janji = `${data.jam_janji}:00`;
+    }
+
     const response = await api.patch(`/appointments/${id}`, data);
+    // Backend returns appointment object directly
     return response.data;
   } catch (error: any) {
     console.error(`Gagal mengupdate janji temu dengan ID ${id}:`, error);
@@ -156,7 +170,8 @@ export const updateAppointment = async (id: number, data: UpdateAppointmentDto):
 };
 
 /**
- * Menghapus janji temu.
+ * ✅ Menghapus janji temu
+ * Backend: DELETE /appointments/:id
  */
 export const deleteAppointment = async (id: number): Promise<void> => {
   try {

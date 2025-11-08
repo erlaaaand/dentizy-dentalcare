@@ -14,7 +14,7 @@ const sizeClasses = {
 
 export function ModalProvider() {
   const { modals, closeModal, confirmModal, closeConfirm } = useModalStore();
-  
+
   // Lock body scroll when modal is open
   useEffect(() => {
     if (modals.length > 0 || confirmModal) {
@@ -22,12 +22,12 @@ export function ModalProvider() {
     } else {
       document.body.style.overflow = 'unset';
     }
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [modals.length, confirmModal]);
-  
+
   return (
     <>
       {/* Regular Modals */}
@@ -58,7 +58,7 @@ export function ModalProvider() {
                 )}
               </div>
             )}
-            
+
             {/* Content */}
             <div className="flex-1 overflow-y-auto p-4">
               {modal.content}
@@ -66,7 +66,7 @@ export function ModalProvider() {
           </div>
         </div>
       ))}
-      
+
       {/* Confirm Modal */}
       {confirmModal && (
         <div
@@ -95,7 +95,7 @@ export function ModalProvider() {
                   </div>
                 )}
               </div>
-              
+
               {/* Title & Message */}
               <div className="text-center mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
@@ -105,7 +105,7 @@ export function ModalProvider() {
                   {confirmModal.message}
                 </p>
               </div>
-              
+
               {/* Actions */}
               <div className="flex gap-3">
                 <button
@@ -116,13 +116,12 @@ export function ModalProvider() {
                 </button>
                 <button
                   onClick={() => confirmModal.onConfirm()}
-                  className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${
-                    confirmModal.type === 'danger'
-                      ? 'bg-red-600 hover:bg-red-700'
-                      : confirmModal.type === 'warning'
+                  className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${confirmModal.type === 'danger'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : confirmModal.type === 'warning'
                       ? 'bg-yellow-600 hover:bg-yellow-700'
                       : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
+                    }`}
                 >
                   {confirmModal.confirmText}
                 </button>
