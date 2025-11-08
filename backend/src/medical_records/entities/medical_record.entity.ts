@@ -1,4 +1,5 @@
 import { Appointment } from '../../appointments/entities/appointment.entity';
+import { User } from '../../users/entities/user.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -6,6 +7,7 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     OneToOne,
+    ManyToOne,
     JoinColumn,
 } from 'typeorm';
 
@@ -47,4 +49,8 @@ export class MedicalRecord {
     @OneToOne(() => Appointment, (appointment) => appointment.medical_record)
     @JoinColumn({ name: 'appointment_id' })
     appointment: Appointment;
+
+    @ManyToOne(() => User, (user) => user.medical_records, { eager: true })
+    @JoinColumn({ name: 'user_id_staff' })
+    user_staff: User;
 }

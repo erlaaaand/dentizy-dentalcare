@@ -5,11 +5,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToMany,
   ManyToMany,
   JoinTable,
   Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
+import { MedicalRecord } from '../../medical_records/entities/medical_record.entity';
 
 @Entity('users')
 export class User {
@@ -53,4 +55,7 @@ export class User {
     },
   })
   roles: Role[];
+
+  @OneToMany(() => MedicalRecord, (record) => record.user_staff)
+  medical_records: MedicalRecord[];
 }
