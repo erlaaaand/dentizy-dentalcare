@@ -211,7 +211,7 @@ export interface CreatePatientDto {
 
 export interface UpdatePatientDto extends Partial<CreatePatientDto> { }
 
-export interface PatientSearchParams {
+export interface SearchPatientDto {
     search?: string;
     page?: number;
     limit?: number;

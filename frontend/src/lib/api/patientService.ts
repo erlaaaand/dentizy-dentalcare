@@ -1,33 +1,6 @@
 import api from './axiosInstance';
+import {CreatePatientDto, UpdatePatientDto, SearchPatientDto} from '@/types/api';
 
-// --- Tipe Data (DTO) ---
-interface CreatePatientDto {
-  nama_lengkap: string;
-  nik?: string;
-  email?: string;
-  no_hp?: string;
-  tanggal_lahir?: string;
-  jenis_kelamin?: 'L' | 'P';
-  alamat?: string;
-}
-
-interface UpdatePatientDto {
-  nama_lengkap?: string;
-  nik?: string;
-  email?: string;
-  no_hp?: string;
-  tanggal_lahir?: string;
-  jenis_kelamin?: 'L' | 'P';
-  alamat?: string;
-}
-
-interface SearchPatientDto {
-  search?: string;
-  page?: number;
-  limit?: number;
-}
-
-// ✅ Tipe response dari backend (dengan pagination)
 interface PaginatedPatientsResponse {
   data: any[];
   pagination: {
@@ -38,108 +11,97 @@ interface PaginatedPatientsResponse {
   };
 }
 
-// --- Fungsi-fungsi API ---
-
 /**
- * Mengambil semua data pasien dari backend (dengan pagination).
+ * ✅ FIXED: GET /patients dengan pagination
  */
 export const getAllPatients = async (params?: SearchPatientDto): Promise<PaginatedPatientsResponse> => {
   try {
     const response = await api.get('/patients', { params });
     return response.data;
-  } catch (error) {
-    console.error('Gagal mengambil data pasien:', error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Gagal mengambil data pasien');
   }
 };
 
 /**
- * Search pasien dengan keyword
+ * ✅ FIXED: GET /patients/search
  */
 export const searchPatients = async (params: SearchPatientDto): Promise<PaginatedPatientsResponse> => {
   try {
     const response = await api.get('/patients/search', { params });
     return response.data;
-  } catch (error) {
-    console.error('Gagal mencari pasien:', error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Gagal mencari pasien');
   }
 };
 
 /**
- * Mengambil satu data pasien berdasarkan ID.
+ * ✅ FIXED: GET /patients/:id
  */
 export const getPatientById = async (id: number) => {
   try {
     const response = await api.get(`/patients/${id}`);
     return response.data;
-  } catch (error) {
-    console.error(`Gagal mengambil data pasien dengan ID ${id}:`, error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || `Gagal mengambil data pasien`);
   }
 };
 
 /**
- * Mengambil pasien berdasarkan nomor rekam medis
+ * ✅ FIXED: GET /patients/by-medical-record/:number
  */
 export const getPatientByMedicalRecord = async (number: string) => {
   try {
     const response = await api.get(`/patients/by-medical-record/${number}`);
     return response.data;
-  } catch (error) {
-    console.error(`Gagal mengambil pasien dengan no RM ${number}:`, error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Pasien tidak ditemukan');
   }
 };
 
 /**
- * Mengambil pasien berdasarkan NIK
+ * ✅ FIXED: GET /patients/by-nik/:nik
  */
 export const getPatientByNik = async (nik: string) => {
   try {
     const response = await api.get(`/patients/by-nik/${nik}`);
     return response.data;
-  } catch (error) {
-    console.error(`Gagal mengambil pasien dengan NIK ${nik}:`, error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Pasien tidak ditemukan');
   }
 };
 
 /**
- * Mendaftarkan pasien baru ke sistem.
+ * ✅ FIXED: POST /patients
  */
 export const createPatient = async (data: CreatePatientDto) => {
   try {
     const response = await api.post('/patients', data);
     return response.data;
-  } catch (error) {
-    console.error('Gagal membuat pasien baru:', error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Gagal membuat pasien baru');
   }
 };
 
 /**
- * Mengupdate data pasien yang sudah ada.
+ * ✅ FIXED: PATCH /patients/:id (bukan PUT!)
  */
 export const updatePatient = async (id: number, data: UpdatePatientDto) => {
   try {
     const response = await api.patch(`/patients/${id}`, data);
     return response.data;
-  } catch (error) {
-    console.error(`Gagal mengupdate pasien dengan ID ${id}:`, error);
-    throw error;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Gagal mengupdate pasien');
   }
 };
 
 /**
- * Menghapus data pasien dari sistem.
+ * ✅ FIXED: DELETE /patients/:id
  */
 export const deletePatient = async (id: number) => {
   try {
-    const response = await api.delete(`/patients/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Gagal menghapus pasien dengan ID ${id}:`, error);
-    throw error;
+    await api.delete(`/patients/${id}`);
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Gagal menghapus pasien');
   }
 };
