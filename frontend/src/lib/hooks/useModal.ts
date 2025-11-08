@@ -1,5 +1,5 @@
 import { useModalStore, ModalConfig } from '@/lib/store/modalStore';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 
 /**
  * Hook for managing modals
@@ -22,12 +22,12 @@ export function useModal() {
 
         openForm: <T = any>(
             title: string,
-            FormComponent: React.ComponentType<{ onSubmit: (data: T) => void; onCancel: () => void; initialData?: T }>,
-            {
-                initialData,
-                onSubmit,
-                size = 'lg',
-            }: {
+            FormComponent: React.ComponentType<{
+                onSubmit: (data: T) => void;
+                onCancel: () => void;
+                initialData?: T;
+            }>,
+            options: {
                 initialData?: T;
                 onSubmit: (data: T) => void | Promise<void>;
                 size?: ModalConfig['size'];
@@ -35,17 +35,17 @@ export function useModal() {
         ) => {
             const modalId = openModal({
                 title,
-                size,
+                size: options.size || 'lg',
                 content: (
                     <FormComponent
             onSubmit= { async(data) => {
-                await onSubmit(data);
+                await options.onSubmit(data);
                 closeModal(modalId);
             }
         }
             onCancel={() => closeModal(modalId)
     }
-    initialData = { initialData }
+    initialData = { options.initialData }
         />
         ),
 });

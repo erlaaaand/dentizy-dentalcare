@@ -1,46 +1,40 @@
 'use client';
 
-import { useAuthStore } from '@/lib/store/authStore';
-import { hasPermission, Permission } from '@/lib/permissions';
-import { ReactNode } from 'react';
+import React from 'react';
+import { usePermission } from '@/lib/hooks/usePermission';
+import { Permission } from '@/lib/permissions';
 
 interface CanProps {
-  permission: Permission;
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode;
+  permission?: Permission;
+  permissions?: Permission[];
+  requireAll?: boolean;
+  fallback?: React.ReactNode;
 }
 
 /**
- * Component untuk conditional rendering berdasarkan permission
- * Usage: <Can permission="patients:create">...</Can>
+ * Component to guard content based on permissions
  */
-export function Can({ permission, children, fallback = null }: CanProps) {
-  const user = useAuthStore(state => state.user);
+export function Can({ 
+  children, 
+  permission, 
+  permissions, 
+  requireAll = false, 
+  fallback = null 
+}: CanProps) {
+  const { can, canAny, canAll } = usePermission();
   
-  if (!user) return <>{fallback}</>;
+  let hasPermission = false;
   
-  const allowed = hasPermission(user.roles, permission);
+  if (permission) {
+    hasPermission = can(permission);
+  } else if (permissions) {
+    hasPermission = requireAll ? canAll(permissions) : canAny(permissions);
+  }
   
-  return <>{allowed ? children : fallback}</>;
-}
-
-interface CanAnyProps {
-  permissions: Permission[];
-  children: ReactNode;
-  fallback?: ReactNode;
-}
-
-/**
- * Component untuk conditional rendering jika user punya salah satu permission
- */
-export function CanAny({ permissions, children, fallback = null }: CanAnyProps) {
-  const user = useAuthStore(state => state.user);
+  if (!hasPermission) {
+    return <>{fallback}</>;
+  }
   
-  if (!user) return <>{fallback}</>;
-  
-  const allowed = permissions.some(permission => 
-    hasPermission(user.roles, permission)
-  );
-  
-  return <>{allowed ? children : fallback}</>;
+  return <>{children}</>;
 }

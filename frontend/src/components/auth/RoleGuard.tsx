@@ -1,50 +1,30 @@
 'use client';
 
-import { useAuthStore, UserRole } from '@/lib/store/authStore';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { ReactNode } from 'react';
+import React from 'react';
+import { useAuthStore } from '@/lib/store/authStore';
+import { UserRole } from '@/types/api';
 
 interface RoleGuardProps {
+  children: React.ReactNode;
   allowedRoles: UserRole[];
-  children: ReactNode;
-  fallbackPath?: string;
+  fallback?: React.ReactNode;
 }
 
 /**
- * Component untuk protect entire page/section berdasarkan role
- * Usage: <RoleGuard allowedRoles={[UserRole.KEPALA_KLINIK]}>...</RoleGuard>
+ * Component to guard content based on user roles
  */
-export function RoleGuard({ 
-  allowedRoles, 
-  children, 
-  fallbackPath = '/dashboard' 
-}: RoleGuardProps) {
-  const user = useAuthStore(state => state.user);
-  const router = useRouter();
+export function RoleGuard({ children, allowedRoles, fallback = null }: RoleGuardProps) {
+  const { user, hasRole } = useAuthStore();
   
-  useEffect(() => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    
-    const hasAccess = allowedRoles.some(role => 
-      user.roles.includes(role)
-    );
-    
-    if (!hasAccess) {
-      router.push(fallbackPath);
-    }
-  }, [user, allowedRoles, router, fallbackPath]);
+  if (!user) {
+    return <>{fallback}</>;
+  }
   
-  if (!user) return null;
+  const hasAccess = allowedRoles.some(role => hasRole(role));
   
-  const hasAccess = allowedRoles.some(role => 
-    user.roles.includes(role)
-  );
-  
-  if (!hasAccess) return null;
+  if (!hasAccess) {
+    return <>{fallback}</>;
+  }
   
   return <>{children}</>;
 }

@@ -5,6 +5,7 @@ export type ID = number;
 export type ISODateString = string; // Format: YYYY-MM-DD
 export type ISODateTimeString = string; // Format: YYYY-MM-DDTHH:mm:ss
 export type TimeString = string; // Format: HH:mm:ss
+import { useAuthStore } from '@/lib/store/authStore';
 
 // ============================================
 // ENUMS
@@ -54,6 +55,17 @@ export interface User {
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
     roles: Role[];
+}
+
+export function useRole() {
+    const { hasRole, isKepalaKlinik, isDokter, isStaf } = useAuthStore();
+
+    return {
+        hasRole,
+        isKepalaKlinik,
+        isDokter,
+        isStaf,
+    };
 }
 
 export interface Patient {
@@ -137,6 +149,7 @@ export interface ApiResponse<T = unknown> {
 export interface ApiError {
     message: string;
     statusCode?: number;
+    error?: string;
     errors?: Record<string, string[]>;
 }
 
@@ -195,7 +208,7 @@ export interface CreatePatientDto {
     alamat?: string;
 }
 
-export interface UpdatePatientDto extends Partial<CreatePatientDto> {}
+export interface UpdatePatientDto extends Partial<CreatePatientDto> { }
 
 export interface PatientSearchParams {
     search?: string;
@@ -213,7 +226,7 @@ export interface CreateMedicalRecordDto {
     plan?: string;
 }
 
-export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> {}
+export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> { }
 
 // User DTOs
 export interface CreateUserDto {

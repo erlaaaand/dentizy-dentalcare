@@ -3,7 +3,7 @@
  * This file aggregates all API service modules
  */
 
-import { apiClient, handleApiError, extractValidationErrors } from './client';
+import { apiClient, handleApiError, extractValidationErrors } from '@/lib/api/client';
 import { 
   User, Patient, Appointment, MedicalRecord, Role,
   CreatePatientDto, UpdatePatientDto, PatientSearchParams,

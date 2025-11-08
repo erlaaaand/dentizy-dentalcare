@@ -12,3 +12,8 @@ export {
 } from './useMediaQuery';
 export { usePermission } from './usePermission';
 export { useRole } from './useRole';
+export { useConfirm } from './useConfirm';
+export { useModal } from './useModal';
+export { useFetch } from './useFetch';
+export { useForm } from './useForm';
+export { useTable } from './useTable';

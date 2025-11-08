@@ -5,25 +5,22 @@ import { hasPermission, Permission } from '@/lib/permissions';
 
 export function usePermission() {
   const user = useAuthStore(state => state.user);
-  
+
   const can = (permission: Permission): boolean => {
     if (!user) return false;
-    return hasPermission(user.roles, permission);
+    const roleNames = user.roles.map(r => r.name);
+    return hasPermission(roleNames, permission);
   };
-  
+
   const canAny = (permissions: Permission[]): boolean => {
     if (!user) return false;
-    return permissions.some(permission => 
-      hasPermission(user.roles, permission)
-    );
+    return permissions.some(permission => can(permission));
   };
-  
+
   const canAll = (permissions: Permission[]): boolean => {
     if (!user) return false;
-    return permissions.every(permission => 
-      hasPermission(user.roles, permission)
-    );
+    return permissions.every(permission => can(permission));
   };
-  
+
   return { can, canAny, canAll };
 }
