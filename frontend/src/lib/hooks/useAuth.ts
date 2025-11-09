@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 // Anda perlu membuat endpoint di backend, misal: GET /auth/profile
 // untuk mendapatkan data user berdasarkan token
-// import { getProfile } from '@/lib/api/authService';
+import { getCurrentUser } from '@/lib/api/authService';
 
 export default function useAuth() {
   const [user, setUser] = useState(null);
@@ -13,8 +13,8 @@ export default function useAuth() {
       const token = localStorage.getItem('access_token');
       if (token) {
         try {
-          // const profile = await getProfile(); // Panggil API
-          // setUser(profile.data);
+          const profile = await getCurrentUser(); // Panggil API
+          setUser(profile.data);
         } catch (error) {
           // Token tidak valid, logout
           localStorage.removeItem('access_token');

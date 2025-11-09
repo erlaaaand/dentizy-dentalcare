@@ -1,294 +1,154 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
-import { logout, getCurrentUser } from '@/lib/api/authService'
-
-interface Notification {
-    id: string
-    title: string
-    message: string
-    time: string
-    type: 'appointment' | 'payment' | 'reminder'
-}
-
-const notifications: Notification[] = [
-    {
-        id: '1',
-        title: 'Janji temu baru',
-        message: 'Sari Indah membuat janji temu untuk besok',
-        time: '5 menit yang lalu',
-        type: 'appointment'
-    },
-    {
-        id: '2',
-        title: 'Pembayaran diterima',
-        message: 'Budi Santoso telah menyelesaikan pembayaran',
-        time: '15 menit yang lalu',
-        type: 'payment'
-    },
-    {
-        id: '3',
-        title: 'Pengingat stok',
-        message: 'Stok anestesi hampir habis',
-        time: '1 jam yang lalu',
-        type: 'reminder'
-    }
-]
+import { useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { logout, getCurrentUser } from '@/lib/api/authService';
+import { useModalStore } from '@/lib/store/modalStore';
+import { useClickOutside } from '@/lib/hooks/useClickOutside';
+import { useToast } from '@/lib/hooks/useToast';
 
 export default function Header() {
-    const router = useRouter()
-    const [showNotifications, setShowNotifications] = useState(false)
-    const [showProfileDropdown, setShowProfileDropdown] = useState(false)
-    const [currentUser, setCurrentUser] = useState<any>(null)
-    const [isLoggingOut, setIsLoggingOut] = useState(false)
+    const router = useRouter();
+    const showConfirm = useModalStore((state) => state.confirm);
+    const isLoading = useModalStore((state) => state.isLoading);
 
-    const notificationRef = useRef<HTMLDivElement>(null)
-    const profileRef = useRef<HTMLDivElement>(null)
+    const currentUser = getCurrentUser();
 
-    // Load user info
-    useEffect(() => {
-        const user = getCurrentUser()
-        setCurrentUser(user)
-    }, [])
+    const { success, error } = useToast();
 
-    const toggleNotifications = () => {
-        setShowNotifications(!showNotifications)
-        setShowProfileDropdown(false)
-    }
+    const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
 
-    const toggleProfileDropdown = () => {
-        setShowProfileDropdown(!showProfileDropdown)
-        setShowNotifications(false)
-    }
+    useClickOutside(profileRef, () => setShowProfileDropdown(false));
 
     const handleLogout = async () => {
-        if (!confirm('Apakah Anda yakin ingin keluar?')) return
-
         try {
-            setIsLoggingOut(true)
-            logout()
-        } catch (error) {
-            console.error('Logout error:', error)
-            // Force logout anyway
-            logout()
+            logout();
+            success('Logout berhasil! Anda telah keluar dari sistem.');
+            setTimeout(() => router.push('/login'), 1500);
+        } catch (err) {
+            console.error('Logout error:', err);
+            error('Logout gagal! Terjadi kesalahan saat logout.');
+            logout();
         }
-    }
+    };
 
-    // Close dropdowns when clicking outside
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
-                setShowNotifications(false)
-            }
-            if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
-                setShowProfileDropdown(false)
-            }
+    const confirmLogout = async () => {
+        await showConfirm({
+            title: 'Konfirmasi Logout',
+            message: 'Apakah Anda yakin ingin keluar dari sistem?',
+            onConfirm: handleLogout,
+            type: 'danger',
+            confirmText: 'Ya, Keluar'
+        });
+    };
+
+    const handleMenuSelect = (value: string) => {
+        setShowProfileDropdown(false);
+        switch (value) {
+            case 'profile':
+                router.push('/dashboard/profile');
+                break;
+            case 'settings':
+                router.push('/dashboard/settings');
+                break;
+            case 'logout':
+                confirmLogout();
+                break;
         }
+    };
 
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [])
-
-    // Close dropdowns on escape key
-    useEffect(() => {
-        const handleEscapeKey = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setShowNotifications(false)
-                setShowProfileDropdown(false)
-            }
-        }
-
-        document.addEventListener('keydown', handleEscapeKey)
-        return () => {
-            document.removeEventListener('keydown', handleEscapeKey)
-        }
-    }, [])
-
-    // Get user initials
     const getUserInitials = () => {
-        if (!currentUser?.nama_lengkap) return '?'
-        const names = currentUser.nama_lengkap.split(' ')
-        if (names.length >= 2) {
-            return `${names[0][0]}${names[1][0]}`.toUpperCase()
-        }
-        return currentUser.nama_lengkap.substring(0, 2).toUpperCase()
-    }
+        if (!currentUser?.nama_lengkap) return '?';
+        const names = currentUser.nama_lengkap.split(' ');
+        return names.length >= 2
+            ? `${names[0][0]}${names[1][0]}`.toUpperCase()
+            : currentUser.nama_lengkap.substring(0, 2).toUpperCase();
+    };
 
-    // Get user role display
     const getUserRole = () => {
-        if (!currentUser?.roles || currentUser.roles.length === 0) return 'User'
-        const role = currentUser.roles[0]
-        const roleMap: { [key: string]: string } = {
-            'kepala_klinik': 'Kepala Klinik',
-            'dokter': 'Dokter',
-            'staf': 'Staf'
-        }
-        return roleMap[role] || role
-    }
+        if (!currentUser?.roles || currentUser.roles.length === 0) return 'User';
+        const role = currentUser.roles[0];
+        const roleMap: Record<string, string> = {
+            kepala_klinik: 'Kepala Klinik',
+            dokter: 'Dokter',
+            staf: 'Staf',
+        };
+        return roleMap[role] || role;
+    };
+
+    const menuOptions = [
+        { value: 'profile', label: 'Profil Saya' },
+        { value: 'settings', label: 'Pengaturan' },
+        { value: 'logout', label: 'Keluar' },
+    ];
 
     return (
-        <header className="bg-white shadow-sm border-b border-gray-200 p-6">
+        <header className="bg-white shadow-sm border-b border-gray-200 p-6 relative">
             <div className="flex items-center justify-between">
                 {/* Page Title */}
                 <div className="min-w-0 flex-1">
                     <h1 className="text-3xl font-bold text-gray-900">
                         Halo, {currentUser?.nama_lengkap || 'User'}!
                     </h1>
-                    <p className="text-gray-600 mt-1">Selamat datang kembali di dashboard Dentizy</p>
+                    <p className="text-gray-600 mt-1">
+                        Selamat datang kembali di dashboard Dentizy
+                    </p>
                 </div>
 
-                {/* Header Actions */}
-                <div className="flex items-center space-x-4 flex-shrink-0">
-
-                    {/* Notification Button */}
-                    <div className="relative" ref={notificationRef}>
-                        <button
-                            onClick={toggleNotifications}
-                            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors relative"
-                            aria-label="Notifikasi"
-                            aria-expanded={showNotifications}
+                {/* Profile Dropdown */}
+                <div className="relative" ref={profileRef}>
+                    <button
+                        onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                        className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                        aria-label="Menu profil"
+                        aria-expanded={showProfileDropdown}
+                        disabled={isLoading}
+                    >
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
+                            <span className="text-sm font-medium text-white">{getUserInitials()}</span>
+                        </div>
+                        <svg
+                            className={`w-4 h-4 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
                         >
-                            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                            </svg>
-                            {notifications.length > 0 && (
-                                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center min-w-[20px]">
-                                    {notifications.length > 99 ? '99+' : notifications.length}
-                                </span>
-                            )}
-                        </button>
+                            <path
+                                fillRule="evenodd"
+                                d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                clipRule="evenodd"
+                            />
+                        </svg>
+                    </button>
 
-                        {/* Notification Panel */}
-                        {showNotifications && (
-                            <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
-                                <div className="p-4 border-b border-gray-200">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-lg font-semibold text-gray-900">Notifikasi</h3>
-                                        <button
-                                            onClick={() => setShowNotifications(false)}
-                                            className="text-gray-400 hover:text-gray-600 p-1"
-                                            aria-label="Tutup notifikasi"
-                                        >
-                                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className="max-h-64 overflow-y-auto">
-                                    {notifications.length > 0 ? (
-                                        notifications.map((notification) => (
-                                            <div key={notification.id} className="p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors">
-                                                <p className="text-sm font-medium text-gray-900">{notification.title}</p>
-                                                <p className="text-xs text-gray-500 mt-1">{notification.message}</p>
-                                                <p className="text-xs text-blue-600 mt-2">{notification.time}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <div className="p-4 text-center text-gray-500">
-                                            <p className="text-sm">Tidak ada notifikasi</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="p-4 border-t border-gray-200">
-                                    <button className="w-full text-center text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                                        Lihat Semua Notifikasi
-                                    </button>
-                                </div>
+                    {showProfileDropdown && (
+                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
+                            <div className="p-4 border-b border-gray-200">
+                                <p className="text-sm font-medium text-gray-900 truncate">{currentUser?.nama_lengkap || 'User'}</p>
+                                <p className="text-xs text-gray-500 truncate">{currentUser?.username || '-'}</p>
+                                <p className="text-xs text-blue-600 mt-1">{getUserRole()}</p>
                             </div>
-                        )}
-                    </div>
-
-                    {/* User Profile Dropdown */}
-                    <div className="relative" ref={profileRef}>
-                        <button
-                            onClick={toggleProfileDropdown}
-                            className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                            aria-label="Menu profil"
-                            aria-expanded={showProfileDropdown}
-                            disabled={isLoggingOut}
-                        >
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                                <span className="text-sm font-medium text-white">{getUserInitials()}</span>
+                            <div className="py-2">
+                                {menuOptions.map((option) => (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => handleMenuSelect(option.value)}
+                                        disabled={option.value === 'logout' && isLoading}
+                                        className={`block w-full text-left px-4 py-2 text-sm transition-colors
+                                            ${option.value === 'logout'
+                                                ? 'text-red-600 hover:bg-red-50'
+                                                : 'text-gray-700 hover:bg-gray-100'
+                                            }
+                                            ${option.value === 'logout' && isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {option.value === 'logout' && isLoading ? 'Keluar...' : option.label}
+                                    </button>
+                                ))}
                             </div>
-                            <svg className={`w-4 h-4 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd"
-                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                    clipRule="evenodd" />
-                            </svg>
-                        </button>
-
-                        {/* Profile Dropdown Menu */}
-                        {showProfileDropdown && (
-                            <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
-                                <div className="p-4 border-b border-gray-200">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
-                                        {currentUser?.nama_lengkap || 'User'}
-                                    </p>
-                                    <p className="text-xs text-gray-500 truncate">
-                                        {currentUser?.username || '-'}
-                                    </p>
-                                    <p className="text-xs text-blue-600 mt-1">{getUserRole()}</p>
-                                </div>
-                                <div className="py-2">
-                                    <button 
-                                        onClick={() => router.push('/dashboard/profile')}
-                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                            </svg>
-                                            <span>Profil Saya</span>
-                                        </div>
-                                    </button>
-                                    <button 
-                                        onClick={() => router.push('/dashboard/settings')}
-                                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                            <span>Pengaturan</span>
-                                        </div>
-                                    </button>
-                                </div>
-                                <div className="border-t border-gray-200">
-                                    <button 
-                                        onClick={handleLogout}
-                                        disabled={isLoggingOut}
-                                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            {isLoggingOut ? (
-                                                <>
-                                                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                    </svg>
-                                                    <span>Keluar...</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                                    </svg>
-                                                    <span>Keluar</span>
-                                                </>
-                                            )}
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
-    )
+    );
 }

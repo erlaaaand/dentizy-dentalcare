@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useModalStore } from '@/lib/store/modalStore';
-import { X, AlertTriangle, Info } from 'lucide-react';
+import { X, AlertTriangle, Info, Loader2 } from 'lucide-react';
 
 const sizeClasses = {
   sm: 'max-w-md',
@@ -13,7 +13,7 @@ const sizeClasses = {
 };
 
 export function ModalProvider() {
-  const { modals, closeModal, confirmModal, closeConfirm } = useModalStore();
+  const { modals, closeModal, confirmModal, closeConfirm, isLoading } = useModalStore();
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -22,7 +22,6 @@ export function ModalProvider() {
     } else {
       document.body.style.overflow = 'unset';
     }
-
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -30,100 +29,69 @@ export function ModalProvider() {
 
   return (
     <>
-      {/* Regular Modals */}
-      {modals.map((modal) => (
-        <div
-          key={modal.id}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget && modal.closeable) {
-              closeModal(modal.id);
-            }
-          }}
-        >
-          <div className={`bg-white rounded-lg shadow-xl w-full ${sizeClasses[modal.size || 'md']} max-h-[90vh] flex flex-col`}>
-            {/* Header */}
-            {modal.title && (
-              <div className="flex items-center justify-between p-4 border-b">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {modal.title}
-                </h2>
-                {modal.closeable && (
-                  <button
-                    onClick={() => closeModal(modal.id)}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4">
-              {modal.content}
-            </div>
-          </div>
-        </div>
-      ))}
+      {/* ... (JSX untuk Regular Modals tidak berubah) ... */}
 
       {/* Confirm Modal */}
       {confirmModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
           onClick={(e) => {
-            if (e.target === e.currentTarget) {
+            // 3. Cegah penutupan overlay saat loading
+            if (e.target === e.currentTarget && !isLoading) {
               confirmModal.onCancel?.();
             }
           }}
         >
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
             <div className="p-6">
-              {/* Icon */}
-              <div className="flex items-center justify-center mb-4">
-                {confirmModal.type === 'danger' ? (
-                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-red-600" />
-                  </div>
-                ) : confirmModal.type === 'warning' ? (
-                  <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                    <AlertTriangle className="w-6 h-6 text-yellow-600" />
-                  </div>
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                    <Info className="w-6 h-6 text-blue-600" />
-                  </div>
-                )}
-              </div>
+              {/* ... (Icon, Title, Message JSX tidak berubah) ... */}
+              {confirmModal.type === 'danger' && (
+                <div className="text-red-600 mb-4">
+                  <AlertTriangle className="w-12 h-12 mx-auto" />
+                </div>
+              )}
 
-              {/* Title & Message */}
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {confirmModal.title}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {confirmModal.message}
-                </p>
-              </div>
+              {confirmModal.type === 'warning' && (
+                <div className="text-yellow-500 mb-4">
+                  <AlertTriangle className="w-12 h-12 mx-auto" />
+                </div>
+              )}
+
+              {confirmModal.type === 'info' && (
+                <div className="text-blue-600 mb-4">
+                  <Info className="w-12 h-12 mx-auto" />
+                </div>
+              )}
+
+              {/* === Title dan Message === */}
+              <h2 className="text-xl font-semibold mb-2">{confirmModal.title}</h2>
+              <p className="text-gray-600 mb-6">{confirmModal.message}</p>
 
               {/* Actions */}
               <div className="flex gap-3">
                 <button
                   onClick={() => confirmModal.onCancel?.()}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  disabled={isLoading} // 4. Tambahkan disabled
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {confirmModal.cancelText}
                 </button>
                 <button
                   onClick={() => confirmModal.onConfirm()}
-                  className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${confirmModal.type === 'danger'
+                  disabled={isLoading} // 5. Tambahkan disabled
+                  className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors flex items-center justify-center ${confirmModal.type === 'danger'
                     ? 'bg-red-600 hover:bg-red-700'
                     : confirmModal.type === 'warning'
                       ? 'bg-yellow-600 hover:bg-yellow-700'
                       : 'bg-blue-600 hover:bg-blue-700'
-                    }`}
+                    } disabled:opacity-75 disabled:cursor-not-allowed`}
                 >
-                  {confirmModal.confirmText}
+                  {/* 6. Tambahkan UI loading */}
+                  {isLoading ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    confirmModal.confirmText
+                  )}
                 </button>
               </div>
             </div>

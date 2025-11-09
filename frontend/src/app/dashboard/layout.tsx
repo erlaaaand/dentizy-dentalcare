@@ -3,6 +3,7 @@ import Sidebar from '@/components/dashboard/sidebar'
 import Header from '@/components/dashboard/header'
 import Footer from '@/components/dashboard/footer'
 import AuthGuard from '@/components/AuthGuard';
+import { Providers } from '@/components/providers/Providers';
 
 export const metadata: Metadata = {
     title: 'Dentizy Dentalcare - Dashboard',
@@ -22,7 +23,9 @@ export default function DashboardLayout({
           <Header />
           {/* Di sini HANYA ada {children} sebagai placeholder untuk konten halaman */}
           <section className="flex-1 overflow-y-auto p-6">
+            <Providers>
             {children}
+            </Providers>
           </section>
           <Footer />
         </main>

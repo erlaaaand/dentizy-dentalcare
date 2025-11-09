@@ -23,11 +23,12 @@ export interface ConfirmModalConfig {
 interface ModalStore {
   modals: ModalConfig[];
   confirmModal: (ConfirmModalConfig & { id: string }) | null;
-  
+  isLoading: boolean;
+
   openModal: (config: Omit<ModalConfig, 'id'>) => string;
   closeModal: (id: string) => void;
   closeAllModals: () => void;
-  
+
   confirm: (config: ConfirmModalConfig) => Promise<boolean>;
   closeConfirm: () => void;
 }
@@ -35,7 +36,8 @@ interface ModalStore {
 export const useModalStore = create<ModalStore>((set, get) => ({
   modals: [],
   confirmModal: null,
-  
+  isLoading: false,
+
   openModal: (config) => {
     const id = `modal-${Date.now()}-${Math.random()}`;
     const modal: ModalConfig = {
@@ -44,42 +46,42 @@ export const useModalStore = create<ModalStore>((set, get) => ({
       closeable: true,
       ...config,
     };
-    
+
     set((state) => ({
       modals: [...state.modals, modal],
     }));
-    
+
     return id;
   },
-  
+
   closeModal: (id) => {
     const modal = get().modals.find((m) => m.id === id);
-    
+
     if (modal?.onClose) {
       modal.onClose();
     }
-    
+
     set((state) => ({
       modals: state.modals.filter((m) => m.id !== id),
     }));
   },
-  
+
   closeAllModals: () => {
     const { modals } = get();
-    
+
     modals.forEach((modal) => {
       if (modal.onClose) {
         modal.onClose();
       }
     });
-    
+
     set({ modals: [] });
   },
-  
+
   confirm: (config) => {
     return new Promise<boolean>((resolve) => {
       const id = `confirm-${Date.now()}`;
-      
+
       set({
         confirmModal: {
           ...config,
@@ -88,14 +90,21 @@ export const useModalStore = create<ModalStore>((set, get) => ({
           cancelText: config.cancelText || 'Batal',
           type: config.type || 'info',
           onConfirm: async () => {
-            await config.onConfirm();
-            get().closeConfirm();
-            resolve(true);
+            set({ isLoading: true }); // 1. Set loading
+            try {
+              await config.onConfirm(); // 2. Jalankan aksi (misal: handleLogout)
+              resolve(true);
+            } catch (error) {
+              console.error('Error during confirm action:', error);
+              resolve(false);
+            } finally {
+              set({ isLoading: false }); // 3. Stop loading
+              get().closeConfirm(); // 4. Tutup modal
+            }
           },
           onCancel: () => {
-            if (config.onCancel) {
-              config.onCancel();
-            }
+            if (get().isLoading) return; // Jangan biarkan menutup saat loading
+            config.onCancel?.();
             get().closeConfirm();
             resolve(false);
           },
@@ -103,8 +112,8 @@ export const useModalStore = create<ModalStore>((set, get) => ({
       });
     });
   },
-  
+
   closeConfirm: () => {
-    set({ confirmModal: null });
+    set({ confirmModal: null, isLoading: false }); // Reset isLoading di sini
   },
 }));

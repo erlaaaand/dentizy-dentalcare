@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Providers } from '@/components/providers/Providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -21,7 +22,9 @@ export default function RootLayout({
         File ini harus sesederhana mungkin.
       */}
       <body className={inter.className}>
-        {children} {/* Cukup render children di sini */}
+        <Providers>
+          {children}
+        </Providers> {/* Cukup render children di sini */}
       </body>
     </html>
   );
