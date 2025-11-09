@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { logout, getCurrentUser } from '@/lib/api/authService';
 import { useModalStore } from '@/lib/store/modalStore';
@@ -13,14 +13,58 @@ export default function Header() {
     const isLoading = useModalStore((state) => state.isLoading);
 
     const currentUser = getCurrentUser();
-
     const { success, error } = useToast();
 
+    // STATE ANIMASI & DROPDOWN
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [animationClass, setAnimationClass] = useState('animate-slide-down');
     const profileRef = useRef<HTMLDivElement>(null);
+    const isClosingRef = useRef(false);
+    const animationDuration = 300; // durasi animasi 0.3s
 
-    useClickOutside(profileRef, () => setShowProfileDropdown(false));
+    // ✅ Tutup dropdown jika klik di luar area
+    useClickOutside(profileRef, () => {
+        if (showProfileDropdown) closeDropdown();
+    });
 
+    // ✅ Fungsi buka dropdown
+    const openDropdown = () => {
+        if (isClosingRef.current || isMounted) return;
+        setAnimationClass('animate-slide-down');
+        setIsMounted(true);
+        setShowProfileDropdown(true);
+    };
+
+    // ✅ Fungsi tutup dropdown dengan animasi halus
+    const closeDropdown = (exitDir: 'up' | 'down' = 'up') => {
+        if (isClosingRef.current) return;
+        isClosingRef.current = true;
+        const exitClass = exitDir === 'down' ? 'animate-slide-down-exit' : 'animate-slide-up-exit';
+        setAnimationClass(exitClass);
+
+        setTimeout(() => {
+            setIsMounted(false);
+            setShowProfileDropdown(false);
+            isClosingRef.current = false;
+            setAnimationClass('animate-slide-down'); // reset
+        }, animationDuration);
+    };
+
+    // ✅ Sinkronisasi niat buka/tutup
+    useEffect(() => {
+        if (showProfileDropdown) openDropdown();
+        else if (isMounted) closeDropdown();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [showProfileDropdown]);
+
+    // ✅ Tombol toggle
+    const onToggleButtonClick = () => {
+        if (showProfileDropdown) closeDropdown();
+        else openDropdown();
+    };
+
+    // ✅ Fungsi logout
     const handleLogout = async () => {
         try {
             logout();
@@ -43,8 +87,9 @@ export default function Header() {
         });
     };
 
+    // ✅ Menu dropdown
     const handleMenuSelect = (value: string) => {
-        setShowProfileDropdown(false);
+        closeDropdown();
         switch (value) {
             case 'profile':
                 router.push('/dashboard/profile');
@@ -58,9 +103,10 @@ export default function Header() {
         }
     };
 
+    // ✅ Utility user
     const getUserInitials = () => {
         if (!currentUser?.nama_lengkap) return '?';
-        const names = currentUser.nama_lengkap.split(' ');
+        const names = currentUser.nama_lengkap.split(' ').filter(Boolean);
         return names.length >= 2
             ? `${names[0][0]}${names[1][0]}`.toUpperCase()
             : currentUser.nama_lengkap.substring(0, 2).toUpperCase();
@@ -83,10 +129,11 @@ export default function Header() {
         { value: 'logout', label: 'Keluar' },
     ];
 
+    // ✅ RENDER UTAMA
     return (
         <header className="bg-white shadow-sm border-b border-gray-200 p-6 relative">
             <div className="flex items-center justify-between">
-                {/* Page Title */}
+                {/* Salam & Judul */}
                 <div className="min-w-0 flex-1">
                     <h1 className="text-3xl font-bold text-gray-900">
                         Halo, {currentUser?.nama_lengkap || 'User'}!
@@ -96,17 +143,19 @@ export default function Header() {
                     </p>
                 </div>
 
-                {/* Profile Dropdown */}
+                {/* Dropdown Profil */}
                 <div className="relative" ref={profileRef}>
                     <button
-                        onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                        onClick={onToggleButtonClick}
                         className="flex items-center space-x-2 p-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                         aria-label="Menu profil"
                         aria-expanded={showProfileDropdown}
                         disabled={isLoading}
                     >
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm">
-                            <span className="text-sm font-medium text-white">{getUserInitials()}</span>
+                            <span className="text-sm font-medium text-white">
+                                {getUserInitials()}
+                            </span>
                         </div>
                         <svg
                             className={`w-4 h-4 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`}
@@ -121,12 +170,21 @@ export default function Header() {
                         </svg>
                     </button>
 
-                    {showProfileDropdown && (
-                        <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 animate-in fade-in duration-200">
+                    {/* Render Dropdown dgn animasi */}
+                    {isMounted && (
+                        <div
+                            className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 ${animationClass}`}
+                        >
                             <div className="p-4 border-b border-gray-200">
-                                <p className="text-sm font-medium text-gray-900 truncate">{currentUser?.nama_lengkap || 'User'}</p>
-                                <p className="text-xs text-gray-500 truncate">{currentUser?.username || '-'}</p>
-                                <p className="text-xs text-blue-600 mt-1">{getUserRole()}</p>
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                    {currentUser?.nama_lengkap || 'User'}
+                                </p>
+                                <p className="text-xs text-gray-500 truncate">
+                                    {currentUser?.username || '-'}
+                                </p>
+                                <p className="text-xs text-blue-600 mt-1">
+                                    {getUserRole()}
+                                </p>
                             </div>
                             <div className="py-2">
                                 {menuOptions.map((option) => (
