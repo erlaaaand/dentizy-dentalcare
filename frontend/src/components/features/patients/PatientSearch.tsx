@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Patient } from '@/types/api';
-import { patientService } from '@/lib/api';
+import * as patientService from '@/lib/api';
 import { useDebounce } from '@/lib/hooks';
 import { PatientCard } from './PatientCard';
 import { Search, X } from 'lucide-react';
@@ -33,8 +33,8 @@ export function PatientSearch({ onSelect, placeholder = 'Cari pasien...', autoFo
     const searchPatients = async (searchQuery: string) => {
         setLoading(true);
         try {
-            const results = await patientService.search(searchQuery);
-            setPatients(results);
+            const results = await patientService.searchPatients({ search: searchQuery });
+            setPatients(results.data);
             setShowResults(true);
         } catch (error) {
             console.error('Search error:', error);

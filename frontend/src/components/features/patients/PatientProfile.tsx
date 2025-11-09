@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Patient, Appointment } from '@/types/api';
-import { patientService } from '@/lib/api';
+import * as patientService from '@/lib/api';
 import { useToastStore } from '@/lib/store/toastStore';
 import { formatDate, formatAge, formatPhoneNumber, getInitials } from '@/lib/formatters';
 import { User, Calendar, Phone, Mail, MapPin, FileText, Clock, Activity } from 'lucide-react';
@@ -22,13 +22,12 @@ export function PatientProfile({ patientId, onEdit }: PatientProfileProps) {
 
     useEffect(() => {
         loadPatient();
-        loadAppointmentHistory();
     }, [patientId]);
 
     const loadPatient = async () => {
         setLoading(true);
         try {
-            const data = await patientService.getById(patientId);
+            const data = await patientService.getPatientById(patientId);
             setPatient(data);
         } catch (err: any) {
             error(err.message || 'Gagal memuat data pasien');
@@ -37,17 +36,6 @@ export function PatientProfile({ patientId, onEdit }: PatientProfileProps) {
         }
     };
 
-    const loadAppointmentHistory = async () => {
-        setLoadingHistory(true);
-        try {
-            const data = await patientService.getHistory(patientId);
-            setAppointments(data);
-        } catch (err: any) {
-            console.error('Failed to load appointment history:', err);
-        } finally {
-            setLoadingHistory(false);
-        }
-    };
 
     if (loading) {
         return (

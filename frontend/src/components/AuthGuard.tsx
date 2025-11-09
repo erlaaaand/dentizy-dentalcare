@@ -44,37 +44,56 @@ export default function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
     const router = useRouter();
     const pathname = usePathname();
     const [status, setStatus] = useState<'loading' | 'verified' | 'unauthorized'>('loading');
-    const [userRoles, setUserRoles] = useState<string[]>([]);
 
     useEffect(() => {
-        const checkAuth = async () => {
+        const checkAuth = () => {
             try {
-                // Cek token di localStorage dan cookies
+                // Cek token di localStorage
                 const token = localStorage.getItem('access_token');
                 const userStr = localStorage.getItem('user');
 
+                // Tidak ada token, redirect ke login
                 if (!token) {
-                    // Tidak ada token, redirect ke login
                     console.log('No token found, redirecting to login');
                     router.push('/login');
                     return;
                 }
 
-                // Jika ada token, ambil user info
+                // Parse user data
                 let user = null;
                 if (userStr) {
                     try {
                         user = JSON.parse(userStr);
-                        setUserRoles(user.roles || []);
                     } catch (e) {
                         console.error('Failed to parse user data:', e);
+                        // Invalid user data, redirect to login
+                        router.push('/login');
+                        return;
                     }
+                }
+
+                // Tidak ada user data, redirect ke login
+                if (!user) {
+                    console.log('No user data found, redirecting to login');
+                    router.push('/login');
+                    return;
                 }
 
                 // Jika ada requiredRoles, cek apakah user punya role yang diperlukan
                 if (requiredRoles && requiredRoles.length > 0) {
-                    const hasRequiredRole = requiredRoles.some(role => 
-                        user?.roles?.includes(role)
+                    if (!user.roles || !Array.isArray(user.roles)) {
+                        console.log('User has no roles');
+                        setStatus('unauthorized');
+                        return;
+                    }
+
+                    // Handle both string array and object array format
+                    const userRoleNames = user.roles.map((role: any) =>
+                        typeof role === 'string' ? role : role.name
+                    );
+
+                    const hasRequiredRole = requiredRoles.some(role =>
+                        userRoleNames.includes(role)
                     );
 
                     if (!hasRequiredRole) {
@@ -84,7 +103,7 @@ export default function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
                     }
                 }
 
-                // Token valid dan role sesuai
+                // Token valid dan role sesuai - PENTING: Set status jadi verified
                 setStatus('verified');
 
             } catch (error) {
@@ -93,6 +112,7 @@ export default function AuthGuard({ children, requiredRoles }: AuthGuardProps) {
             }
         };
 
+        // Run immediately
         checkAuth();
     }, [router, pathname, requiredRoles]);
 
