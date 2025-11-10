@@ -1,16 +1,15 @@
 // frontend/src/components/features/patients/PatientList.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { Patient } from '@/types/api';
 import { usePatients } from '@/contexts/PatientContext';
 import { useConfirm } from '@/lib/hooks/useConfirm';
 import { usePagination } from '@/lib/hooks';
 import { formatDate, formatAge, formatPhoneNumber } from '@/lib/formatters';
-import { Search, Plus, Edit, Trash2, Eye, Phone, Mail, X } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Phone, Mail, Filter, X } from 'lucide-react';
 import Table, { Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
-import { SearchInput } from '@/components/ui/SearchInput';
 
 interface PatientListProps {
     onEdit?: (patient: Patient) => void;
@@ -25,13 +24,19 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
         totalItems,
         currentPage,
         searchQuery,
+        filters,
         setCurrentPage,
         setSearchQuery,
+        setFilters,
+        resetFilters,
         deletePatient
     } = usePatients();
 
     const { confirmDelete } = useConfirm();
     const { totalPages } = usePagination({ totalItems, itemsPerPage: 10 });
+
+    const [showFilter, setShowFilter] = useState(false);
+    const [localFilters, setLocalFilters] = useState(filters);
 
     const handleDelete = async (patient: Patient) => {
         await confirmDelete(`pasien "${patient.nama_lengkap}"`, async () => {
@@ -39,12 +44,25 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
         });
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        // Mencegah form submission saat Enter
-        if (e.key === 'Enter') {
-            e.preventDefault();
-        }
+    const handleApplyFilter = () => {
+        setFilters(localFilters);
+        setShowFilter(false);
     };
+
+    const handleResetFilter = () => {
+        const emptyFilters = {
+            jenis_kelamin: '' as '',
+            umur_min: undefined,
+            umur_max: undefined,
+            tanggal_daftar_dari: '',
+            tanggal_daftar_sampai: '',
+        };
+        setLocalFilters(emptyFilters);
+        resetFilters();
+        setShowFilter(false);
+    };
+
+    const activeFilterCount = Object.values(filters).filter(v => v && v !== '').length;
 
     const columns: Column<Patient>[] = [
         {
@@ -150,21 +168,48 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
 
     return (
         <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <SearchInput
-                    value={searchQuery}
-                    onChange={setSearchQuery} // Langsung panggil setSearchQuery
-                    placeholder="Cari berdasarkan nama, NIK, No. RM..."
-                    debounceMs={500} // Atur debounce di sini
-                    className="w-full"
-                />
+            {/* Header dengan Search & Filter */}
+            <div className="flex items-center gap-3">
+                {/* Instant Search Input */}
+                <div className="flex-1 relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari berdasarkan nama, NIK, No. RM..."
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    )}
+                    {loading && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                            <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
+                        </div>
+                    )}
+                </div>
 
-                {/* Tampilkan 'loading' hanya jika sedang mencari (ada query) */}
-                {loading && searchQuery && (
-                    <p className="mt-1 text-xs text-gray-500">Mencari...</p>
-                )}
+                {/* Filter Button */}
+                <button
+                    onClick={() => setShowFilter(!showFilter)}
+                    className="relative flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                    <Filter className="w-5 h-5" />
+                    <span>Filter</span>
+                    {activeFilterCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-blue-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                            {activeFilterCount}
+                        </span>
+                    )}
+                </button>
 
+                {/* Add Button */}
                 {onAdd && (
                     <button
                         type="button"
@@ -177,11 +222,137 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
                 )}
             </div>
 
+            {/* Filter Panel */}
+            {showFilter && (
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {/* Jenis Kelamin */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Jenis Kelamin
+                                </label>
+                                <select
+                                    value={localFilters.jenis_kelamin || ''}
+                                    onChange={(e) => setLocalFilters({
+                                        ...localFilters,
+                                        jenis_kelamin: e.target.value as any
+                                    })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="">Semua</option>
+                                    <option value="L">Laki-laki</option>
+                                    <option value="P">Perempuan</option>
+                                </select>
+                            </div>
+
+                            {/* Umur Min */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Umur Minimal
+                                </label>
+                                <input
+                                    type="number"
+                                    value={localFilters.umur_min || ''}
+                                    onChange={(e) => setLocalFilters({
+                                        ...localFilters,
+                                        umur_min: e.target.value ? parseInt(e.target.value) : undefined
+                                    })}
+                                    placeholder="0"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Umur Max */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Umur Maksimal
+                                </label>
+                                <input
+                                    type="number"
+                                    value={localFilters.umur_max || ''}
+                                    onChange={(e) => setLocalFilters({
+                                        ...localFilters,
+                                        umur_max: e.target.value ? parseInt(e.target.value) : undefined
+                                    })}
+                                    placeholder="100"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Tanggal Daftar Dari */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Tanggal Daftar Dari
+                                </label>
+                                <input
+                                    type="date"
+                                    value={localFilters.tanggal_daftar_dari || ''}
+                                    onChange={(e) => setLocalFilters({
+                                        ...localFilters,
+                                        tanggal_daftar_dari: e.target.value
+                                    })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+
+                            {/* Tanggal Daftar Sampai */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Tanggal Daftar Sampai
+                                </label>
+                                <input
+                                    type="date"
+                                    value={localFilters.tanggal_daftar_sampai || ''}
+                                    onChange={(e) => setLocalFilters({
+                                        ...localFilters,
+                                        tanggal_daftar_sampai: e.target.value
+                                    })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-3 pt-2 border-t">
+                            <button
+                                onClick={handleApplyFilter}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            >
+                                Terapkan Filter
+                            </button>
+                            <button
+                                onClick={handleResetFilter}
+                                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                                Reset
+                            </button>
+                            <button
+                                onClick={() => setShowFilter(false)}
+                                className="ml-auto text-gray-600 hover:text-gray-800"
+                            >
+                                Tutup
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Search Info */}
-            {searchQuery && (
-                <div className="text-sm text-gray-600">
-                    Menampilkan hasil pencarian untuk: <strong>"{searchQuery}"</strong>
-                    {totalItems > 0 && ` - ${totalItems} pasien ditemukan`}
+            {(searchQuery || activeFilterCount > 0) && (
+                <div className="text-sm text-gray-600 flex items-center gap-2">
+                    {searchQuery && (
+                        <span>
+                            Hasil pencarian: <strong>"{searchQuery}"</strong>
+                        </span>
+                    )}
+                    {activeFilterCount > 0 && (
+                        <span className="flex items-center gap-1">
+                            <Filter className="w-4 h-4" />
+                            {activeFilterCount} filter aktif
+                        </span>
+                    )}
+                    {totalItems > 0 && <span>- {totalItems} pasien ditemukan</span>}
                 </div>
             )}
 
@@ -192,7 +363,9 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
                     columns={columns}
                     isLoading={loading}
                     emptyMessage={
-                        searchQuery ? 'Tidak ada pasien yang ditemukan' : 'Belum ada data pasien'
+                        searchQuery || activeFilterCount > 0
+                            ? 'Tidak ada pasien yang ditemukan'
+                            : 'Belum ada data pasien'
                     }
                     hoverable={true}
                 />

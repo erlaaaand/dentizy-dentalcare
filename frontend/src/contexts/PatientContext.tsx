@@ -1,10 +1,18 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import { Patient, UserRole } from '@/types/api';
 import * as patientService from '@/lib/api';
 import { useToastStore } from '@/lib/store/toastStore';
 import { useAuth } from '@/lib/hooks/useAuth';
+
+interface PatientFilters {
+    jenis_kelamin?: 'L' | 'P' | '';
+    umur_min?: number;
+    umur_max?: number;
+    tanggal_daftar_dari?: string;
+    tanggal_daftar_sampai?: string;
+}
 
 interface PatientContextValue {
     patients: Patient[];
@@ -12,9 +20,12 @@ interface PatientContextValue {
     totalItems: number;
     currentPage: number;
     searchQuery: string;
+    filters: PatientFilters;
     loadPatients: () => Promise<void>;
     setCurrentPage: (page: number) => void;
     setSearchQuery: (query: string) => void;
+    setFilters: (filters: PatientFilters) => void;
+    resetFilters: () => void;
     deletePatient: (patientId: number) => Promise<void>;
     refreshPatients: () => Promise<void>;
     canViewAllPatients: boolean;
@@ -23,6 +34,14 @@ interface PatientContextValue {
 
 const PatientContext = createContext<PatientContextValue | null>(null);
 
+const DEFAULT_FILTERS: PatientFilters = {
+    jenis_kelamin: '',
+    umur_min: undefined,
+    umur_max: undefined,
+    tanggal_daftar_dari: '',
+    tanggal_daftar_sampai: '',
+};
+
 export function PatientProvider({ children }: { children: React.ReactNode }) {
     const { user, loading: authLoading } = useAuth();
     const { error, success } = useToastStore();
@@ -30,69 +49,121 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(false);
     const [totalItems, setTotalItems] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchQuery, setSearchQueryState] = useState('');
+    const [filters, setFiltersState] = useState<PatientFilters>(DEFAULT_FILTERS);
 
-    // Tetap jalankan semua hook dulu
+    // Ref untuk cancel previous request
+    const abortControllerRef = useRef<AbortController | null>(null);
+
     const roleNames = Array.isArray(user?.roles)
         ? user!.roles.map((r) => r.name)
         : [];
-
-    console.log('🧠 DEBUG ROLE CHECK:', {
-        user,
-        roles: user?.roles,
-        extractedRoleNames: roleNames,
-    });
 
     const isDokter = roleNames.includes(UserRole.DOKTER);
     const canViewAllPatients =
         roleNames.includes(UserRole.KEPALA_KLINIK) ||
         roleNames.includes(UserRole.STAF);
 
-    // --- PERBAIKAN DIMULAI DI SINI ---
-    const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, _setSearchQuery] = useState(''); // Diganti nama
+    // Custom setter untuk search dengan instant reset page
+    const setSearchQuery = useCallback((query: string) => {
+        setSearchQueryState(query);
+        setCurrentPage(1); // Reset ke halaman 1
+    }, []);
 
-    // Buat fungsi 'setter' kustom untuk setSearchQuery
-    const setSearchQuery = (query: string) => {
-        // Hanya jalankan jika query benar-benar berubah
-        if (query !== searchQuery) {
-            _setSearchQuery(query);
-            setCurrentPage(1); // INI KUNCINYA: Reset halaman ke 1
-        }
-    };
-    // --- PERBAIKAN SELESAI ---
+    // Custom setter untuk filters
+    const setFilters = useCallback((newFilters: PatientFilters) => {
+        setFiltersState(newFilters);
+        setCurrentPage(1); // Reset ke halaman 1
+    }, []);
+
+    const resetFilters = useCallback(() => {
+        setFiltersState(DEFAULT_FILTERS);
+        setCurrentPage(1);
+    }, []);
 
     const loadPatients = useCallback(async () => {
         if (!user) return;
+
+        // Cancel previous request
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        // Create new abort controller
+        const abortController = new AbortController();
+        abortControllerRef.current = abortController;
+
         setLoading(true);
         try {
+            // Build params
+            const params: any = {
+                page: currentPage,
+                limit: 10,
+                search: searchQuery || undefined,
+            };
+
+            // Add filters
+            if (filters.jenis_kelamin) {
+                params.jenis_kelamin = filters.jenis_kelamin;
+            }
+            if (filters.umur_min) {
+                params.umur_min = filters.umur_min;
+            }
+            if (filters.umur_max) {
+                params.umur_max = filters.umur_max;
+            }
+            if (filters.tanggal_daftar_dari) {
+                params.tanggal_daftar_dari = filters.tanggal_daftar_dari;
+            }
+            if (filters.tanggal_daftar_sampai) {
+                params.tanggal_daftar_sampai = filters.tanggal_daftar_sampai;
+            }
+
             let response;
             if (isDokter) {
                 response = await patientService.getPatientsByDoctor({
                     doctor_id: user.id,
-                    page: currentPage,
-                    limit: 10,
-                    search: searchQuery || undefined,
+                    ...params,
                 });
             } else {
-                response = await patientService.getAllPatients({
-                    page: currentPage,
-                    limit: 10,
-                    search: searchQuery || undefined,
-                });
+                response = await patientService.getAllPatients(params);
             }
+
+            // Check if request was aborted
+            if (abortController.signal.aborted) {
+                return;
+            }
+
             setPatients(response.data);
             setTotalItems(response.pagination.total);
         } catch (err: any) {
+            // Ignore abort errors
+            if (err.name === 'AbortError' || abortController.signal.aborted) {
+                return;
+            }
             error(err.message || 'Gagal memuat data pasien');
             setPatients([]);
         } finally {
-            setLoading(false);
+            if (!abortController.signal.aborted) {
+                setLoading(false);
+            }
         }
-    }, [user, isDokter, currentPage, searchQuery]);
+    }, [user, isDokter, currentPage, searchQuery, filters, error]);
 
+    // Effect untuk auto-load dengan instant response
     useEffect(() => {
-        if (user) loadPatients();
-    }, [user, currentPage, searchQuery, loadPatients]);
+        if (user) {
+            loadPatients();
+        }
+
+        // Cleanup: abort on unmount
+        return () => {
+            if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+            }
+        };
+    }, [user, currentPage, searchQuery, filters, loadPatients]);
 
     const deletePatient = useCallback(async (patientId: number) => {
         try {
@@ -103,7 +174,7 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
             error(err.message || 'Gagal menghapus pasien');
             throw err;
         }
-    }, [loadPatients]);
+    }, [loadPatients, success, error]);
 
     const refreshPatients = useCallback(async () => {
         await loadPatients();
@@ -115,16 +186,18 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         totalItems,
         currentPage,
         searchQuery,
+        filters,
         loadPatients,
-        setCurrentPage, // Ini masih setter 'useState' yang asli
-        setSearchQuery, // Ini sekarang adalah fungsi kustom kita
+        setCurrentPage,
+        setSearchQuery,
+        setFilters,
+        resetFilters,
         deletePatient,
         refreshPatients,
         canViewAllPatients,
         isDokter,
     };
 
-    // 🧩 Tampilkan skeleton saat auth belum siap
     if (authLoading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -133,10 +206,8 @@ export function PatientProvider({ children }: { children: React.ReactNode }) {
         );
     }
 
-    // Baru di sini lakukan render bersyarat
     if (!user) {
-        console.log('⏳ User belum siap di PatientContext');
-        return <>{children}</>; // tetap aman, hook sudah dipanggil semua
+        return <>{children}</>;
     }
 
     return (
