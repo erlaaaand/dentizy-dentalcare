@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Patient } from '@/types/api';
-import * as patienService from '@/lib/api';
+import * as patientService from '@/lib/api';
 import { useToastStore } from '@/lib/store/toastStore';
 import { useConfirm } from '@/lib/hooks/useConfirm';
 import { useDebounce, usePagination } from '@/lib/hooks';
@@ -11,13 +11,19 @@ import { Search, Plus, Edit, Trash2, Eye, Phone, Mail } from 'lucide-react';
 import Table, { Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
 
+// ✅ Sekarang pakai user_id, bukan doctorId
 interface PatientListProps {
+    user_id?: number; // ID user yang sedang login
+    role_id?: string; // Role ID user (1=dokter, 2=staf, 3=kepala_klinik)
+    patients?: Patient[]; // opsional
+    totalItems?: number;  // opsional
+    loading?: boolean;    // opsional
     onEdit?: (patient: Patient) => void;
     onView?: (patient: Patient) => void;
     onAdd?: () => void;
 }
 
-export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
+export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: PatientListProps) {
     const [patients, setPatients] = useState<Patient[]>([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -27,29 +33,53 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
     const { confirmDelete } = useConfirm();
 
     const [totalItems, setTotalItems] = useState(0);
-    const {
-        currentPage,
-        itemsPerPage,
-        goToPage,
-        totalPages,
-    } = usePagination({ totalItems, itemsPerPage: 10 });
+    const { currentPage, itemsPerPage, goToPage, totalPages } = usePagination({
+        totalItems,
+        itemsPerPage: 10,
+    });
 
     useEffect(() => {
         loadPatients();
-    }, [currentPage, debouncedSearch]);
+    }, [currentPage, debouncedSearch, user_id, role_id]);
 
     const loadPatients = async () => {
+        console.log('🧠 Props diterima oleh PatientList:', { user_id, role_id });
         setLoading(true);
         try {
-            const response = await patienService.getAllPatients({
-                page: currentPage,
-                limit: itemsPerPage,
-                search: debouncedSearch || undefined,
-            });
+            let response;
 
-            setPatients(response.data);
-            setTotalItems(response.pagination.total);
+            if (role_id === "dokter" && user_id) {
+                // ✅ Jika yang login adalah dokter → ambil pasien berdasarkan dokter
+                response = await patientService.getPatientsByDoctor({
+                    doctor_id: user_id,
+                    page: currentPage,
+                    limit: itemsPerPage,
+                    search: debouncedSearch || undefined,
+                });
+            } else if (role_id === "staf" || role_id === "kepala_klinik") {
+                // ✅ Jika staf atau kepala klinik → ambil semua pasien
+                response = await patientService.getAllPatients({
+                    page: currentPage,
+                    limit: itemsPerPage,
+                    search: debouncedSearch || undefined,
+                });
+            } else {
+                // ✅ Role lainnya (misal belum dikenali)
+                setPatients([]);
+                setTotalItems(0);
+                setLoading(false);
+                return;
+            }
+
+            if (response?.data) {
+                setPatients(response.data);
+                setTotalItems(response.pagination?.total || response.data.length || 0);
+            } else {
+                setPatients([]);
+                setTotalItems(0);
+            }
         } catch (err: any) {
+            console.error('Gagal memuat pasien:', err);
             error(err.message || 'Gagal memuat data pasien');
         } finally {
             setLoading(false);
@@ -57,21 +87,17 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
     };
 
     const handleDelete = async (patient: Patient) => {
-        const confirmed = await confirmDelete(
-            `pasien "${patient.nama_lengkap}"`,
-            async () => {
-                try {
-                    await patienService.deletePatient(patient.id);
-                    success('Pasien berhasil dihapus');
-                    loadPatients();
-                } catch (err: any) {
-                    error(err.message || 'Gagal menghapus pasien');
-                }
+        await confirmDelete(`pasien "${patient.nama_lengkap}"`, async () => {
+            try {
+                await patientService.deletePatient(patient.id);
+                success('Pasien berhasil dihapus');
+                loadPatients();
+            } catch (err: any) {
+                error(err.message || 'Gagal menghapus pasien');
             }
-        );
+        });
     };
 
-    // Define table columns
     const columns: Column<Patient>[] = [
         {
             key: 'nomor_rekam_medis',
@@ -87,9 +113,7 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
             header: 'Nama Pasien',
             render: (patient) => (
                 <div>
-                    <div className="text-sm font-medium text-gray-900">
-                        {patient.nama_lengkap}
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">{patient.nama_lengkap}</div>
                     {patient.jenis_kelamin && (
                         <div className="text-sm text-gray-500">
                             {patient.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
@@ -102,9 +126,7 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
             key: 'tanggal_lahir',
             header: 'Umur',
             render: (patient) => (
-                <span className="text-sm text-gray-900">
-                    {formatAge(patient.tanggal_lahir)}
-                </span>
+                <span className="text-sm text-gray-900">{formatAge(patient.tanggal_lahir)}</span>
             ),
         },
         {
@@ -131,9 +153,7 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
             key: 'created_at',
             header: 'Terdaftar',
             render: (patient) => (
-                <span className="text-sm text-gray-500">
-                    {formatDate(patient.created_at)}
-                </span>
+                <span className="text-sm text-gray-500">{formatDate(patient.created_at)}</span>
             ),
         },
         {
@@ -172,7 +192,6 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
         },
     ];
 
-    // Calculate pagination info
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
 
@@ -211,14 +230,11 @@ export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
                     columns={columns}
                     isLoading={loading}
                     emptyMessage={
-                        searchQuery
-                            ? 'Tidak ada pasien yang ditemukan'
-                            : 'Belum ada data pasien'
+                        searchQuery ? 'Tidak ada pasien yang ditemukan' : 'Belum ada data pasien'
                     }
                     hoverable={true}
                 />
 
-                {/* Pagination */}
                 {!loading && patients.length > 0 && (
                     <Pagination
                         currentPage={currentPage}

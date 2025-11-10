@@ -3,7 +3,7 @@ import { Appointment, CreateAppointmentDto, UpdateAppointmentDto } from '@/types
 
 // --- Tipe Data DTO ---
 interface FindAppointmentsQuery {
-  doctorId?: number | string;
+  doctor_id?: number | string;
   date?: string;
   status?: 'dijadwalkan' | 'selesai' | 'dibatalkan' | '';
   page?: number;
@@ -34,7 +34,7 @@ export const getAppointments = async (params: FindAppointmentsQuery = {}): Promi
     Object.entries(params).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== '') {
         // Konversi doctorId menjadi number jika berupa string
-        if (key === 'doctorId' && typeof value === 'string') {
+        if (key === 'doctor_id' && typeof value === 'string') {
           const numValue = parseInt(value, 10);
           if (!isNaN(numValue)) {
             cleanParams[key] = numValue;
