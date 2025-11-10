@@ -1,10 +1,12 @@
+// frontend/src/app/dashboard/patients/[id]/page.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { usePermission } from '@/lib/hooks/usePermission';
 import { Permission } from '@/lib/permissions';
+import { usePatientDetail } from '@/lib/hooks/usePatientDetail';
 import { PatientProfile } from '@/components/features/patients/PatientProfile';
 import { Can } from '@/components/auth/Can';
 import { useToastStore } from '@/lib/store/toastStore';
@@ -12,14 +14,6 @@ import { Edit, ArrowLeft, Trash2 } from 'lucide-react';
 import { useConfirm } from '@/lib/hooks/useConfirm';
 import * as patientService from '@/lib/api';
 
-/**
- * Halaman Detail Pasien dengan RBAC
- * 
- * Role Access:
- * - Kepala Klinik: View + Edit + Delete
- * - Staf: View + Edit
- * - Dokter: View only (jika pasien ditugaskan)
- */
 export default function PatientDetailPage() {
     const router = useRouter();
     const params = useParams();
@@ -30,51 +24,16 @@ export default function PatientDetailPage() {
     const { success, error } = useToastStore();
     const { confirmDelete } = useConfirm();
 
-    const [loading, setLoading] = useState(true);
-    const [hasAccess, setHasAccess] = useState(false);
+    const { patient, loading, hasAccess, refreshPatient } = usePatientDetail({
+        patientId,
+        checkAccess: true,
+    });
 
-    // ===== RBAC Permissions =====
+    // RBAC Permissions
     const canUpdate = can(Permission.UPDATE_PATIENT);
     const canDelete = can(Permission.DELETE_PATIENT);
 
-    // ===== Check Access =====
-    useEffect(() => {
-        const checkAccess = async () => {
-            if (!user || isNaN(patientId)) {
-                setHasAccess(false);
-                setLoading(false);
-                return;
-            }
-
-            try {
-                // Dokter: Check if patient is assigned to them
-                const isDokter = user.roles.some(r => r.name === 'dokter');
-
-                if (isDokter) {
-                    // Check if patient has appointments with this doctor
-                    const patient = await patientService.getPatientById(patientId);
-                    const hasAppointment = patient.appointments?.some(
-                        apt => apt.doctor_id === user.id
-                    );
-                    setHasAccess(hasAppointment || false);
-                } else {
-                    // Kepala Klinik & Staf: Full access
-                    setHasAccess(true);
-                }
-            } catch (err: any) {
-                error(err.message || 'Gagal memeriksa akses');
-                setHasAccess(false);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        if (!authLoading) {
-            checkAccess();
-        }
-    }, [user, authLoading, patientId]);
-
-    // ===== Handlers =====
+    // Handlers
     const handleEdit = () => {
         router.push(`/dashboard/patients/${patientId}/edit`);
     };
@@ -95,7 +54,7 @@ export default function PatientDetailPage() {
         router.push('/dashboard/patients');
     };
 
-    // ===== Loading State =====
+    // Loading State
     if (authLoading || loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -104,7 +63,7 @@ export default function PatientDetailPage() {
         );
     }
 
-    // ===== Access Denied =====
+    // Access Denied
     if (!hasAccess) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
@@ -126,7 +85,7 @@ export default function PatientDetailPage() {
         );
     }
 
-    // ===== Main Render =====
+    // Main Render
     return (
         <div className="space-y-6">
             {/* Header with Actions */}

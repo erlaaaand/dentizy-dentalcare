@@ -114,7 +114,7 @@ export const createPatient = async (data: Partial<Patient>): Promise<Patient> =>
  */
 export const updatePatient = async (id: number | string, data: Partial<Patient>): Promise<Patient> => {
   try {
-    const response = await api.put<Patient>(`/patients/${id}`, data);
+    const response = await api.patch<Patient>(`/patients/${id}`, data);
 
     if (!response.data) {
       throw new Error('Failed to update patient');

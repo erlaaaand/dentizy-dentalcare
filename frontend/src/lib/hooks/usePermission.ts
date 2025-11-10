@@ -1,10 +1,11 @@
+// lib/hooks/usePermission.ts
 'use client';
 
-import { useAuthStore } from '@/lib/store/authStore';
+import { useAuth } from '@/lib/hooks/useAuth';  // ← Import ini
 import { Permission, hasPermission } from '@/lib/permissions';
 
 export function usePermission() {
-  const user = useAuthStore(state => state.user);
+  const { user } = useAuth();  // ← Gunakan useAuth() bukan useAuthStore
 
   const extractRoleNames = (): string[] => {
     if (!user || !Array.isArray(user.roles)) return [];
@@ -24,19 +25,20 @@ export function usePermission() {
   };
 
   const can = (permission: Permission): boolean => {
-    if (!user) return false;
+    if (!user) {
+      console.log('❌ usePermission: user is null');
+      return false;
+    }
 
     const roleNames = extractRoleNames();
 
-    // Debug log (nonaktifkan di production)
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 Checking permission:', {
-        user,
-        roleNames,
-        permission,
-        result: hasPermission(roleNames, permission),
-      });
-    }
+    // Debug log
+    console.log('🔍 Checking permission:', {
+      user,
+      roleNames,
+      permission,
+      result: hasPermission(roleNames, permission),
+    });
 
     return hasPermission(roleNames, permission);
   };

@@ -1,3 +1,4 @@
+// frontend/src/components/features/patients/PatientSearch.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -33,7 +34,7 @@ export function PatientSearch({ onSelect, placeholder = 'Cari pasien...', autoFo
     const searchPatients = async (searchQuery: string) => {
         setLoading(true);
         try {
-            const results = await patientService.searchPatients({ search: searchQuery });
+            const results = await patientService.searchPatients(searchQuery);
             setPatients(results.data);
             setShowResults(true);
         } catch (error) {

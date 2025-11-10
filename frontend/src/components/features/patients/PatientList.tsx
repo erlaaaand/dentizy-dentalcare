@@ -1,101 +1,49 @@
+// frontend/src/components/features/patients/PatientList.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Patient } from '@/types/api';
-import * as patientService from '@/lib/api';
-import { useToastStore } from '@/lib/store/toastStore';
+import { usePatients } from '@/contexts/PatientContext';
 import { useConfirm } from '@/lib/hooks/useConfirm';
-import { useDebounce, usePagination } from '@/lib/hooks';
+import { usePagination } from '@/lib/hooks';
 import { formatDate, formatAge, formatPhoneNumber } from '@/lib/formatters';
-import { Search, Plus, Edit, Trash2, Eye, Phone, Mail } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye, Phone, Mail, X } from 'lucide-react';
 import Table, { Column } from '@/components/ui/Table';
 import { Pagination } from '@/components/ui/Pagination';
+import { SearchInput } from '@/components/ui/SearchInput';
 
-// ✅ Sekarang pakai user_id, bukan doctorId
 interface PatientListProps {
-    user_id?: number; // ID user yang sedang login
-    role_id?: string; // Role ID user (1=dokter, 2=staf, 3=kepala_klinik)
-    patients?: Patient[]; // opsional
-    totalItems?: number;  // opsional
-    loading?: boolean;    // opsional
     onEdit?: (patient: Patient) => void;
     onView?: (patient: Patient) => void;
     onAdd?: () => void;
 }
 
-export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: PatientListProps) {
-    const [patients, setPatients] = useState<Patient[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const debouncedSearch = useDebounce(searchQuery, 500);
-
-    const { success, error } = useToastStore();
-    const { confirmDelete } = useConfirm();
-
-    const [totalItems, setTotalItems] = useState(0);
-    const { currentPage, itemsPerPage, goToPage, totalPages } = usePagination({
+export function PatientList({ onEdit, onView, onAdd }: PatientListProps) {
+    const {
+        patients,
+        loading,
         totalItems,
-        itemsPerPage: 10,
-    });
+        currentPage,
+        searchQuery,
+        setCurrentPage,
+        setSearchQuery,
+        deletePatient
+    } = usePatients();
 
-    useEffect(() => {
-        loadPatients();
-    }, [currentPage, debouncedSearch, user_id, role_id]);
-
-    const loadPatients = async () => {
-        console.log('🧠 Props diterima oleh PatientList:', { user_id, role_id });
-        setLoading(true);
-        try {
-            let response;
-
-            if (role_id === "dokter" && user_id) {
-                // ✅ Jika yang login adalah dokter → ambil pasien berdasarkan dokter
-                response = await patientService.getPatientsByDoctor({
-                    doctor_id: user_id,
-                    page: currentPage,
-                    limit: itemsPerPage,
-                    search: debouncedSearch || undefined,
-                });
-            } else if (role_id === "staf" || role_id === "kepala_klinik") {
-                // ✅ Jika staf atau kepala klinik → ambil semua pasien
-                response = await patientService.getAllPatients({
-                    page: currentPage,
-                    limit: itemsPerPage,
-                    search: debouncedSearch || undefined,
-                });
-            } else {
-                // ✅ Role lainnya (misal belum dikenali)
-                setPatients([]);
-                setTotalItems(0);
-                setLoading(false);
-                return;
-            }
-
-            if (response?.data) {
-                setPatients(response.data);
-                setTotalItems(response.pagination?.total || response.data.length || 0);
-            } else {
-                setPatients([]);
-                setTotalItems(0);
-            }
-        } catch (err: any) {
-            console.error('Gagal memuat pasien:', err);
-            error(err.message || 'Gagal memuat data pasien');
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { confirmDelete } = useConfirm();
+    const { totalPages } = usePagination({ totalItems, itemsPerPage: 10 });
 
     const handleDelete = async (patient: Patient) => {
         await confirmDelete(`pasien "${patient.nama_lengkap}"`, async () => {
-            try {
-                await patientService.deletePatient(patient.id);
-                success('Pasien berhasil dihapus');
-                loadPatients();
-            } catch (err: any) {
-                error(err.message || 'Gagal menghapus pasien');
-            }
+            await deletePatient(patient.id);
         });
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        // Mencegah form submission saat Enter
+        if (e.key === 'Enter') {
+            e.preventDefault();
+        }
     };
 
     const columns: Column<Patient>[] = [
@@ -143,7 +91,9 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                     {patient.email && (
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                             <Mail className="w-3 h-3" />
-                            <span>{patient.email}</span>
+                            <span className="truncate max-w-[200px]" title={patient.email}>
+                                {patient.email}
+                            </span>
                         </div>
                     )}
                 </div>
@@ -164,6 +114,7 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                 <div className="flex items-center justify-end gap-2">
                     {onView && (
                         <button
+                            type="button"
                             onClick={() => onView(patient)}
                             className="text-blue-600 hover:text-blue-900 transition-colors"
                             title="Lihat detail"
@@ -173,6 +124,7 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                     )}
                     {onEdit && (
                         <button
+                            type="button"
                             onClick={() => onEdit(patient)}
                             className="text-green-600 hover:text-green-900 transition-colors"
                             title="Edit"
@@ -181,6 +133,7 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={() => handleDelete(patient)}
                         className="text-red-600 hover:text-red-900 transition-colors"
                         title="Hapus"
@@ -192,28 +145,29 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
         },
     ];
 
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
+    const startIndex = (currentPage - 1) * 10;
+    const endIndex = Math.min(currentPage * 10, totalItems);
 
     return (
         <div className="space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <div className="flex-1 max-w-md">
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Cari pasien..."
-                            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                        />
-                    </div>
-                </div>
+                <SearchInput
+                    value={searchQuery}
+                    onChange={setSearchQuery} // Langsung panggil setSearchQuery
+                    placeholder="Cari berdasarkan nama, NIK, No. RM..."
+                    debounceMs={500} // Atur debounce di sini
+                    className="w-full"
+                />
+
+                {/* Tampilkan 'loading' hanya jika sedang mencari (ada query) */}
+                {loading && searchQuery && (
+                    <p className="mt-1 text-xs text-gray-500">Mencari...</p>
+                )}
 
                 {onAdd && (
                     <button
+                        type="button"
                         onClick={onAdd}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm hover:shadow-md"
                     >
@@ -222,6 +176,14 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                     </button>
                 )}
             </div>
+
+            {/* Search Info */}
+            {searchQuery && (
+                <div className="text-sm text-gray-600">
+                    Menampilkan hasil pencarian untuk: <strong>"{searchQuery}"</strong>
+                    {totalItems > 0 && ` - ${totalItems} pasien ditemukan`}
+                </div>
+            )}
 
             {/* Table */}
             <div className="bg-white rounded-lg shadow-sm">
@@ -239,7 +201,7 @@ export function PatientList({ user_id, role_id, onEdit, onView, onAdd }: Patient
                     <Pagination
                         currentPage={currentPage}
                         totalPages={totalPages}
-                        onPageChange={goToPage}
+                        onPageChange={setCurrentPage}
                         showInfo={true}
                         startIndex={startIndex}
                         endIndex={endIndex}
