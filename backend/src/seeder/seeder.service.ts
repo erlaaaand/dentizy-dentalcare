@@ -114,12 +114,6 @@ export class SeederService {
                     password: hashedPassword,
                     roles: [kepalaKlinikRole],
                 },
-                {
-                    nama_lengkap: 'Dr. Bambang Wijaya',
-                    username: 'bambang.dokter',
-                    password: hashedPassword,
-                    roles: [dokterRole],
-                },
             ];
 
             await this.userRepo.save(users);

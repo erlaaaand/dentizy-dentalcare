@@ -51,6 +51,15 @@ export class PatientsController {
     }
 
     /**
+     * FIX: Get patients by doctor ID
+     */
+    @Get('by-doctor/:doctorId')
+    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK)
+    findByDoctor(@Param('doctorId', ParseIntPipe) doctorId: number, @Query(ValidationPipe) query: SearchPatientDto) {
+        return this.patientsService.findByDoctor(doctorId, query);
+    }
+
+    /**
      * FIX: Get by NIK
      */
     @Get('by-nik/:nik')
