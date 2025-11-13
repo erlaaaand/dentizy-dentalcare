@@ -1,6 +1,3 @@
-// ============================================
-// FILE 4: utils/transaction.manager.ts
-// ============================================
 import { Injectable, BadRequestException, ConflictException, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 
