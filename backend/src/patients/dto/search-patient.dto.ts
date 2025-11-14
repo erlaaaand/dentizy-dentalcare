@@ -104,10 +104,4 @@ export class SearchPatientDto {
     @Transform(({ value }) => value === 'true' || value === true)
     @IsBoolean()
     is_new?: boolean;
-
-    @ApiPropertyOptional({ description: 'Pasien dengan alergi' })
-    @IsOptional()
-    @Transform(({ value }) => value === 'true' || value === true)
-    @IsBoolean()
-    has_allergies?: boolean;
 }

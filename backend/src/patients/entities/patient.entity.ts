@@ -63,6 +63,10 @@ export class Patient {
     @Index('idx_patient_online_status')
     is_registered_online: boolean;
 
+    @Column({ default: true })
+    @Index('idx_patient_active_status')
+    is_active: boolean;
+
     @CreateDateColumn()
     @Index('idx_patient_created_at')
     created_at: Date;

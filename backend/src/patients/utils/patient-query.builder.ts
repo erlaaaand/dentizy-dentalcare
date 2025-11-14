@@ -135,11 +135,6 @@ export class PatientQueryBuilder {
             qb.andWhere('patient.created_at >= :thirtyDaysAgo', { thirtyDaysAgo });
         }
 
-        // Filter patients with allergies
-        if (query.has_allergies) {
-            qb.andWhere('patient.riwayat_alergi IS NOT NULL')
-                .andWhere("patient.riwayat_alergi != ''");
-        }
     }
 
     /**

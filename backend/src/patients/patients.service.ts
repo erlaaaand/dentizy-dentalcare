@@ -7,14 +7,38 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Patient } from './entities/patient.entity';
 import { CreatePatientDto } from './dto/create-patient.dto';
 import { UpdatePatientDto } from './dto/update-patient.dto';
 import { SearchPatientDto } from './dto/search-patient.dto';
+import { PatientResponseDto } from './dto/patient-response.dto';
+import { PatientRepository } from './repositories/patients.repository';
 import { PatientQueryBuilder } from './utils/patient-query.builder';
 import { MedicalRecordNumberGenerator } from './utils/medical-record-number.generator';
 import { PatientValidator } from './utils/patient.validator';
 import { TransactionManager } from './utils/transaction.manager';
+import { PatientCacheService } from './services/patient-cache.service';
+import { PatientMapper } from './utils/patient.mapper';
+
+// Event Types
+export class PatientCreatedEvent {
+    constructor(public readonly patient: Patient) { }
+}
+
+export class PatientUpdatedEvent {
+    constructor(
+        public readonly patientId: number,
+        public readonly changes: Partial<UpdatePatientDto>
+    ) { }
+}
+
+export class PatientDeletedEvent {
+    constructor(
+        public readonly patientId: number,
+        public readonly patientName: string
+    ) { }
+}
 
 @Injectable()
 export class PatientsService {
@@ -23,23 +47,27 @@ export class PatientsService {
     constructor(
         @InjectRepository(Patient)
         private readonly patientRepository: Repository<Patient>,
+        private readonly customPatientRepository: PatientRepository,
         private readonly dataSource: DataSource,
         private readonly queryBuilder: PatientQueryBuilder,
         private readonly recordGenerator: MedicalRecordNumberGenerator,
         private readonly validator: PatientValidator,
         private readonly transactionManager: TransactionManager,
+        private readonly cacheService: PatientCacheService,
+        private readonly mapper: PatientMapper,
+        private readonly eventEmitter: EventEmitter2,
     ) { }
 
     /**
      * Buat pasien baru dengan transaction dan retry mechanism
      */
-    async create(createPatientDto: CreatePatientDto): Promise<Patient> {
-        return this.transactionManager.executeWithRetry(async (queryRunner) => {
+    async create(createPatientDto: CreatePatientDto): Promise<PatientResponseDto> {
+        const patient = await this.transactionManager.executeWithRetry(async (queryRunner) => {
             // Validasi business logic
-            await this.validator.validateCreate(createPatientDto, queryRunner);
+            await this.validator.validateCreate(createPatientDto);
 
             // Generate nomor rekam medis
-            const nomorRekamMedis = await this.recordGenerator.generate(queryRunner);
+            const nomorRekamMedis = await this.recordGenerator.generate();
 
             // Buat dan simpan pasien
             const newPatient = queryRunner.manager.create(Patient, {
@@ -48,6 +76,7 @@ export class PatientsService {
                 tanggal_lahir: createPatientDto.tanggal_lahir
                     ? new Date(createPatientDto.tanggal_lahir)
                     : undefined,
+                is_active: true,
             });
 
             const savedPatient = await queryRunner.manager.save(newPatient);
@@ -55,109 +84,141 @@ export class PatientsService {
 
             return savedPatient;
         });
+
+        // Emit event untuk listener
+        this.eventEmitter.emit('patient.created', new PatientCreatedEvent(patient));
+
+        // Invalidate list caches
+        await this.cacheService.invalidateListCaches();
+
+        return this.mapper.toResponseDto(patient);
     }
 
     /**
      * Ambil semua pasien dengan pagination
      */
     async findAll(query: SearchPatientDto): Promise<any> {
-        try {
-            const { page = 1, limit = 10 } = query;
-            const skip = (page - 1) * limit;
+        return this.cacheService.getCachedListOrSearch(query, async () => {
+            try {
+                const { page = 1, limit = 10 } = query;
+                const skip = (page - 1) * limit;
 
-            const [patients, total] = await this.patientRepository.findAndCount({
-                order: { created_at: 'DESC' },
-                select: [
-                    'id', 'nomor_rekam_medis', 'nik', 'nama_lengkap',
-                    'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp', 'created_at'
-                ],
-                take: limit,
-                skip: skip,
-            });
+                const [patients, total] = await this.patientRepository.findAndCount({
+                    where: { is_active: true },
+                    order: { created_at: 'DESC' },
+                    select: [
+                        'id', 'nomor_rekam_medis', 'nik', 'nama_lengkap',
+                        'tanggal_lahir', 'jenis_kelamin', 'email', 'no_hp',
+                        'alamat', 'is_active', 'created_at', 'updated_at'
+                    ],
+                    take: limit,
+                    skip: skip,
+                });
 
-            this.logger.log(`📋 Retrieved ${patients.length}/${total} patients (page ${page})`);
+                this.logger.log(`📋 Retrieved ${patients.length}/${total} patients (page ${page})`);
 
-            return {
-                data: patients,
-                pagination: {
-                    total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(total / limit),
-                },
-            };
-        } catch (error) {
-            this.logger.error('❌ Error fetching patients:', error);
-            throw new BadRequestException('Gagal mengambil daftar pasien');
-        }
+                return {
+                    data: this.mapper.toResponseDtoList(patients),
+                    pagination: {
+                        total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil(total / limit),
+                    },
+                };
+            } catch (error) {
+                this.logger.error('❌ Error fetching patients:', error);
+                throw new BadRequestException('Gagal mengambil daftar pasien');
+            }
+        });
     }
 
     /**
      * Search pasien dengan full features
      */
     async search(query: SearchPatientDto): Promise<any> {
-        try {
-            this.validator.validateSearchQuery(query);
+        return this.cacheService.getCachedListOrSearch(query, async () => {
+            try {
+                this.validator.validateSearchQuery(query);
 
-            const { page = 1, limit = 10 } = query;
-            const skip = (page - 1) * limit;
+                const { page = 1, limit = 10 } = query;
+                const skip = (page - 1) * limit;
 
-            // Build query dengan filter dan sorting
-            const queryBuilderInstance = this.queryBuilder.build(
-                this.patientRepository.createQueryBuilder('patient'),
-                query
-            );
+                // Build query dengan filter dan sorting
+                const queryBuilderInstance = this.queryBuilder.build(
+                    this.patientRepository.createQueryBuilder('patient'),
+                    query
+                );
 
-            // Apply pagination
-            queryBuilderInstance.take(limit).skip(skip);
+                // Apply pagination
+                queryBuilderInstance.take(limit).skip(skip);
 
-            const [patients, total] = await queryBuilderInstance.getManyAndCount();
+                const [patients, total] = await queryBuilderInstance.getManyAndCount();
 
-            this.logger.log(
-                `🔍 Search: "${query.search || 'all'}" | Results: ${patients.length}/${total}`
-            );
+                this.logger.log(
+                    `🔍 Search: "${query.search || 'all'}" | Results: ${patients.length}/${total}`
+                );
 
-            return {
-                data: patients,
-                pagination: {
-                    total,
-                    page,
-                    limit,
-                    totalPages: Math.ceil(total / limit),
-                },
-            };
-        } catch (error) {
-            if (error instanceof BadRequestException) throw error;
-            this.logger.error('❌ Error searching patients:', error.stack);
-            throw new BadRequestException('Gagal mencari pasien. Silakan coba lagi.');
-        }
-    }
-
-    async findOne(id: number): Promise<Patient> {
-        try {
-            const patient = await this.patientRepository.findOne({
-                where: { id },
-                relations: ['appointments'],
-            });
-
-            if (!patient) {
-                throw new NotFoundException(`Pasien dengan ID #${id} tidak ditemukan`);
+                return {
+                    data: this.mapper.toResponseDtoList(patients),
+                    pagination: {
+                        total,
+                        page,
+                        limit,
+                        totalPages: Math.ceil(total / limit),
+                    },
+                };
+            } catch (error) {
+                if (error instanceof BadRequestException) throw error;
+                this.logger.error('❌ Error searching patients:', error.stack);
+                throw new BadRequestException('Gagal mencari pasien. Silakan coba lagi.');
             }
-
-            return patient;
-        } catch (error) {
-            if (error instanceof NotFoundException) throw error;
-            this.logger.error(`❌ Error finding patient ID ${id}:`, error);
-            throw new BadRequestException('Gagal mengambil data pasien');
-        }
+        });
     }
 
-    async findByMedicalRecordNumber(nomorRekamMedis: string): Promise<Patient> {
-        return this.findByField('nomor_rekam_medis', nomorRekamMedis, 'nomor rekam medis');
+    /**
+     * Get statistics untuk dashboard
+     */
+    async getStatistics(): Promise<{
+        total: number;
+        new_this_month: number;
+        active: number;
+        with_allergies: number;
+    }> {
+        return this.cacheService.getCachedStats(async () => {
+            return this.customPatientRepository.getStatistics();
+        });
     }
 
-    async findByNik(nik: string): Promise<Patient> {
-        return this.findByField('nik', nik, 'NIK');
+    async findOne(id: number): Promise<PatientResponseDto> {
+        return this.cacheService.getCachedPatient(id, async () => {
+            try {
+                const patient = await this.patientRepository.findOne({
+                    where: { id },
+                    relations: ['appointments', 'medical_records'],
+                });
+
+                if (!patient) {
+                    throw new NotFoundException(`Pasien dengan ID #${id} tidak ditemukan`);
+                }
+
+                return this.mapper.toResponseDto(patient);
+            } catch (error) {
+                if (error instanceof NotFoundException) throw error;
+                this.logger.error(`❌ Error finding patient ID ${id}:`, error);
+                throw new BadRequestException('Gagal mengambil data pasien');
+            }
+        });
+    }
+
+    async findByMedicalRecordNumber(nomorRekamMedis: string): Promise<PatientResponseDto> {
+        const patient = await this.findByField('nomor_rekam_medis', nomorRekamMedis, 'nomor rekam medis');
+        return this.mapper.toResponseDto(patient);
+    }
+
+    async findByNik(nik: string): Promise<PatientResponseDto> {
+        const patient = await this.findByField('nik', nik, 'NIK');
+        return this.mapper.toResponseDto(patient);
     }
 
     async findByDoctor(doctorId: number, query: SearchPatientDto): Promise<any> {
@@ -167,8 +228,9 @@ export class PatientsService {
 
             const qb = this.patientRepository
                 .createQueryBuilder('patient')
-                .leftJoin('appointments', 'appointment', 'appointment.patient_id = patient.id')
-                .where('appointment.doctor_id = :doctorId', { doctorId });
+                .leftJoin('patient.appointments', 'appointment')
+                .where('appointment.doctor_id = :doctorId', { doctorId })
+                .andWhere('patient.is_active = :is_active', { is_active: true });
 
             if (search) {
                 qb.andWhere(
@@ -185,7 +247,7 @@ export class PatientsService {
             const [patients, total] = await qb.getManyAndCount();
 
             return {
-                data: patients,
+                data: this.mapper.toResponseDtoList(patients),
                 pagination: {
                     total,
                     page,
@@ -199,7 +261,7 @@ export class PatientsService {
         }
     }
 
-    async update(id: number, updatePatientDto: UpdatePatientDto): Promise<Patient> {
+    async update(id: number, updatePatientDto: UpdatePatientDto): Promise<PatientResponseDto> {
         try {
             const patient = await this.patientRepository.findOneBy({ id });
 
@@ -208,7 +270,7 @@ export class PatientsService {
             }
 
             // Validasi update
-            await this.validator.validateUpdate(id, updatePatientDto, this.patientRepository);
+            await this.validator.validateUpdate(id, updatePatientDto);
 
             // Update data
             Object.assign(patient, updatePatientDto);
@@ -220,7 +282,14 @@ export class PatientsService {
             const updatedPatient = await this.patientRepository.save(patient);
             this.logger.log(`✅ Patient updated: #${id} - ${updatedPatient.nama_lengkap}`);
 
-            return updatedPatient;
+            // Emit event
+            this.eventEmitter.emit('patient.updated', new PatientUpdatedEvent(id, updatePatientDto));
+
+            // Invalidate caches
+            await this.cacheService.invalidatePatientCache(id);
+            await this.cacheService.invalidateListCaches();
+
+            return this.mapper.toResponseDto(updatedPatient);
         } catch (error) {
             if (error instanceof NotFoundException || error instanceof ConflictException || error instanceof BadRequestException) {
                 throw error;
@@ -230,7 +299,7 @@ export class PatientsService {
         }
     }
 
-    async remove(id: number): Promise<void> {
+    async remove(id: number): Promise<{ message: string }> {
         try {
             const patient = await this.patientRepository.findOne({
                 where: { id },
@@ -241,14 +310,31 @@ export class PatientsService {
                 throw new NotFoundException(`Pasien dengan ID #${id} tidak ditemukan`);
             }
 
-            if (patient.appointments?.length > 0) {
+            // Check for active appointments
+            const hasActiveAppointments = patient.appointments?.some(
+                app => ['dijadwalkan', 'sedang_berlangsung'].includes(app.status)
+            );
+
+            if (hasActiveAppointments) {
                 throw new ConflictException(
-                    'Tidak bisa menghapus pasien yang sudah memiliki riwayat janji temu'
+                    'Tidak bisa menghapus pasien yang memiliki janji temu aktif'
                 );
             }
 
-            await this.patientRepository.remove(patient);
-            this.logger.log(`🗑️ Patient deleted: #${id} - ${patient.nama_lengkap}`);
+            const patientName = patient.nama_lengkap;
+
+            // Soft delete
+            await this.customPatientRepository.softDeleteById(id);
+            this.logger.log(`🗑️ Patient soft deleted: #${id} - ${patientName}`);
+
+            // Emit event
+            this.eventEmitter.emit('patient.deleted', new PatientDeletedEvent(id, patientName));
+
+            // Invalidate caches
+            await this.cacheService.invalidatePatientCache(id);
+            await this.cacheService.invalidateListCaches();
+
+            return { message: `Pasien ${patientName} berhasil dihapus` };
         } catch (error) {
             if (error instanceof NotFoundException || error instanceof ConflictException) {
                 throw error;
@@ -265,7 +351,7 @@ export class PatientsService {
         try {
             const patient = await this.patientRepository.findOne({
                 where: { [field]: value } as any,
-                relations: ['appointments'],
+                relations: ['appointments', 'medical_records'],
             });
 
             if (!patient) {

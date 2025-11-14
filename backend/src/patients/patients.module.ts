@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -13,6 +14,7 @@ import { PatientValidator } from './utils/patient.validator';
 import { PatientEventListener } from './listeners/patient-event.listener';
 import { PatientCacheService } from './services/patient-cache.service';
 import { PatientMapper } from './utils/patient.mapper';
+import { TransactionManager } from './utils/transaction.manager';
 
 @Module({
   imports: [
@@ -20,7 +22,7 @@ import { PatientMapper } from './utils/patient.mapper';
 
     // Cache configuration
     CacheModule.register({
-      ttl: 300, // 5 minutes default
+      ttl: 300000, // 5 minutes in milliseconds
       max: 100, // maximum number of items in cache
     }),
 
@@ -51,6 +53,7 @@ import { PatientMapper } from './utils/patient.mapper';
     PatientEventListener,
     PatientCacheService,
     PatientMapper,
+    TransactionManager,
   ],
   exports: [PatientsService, PatientRepository],
 })

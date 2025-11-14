@@ -1,12 +1,17 @@
 import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
-import { PatientRepository } from '../repositories/patients.repository';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Patient } from '../entities/patient.entity';
 import { CreatePatientDto } from '../dto/create-patient.dto';
 import { UpdatePatientDto } from '../dto/update-patient.dto';
 import { SearchPatientDto } from '../dto/search-patient.dto';
 
 @Injectable()
 export class PatientValidator {
-    constructor(private readonly patientRepository: PatientRepository) { }
+    constructor(
+        @InjectRepository(Patient)
+        private readonly patientRepository: Repository<Patient>
+    ) { }
 
     /**
      * Validate search query comprehensively

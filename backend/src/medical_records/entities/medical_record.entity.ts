@@ -1,5 +1,6 @@
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { User } from '../../users/entities/user.entity';
+import { Patient } from '../../patients/entities/patient.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -21,6 +22,9 @@ export class MedicalRecord {
 
     @Column({ nullable: true }) // ID staf yang mencatat, bisa nullable jika diisi dokter
     user_id_staff: number;
+
+    @Column()
+    patient_id: number;
 
     // --- Implementasi SOAP ---
 
@@ -53,4 +57,8 @@ export class MedicalRecord {
     @ManyToOne(() => User, (user) => user.medical_records, { eager: true })
     @JoinColumn({ name: 'user_id_staff' })
     user_staff: User;
+
+    @ManyToOne(() => Patient, (patient) => patient.medical_records)
+    @JoinColumn({ name: 'patient_id' }) // <-- ATAU INI YANG HILANG
+    patient: Patient;
 }

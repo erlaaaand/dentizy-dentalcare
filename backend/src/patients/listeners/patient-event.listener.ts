@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import * as patientsService from '../patients.service';
+import { PatientCreatedEvent, PatientUpdatedEvent, PatientDeletedEvent } from '../patients.service';
 
 @Injectable()
 export class PatientEventListener {
@@ -16,7 +16,7 @@ export class PatientEventListener {
      * - WebSocket broadcast untuk real-time UI update
      */
     @OnEvent('patient.created')
-    handlePatientCreated(event: patientsService.PatientCreatedEvent) {
+    handlePatientCreated(event: PatientCreatedEvent) {
         this.logger.log(
             `🎉 New patient registered: ${event.patient.nama_lengkap} (${event.patient.nomor_rekam_medis})`
         );
@@ -35,7 +35,7 @@ export class PatientEventListener {
      * Handle patient updated event
      */
     @OnEvent('patient.updated')
-    handlePatientUpdated(event: patientsService.PatientUpdatedEvent) {
+    handlePatientUpdated(event: PatientUpdatedEvent) {
         this.logger.log(`✏️ Patient #${event.patientId} updated`);
 
         // Log changes untuk audit trail
@@ -54,7 +54,7 @@ export class PatientEventListener {
      * Handle patient deleted event
      */
     @OnEvent('patient.deleted')
-    handlePatientDeleted(event: patientsService.PatientDeletedEvent) {
+    handlePatientDeleted(event: PatientDeletedEvent) {
         this.logger.log(`🗑️ Patient #${event.patientId} (${event.patientName}) deleted`);
 
         // TODO: Archive patient data

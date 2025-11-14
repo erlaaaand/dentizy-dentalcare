@@ -1,5 +1,3 @@
-// patient.cache.service.ts
-
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
@@ -32,20 +30,26 @@ export class PatientCacheService {
         const operation = query.search ? 'search' : 'list';
         const cacheKey = this.getCacheKey(operation, query);
 
-        const cached = await this.cacheManager.get(cacheKey);
-        if (cached) {
-            this.logger.debug(`📦 Cache hit: ${cacheKey}`);
-            return cached;
+        try {
+            const cached = await this.cacheManager.get(cacheKey);
+            if (cached) {
+                this.logger.debug(`📦 Cache hit: ${cacheKey}`);
+                return cached;
+            }
+
+            this.logger.debug(`📦 Cache miss: ${cacheKey}`);
+            const result = await fallback();
+
+            // Cache hasil pencarian lebih singkat
+            const ttl = operation === 'search' ? 60 : this.CACHE_TTL_SECONDS;
+            await this.cacheManager.set(cacheKey, result, ttl * 1000); // Convert to ms
+
+            return result;
+        } catch (error) {
+            this.logger.error(`Error in cache operation: ${error.message}`);
+            // Fallback to direct query on cache error
+            return fallback();
         }
-
-        this.logger.debug(`📦 Cache miss: ${cacheKey}`);
-        const result = await fallback();
-
-        // Cache hasil pencarian lebih singkat
-        const ttl = operation === 'search' ? 60 : this.CACHE_TTL_SECONDS;
-        await this.cacheManager.set(cacheKey, result, ttl);
-
-        return result;
     }
 
     /**
@@ -57,17 +61,22 @@ export class PatientCacheService {
     ): Promise<PatientResponseDto> {
         const cacheKey = this.getCacheKey('detail', { id });
 
-        const cached = await this.cacheManager.get<PatientResponseDto>(cacheKey);
-        if (cached) {
-            this.logger.debug(`📦 Cache hit: ${cacheKey}`);
-            return cached;
+        try {
+            const cached = await this.cacheManager.get<PatientResponseDto>(cacheKey);
+            if (cached) {
+                this.logger.debug(`📦 Cache hit: ${cacheKey}`);
+                return cached;
+            }
+
+            this.logger.debug(`📦 Cache miss: ${cacheKey}`);
+            const result = await fallback();
+            await this.cacheManager.set(cacheKey, result, this.CACHE_TTL_SECONDS * 1000);
+
+            return result;
+        } catch (error) {
+            this.logger.error(`Error in cache operation: ${error.message}`);
+            return fallback();
         }
-
-        this.logger.debug(`📦 Cache miss: ${cacheKey}`);
-        const result = await fallback();
-        await this.cacheManager.set(cacheKey, result, this.CACHE_TTL_SECONDS);
-
-        return result;
     }
 
     /**
@@ -75,39 +84,61 @@ export class PatientCacheService {
      */
     async getCachedStats(fallback: () => Promise<any>): Promise<any> {
         const cacheKey = this.getCacheKey('stats', {});
-        const cached = await this.cacheManager.get(cacheKey);
 
-        if (cached) {
-            this.logger.debug(`📦 Cache hit: ${cacheKey}`);
-            return cached;
+        try {
+            const cached = await this.cacheManager.get(cacheKey);
+
+            if (cached) {
+                this.logger.debug(`📦 Cache hit: ${cacheKey}`);
+                return cached;
+            }
+
+            this.logger.debug(`📦 Cache miss: ${cacheKey}`);
+            const stats = await fallback();
+            await this.cacheManager.set(cacheKey, stats, 60 * 1000); // Cache stats 1 menit
+            return stats;
+        } catch (error) {
+            this.logger.error(`Error in cache operation: ${error.message}`);
+            return fallback();
         }
-
-        this.logger.debug(`📦 Cache miss: ${cacheKey}`);
-        const stats = await fallback();
-        await this.cacheManager.set(cacheKey, stats, 60); // Cache stats 1 menit
-        return stats;
     }
 
     /**
      * Meng-invalidate cache untuk satu pasien (by ID).
      */
     async invalidatePatientCache(id: number): Promise<void> {
-        const cacheKey = this.getCacheKey('detail', { id });
-        await this.cacheManager.del(cacheKey);
-        this.logger.log(`💨 Invalidated cache: ${cacheKey}`);
+        try {
+            const cacheKey = this.getCacheKey('detail', { id });
+            await this.cacheManager.del(cacheKey);
+            this.logger.log(`💨 Invalidated cache: ${cacheKey}`);
+        } catch (error) {
+            this.logger.error(`Error invalidating cache: ${error.message}`);
+        }
     }
 
     /**
      * Meng-invalidate semua cache yang terkait dengan list, search, dan stats.
      */
     async invalidateListCaches(): Promise<void> {
-        this.logger.warn(
-            `💨 Invalidating all list/search/stats caches. (Using 'reset' for memory store)`,
-        );
-        // PERHATIAN: 'cache-manager' (terutama memory store) tidak punya
-        // metode 'del' berbasis pattern (seperti SCAN di Redis).
-        // Metode 'reset' adalah 'opsi nuklir' yang akan menghapus SEMUA cache.
-        // Jika Anda menggunakan Redis, ganti ini dengan logika 'SCAN' dan 'DEL'.
-        await this.cacheManager.reset();
+        try {
+            this.logger.warn(
+                `💨 Invalidating all list/search/stats caches. (Using 'reset' for memory store)`,
+            );
+            // PERHATIAN: 'cache-manager' (terutama memory store) tidak punya
+            // metode 'del' berbasis pattern (seperti SCAN di Redis).
+            // Metode 'reset' adalah 'opsi nuklir' yang akan menghapus SEMUA cache.
+            // Jika Anda menggunakan Redis, ganti ini dengan logika 'SCAN' dan 'DEL'.
+            await (this.cacheManager as any).stores[0].clear();
+            this.logger.log(`💨 All cache cleared.`);
+        } catch (error) {
+            this.logger.error(`Error invalidating list caches: ${error.message}`);
+        }
+    }
+
+    /**
+     * Get cache store untuk monitoring (optional)
+     */
+    async getCacheStore(): Promise<Cache> {
+        return this.cacheManager;
     }
 }

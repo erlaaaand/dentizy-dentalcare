@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource, Repository, SelectQueryBuilder } from 'typeorm';
+import { DataSource, Repository, SelectQueryBuilder, MoreThanOrEqual, IsNull } from 'typeorm';
 import { Patient } from '../entities/patient.entity';
 import { SearchPatientDto } from '../dto/search-patient.dto';
-
 
 @Injectable()
 export class PatientRepository extends Repository<Patient> {
@@ -21,10 +20,12 @@ export class PatientRepository extends Repository<Patient> {
                 'patient.nik',
                 'patient.nama_lengkap',
                 'patient.tanggal_lahir',
-                'patient.jenis_kelamin',
+                'patient.alamat',
                 'patient.email',
                 'patient.no_hp',
-                'patient.alamat',
+                'patient.jenis_kelamin',
+                'patient.is_registered_online',
+                'patient.is_active',
                 'patient.created_at',
                 'patient.updated_at',
             ]);
@@ -101,31 +102,30 @@ export class PatientRepository extends Repository<Patient> {
         total: number;
         new_this_month: number;
         active: number;
-        with_allergies: number;
     }> {
         const startOfMonth = new Date();
         startOfMonth.setDate(1);
         startOfMonth.setHours(0, 0, 0, 0);
 
-        const [total, newThisMonth, active, withAllergies] = await Promise.all([
-            this.count(),
+        const [total, newThisMonth, active] = await Promise.all([
+            this.count(), // total semua pasien termasuk yang non-active
             this.count({
                 where: {
-                    created_at: startOfMonth as any,
+                    created_at: MoreThanOrEqual(startOfMonth),
                 },
             }),
-            this.count({ where: { is_active: true } }),
-            this.createQueryBuilder('patient')
-                .where('patient.riwayat_alergi IS NOT NULL')
-                .andWhere("patient.riwayat_alergi != ''")
-                .getCount(),
+            this.count({
+                where: {
+                    is_active: true,
+                    deleted_at: IsNull(), // pastikan tidak soft-delete
+                },
+            }),
         ]);
 
         return {
             total,
             new_this_month: newThisMonth,
             active,
-            with_allergies: withAllergies,
         };
     }
 
