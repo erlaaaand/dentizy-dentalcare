@@ -20,9 +20,8 @@ export enum Gender {
 }
 
 @Entity('patients')
-// Composite indexes untuk optimasi query yang sering digunakan
 @Index('idx_patient_search', ['nama_lengkap', 'nik', 'email'])
-@Index('idx_patient_active', ['deleted_at']) // Untuk soft delete queries
+@Index('idx_patient_active', ['is_active', 'deleted_at'])
 export class Patient {
     @PrimaryGeneratedColumn()
     id: number;
@@ -36,7 +35,7 @@ export class Patient {
     nik: string;
 
     @Column({ length: 250 })
-    @Index('idx_patient_nama', { fulltext: true }) // Fulltext index untuk searching
+    @Index('idx_patient_nama')
     nama_lengkap: string;
 
     @Column({ type: 'date', nullable: true })
@@ -50,6 +49,7 @@ export class Patient {
     email: string;
 
     @Column({ length: 20, nullable: true })
+    @Index('idx_patient_no_hp')
     no_hp: string;
 
     @Column({
@@ -59,7 +59,6 @@ export class Patient {
     })
     jenis_kelamin: Gender;
 
-    // Informasi tambahan untuk klinik gigi
     @Column({ type: 'text', nullable: true })
     riwayat_alergi: string;
 
@@ -69,6 +68,21 @@ export class Patient {
     @Column({ type: 'text', nullable: true })
     catatan_khusus: string;
 
+    @Column({ length: 5, nullable: true })
+    golongan_darah: string;
+
+    @Column({ length: 250, nullable: true })
+    pekerjaan: string;
+
+    @Column({ length: 250, nullable: true })
+    kontak_darurat_nama: string;
+
+    @Column({ length: 20, nullable: true })
+    kontak_darurat_nomor: string;
+
+    @Column({ length: 100, nullable: true })
+    kontak_darurat_relasi: string;
+
     @Column({ default: false })
     @Index('idx_patient_online_status')
     is_registered_online: boolean;
@@ -77,10 +91,6 @@ export class Patient {
     @Index('idx_patient_active_status')
     is_active: boolean;
 
-    @Column({ type: 'varchar', length: 250, nullable: true })
-    pekerjaan: string;
-
-    // Audit fields
     @CreateDateColumn()
     @Index('idx_patient_created_at')
     created_at: Date;
@@ -89,10 +99,9 @@ export class Patient {
     updated_at: Date;
 
     @DeleteDateColumn()
-    @Exclude() // Jangan return di response
+    @Exclude()
     deleted_at: Date;
 
-    // Relations
     @OneToMany(() => Appointment, (appointment) => appointment.patient)
     appointments: Appointment[];
 
@@ -102,24 +111,28 @@ export class Patient {
     // Virtual fields (computed)
     get umur(): number | null {
         if (!this.tanggal_lahir) return null;
+
         const today = new Date();
         const birthDate = new Date(this.tanggal_lahir);
         let age = today.getFullYear() - birthDate.getFullYear();
         const monthDiff = today.getMonth() - birthDate.getMonth();
+
         if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
             age--;
         }
-        return age;
+
+        return age >= 0 ? age : null;
     }
 
     get is_new_patient(): boolean {
+        if (!this.created_at) return false;
+
         const daysSinceCreation = Math.floor(
             (new Date().getTime() - new Date(this.created_at).getTime()) / (1000 * 60 * 60 * 24)
         );
         return daysSinceCreation <= 30;
     }
 
-    // Hooks
     @BeforeInsert()
     @BeforeUpdate()
     normalizeData() {
@@ -130,7 +143,13 @@ export class Patient {
             this.nama_lengkap = this.nama_lengkap.trim();
         }
         if (this.no_hp) {
-            this.no_hp = this.no_hp.replace(/\s+/g, '');
+            this.no_hp = this.no_hp.replace(/\s+/g, '').trim();
+        }
+        if (this.nik) {
+            this.nik = this.nik.trim();
+        }
+        if (this.alamat) {
+            this.alamat = this.alamat.trim();
         }
     }
 }

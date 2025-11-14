@@ -12,33 +12,21 @@ export class PatientValidator {
      * Validate search query comprehensively
      */
     validateSearchQuery(query: SearchPatientDto): void {
-        // Validate age range
         this.validateAgeRange(query.umur_min, query.umur_max);
-
-        // Validate date range
         this.validateDateRange(query.tanggal_daftar_dari, query.tanggal_daftar_sampai);
-
-        // Validate search length
         this.validateSearchLength(query.search);
-
-        // Validate pagination
         this.validatePagination(query.page, query.limit);
     }
 
     /**
-     * Validate create patient data dengan business rules
+     * Validate create patient data
      */
     async validateCreate(dto: CreatePatientDto): Promise<void> {
-        // Validate unique fields
         await this.validateUniqueFields(dto);
-
-        // Validate birth date
         this.validateBirthDate(dto.tanggal_lahir);
-
-        // Validate phone format
         this.validatePhoneNumber(dto.no_hp);
 
-        // Business rule: Patient harus punya minimal nama dan kontak
+        // Business rule: Patient must have at least one contact
         if (!dto.no_hp && !dto.email) {
             throw new BadRequestException(
                 'Pasien harus memiliki minimal satu kontak (nomor HP atau email)'
@@ -58,32 +46,32 @@ export class PatientValidator {
 
         // Validate NIK uniqueness if changed
         if (dto.nik && dto.nik !== patient.nik) {
-            const existing = await this.patientRepository.existsByField('nik', dto.nik);
-            if (existing) {
+            const existing = await this.patientRepository.findOne({
+                where: { nik: dto.nik }
+            });
+            if (existing && existing.id !== id) {
                 throw new ConflictException(`NIK ${dto.nik} sudah terdaftar`);
             }
         }
 
         // Validate email uniqueness if changed
         if (dto.email && dto.email !== patient.email) {
-            const existing = await this.patientRepository.existsByField('email', dto.email);
-            if (existing) {
+            const existing = await this.patientRepository.findOne({
+                where: { email: dto.email }
+            });
+            if (existing && existing.id !== id) {
                 throw new ConflictException(`Email ${dto.email} sudah terdaftar`);
             }
         }
 
-        // Validate birth date
         this.validateBirthDate(dto.tanggal_lahir);
-
-        // Validate phone
         this.validatePhoneNumber(dto.no_hp);
 
-        // Business rule: Jangan hapus semua kontak
-        const willHaveContact =
-            (dto.no_hp !== '' || patient.no_hp) &&
-            (dto.email !== '' || patient.email);
+        // Business rule: Don't remove all contacts
+        const newNoHp = dto.no_hp !== undefined ? dto.no_hp : patient.no_hp;
+        const newEmail = dto.email !== undefined ? dto.email : patient.email;
 
-        if (!willHaveContact) {
+        if (!newNoHp && !newEmail) {
             throw new BadRequestException(
                 'Pasien harus memiliki minimal satu kontak (nomor HP atau email)'
             );
@@ -94,24 +82,21 @@ export class PatientValidator {
      * Validate unique fields (NIK, Email)
      */
     private async validateUniqueFields(dto: CreatePatientDto): Promise<void> {
-        // Check NIK uniqueness
         if (dto.nik) {
-            const existsByNik = await this.patientRepository.existsByField('nik', dto.nik);
+            const existsByNik = await this.patientRepository.findOne({
+                where: { nik: dto.nik }
+            });
             if (existsByNik) {
                 throw new ConflictException(`Pasien dengan NIK ${dto.nik} sudah terdaftar`);
             }
         }
 
-        // Check email uniqueness
         if (dto.email) {
-            const existsByEmail = await this.patientRepository.existsByField(
-                'email',
-                dto.email
-            );
+            const existsByEmail = await this.patientRepository.findOne({
+                where: { email: dto.email }
+            });
             if (existsByEmail) {
-                throw new ConflictException(
-                    `Pasien dengan email ${dto.email} sudah terdaftar`
-                );
+                throw new ConflictException(`Pasien dengan email ${dto.email} sudah terdaftar`);
             }
         }
     }
@@ -155,7 +140,6 @@ export class PatientValidator {
                 );
             }
 
-            // Check if date range is not too far in the past
             const tenYearsAgo = new Date();
             tenYearsAgo.setFullYear(tenYearsAgo.getFullYear() - 10);
 
@@ -172,17 +156,19 @@ export class PatientValidator {
      */
     private validateSearchLength(search?: string): void {
         if (search) {
-            if (search.length < 2) {
+            const trimmed = search.trim();
+
+            if (trimmed.length < 2) {
                 throw new BadRequestException('Pencarian minimal 2 karakter');
             }
 
-            if (search.length > 255) {
+            if (trimmed.length > 255) {
                 throw new BadRequestException('Pencarian maksimal 255 karakter');
             }
 
             // Check for SQL injection patterns
-            const dangerousPatterns = /(\bSELECT\b|\bDROP\b|\bDELETE\b|\bINSERT\b|\bUPDATE\b)/gi;
-            if (dangerousPatterns.test(search)) {
+            const dangerousPatterns = /(\bSELECT\b|\bDROP\b|\bDELETE\b|\bINSERT\b|\bUPDATE\b|\bUNION\b)/gi;
+            if (dangerousPatterns.test(trimmed)) {
                 throw new BadRequestException('Pencarian mengandung karakter tidak valid');
             }
         }
@@ -213,21 +199,18 @@ export class PatientValidator {
     private validateBirthDate(birthDate?: string | Date): void {
         if (!birthDate) return;
 
-        const date = new Date(birthDate);
+        const date = typeof birthDate === 'string' ? new Date(birthDate) : birthDate;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Check if date is valid
         if (isNaN(date.getTime())) {
             throw new BadRequestException('Format tanggal lahir tidak valid');
         }
 
-        // Birth date cannot be in the future
         if (date > today) {
             throw new BadRequestException('Tanggal lahir tidak boleh di masa depan');
         }
 
-        // Birth date cannot be more than 150 years ago
         const maxYearsAgo = new Date();
         maxYearsAgo.setFullYear(maxYearsAgo.getFullYear() - 150);
 
@@ -236,15 +219,6 @@ export class PatientValidator {
                 'Tanggal lahir tidak valid (lebih dari 150 tahun yang lalu)'
             );
         }
-
-        // Optional: Warn if patient is too young (< 1 year for dental clinic)
-        const oneYearAgo = new Date();
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-
-        // This is just a warning, not blocking
-        // if (date > oneYearAgo) {
-        //     console.warn('Patient is less than 1 year old');
-        // }
     }
 
     /**
@@ -269,5 +243,4 @@ export class PatientValidator {
             );
         }
     }
-    
 }
