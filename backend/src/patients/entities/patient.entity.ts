@@ -59,37 +59,9 @@ export class Patient {
     })
     jenis_kelamin: Gender;
 
-    @Column({ type: 'text', nullable: true })
-    riwayat_alergi: string;
-
-    @Column({ type: 'text', nullable: true })
-    riwayat_penyakit: string;
-
-    @Column({ type: 'text', nullable: true })
-    catatan_khusus: string;
-
-    @Column({ length: 5, nullable: true })
-    golongan_darah: string;
-
-    @Column({ length: 250, nullable: true })
-    pekerjaan: string;
-
-    @Column({ length: 250, nullable: true })
-    kontak_darurat_nama: string;
-
-    @Column({ length: 20, nullable: true })
-    kontak_darurat_nomor: string;
-
-    @Column({ length: 100, nullable: true })
-    kontak_darurat_relasi: string;
-
     @Column({ default: false })
     @Index('idx_patient_online_status')
     is_registered_online: boolean;
-
-    @Column({ default: true })
-    @Index('idx_patient_active_status')
-    is_active: boolean;
 
     @CreateDateColumn()
     @Index('idx_patient_created_at')

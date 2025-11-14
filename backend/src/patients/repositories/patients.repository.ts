@@ -25,10 +25,6 @@ export class PatientRepository extends Repository<Patient> {
                 'patient.email',
                 'patient.no_hp',
                 'patient.alamat',
-                'patient.riwayat_alergi',
-                'patient.riwayat_penyakit',
-                'patient.golongan_darah',
-                'patient.is_active',
                 'patient.created_at',
                 'patient.updated_at',
             ]);
