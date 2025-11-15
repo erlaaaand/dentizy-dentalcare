@@ -4,6 +4,7 @@ import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { UserMapper } from '../../domains/mappers/user.mapper';
 import { UserResponseDto } from '../dto/user-response.dto';
+import { User } from '../../domains/entities/user.entity'
 
 @Injectable()
 export class FindUsersService {
@@ -56,13 +57,58 @@ export class FindUsersService {
     }
 
     /**
+     * Find user by ID for authentication (returns full User entity)
+     * ⚠️ ONLY USE FOR AUTHENTICATION - Returns user with password and all relations
+     */
+    async findOneForAuth(userId: number): Promise<User> {
+        try {
+            this.logger.debug(`Finding user for auth by ID: ${userId}`);
+
+            const user = await this.userRepository.findByIdWithPassword(userId);
+
+            if (!user) {
+                throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+            }
+
+            this.logger.debug(`Found user for auth: ${user.username}`);
+
+            return user; // Return full entity untuk auth
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+
+            this.logger.error(`Error finding user for auth ID ${userId}:`, error.message);
+            throw new BadRequestException('Gagal mengambil data user');
+        }
+    }
+
+    /**
+ * Find user by username FOR AUTHENTICATION
+ * Returns the full entity with password
+ */
+    public async findByUsernameForAuth(username: string): Promise<User> {
+        this.logger.debug(`Mencari user untuk auth: ${username}`);
+
+        // Panggil method repository yang mengambil password
+        const user = await this.userRepository.findByUsernameWithPassword(username);
+
+        if (!user) {
+            throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
+        }
+
+        this.logger.debug(`User auth ditemukan: ${user.username}`);
+        return user; // Kembalikan entity LENGKAP
+    }
+
+    /**
      * Find user by username
      */
     async findByUsername(username: string): Promise<UserResponseDto> {
         try {
             this.logger.debug(`Finding user by username: ${username}`);
 
-            const user = await this.userRepository.findByUsernameWithoutPassword(username);
+            const user = await this.userRepository.findByUsernameWithPassword(username);
 
             if (!user) {
                 throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);

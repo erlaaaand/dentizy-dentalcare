@@ -5,8 +5,6 @@ import { Repository, In } from 'typeorm';
 import { User } from '../../domains/entities/user.entity';
 import { Role } from '../../../roles/entities/role.entity';
 import { FindUsersQueryDto } from '../../applications/dto/find-users-query.dto';
-import { UserResponseDto } from '../../applications/dto/user-response.dto';
-import { UserMapper } from '../../domains/mappers/user.mapper';
 
 @Injectable()
 export class UserRepository {
@@ -17,9 +15,40 @@ export class UserRepository {
         private readonly repository: Repository<User>,
         @InjectRepository(Role)
         private readonly roleRepository: Repository<Role>,
-        @InjectRepository(User)
-        private readonly userRepository: Repository<User>,
     ) { }
+
+    /**
+     * Create new user
+     */
+    async create(data: {
+        username: string;
+        nama_lengkap: string;
+        password: string;
+        roles: Role[];
+    }): Promise<User> {
+        const user = this.repository.create({
+            username: data.username,
+            nama_lengkap: data.nama_lengkap,
+            password: data.password,
+            roles: data.roles
+        });
+
+        return this.repository.save(user);
+    }
+
+    /**
+     * Update user
+     */
+    async update(user: User): Promise<User> {
+        return this.repository.save(user);
+    }
+
+    /**
+     * Delete user
+     */
+    async delete(user: User): Promise<void> {
+        await this.repository.remove(user);
+    }
 
     /**
      * Find all users with optional role filter
@@ -76,26 +105,38 @@ export class UserRepository {
     }
 
     /**
-     * Find user by username
+     * Find user by username without password
      */
-    async findByUsername(username: string): Promise<UserResponseDto> {
-        try {
-            const user = await this.userRepository.findByUsernameWithoutPassword(username);
-
-            if (!user) {
-                throw new Error(`User dengan username "${username}" tidak ditemukan`);
+    async findByUsernameWithoutPassword(username: string): Promise<User | null> {
+        return this.repository.findOne({
+            where: { username },
+            relations: ['roles'],
+            select: {
+                id: true,
+                username: true,
+                nama_lengkap: true,
+                created_at: true,
+                updated_at: true,
+                profile_photo: true
             }
-
-            return UserMapper.toResponseDto(user);
-        } catch (error) {
-            this.logger.error(`Error finding user by username ${username}:`, error.message);
-            throw error;
-        }
+        });
     }
 
     /**
- * Search users by name (partial match)
- */
+     * Find user by username with password (for authentication)
+     */
+    async findByUsernameWithPassword(username: string): Promise<User | null> {
+        return this.repository
+            .createQueryBuilder('user') // Gunakan Query Builder
+            .where('user.username = :username', { username })
+            .addSelect('user.password') // <-- PAKSA 'select' kolom password
+            .leftJoinAndSelect('user.roles', 'role') // Load relasi roles
+            .getOne(); // Ambil hasilnya
+    }
+
+    /**
+     * Search users by name (partial match)
+     */
     async searchByName(searchTerm: string): Promise<User[]> {
         return this.repository
             .createQueryBuilder('user')
@@ -119,6 +160,25 @@ export class UserRepository {
             ])
             .orderBy('user.nama_lengkap', 'ASC')
             .getMany();
+    }
+
+    /**
+     * Check if username exists
+     */
+    async usernameExists(username: string): Promise<boolean> {
+        const count = await this.repository.count({
+            where: { username }
+        });
+        return count > 0;
+    }
+
+    /**
+     * Find roles by IDs
+     */
+    async findRolesByIds(roleIds: number[]): Promise<Role[]> {
+        return this.roleRepository.findBy({
+            id: In(roleIds)
+        });
     }
 
     /**

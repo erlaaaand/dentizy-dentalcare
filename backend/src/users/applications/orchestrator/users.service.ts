@@ -11,6 +11,7 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { PasswordChangeResponseDto } from '../dto/password-change-response.dto';
+import { User } from 'src/users/domains/entities/user.entity';
 
 /**
  * Users Service - Orchestrator
@@ -53,10 +54,9 @@ export class UsersService {
     /**
      * Find user by username (for auth)
      */
-    async findOneByUsername(username: string): Promise<any> {
-        // Note: This returns raw user with password for auth purposes
-        // Should only be used by auth module
-        return this.findUsersService.findByUsername(username);
+    async findOneByUsername(username: string): Promise<User | null> { // Pastikan return type adalah Promise<User>
+
+        return this.findUsersService.findByUsernameForAuth(username);
     }
 
     /**
@@ -153,4 +153,9 @@ export class UsersService {
     }> {
         return this.findUsersService.findWithPagination(page, limit, query);
     }
+
+    async findOneForAuth(userId: number): Promise<User> {
+        return this.findUsersService.findOneForAuth(userId);
+    }
+
 }

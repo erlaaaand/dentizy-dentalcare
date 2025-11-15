@@ -34,6 +34,10 @@ export class ChangePasswordService {
                 this.userValidation.validateUserExists(user, userId);
 
                 // 2. Verify old password
+                if (!user) {
+                    throw new BadRequestException(`User with id ${userId} not found`);
+                }
+
                 const isOldPasswordValid = await this.passwordHasher.compare(
                     oldPassword,
                     user.password

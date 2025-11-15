@@ -1,5 +1,5 @@
 // application/use-cases/update-user.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { UserValidationService } from '../../domains/services/user-validation.service';
@@ -27,6 +27,10 @@ export class UpdateUserService {
             // 1. Find user
             const user = await this.userRepository.findByIdWithPassword(userId);
             this.userValidation.validateUserExists(user, userId);
+
+            if (!user) {
+                throw new BadRequestException(`User with id ${userId} not found`);
+            }
 
             const changes: Record<string, any> = {};
 

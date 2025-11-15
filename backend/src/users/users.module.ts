@@ -1,7 +1,8 @@
 // users.module.ts
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { AuthModule } from '../auth/auth.module';
 
 // Entities
 import { User } from './domains/entities/user.entity';
@@ -38,6 +39,7 @@ import { ValidationExceptionFilter } from './interface/filters/validation-except
 
 @Module({
   imports: [
+    forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([User, Role]),
     EventEmitterModule.forRoot()
   ],

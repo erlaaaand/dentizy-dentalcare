@@ -21,6 +21,10 @@ export class DeleteUserService {
             const user = await this.userRepository.findByIdWithPassword(userId);
             this.userValidation.validateUserExists(user, userId);
 
+            if (!user) {
+                throw new BadRequestException(`User with id ${userId} not found`);
+            }
+
             // 2. Validate can delete
             const canDeleteCheck = this.userValidation.validateCanDelete(user);
             if (!canDeleteCheck.canDelete) {

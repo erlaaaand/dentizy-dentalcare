@@ -1,5 +1,5 @@
 // application/use-cases/reset-password.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { UserValidationService } from '../../domains/services/user-validation.service';
 import { PasswordHasherService } from '../../../auth/infrastructures/security/password-hasher.service';
@@ -29,6 +29,10 @@ export class ResetPasswordService {
             // 1. Find user
             const user = await this.userRepository.findByIdWithPassword(userId);
             this.userValidation.validateUserExists(user, userId);
+
+            if (!user) {
+                throw new BadRequestException(`User with id ${userId} not found`);
+            }
 
             // 2. Validate password strength
             const strengthCheck = this.passwordPolicy.validatePasswordStrength(newPassword);
@@ -86,6 +90,10 @@ export class ResetPasswordService {
             // 1. Find user
             const user = await this.userRepository.findByIdWithPassword(userId);
             this.userValidation.validateUserExists(user, userId);
+            
+            if (!user) {
+                throw new BadRequestException(`User with id ${userId} not found`);
+            }
 
             // 2. Generate temporary password
             const temporaryPassword = this.passwordPolicy.generateTemporaryPassword();
