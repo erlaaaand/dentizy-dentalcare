@@ -213,4 +213,24 @@ export class PatientsController {
     async remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
         return this.patientsService.remove(id);
     }
+
+    @Patch(':id/restore')
+    @Roles(UserRole.KEPALA_KLINIK)
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Pulihkan pasien (restore soft delete)',
+        description: 'Hanya KEPALA_KLINIK yang dapat memulihkan pasien yang telah dihapus (soft delete)'
+    })
+    @ApiParam({ name: 'id', description: 'ID Pasien' })
+    @ApiResponse({
+        status: 200,
+        description: 'Pasien berhasil dipulihkan',
+        schema: {
+            example: { message: 'Pasien John Doe berhasil dipulihkan' }
+        }
+    })
+    @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan atau tidak dihapus' })
+    async restore(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
+        return this.patientsService.restore(id);
+    }
 }

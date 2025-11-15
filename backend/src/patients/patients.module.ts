@@ -11,7 +11,7 @@ import { PatientRepository } from './repositories/patients.repository';
 import { PatientQueryBuilder } from './utils/patient-query.builder';
 import { MedicalRecordNumberGenerator } from './utils/medical-record-number.generator';
 import { PatientValidator } from './utils/patient.validator';
-import { PatientEventListener } from './listeners/patient-event.listener';
+import { PatientEventListener } from './listeners/patient.event-listener';
 import { PatientCacheService } from './services/patient-cache.service';
 import { PatientMapper } from './utils/patient.mapper';
 import { TransactionManager } from './utils/transaction.manager';

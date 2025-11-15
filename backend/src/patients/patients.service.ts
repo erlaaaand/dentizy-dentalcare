@@ -20,25 +20,9 @@ import { PatientValidator } from './utils/patient.validator';
 import { TransactionManager } from './utils/transaction.manager';
 import { PatientCacheService } from './services/patient-cache.service';
 import { PatientMapper } from './utils/patient.mapper';
-
-// Event Types
-export class PatientCreatedEvent {
-    constructor(public readonly patient: Patient) { }
-}
-
-export class PatientUpdatedEvent {
-    constructor(
-        public readonly patientId: number,
-        public readonly changes: Partial<UpdatePatientDto>
-    ) { }
-}
-
-export class PatientDeletedEvent {
-    constructor(
-        public readonly patientId: number,
-        public readonly patientName: string
-    ) { }
-}
+import { PatientCreatedEvent } from './events/patient-created.event';
+import { PatientUpdatedEvent } from './events/patient-updated.event';
+import { PatientDeletedEvent } from './events/patient-deleted.event';
 
 @Injectable()
 export class PatientsService {
@@ -324,7 +308,7 @@ export class PatientsService {
             const patientName = patient.nama_lengkap;
 
             // Soft delete
-            await this.customPatientRepository.softDeleteById(id);
+            await this.customPatientRepository.softDelete(id);
             this.logger.log(`🗑️ Patient soft deleted: #${id} - ${patientName}`);
 
             // Emit event
@@ -341,6 +325,27 @@ export class PatientsService {
             }
             this.logger.error(`❌ Error deleting patient ID ${id}:`, error);
             throw new BadRequestException('Gagal menghapus pasien');
+        }
+    }
+
+    async restore(id: number): Promise<{ message: string }> {
+        try {
+            const patient = await this.customPatientRepository.findSoftDeletedById(id);
+            if (!patient) {
+                throw new NotFoundException(`Pasien dengan ID #${id} tidak ditemukan atau tidak dihapus`);
+            }
+            await this.customPatientRepository.restore(id);
+            this.logger.log(`♻️ Patient restored: #${id} - ${patient.nama_lengkap}`);
+            // Invalidate caches
+            await this.cacheService.invalidatePatientCache(id);
+            await this.cacheService.invalidateListCaches();
+            return { message: `Pasien ${patient.nama_lengkap} berhasil dipulihkan` };
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
+            this.logger.error(`❌ Error restoring patient ID ${id}:`, error);
+            throw new BadRequestException('Gagal memulihkan pasien');
         }
     }
 

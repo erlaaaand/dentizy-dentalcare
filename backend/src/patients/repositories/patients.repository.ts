@@ -132,11 +132,11 @@ export class PatientRepository extends Repository<Patient> {
     /**
      * Soft delete patient (lebih aman dari hard delete)
      */
-    async softDeleteById(id: number): Promise<void> {
-        await this.createQueryBuilder()
-            .softDelete()
-            .where('id = :id', { id })
-            .execute();
+    async findSoftDeletedById(id: number): Promise<Patient | null> {
+        return this.findOne({
+            where: { id },
+            withDeleted: true,
+        });
     }
 
     /**
