@@ -1,8 +1,9 @@
+// backend/src/auth/infrastructures/strategies/jwt.strategy.ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { UsersService } from '../../users/users.service';
-import { User } from '../../users/entities/user.entity';
+import { UsersService } from '../../../users/applications/orchestrator/users.service';
+import { User } from '../../../users/domains/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -14,7 +15,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            secretOrKey: configService.getOrThrow('JWT_SECRET'), // <-- 3. Gunakan ConfigService
+            secretOrKey: configService.getOrThrow('JWT_SECRET'),
         });
     }
 
@@ -24,8 +25,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
      * `payload` adalah isi dari token yang sudah di-decode.
      */
     async validate(payload: { sub: number; username: string }): Promise<User> {
-        // Kita cari pengguna di database berdasarkan ID (sub) dari payload token
-        const user = await this.usersService.findOne(payload.sub);
+        // ✅ Gunakan findOneForAuth() yang return User entity (bukan DTO)
+        // Ini penting karena Passport Strategy membutuhkan full User entity
+        const user = await this.usersService.findOneForAuth(payload.sub);
 
         if (!user) {
             // Jika pengguna tidak ditemukan (misalnya sudah dihapus), tolak akses

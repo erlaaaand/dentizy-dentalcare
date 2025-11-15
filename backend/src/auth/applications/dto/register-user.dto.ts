@@ -1,6 +1,5 @@
 import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
-import { UserRole } from '../../roles/entities/role.entity';
-import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../shared/validators/password.validator';
+import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../../shared/validators/password.validator';
 
 export class RegisterUserDto {
     @IsNotEmpty()
