@@ -12,7 +12,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Gender } from '../entities/patient.entity';
+import { Gender } from '../../domains/entities/patient.entity';
 
 export class CreatePatientDto {
     @ApiProperty({ example: 'Dr. John Doe', description: 'Nama lengkap pasien' })

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import { IsOptional, IsString, IsNumber, IsEnum, IsDateString, Min, Max, MaxLength, IsBoolean } from 'class-validator';
-import { Gender } from '../entities/patient.entity';
+import { Gender } from '../../domains/entities/patient.entity';
 
 export enum SortField {
     NAMA_LENGKAP = 'nama_lengkap',

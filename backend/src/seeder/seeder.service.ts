@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role, UserRole } from '../roles/entities/role.entity';
 import { User } from '../users/entities/user.entity';
-import { Patient } from '../patients/entities/patient.entity';
+import { Patient } from '../patients/domains/entities/patient.entity';
 import { Appointment, AppointmentStatus } from '../appointments/entities/appointment.entity';
 import * as bcrypt from 'bcrypt';
 import { MedicalRecord } from 'src/medical_records/entities/medical_record.entity';

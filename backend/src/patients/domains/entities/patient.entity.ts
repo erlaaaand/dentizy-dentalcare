@@ -1,5 +1,5 @@
-import { Appointment } from '../../appointments/entities/appointment.entity';
-import { MedicalRecord } from '../../medical_records/entities/medical_record.entity';
+import { Appointment } from '../../../appointments/entities/appointment.entity';
+import { MedicalRecord } from '../../../medical_records/entities/medical_record.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,

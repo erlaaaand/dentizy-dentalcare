@@ -4,17 +4,17 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CacheModule } from '@nestjs/cache-manager';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerModule } from '@nestjs/throttler';
-import { Patient } from './entities/patient.entity';
-import { PatientsService } from './patients.service';
-import { PatientsController } from './patients.controller';
-import { PatientRepository } from './repositories/patients.repository';
-import { PatientQueryBuilder } from './utils/patient-query.builder';
-import { MedicalRecordNumberGenerator } from './utils/medical-record-number.generator';
-import { PatientValidator } from './utils/patient.validator';
-import { PatientEventListener } from './listeners/patient.event-listener';
-import { PatientCacheService } from './services/patient-cache.service';
-import { PatientMapper } from './utils/patient.mapper';
-import { TransactionManager } from './utils/transaction.manager';
+import { Patient } from './domains/entities/patient.entity';
+import { PatientsService } from './application/orchestrator/patients.service';
+import { PatientsController } from './interface/http/patients.controller';
+import { PatientRepository } from './infrastructure/persistence/repositories/patients.repository';
+import { PatientQueryBuilder } from './infrastructure/persistence/query/patient-query.builder';
+import { MedicalRecordNumberGenerator } from './infrastructure/generator/medical-record-number.generator';
+import { PatientValidator } from './domains/validators/patient.validator';
+import { PatientEventListener } from './infrastructure/listeners/patient.event-listener';
+import { PatientCacheService } from './infrastructure/cache/patient-cache.service';
+import { PatientMapper } from './domains/mappers/patient.mapper';
+import { TransactionManager } from './infrastructure/transactions/transaction.manager';
 
 @Module({
   imports: [

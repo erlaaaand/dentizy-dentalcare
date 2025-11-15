@@ -8,21 +8,21 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { Patient } from './entities/patient.entity';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
-import { SearchPatientDto } from './dto/search-patient.dto';
-import { PatientResponseDto } from './dto/patient-response.dto';
-import { PatientRepository } from './repositories/patients.repository';
-import { PatientQueryBuilder } from './utils/patient-query.builder';
-import { MedicalRecordNumberGenerator } from './utils/medical-record-number.generator';
-import { PatientValidator } from './utils/patient.validator';
-import { TransactionManager } from './utils/transaction.manager';
-import { PatientCacheService } from './services/patient-cache.service';
-import { PatientMapper } from './utils/patient.mapper';
-import { PatientCreatedEvent } from './events/patient-created.event';
-import { PatientUpdatedEvent } from './events/patient-updated.event';
-import { PatientDeletedEvent } from './events/patient-deleted.event';
+import { Patient } from '../../domains/entities/patient.entity';
+import { CreatePatientDto } from '../dto/create-patient.dto';
+import { UpdatePatientDto } from '../dto/update-patient.dto';
+import { SearchPatientDto } from '../dto/search-patient.dto';
+import { PatientResponseDto } from '../dto/patient-response.dto';
+import { PatientRepository } from '../../infrastructure/persistence/repositories/patients.repository';
+import { PatientQueryBuilder } from '../../infrastructure/persistence/query/patient-query.builder';
+import { MedicalRecordNumberGenerator } from '../../infrastructure/generator/medical-record-number.generator';
+import { PatientValidator } from '../../domains/validators/patient.validator';
+import { TransactionManager } from '../../infrastructure/transactions/transaction.manager';
+import { PatientCacheService } from '../../infrastructure/cache/patient-cache.service';
+import { PatientMapper } from '../../domains/mappers/patient.mapper';
+import { PatientCreatedEvent } from '../../infrastructure/events/patient-created.event';
+import { PatientUpdatedEvent } from '../../infrastructure/events/patient-updated.event';
+import { PatientDeletedEvent } from '../../infrastructure/events/patient-deleted.event';
 
 @Injectable()
 export class PatientsService {

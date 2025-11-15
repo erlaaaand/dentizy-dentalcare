@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, Repository, SelectQueryBuilder, MoreThanOrEqual, IsNull } from 'typeorm';
-import { Patient } from '../entities/patient.entity';
-import { SearchPatientDto } from '../dto/search-patient.dto';
+import { Patient } from '../../../domains/entities/patient.entity';
+import { SearchPatientDto } from '../../../application/dto/search-patient.dto';
 
 @Injectable()
 export class PatientRepository extends Repository<Patient> {

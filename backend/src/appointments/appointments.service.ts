@@ -4,7 +4,7 @@ import { Repository, DataSource, Between, LessThan, MoreThan } from 'typeorm';
 import { Appointment, AppointmentStatus } from './entities/appointment.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
-import { Patient } from '../patients/entities/patient.entity';
+import { Patient } from '../patients/domains/entities/patient.entity';
 import { User } from '../users/entities/user.entity';
 import { UserRole } from 'src/roles/entities/role.entity';
 import { NotificationsService } from '../notifications/notifications.service';

@@ -1,5 +1,5 @@
 import { Expose, Type } from 'class-transformer';
-import { Gender } from '../entities/patient.entity';
+import { Gender } from '../../domains/entities/patient.entity';
 
 export class PatientResponseDto {
     @Expose()

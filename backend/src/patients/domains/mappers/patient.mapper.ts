@@ -3,7 +3,7 @@
 import { Injectable } from '@nestjs/common';
 import { plainToInstance } from 'class-transformer';
 import { Patient } from '../entities/patient.entity';
-import { PatientResponseDto } from '../dto/patient-response.dto';
+import { PatientResponseDto } from '../../application/dto/patient-response.dto';
 
 @Injectable()
 export class PatientMapper {

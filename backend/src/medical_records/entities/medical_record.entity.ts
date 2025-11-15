@@ -1,6 +1,6 @@
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { User } from '../../users/entities/user.entity';
-import { Patient } from '../../patients/entities/patient.entity';
+import { Patient } from '../../patients/domains/entities/patient.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,

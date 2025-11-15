@@ -23,14 +23,14 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
-import { UserRole } from '../roles/entities/role.entity';
-import { PatientsService } from './patients.service';
-import { CreatePatientDto } from './dto/create-patient.dto';
-import { UpdatePatientDto } from './dto/update-patient.dto';
-import { SearchPatientDto } from './dto/search-patient.dto';
-import { PatientResponseDto } from './dto/patient-response.dto';
+import { RolesGuard } from '../../../auth/guards/roles.guard';
+import { Roles } from '../../../auth/decorators/roles.decorator';
+import { UserRole } from '../../../roles/entities/role.entity';
+import { PatientsService } from '../../application/orchestrator/patients.service';
+import { CreatePatientDto } from '../../application/dto/create-patient.dto';
+import { UpdatePatientDto } from '../../application/dto/update-patient.dto';
+import { SearchPatientDto } from '../../application/dto/search-patient.dto';
+import { PatientResponseDto } from '../../application/dto/patient-response.dto';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
 

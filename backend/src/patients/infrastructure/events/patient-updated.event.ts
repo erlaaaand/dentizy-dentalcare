@@ -1,4 +1,4 @@
-import { UpdatePatientDto } from '../dto/update-patient.dto';
+import { UpdatePatientDto } from '../../application/dto/update-patient.dto';
 
 export class PatientUpdatedEvent {
     constructor(

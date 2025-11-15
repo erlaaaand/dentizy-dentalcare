@@ -1,6 +1,6 @@
 import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-import { Patient } from '../entities/patient.entity';
+import { Patient } from '../../domains/entities/patient.entity';
 
 @Injectable()
 export class MedicalRecordNumberGenerator {
