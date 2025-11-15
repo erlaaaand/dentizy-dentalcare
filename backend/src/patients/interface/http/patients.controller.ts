@@ -23,8 +23,8 @@ import {
     ApiParam,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../../../auth/guards/roles.guard';
-import { Roles } from '../../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
+import { Roles } from '../../../auth/interface/decorators/roles.decorator';
 import { UserRole } from '../../../roles/entities/role.entity';
 import { PatientsService } from '../../application/orchestrator/patients.service';
 import { CreatePatientDto } from '../../application/dto/create-patient.dto';
