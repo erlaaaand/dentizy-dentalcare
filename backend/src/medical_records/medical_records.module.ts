@@ -26,10 +26,15 @@ import { MedicalRecordAuthorizationService } from './domains/services/medical-re
 
 // Validators
 import { MedicalRecordValidator } from './domains/validators/medical-record.validator';
+import { MedicalRecordCreateValidator } from './domains/validators/medical-record-create.validator';
+import { MedicalRecordUpdateValidator } from './domains/validators/medical-record-update.validator';
+import { MedicalRecordAuthorizationValidator } from './domains/validators/medical-record-authorization.validator';
 
 // Infrastructure
 import { MedicalRecordsRepository } from './infrastructure/persistence/repositories/medical-records.repository';
 import { MedicalRecordQueryBuilder } from './infrastructure/persistence/query/medical-record-query.builder';
+import { TransactionManager } from './infrastructure/transactions/transaction.manager';
+import { MedicalRecordEventListener } from './infrastructure/listeners/medical-record.event-listener';
 
 @Module({
     imports: [
@@ -57,10 +62,17 @@ import { MedicalRecordQueryBuilder } from './infrastructure/persistence/query/me
 
         // Validators
         MedicalRecordValidator,
+        MedicalRecordCreateValidator,
+        MedicalRecordUpdateValidator,
+        MedicalRecordAuthorizationValidator,
 
         // Infrastructure
         MedicalRecordsRepository,
         MedicalRecordQueryBuilder,
+        TransactionManager,
+
+        // Event Listeners
+        MedicalRecordEventListener,
     ],
     exports: [
         // Export orchestrator for other modules
@@ -68,6 +80,8 @@ import { MedicalRecordQueryBuilder } from './infrastructure/persistence/query/me
 
         // Export repository for direct access if needed
         MedicalRecordsRepository,
+
+        TransactionManager
     ],
 })
 export class MedicalRecordsModule { }
