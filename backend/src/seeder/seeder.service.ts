@@ -2,11 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Role, UserRole } from '../roles/entities/role.entity';
-import { User } from '../users/entities/user.entity';
+import { User } from '../users/domains/entities/user.entity';
 import { Patient } from '../patients/domains/entities/patient.entity';
-import { Appointment, AppointmentStatus } from '../appointments/entities/appointment.entity';
+import { Appointment, AppointmentStatus } from '../appointments/domains/entities/appointment.entity';
 import * as bcrypt from 'bcrypt';
-import { MedicalRecord } from 'src/medical_records/entities/medical_record.entity';
+import { MedicalRecord } from 'src/medical_records/domains/entities/medical-record.entity';
 
 @Injectable()
 export class SeederService {
@@ -93,7 +93,7 @@ export class SeederService {
                 throw new Error('Roles not found. Please run role seeding first.');
             }
 
-            const hashedPassword = await bcrypt.hash('password123', 10);
+            const hashedPassword = await bcrypt.hash('developerganteng', 10);
 
             const users = [
                 {
