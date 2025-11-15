@@ -7,7 +7,7 @@ import {
     MaxLength
 } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { AppointmentStatus } from '../entities/appointment.entity';
+import { AppointmentStatus } from '../../domains/entities/appointment.entity';
 
 export class UpdateAppointmentDto {
     @IsOptional()

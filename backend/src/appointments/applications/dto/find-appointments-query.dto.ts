@@ -1,6 +1,6 @@
 import { IsDateString, IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AppointmentStatus } from '../entities/appointment.entity';
+import { AppointmentStatus } from '../../domains/entities/appointment.entity';
 
 export class FindAppointmentsQueryDto {
     @IsOptional()

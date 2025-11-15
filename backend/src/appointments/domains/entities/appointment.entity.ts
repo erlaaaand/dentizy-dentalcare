@@ -1,6 +1,6 @@
-import { MedicalRecord } from '../../medical_records/domains/entities/medical-record.entity';
-import { Patient } from '../../patients/domains/entities/patient.entity';
-import { User } from '../../users/entities/user.entity';
+import { MedicalRecord } from '../../../medical_records/domains/entities/medical-record.entity';
+import { Patient } from '../../../patients/domains/entities/patient.entity';
+import { User } from '../../../users/domains/entities/user.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
