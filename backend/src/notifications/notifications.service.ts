@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, LessThan } from 'typeorm';
 import { Notification, NotificationStatus, NotificationType } from './entities/notification.entity';
-import { Appointment } from '../appointments/entities/appointment.entity';
+import { Appointment } from '../appointments/domains/entities/appointment.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MailerService } from '@nestjs-modules/mailer';
 
