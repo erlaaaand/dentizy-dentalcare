@@ -31,16 +31,18 @@ export class NotificationRepository {
 
     /**
      * Find by ID with relations
+     * ✅ FIXED: Menggunakan 'doctor' bukan 'doctor_id'
      */
     async findById(id: number): Promise<Notification | null> {
         return this.repository.findOne({
             where: { id },
-            relations: ['appointment', 'appointment.patient', 'appointment.doctor_id'],
+            relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
         });
     }
 
     /**
      * Find pending notifications to send (optimized for cron)
+     * ✅ FIXED: Menggunakan 'doctor' bukan 'doctor_id'
      */
     async findPendingToSend(limit: number = 50): Promise<Notification[]> {
         const now = new Date();
@@ -50,7 +52,7 @@ export class NotificationRepository {
                 status: NotificationStatus.PENDING,
                 send_at: LessThan(now),
             },
-            relations: ['appointment', 'appointment.patient', 'appointment.doctor_id'],
+            relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
             order: {
                 send_at: 'ASC',
             },
@@ -120,6 +122,7 @@ export class NotificationRepository {
 
     /**
      * Get all notifications with pagination and filters
+     * ✅ FIXED: Menggunakan 'doctor' bukan 'doctor_id'
      */
     async findAll(query: QueryNotificationsDto): Promise<{
         data: Notification[];
@@ -136,7 +139,7 @@ export class NotificationRepository {
             .createQueryBuilder('notification')
             .leftJoinAndSelect('notification.appointment', 'appointment')
             .leftJoinAndSelect('appointment.patient', 'patient')
-            .leftJoinAndSelect('appointment.doctor_id', 'doctor');
+            .leftJoinAndSelect('appointment.doctor', 'doctor'); // ✅ FIXED
 
         if (status) {
             queryBuilder.andWhere('notification.status = :status', { status });
@@ -174,7 +177,7 @@ export class NotificationRepository {
             where: {
                 status: NotificationStatus.FAILED,
             },
-            relations: ['appointment', 'appointment.patient'],
+            relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
             order: {
                 updated_at: 'DESC',
             },
