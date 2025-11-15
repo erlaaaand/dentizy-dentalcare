@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useModalStore } from '@/lib/store/modalStore';
+import { useModalStore } from '@/stores/modalStore';
 import { X, AlertTriangle, Info, Loader2 } from 'lucide-react';
 
 const sizeClasses = {

@@ -1,7 +1,7 @@
 import React from 'react';
-import Sidebar from '@/components/dashboard/sidebar';
-import Header from '@/components/dashboard/header';
-import Footer from '@/components/dashboard/footer';
+import Sidebar from '@/components/ui/layout/Sidebar';
+import Header from '@/components/ui/layout/Header';
+import Footer from '@/components/ui/layout/footer/Footer';
 import { cn } from '@/lib/utils';
 
 export interface DashboardLayoutProps {
