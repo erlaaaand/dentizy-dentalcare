@@ -13,7 +13,7 @@
  */
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
 
-export const PASSWORD_VALIDATION_MESSAGE = 
+export const PASSWORD_VALIDATION_MESSAGE =
   'Password harus minimal 8 karakter dengan kombinasi huruf besar, huruf kecil, angka, dan karakter khusus (@$!%*?&#)';
 
 export const PASSWORD_MIN_LENGTH = 8;
