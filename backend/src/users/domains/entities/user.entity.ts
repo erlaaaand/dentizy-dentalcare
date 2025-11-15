@@ -1,4 +1,4 @@
-import { Role } from '../../roles/entities/role.entity';
+import { Role } from '../../../roles/entities/role.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -11,7 +11,7 @@ import {
   Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
-import { MedicalRecord } from '../../medical_records/entities/medical_record.entity';
+import { MedicalRecord } from '../../../medical_records/domains/entities/medical-record.entity';
 
 @Entity('users')
 export class User {
@@ -56,6 +56,6 @@ export class User {
   })
   roles: Role[];
 
-  @OneToMany(() => MedicalRecord, (record) => record.user_staff)
+  @OneToMany(() => MedicalRecord, (record) => record.doctor_id)
   medical_records: MedicalRecord[];
 }

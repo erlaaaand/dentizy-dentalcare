@@ -1,5 +1,5 @@
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
-import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../shared/validators/password.validator';
+import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../../shared/validators/password.validator';
 
 export class ChangePasswordDto {
     @IsNotEmpty({ message: 'Password lama harus diisi' })

@@ -1,5 +1,5 @@
 import { IsEnum, IsOptional } from 'class-validator';
-import { UserRole } from '../../roles/entities/role.entity';
+import { UserRole } from '../../../roles/entities/role.entity';
 
 export class FindUsersQueryDto {
   @IsOptional()
