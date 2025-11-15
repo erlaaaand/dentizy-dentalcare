@@ -14,8 +14,8 @@ import { RolesService } from './roles.service';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../auth/guards/roles.guard';
-import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/interface/guards/roles.guard';
+import { Roles } from '../auth/interface/decorators/roles.decorator';
 import { UserRole } from './entities/role.entity';
 
 @Controller('roles')
