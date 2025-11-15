@@ -1,4 +1,5 @@
-import { Appointment } from '../../appointments/domains/entities/appointment.entity';
+// domains/entities/notification.entity.ts
+import { Appointment } from '../../../appointments/domains/entities/appointment.entity';
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -7,6 +8,7 @@ import {
     UpdateDateColumn,
     ManyToOne,
     JoinColumn,
+    Index,
 } from 'typeorm';
 
 export enum NotificationType {
@@ -22,6 +24,8 @@ export enum NotificationStatus {
 }
 
 @Entity('notifications')
+@Index(['status', 'send_at']) // Composite index untuk cron job query
+@Index(['appointment_id', 'status']) // Index untuk cancel operations
 export class Notification {
     @PrimaryGeneratedColumn()
     id: number;
@@ -40,13 +44,21 @@ export class Notification {
         enum: NotificationStatus,
         default: NotificationStatus.PENDING,
     })
+    @Index() // Index untuk filtering by status
     status: NotificationStatus;
 
-    @Column({ type: 'timestamp', nullable: true })
-    send_at: Date; // Jadwal kapan notifikasi harus dikirim
+    @Column({ type: 'timestamp' })
+    @Index() // Index untuk scheduling queries
+    send_at: Date;
 
     @Column({ type: 'timestamp', nullable: true })
-    sent_at: Date; // Waktu saat notifikasi berhasil terkirim
+    sent_at: Date | null;
+
+    @Column({ type: 'text', nullable: true })
+    error_message: string | null; // Store error for debugging
+
+    @Column({ type: 'int', default: 0 })
+    retry_count: number; // Track retry attempts
 
     @CreateDateColumn()
     created_at: Date;
