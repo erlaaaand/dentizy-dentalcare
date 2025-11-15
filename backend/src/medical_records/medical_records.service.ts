@@ -216,7 +216,7 @@ export class MedicalRecordsService {
             const isDokter = user.roles.some(r => r.name === UserRole.DOKTER);
 
             if (!isKepalaKlinik) {
-                const isCreator = record.user_id_staff === user.id;
+                const isCreator = record.doctor_id === user.id;
                 const isAppointmentDoctor = record.appointment.doctor_id === user.id;
 
                 if (isDokter) {
@@ -249,7 +249,7 @@ export class MedicalRecordsService {
             // ✅ AUDIT: Log who is updating what
             this.logger.log(
                 `User ${user.id} (${user.roles.map(r => r.name).join(', ')}) ` +
-                `updating medical record #${id} (created by user ${record.user_id_staff})`
+                `updating medical record #${id} (created by user ${record.doctor_id})`
             );
 
             // Update record
