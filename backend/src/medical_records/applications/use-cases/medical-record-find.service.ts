@@ -2,10 +2,10 @@ import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nest
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalRecord } from '../../domains/entities/medical-record.entity';
-import { User } from '../../../users/entities/user.entity';
+import { User } from '../../../users/domains/entities/user.entity';
 import { MedicalRecordAuthorizationService } from '../../domains/services/medical-record-authorization.service';
 import { MedicalRecordValidator } from '../../domains/validators/medical-record.validator';
-import { AppointmentStatus } from '../../../appointments/entities/appointment.entity';
+import { AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 
 @Injectable()
 export class MedicalRecordFindService {

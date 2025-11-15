@@ -1,9 +1,9 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DataSource, EntityManager } from 'typeorm';
 import { MedicalRecord } from '../../domains/entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../appointments/entities/appointment.entity';
+import { Appointment, AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
-import { User } from '../../../users/entities/user.entity';
+import { User } from '../../../users/domains/entities/user.entity';
 import { MedicalRecordMapper } from '../../domains/mappers/medical-record.mappers';
 import { MedicalRecordDomainService } from '../../domains/services/medical-record-domain.service';
 import { MedicalRecordAuthorizationService } from '../../domains/services/medical-record-authorization.service';

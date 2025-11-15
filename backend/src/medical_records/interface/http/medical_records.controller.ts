@@ -30,13 +30,14 @@ import { SearchMedicalRecordDto } from '../../applications/dto/search-medical-re
 // DTO Respons yang Anda berikan
 import { MedicalRecordResponseDto } from '../../applications/dto/medical-record-response.dto';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '../../../auth/guards/roles.guard';
-import { Roles } from '../../../auth/decorators/roles.decorator';
+import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
+import { Roles } from '../../../auth/interface/decorators/roles.decorator';
 import { UserRole } from '../../../roles/entities/role.entity';
-import { GetUser } from '../../../auth/decorators/get-user.decorator';
-import { User } from '../../../users/entities/user.entity';
+import { GetUser } from '../../../auth/interface/decorators/get-user.decorator';
+import { User } from '../../../users/domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { FindAllMedicalRecordQueryDto } from 'src/medical_records/applications/dto/find-all-medical-record.dto';
 
 @ApiTags('Medical Records')
 @ApiBearerAuth()
@@ -89,10 +90,10 @@ export class MedicalRecordsController {
         }
     })
     async findAll(
-        @Query(ValidationPipe)
+        @Query(new ValidationPipe({ transform: true })) query: SearchMedicalRecordDto,
         @GetUser() user: User
     ) {
-        return await this.medicalRecordsService.findAll(user);
+        return await this.medicalRecordsService.findAll(user, query);
     }
 
     @Get('search')

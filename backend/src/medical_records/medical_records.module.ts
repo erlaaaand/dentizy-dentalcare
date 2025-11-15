@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 // Entities
 import { MedicalRecord } from './domains/entities/medical-record.entity';
-import { Appointment } from '../appointments/entities/appointment.entity';
+import { Appointment } from '../appointments/domains/entities/appointment.entity';
 
 // Controller
 import { MedicalRecordsController } from './interface/http/medical_records.controller';

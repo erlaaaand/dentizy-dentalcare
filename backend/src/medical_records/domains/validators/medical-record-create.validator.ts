@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { CreateMedicalRecordDto } from '../../applications/dto/create-medical-record.dto';
-import { Appointment, AppointmentStatus } from '../../../appointments/entities/appointment.entity';
-import { User } from '../../../users/entities/user.entity';
+import { Appointment, AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
+import { User } from '../../../users/domains/entities/user.entity';
 
 /**
  * Validator for Medical Record Creation

@@ -1,4 +1,4 @@
-import { AppointmentStatus } from '../../../appointments/entities/appointment.entity';
+import { AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 
 export class MedicalRecordResponseDto {
     id: number;

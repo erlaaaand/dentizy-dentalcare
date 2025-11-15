@@ -1,6 +1,6 @@
 import { IsOptional, IsNumber, IsString, IsDateString, IsEnum } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AppointmentStatus } from '../../../appointments/entities/appointment.entity';
+import { AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 
 export class SearchMedicalRecordDto {
     @IsOptional()

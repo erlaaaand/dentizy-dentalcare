@@ -1,6 +1,6 @@
 import { Injectable, ConflictException, BadRequestException } from '@nestjs/common';
 import { MedicalRecord } from './../entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../appointments/entities/appointment.entity';
+import { Appointment, AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 
 @Injectable()
 export class MedicalRecordDomainService {
