@@ -369,7 +369,7 @@ describe('LoginService', () => {
         const userWithMultipleRoles = {
           ...mockUser,
           roles: [
-            { id: 1, name: UserRole.STAF, description: 'Admin' },
+            { id: 1, name: UserRole.KEPALA_KLINIK, description: 'Kepala Klinik' },
             { id: 2, name: UserRole.DOKTER, description: 'Dokter' },
             { id: 3, name: UserRole.STAF, description: 'Staf' },
           ],
@@ -382,7 +382,7 @@ describe('LoginService', () => {
 
         const result = await service.execute(mockLoginDto, mockMetadata);
 
-        expect(result.user.roles).toEqual(['admin', 'dokter', 'staf']);
+        expect(result.user.roles).toEqual(['kepala_klinik', 'dokter', 'staf']);
       });
     });
 
