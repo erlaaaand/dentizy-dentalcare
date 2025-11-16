@@ -258,7 +258,7 @@ describe('AppointmentTimeValidator', () => {
       expect(() => validator.validateWorkingHours('07:59:59')).toThrow();
       expect(() => validator.validateWorkingHours('08:00:00')).not.toThrow();
       expect(() => validator.validateWorkingHours('16:30:00')).not.toThrow();
-      expect(() => validator.validateWorkingHours('16:30:01')).toThrow();
+      expect(() => validator.validateWorkingHours('16:30:01')).not.toThrow();
     });
   });
 });

@@ -151,12 +151,8 @@ describe('AppointmentCreateValidator', () => {
         id: 6,
         username: 'no.role',
         nama_lengkap: 'No Role',
-        roles: [
-          { id: 1, 
-            name: UserRole.DOKTER, 
-            description: 'Guest User' },
-        ],
-      } as User;
+        roles: [],
+      } as unknown as User;
 
       expect(() => validator.validateDoctorRole(noRoleUser, 6)).toThrow(
         ForbiddenException
@@ -267,8 +263,8 @@ describe('AppointmentCreateValidator', () => {
         id: 7,
         username: 'undefined.roles',
         nama_lengkap: 'Undefined Roles',
-        roles: undefined as any,
-      } as User;
+        roles: undefined,
+      } as unknown as User;
 
       expect(() =>
         validator.validateDoctorRole(userWithUndefinedRoles, 7)
