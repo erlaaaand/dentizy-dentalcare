@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Appointment } from '../../domains/entities/appointment.entity';
 import { User } from '../../../users/domains/entities/user.entity';
@@ -38,7 +38,7 @@ export class AppointmentCancellationService {
                     const appointment = await this.repository.findByIdInTransaction(qr, id);
 
                     if (!appointment) {
-                        throw new Error(`Janji temu dengan ID #${id} tidak ditemukan`);
+                        throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
                     }
 
                     // 2. VALIDASI: Comprehensive cancellation validation
