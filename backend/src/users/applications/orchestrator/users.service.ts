@@ -55,7 +55,6 @@ export class UsersService {
      * Find user by username (for auth)
      */
     async findOneByUsername(username: string): Promise<User | null> { // Pastikan return type adalah Promise<User>
-
         return this.findUsersService.findByUsernameForAuth(username);
     }
 
@@ -154,7 +153,7 @@ export class UsersService {
         return this.findUsersService.findWithPagination(page, limit, query);
     }
 
-    async findOneForAuth(userId: number): Promise<User> {
+    async findOneForAuth(userId: number): Promise<User | null> {
         return this.findUsersService.findOneForAuth(userId);
     }
 
