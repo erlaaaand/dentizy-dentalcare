@@ -5,6 +5,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { SeederService } from './seeder/seeder.service';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
 
 async function bootstrap() {
@@ -13,6 +14,8 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
+
+    app.useGlobalFilters(new HttpExceptionFilter());
 
     // ✅ Get ConfigService
     const configService = app.get(ConfigService);
@@ -37,29 +40,31 @@ async function bootstrap() {
     }));
 
     // ✅ 2. IMPROVED CORS Configuration
-    const allowedOrigins = nodeEnv === 'production' 
+    const allowedOrigins = nodeEnv === 'production'
       ? [frontendUrl] // Production: strict origin
       : [frontendUrl, 'http://localhost:3001', 'http://localhost:3000']; // Development
 
     app.enableCors({
       origin: (origin, callback) => {
         // ✅ FIX: Stricter origin checking
-        
+
         // In production, ALWAYS require origin header
         if (!origin) {
           if (nodeEnv === 'production') {
             logger.error(`🚫 CORS blocked: Missing origin header (Production mode)`);
             return callback(new Error('Origin header required in production'));
           }
-          
+
           // Development: Allow no-origin (e.g., Postman, curl)
           logger.debug(`⚠️ No origin header - allowing (Development mode only)`);
           return callback(null, true);
         }
-        
+
         // Check if origin is in whitelist
         if (allowedOrigins.includes(origin)) {
-          logger.debug(`✅ CORS allowed: ${origin}`);
+          if (nodeEnv !== 'production') {
+            logger.debug(`✅ CORS allowed: ${origin}`);
+          }
           callback(null, true);
         } else {
           // ✅ FIX: Log with proper error level and detailed info
@@ -122,7 +127,7 @@ async function bootstrap() {
           filter: true,
         },
       });
-      
+
       logger.log('📚 Swagger available at: /api-docs');
     }
 
@@ -133,7 +138,7 @@ async function bootstrap() {
       logger.log('✅ Database connection successful');
     } catch (error) {
       logger.error('❌ Database connection failed:', error.message);
-      
+
       if (nodeEnv === 'production') {
         throw new Error('Cannot connect to database. Please check your configuration.');
       } else {
@@ -156,7 +161,7 @@ async function bootstrap() {
     // ✅ 7. GRACEFUL SHUTDOWN HANDLERS
     const gracefulShutdown = async (signal: string) => {
       logger.warn(`⚠️ ${signal} signal received: closing HTTP server`);
-      
+
       try {
         await app.close();
         logger.log('✅ Application closed gracefully');
@@ -173,7 +178,7 @@ async function bootstrap() {
     // ✅ 8. UNHANDLED REJECTION HANDLER
     process.on('unhandledRejection', (reason, promise) => {
       logger.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
-      
+
       if (nodeEnv === 'production') {
         // In production, restart the application
         gracefulShutdown('UNHANDLED_REJECTION');
