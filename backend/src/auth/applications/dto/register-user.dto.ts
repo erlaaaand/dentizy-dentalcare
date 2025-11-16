@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
+import { ArrayMinSize, IsArray, IsEnum, IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
 import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../../shared/validators/password.validator';
 
 export class RegisterUserDto {
@@ -19,5 +19,6 @@ export class RegisterUserDto {
     @IsNotEmpty()
     @IsArray()
     @IsNumber({}, { each: true })
+    @ArrayMinSize(1, { message: 'Roles cannot be empty'})
     roles: number[]; // Array berisi ID role, contoh: [2] untuk 'staf'
 }
