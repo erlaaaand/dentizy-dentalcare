@@ -39,7 +39,8 @@ import { PasswordChangeResponseDto } from '../../applications/dto/password-chang
 import { User } from '../../domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { AuthService } from 'src/auth/applications/orchestrator/auth.service';
+import { AuthService } from '../../../auth/applications/orchestrator/auth.service';
+import { BadRequestException } from '@nestjs/common'; // Pastikan ini diimpor
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -52,7 +53,7 @@ export class UsersController {
     ) { }
 
     @Post()
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+    @Roles(UserRole.KEPALA_KLINIK)
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({
         summary: 'Buat user baru',
@@ -234,6 +235,11 @@ export class UsersController {
         @GetUser() user: User,
         @Body() changePasswordDto: ChangePasswordDto
     ): Promise<PasswordChangeResponseDto> {
+
+        if (changePasswordDto.newPassword !== changePasswordDto.confirmPassword) {
+            throw new BadRequestException('Password baru dan konfirmasi password tidak cocok');
+        }
+
         return this.usersService.changePassword(
             user.id,
             changePasswordDto.oldPassword,

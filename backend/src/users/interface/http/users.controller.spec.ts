@@ -1,8 +1,13 @@
-// interface/http/users.controller.spec.ts
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from '../../applications/orchestrator/users.service';
 import { BadRequestException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
+
+import { AuthService } from '../../../auth/applications/orchestrator/auth.service';
 
 describe('UsersController', () => {
   let controller: UsersController;
@@ -10,8 +15,10 @@ describe('UsersController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [CacheModule.register()], // Untuk CacheInterceptor
       controllers: [UsersController],
       providers: [
+        // Mock untuk UsersService (index 0)
         {
           provide: UsersService,
           useValue: {
@@ -24,13 +31,47 @@ describe('UsersController', () => {
             resetPassword: jest.fn(),
             generateTemporaryPassword: jest.fn()
           }
-        }
+        },
+
+        // [PERBAIKAN] 2. Tambahkan mock untuk AuthService (index 1)
+        {
+          provide: AuthService,
+          useValue: {
+            // Sediakan mock method yang MUNGKIN dipanggil oleh controller
+            // Jika tidak ada, objek kosong {} saja sudah cukup untuk DI
+            validateUser: jest.fn(),
+            login: jest.fn(),
+          }
+        },
+
+        // Mock Guards
+        {
+          provide: AuthGuard('jwt'),
+          useValue: { canActivate: jest.fn(() => true) },
+        },
+        {
+          provide: RolesGuard,
+          useValue: { canActivate: jest.fn(() => true) },
+        },
+        {
+          provide: ThrottlerGuard,
+          useValue: { canActivate: jest.fn(() => true) },
+        },
       ]
-    }).compile();
+    })
+      .overrideGuard(AuthGuard('jwt'))
+      .useValue({ canActivate: jest.fn(() => true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .overrideGuard(ThrottlerGuard)
+      .useValue({ canActivate: jest.fn(() => true) })
+      .compile();
 
     controller = module.get<UsersController>(UsersController);
     usersService = module.get(UsersService);
   });
+
+  // ... Sisa tes Anda (it, describe) tidak perlu diubah ...
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
@@ -74,7 +115,7 @@ describe('UsersController', () => {
 
       const expectedResult = {
         message: 'Password berhasil diubah',
-        timestamp: new Date().toISOString(),
+        timestamp: expect.any(String),
         user: { id: 1, username: 'testuser' }
       };
 
@@ -101,6 +142,8 @@ describe('UsersController', () => {
       await expect(
         controller.changePassword(user, changePasswordDto)
       ).rejects.toThrow(BadRequestException);
+
+      expect(usersService.changePassword).not.toHaveBeenCalled();
     });
   });
 });
