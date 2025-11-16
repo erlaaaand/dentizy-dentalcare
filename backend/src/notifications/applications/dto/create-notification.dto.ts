@@ -17,6 +17,3 @@ export class CreateNotificationDto {
     @IsDate()
     send_at: Date;
 }
-
-
-
