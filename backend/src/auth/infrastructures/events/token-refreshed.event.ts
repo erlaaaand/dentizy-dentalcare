@@ -4,5 +4,5 @@ export class TokenRefreshedEvent {
         public readonly userId: number,
         public readonly username: string,
         public readonly timestamp: Date = new Date(),
-    ) { }
+    ) { Object.freeze(this); }
 }
