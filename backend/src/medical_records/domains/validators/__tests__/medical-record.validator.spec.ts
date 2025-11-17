@@ -5,6 +5,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { MedicalRecordValidator } from '../medical-record.validator';
 import { MedicalRecord } from '../../entities/medical-record.entity';
+import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import { User } from '../../../../users/domains/entities/user.entity';
+import { Patient } from '../../../../patients/domains/entities/patient.entity';
 
 // ============================================================================
 // MOCK DATA
@@ -20,9 +23,15 @@ const createMockMedicalRecord = (): MedicalRecord => ({
   plan: 'Test',
   created_at: new Date(),
   updated_at: new Date(),
-  appointment: {} as any,
-  doctor: {} as any,
-  patient: {} as any,
+  appointment: {
+    id: 10,
+    tanggal_janji: new Date(),
+    status: AppointmentStatus.DIJADWALKAN, // atau enum AppointmentStatus.DIJADWALKAN
+    patient: { id: 3, nama_lengkap: 'Jane Doe' } as any,
+    doctor: { id: 2, nama_lengkap: 'Dr. John' } as any,
+  } as Appointment,
+  doctor: { id: 2, nama_lengkap: 'Dr. John' } as User,
+  patient: { id: 3, nama_lengkap: 'Jane Doe' } as Patient,
 } as MedicalRecord);
 
 // ============================================================================
@@ -322,7 +331,7 @@ describe('MedicalRecordValidator', () => {
 
     it('should throw error when relation is missing', () => {
       const record = createMockMedicalRecord();
-      record.appointment = null;
+      (record as any).appointment = null; // bypass TS
       const relations = ['appointment'];
 
       expect(() => validator.validateRelationsLoaded(record, relations))
@@ -331,7 +340,7 @@ describe('MedicalRecordValidator', () => {
 
     it('should throw error with correct relation name', () => {
       const record = createMockMedicalRecord();
-      record.doctor = null;
+      (record as any).doctor = null; // bypass TS
       const relations = ['doctor'];
 
       expect(() => validator.validateRelationsLoaded(record, relations))
@@ -348,8 +357,8 @@ describe('MedicalRecordValidator', () => {
 
     it('should throw error for first missing relation', () => {
       const record = createMockMedicalRecord();
-      record.appointment = null;
-      record.doctor = null;
+      (record as any).appointment = null; // bypass TS
+      (record as any).doctor = null;       // bypass TS
       const relations = ['appointment', 'doctor'];
 
       expect(() => validator.validateRelationsLoaded(record, relations))
@@ -366,7 +375,7 @@ describe('MedicalRecordValidator', () => {
 
     it('should throw error when relation is undefined', () => {
       const record = createMockMedicalRecord();
-      record.patient = undefined;
+      (record as any).patient = undefined; // bypass TS
       const relations = ['patient'];
 
       expect(() => validator.validateRelationsLoaded(record, relations))

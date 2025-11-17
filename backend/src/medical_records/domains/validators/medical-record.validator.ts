@@ -6,7 +6,7 @@ export class MedicalRecordValidator {
     /**
      * Validate medical record ID
      */
-    validateId(id: number): void {
+    validateId(id: number | null | undefined): void {
         if (!id || id <= 0) {
             throw new BadRequestException('ID rekam medis tidak valid');
         }
@@ -15,7 +15,7 @@ export class MedicalRecordValidator {
     /**
      * Validate appointment ID
      */
-    validateAppointmentId(appointmentId: number): void {
+    validateAppointmentId(appointmentId: number | null | undefined): void {
         if (!appointmentId || appointmentId <= 0) {
             throw new BadRequestException('ID janji temu tidak valid');
         }
@@ -24,7 +24,7 @@ export class MedicalRecordValidator {
     /**
      * Validate user ID
      */
-    validateUserId(userId: number): void {
+    validateUserId(userId: number | null | undefined): void {
         if (!userId || userId <= 0) {
             throw new BadRequestException('ID user tidak valid');
         }
@@ -33,7 +33,7 @@ export class MedicalRecordValidator {
     /**
      * Validate medical record exists
      */
-    validateExists(medicalRecord: MedicalRecord | null): void {
+    validateExists(medicalRecord: MedicalRecord | null | undefined): void {
         if (!medicalRecord) {
             throw new BadRequestException('Rekam medis tidak ditemukan');
         }
@@ -44,7 +44,7 @@ export class MedicalRecordValidator {
      */
     validateFieldLength(
         fieldName: string,
-        value: string,
+        value: string | null | undefined,
         maxLength: number = 5000
     ): void {
         if (value && value.length > maxLength) {
