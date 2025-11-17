@@ -120,12 +120,12 @@ describe('MedicalRecordMapper', () => {
       const result = mapper.toResponseDto(entity);
 
       expect(result.appointment).toBeDefined();
-      expect(result.appointment.id).toBe(entity.appointment.id);
-      expect(result.appointment.appointment_date).toEqual(entity.appointment.tanggal_janji);
-      expect(result.appointment.status).toBe(entity.appointment.status);
-      expect(result.appointment.patient).toBeDefined();
-      expect(result.appointment.patient.id).toBe(3);
-      expect(result.appointment.patient.nama_lengkap).toBe('Jane Smith');
+      expect(result.appointment?.id).toBe(entity.appointment.id);
+      expect(result.appointment?.appointment_date).toEqual(entity.appointment.tanggal_janji);
+      expect(result.appointment?.status).toBe(entity.appointment.status);
+      expect(result.appointment?.patient).toBeDefined();
+      expect(result.appointment?.patient?.id).toBe(3);
+      expect(result.appointment?.patient?.nama_lengkap).toBe('Jane Smith');
     });
 
     it('should map doctor relation when present', () => {
@@ -133,8 +133,8 @@ describe('MedicalRecordMapper', () => {
       const result = mapper.toResponseDto(entity);
 
       expect(result.doctor).toBeDefined();
-      expect(result.doctor.id).toBe(entity.doctor.id);
-      expect(result.doctor.name).toBe(entity.doctor.nama_lengkap);
+      expect(result.doctor?.id).toBe(entity.doctor.id);
+      expect(result.doctor?.name).toBe(entity.doctor.nama_lengkap);
     });
 
     it('should map patient relation when present', () => {
@@ -142,19 +142,20 @@ describe('MedicalRecordMapper', () => {
       const result = mapper.toResponseDto(entity);
 
       expect(result.patient).toBeDefined();
-      expect(result.patient.id).toBe(entity.patient.id);
-      expect(result.patient.nama_lengkap).toBe(entity.patient.nama_lengkap);
-      expect(result.patient.no_rm).toBe(entity.patient.nomor_rekam_medis);
-      expect(result.patient.tanggal_lahir).toEqual(entity.patient.tanggal_lahir);
+      expect(result.patient?.id).toBe(entity.patient.id);
+      expect(result.patient?.nama_lengkap).toBe(entity.patient.nama_lengkap);
+      expect(result.patient?.no_rm).toBe(entity.patient.nomor_rekam_medis);
+      expect(result.patient?.tanggal_lahir).toEqual(entity.patient.tanggal_lahir);
     });
 
     it('should handle missing relations gracefully', () => {
-      const entity = createMockMedicalRecord();
-      entity.appointment = null;
-      entity.doctor = null;
-      entity.patient = null;
+      const entity: Partial<MedicalRecord> = createMockMedicalRecord();
 
-      const result = mapper.toResponseDto(entity);
+      entity.appointment = undefined;
+      entity.doctor = undefined;
+      entity.patient = undefined;
+
+      const result = mapper.toResponseDto(entity as MedicalRecord);
 
       expect(result.appointment).toBeUndefined();
       expect(result.doctor).toBeUndefined();
@@ -176,10 +177,10 @@ describe('MedicalRecordMapper', () => {
   // ==========================================================================
   describe('toResponseDtoArray', () => {
     it('should map array of entities to array of DTOs', () => {
-      const entities = [
+      const entities: MedicalRecord[] = [
         createMockMedicalRecord(),
-        { ...createMockMedicalRecord(), id: 2 },
-        { ...createMockMedicalRecord(), id: 3 },
+        Object.assign(new MedicalRecord(), createMockMedicalRecord(), { id: 2 }),
+        Object.assign(new MedicalRecord(), createMockMedicalRecord(), { id: 3 }),
       ];
 
       const result = mapper.toResponseDtoArray(entities);
