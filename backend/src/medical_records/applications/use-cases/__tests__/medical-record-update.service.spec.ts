@@ -146,7 +146,7 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated' };
-      const mergedRecord = { ...existingRecord, ...updateData };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -309,7 +309,8 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated' };
-      const mergedRecord = { ...existingRecord, ...updateData };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
+
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -332,7 +333,7 @@ describe('MedicalRecordUpdateService', () => {
       const dto = createMockUpdateDto();
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
-      const mergedRecord = { ...existingRecord };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord);
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -354,7 +355,7 @@ describe('MedicalRecordUpdateService', () => {
       const dto = createMockUpdateDto();
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
-      const mergedRecord = { ...existingRecord };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord);
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -378,7 +379,7 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       existingRecord.appointment.status = AppointmentStatus.SELESAI;
-      const mergedRecord = { ...existingRecord };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord);
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -453,7 +454,7 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated subjektif only' };
-      const mergedRecord = { ...existingRecord, ...updateData };
+      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
