@@ -3,17 +3,17 @@ import { IsOptional, IsString } from 'class-validator';
 export class UpdateMedicalRecordDto {
     @IsOptional()
     @IsString()
-    subjektif?: string;
+    subjektif?: string | null;
 
     @IsOptional()
     @IsString()
-    objektif?: string;
+    objektif?: string | null;
 
     @IsOptional()
     @IsString()
-    assessment?: string;
+    assessment?: string | null;
 
     @IsOptional()
     @IsString()
-    plan?: string;
+    plan?: string | null;
 }
