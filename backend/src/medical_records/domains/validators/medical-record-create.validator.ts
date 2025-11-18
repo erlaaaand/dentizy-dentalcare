@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { CreateMedicalRecordDto } from '../../applications/dto/create-medical-record.dto';
 import { Appointment, AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../users/domains/entities/user.entity';
@@ -11,7 +11,16 @@ export class MedicalRecordCreateValidator {
     /**
      * Validate complete creation request
      */
-    validate(dto: CreateMedicalRecordDto, appointment: Appointment, user: User): void {
+    validate(dto: CreateMedicalRecordDto | null | undefined, appointment: Appointment | null | undefined, user: User | null | undefined): void {
+        if (!dto) {
+            throw new BadRequestException('DTO cannot be null or undefined');
+        }
+        if (!appointment) {
+            throw new BadRequestException('Appointment cannot be null or undefined');
+        }
+        if (!user) {
+            throw new UnauthorizedException('User must be authenticated');
+        }
         this.validateDto(dto);
         this.validateAppointment(appointment);
         this.validateSOAPFields(dto);

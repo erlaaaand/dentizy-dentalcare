@@ -13,7 +13,7 @@ export class MedicalRecordAuthorizationValidator {
     /**
      * Validate user is authenticated
      */
-    validateAuthenticated(user: User): void {
+    validateAuthenticated(user: User | null | undefined): void {
         if (!user || !user.id) {
             throw new UnauthorizedException('User tidak terautentikasi');
         }

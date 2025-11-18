@@ -35,16 +35,16 @@ export class MedicalRecord {
 
     // SOAP fields
     @Column({ type: 'text', nullable: true })
-    subjektif: string;
+    subjektif: string | null;
 
     @Column({ type: 'text', nullable: true })
-    objektif: string;
+    objektif: string | null;
 
     @Column({ type: 'text', nullable: true })
-    assessment: string;
+    assessment: string | null;
 
     @Column({ type: 'text', nullable: true })
-    plan: string;
+    plan: string | null;
 
     // timestamps
     @CreateDateColumn()
@@ -54,7 +54,7 @@ export class MedicalRecord {
     updated_at: Date;
 
     @DeleteDateColumn()
-    deleted_at: Date;
+    deleted_at: Date | null;
 
     // relations
     @OneToOne(() => Appointment, (appointment) => appointment.medical_record)

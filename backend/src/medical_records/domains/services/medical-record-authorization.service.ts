@@ -199,6 +199,8 @@ export class MedicalRecordAuthorizationService {
      * Get user role summary for logging
      */
     getRoleSummary(user: User): string {
-        return user.roles.map(r => r.name).join(', ');
+        return user.roles
+            .map(r => r.name.toUpperCase()) // ✅ convert ke huruf besar
+            .join(', ');
     }
 }
