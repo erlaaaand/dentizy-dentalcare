@@ -13,7 +13,6 @@ export class CreateNotificationDto {
     type: NotificationType;
 
     @IsNotEmpty()
-    @Type(() => Date)
     @IsDate()
     send_at: Date;
 }
