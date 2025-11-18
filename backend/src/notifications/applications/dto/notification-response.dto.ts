@@ -14,12 +14,12 @@ export class NotificationResponseDto {
         id: number;
         tanggal_janji: Date;
         jam_janji: string;
-        patient: {
+        patient?: {
             id: number;
             nama_lengkap: string;
             email: string;
         };
-        doctor: {
+        doctor?: {
             id: number;
             nama_lengkap: string;
         };

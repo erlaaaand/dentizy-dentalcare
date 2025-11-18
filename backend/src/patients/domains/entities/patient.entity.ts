@@ -39,10 +39,10 @@ export class Patient {
     nama_lengkap: string;
 
     @Column({ type: 'date', nullable: true })
-    tanggal_lahir: Date;
+    tanggal_lahir: Date | null;
 
     @Column({ type: 'text', nullable: true })
-    alamat: string;
+    alamat: string | null;
 
     @Column({ length: 250, nullable: true, unique: true })
     @Index('idx_patient_email')
