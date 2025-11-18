@@ -24,11 +24,11 @@ export class SearchMedicalRecordDto {
 
     @IsOptional()
     @IsDateString()
-    start_date?: string;
+    start_date?: string | Date;
 
     @IsOptional()
     @IsDateString()
-    end_date?: string;
+    end_date?: string | Date;
 
     @IsOptional()
     @IsEnum(AppointmentStatus)
