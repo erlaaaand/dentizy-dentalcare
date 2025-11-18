@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class CreateMedicalRecordDto {
+export class CreateMedicalRecordDto{
     @IsNotEmpty({ message: 'Appointment ID harus diisi' })
     @IsNumber()
     appointment_id: number;
