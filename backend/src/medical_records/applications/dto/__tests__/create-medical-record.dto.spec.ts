@@ -37,7 +37,7 @@ describe('CreateMedicalRecordDto', () => {
     });
 
     it('should fail when appointment_id is missing', async () => {
-      const invalidDto = { ...validDto };
+      const invalidDto = { ...validDto } as any;
       delete invalidDto.appointment_id;
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);
@@ -46,7 +46,7 @@ describe('CreateMedicalRecordDto', () => {
     });
 
     it('should fail when user_id_staff is missing', async () => {
-      const invalidDto = { ...validDto };
+      const invalidDto = { ...validDto } as any;
       delete invalidDto.user_id_staff;
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);

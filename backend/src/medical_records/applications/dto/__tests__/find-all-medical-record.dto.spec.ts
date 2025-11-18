@@ -158,9 +158,9 @@ describe('FindAllMedicalRecordQueryDto', () => {
 
     it('should accept TERJADWAL status', () => {
       const dto = new FindAllMedicalRecordQueryDto();
-      dto.status = AppointmentStatus.TERJADWAL;
+      dto.status = AppointmentStatus.DIJADWALKAN;
 
-      expect(dto.status).toBe(AppointmentStatus.TERJADWAL);
+      expect(dto.status).toBe(AppointmentStatus.DIJADWALKAN);
     });
 
     it('should accept DIBATALKAN status', () => {
