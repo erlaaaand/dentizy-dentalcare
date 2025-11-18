@@ -46,19 +46,23 @@ export class SendNotificationService {
             );
 
         } catch (error) {
-            // Mark as failed with error message
-            await this.notificationRepository.markAsFailed(
-                notification.id,
-                error.message
-            );
 
+            // 1. Log error *lebih dulu* (test mengharuskan ini)
             this.logger.error(
                 `❌ Failed to send notification #${notification.id}:`,
                 error.message
             );
 
+            // 2. Baru markAsFailed
+            await this.notificationRepository.markAsFailed(
+                notification.id,
+                error.message
+            );
+
+            // 3. Lempar ulang error repo jika gagal
             throw error;
         }
+
     }
 
     private async sendEmailReminder(notification: Notification): Promise<void> {
