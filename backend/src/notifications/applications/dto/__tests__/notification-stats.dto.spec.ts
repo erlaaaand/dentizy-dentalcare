@@ -2,6 +2,7 @@
 import { NotificationStatsDto } from '../notification-stats.dto';
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
+import { NotificationType } from '../../../../notifications/domains/entities/notification.entity';
 
 describe('NotificationStatsDto', () => {
   const mockData = {
@@ -11,7 +12,12 @@ describe('NotificationStatsDto', () => {
     failed: 5,
     scheduled_today: 3,
     scheduled_this_week: 7,
+    by_type: [
+      { type: NotificationType.EMAIL_REMINDER, count: 50 },
+      { type: NotificationType.SMS_REMINDER, count: 70 },
+    ],
   };
+
 
   it('should map values correctly', () => {
     const dto = plainToInstance(NotificationStatsDto, mockData);

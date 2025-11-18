@@ -1,6 +1,6 @@
 // applications/dto/notification-stats.dto.ts
 import { Expose, Type } from 'class-transformer';
-import { IsInt, Min, IsArray, ValidateNested, IsEnum } from 'class-validator';
+import { IsInt, Min, IsArray, ValidateNested, IsEnum, IsOptional } from 'class-validator';
 import { NotificationType } from '../../domains/entities/notification.entity'; // Pastikan path import ini sesuai struktur folder Anda
 
 // 1. Sub-class untuk mendefinisikan isi array 'by_type'
@@ -52,5 +52,6 @@ export class NotificationStatsDto {
     @IsArray()
     @ValidateNested({ each: true }) // Validasi setiap item di dalam array
     @Type(() => NotificationTypeStatDto) // Transformasi JSON object ke class instance
+    @IsOptional()
     by_type: NotificationTypeStatDto[];
 }
