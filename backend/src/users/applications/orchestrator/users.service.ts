@@ -1,4 +1,5 @@
 // application/orchestrator/users.service.ts
+
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserService } from '../use-cases/create-user.service';
 import { UpdateUserService } from '../use-cases/update-user.service';
@@ -11,12 +12,8 @@ import { UpdateUserDto } from '../dto/update-user.dto';
 import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { PasswordChangeResponseDto } from '../dto/password-change-response.dto';
-import { User } from 'src/users/domains/entities/user.entity';
+import { User } from '../../../users/domains/entities/user.entity';
 
-/**
- * Users Service - Orchestrator
- * Delegates to specific use cases
- */
 @Injectable()
 export class UsersService {
     private readonly logger = new Logger(UsersService.name);
@@ -38,9 +35,10 @@ export class UsersService {
     }
 
     /**
-     * Find all users with optional filters
+     * Find all users with optional filters, search, and pagination
+     * Delegated fully to FindUsersService use case.
      */
-    async findAll(query: FindUsersQueryDto): Promise<UserResponseDto[]> {
+    async findAll(query: FindUsersQueryDto): Promise<{ data: UserResponseDto[], meta: any }> {
         return this.findUsersService.findAll(query);
     }
 
@@ -54,8 +52,15 @@ export class UsersService {
     /**
      * Find user by username (for auth)
      */
-    async findOneByUsername(username: string): Promise<User | null> { // Pastikan return type adalah Promise<User>
+    async findOneByUsername(username: string): Promise<User | null> {
         return this.findUsersService.findByUsernameForAuth(username);
+    }
+
+    /**
+     * Find user by ID (for auth strategies)
+     */
+    async findOneForAuth(userId: number): Promise<User | null> {
+        return this.findUsersService.findOneForAuth(userId);
     }
 
     /**
@@ -73,7 +78,7 @@ export class UsersService {
     }
 
     /**
-     * Change password (user changes their own password)
+     * Change password (user context)
      */
     async changePassword(
         userId: number,
@@ -84,7 +89,7 @@ export class UsersService {
     }
 
     /**
-     * Reset password (admin resets user password)
+     * Reset password (admin context)
      */
     async resetPassword(
         userId: number,
@@ -101,13 +106,6 @@ export class UsersService {
         message: string;
     }> {
         return this.resetPasswordService.generateTemporaryPassword(userId);
-    }
-
-    /**
- * Search users by name
- */
-    async searchByName(searchTerm: string): Promise<UserResponseDto[]> {
-        return this.findUsersService.searchByName(searchTerm);
     }
 
     /**
@@ -138,23 +136,4 @@ export class UsersService {
     async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
         return this.findUsersService.getRecentlyCreated(limit);
     }
-
-    /**
-     * Find with pagination
-     */
-    async findWithPagination(
-        page: number,
-        limit: number,
-        query?: FindUsersQueryDto
-    ): Promise<{
-        data: UserResponseDto[];
-        meta: any;
-    }> {
-        return this.findUsersService.findWithPagination(page, limit, query);
-    }
-
-    async findOneForAuth(userId: number): Promise<User | null> {
-        return this.findUsersService.findOneForAuth(userId);
-    }
-
 }

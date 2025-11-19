@@ -1,10 +1,11 @@
 // application/use-cases/find-users.service.ts
+
 import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { UserMapper } from '../../domains/mappers/user.mapper';
 import { UserResponseDto } from '../dto/user-response.dto';
-import { User } from '../../domains/entities/user.entity'
+import { User } from '../../domains/entities/user.entity';
 
 @Injectable()
 export class FindUsersService {
@@ -13,208 +14,80 @@ export class FindUsersService {
     constructor(private readonly userRepository: UserRepository) { }
 
     /**
-     * Find all users with optional filters
+     * Find all users with pagination, filters, and search
      */
-    async findAll(query: FindUsersQueryDto): Promise<UserResponseDto[]> {
+    async findAll(query: FindUsersQueryDto): Promise<{ data: UserResponseDto[]; meta: any }> {
         try {
             this.logger.debug(`Finding users with query: ${JSON.stringify(query)}`);
 
-            const users = await this.userRepository.findAll(query);
+            const page = query.page || 1;
+            const limit = query.limit || 10;
+            const skip = (page - 1) * limit;
 
-            this.logger.log(`📋 Retrieved ${users.length} users`);
+            // Gunakan method baru findAndCountUsers
+            const [users, total] = await this.userRepository.findAndCountUsers({
+                skip,
+                take: limit,
+                search: query.search,
+                role: query.role,
+                isActive: query.isActive,
+            });
 
-            return UserMapper.toResponseDtoArray(users);
+            this.logger.log(`📋 Retrieved ${users.length} users (Total: ${total})`);
+
+            return {
+                data: UserMapper.toResponseDtoArray(users),
+                meta: {
+                    total,
+                    page,
+                    limit,
+                    lastPage: Math.ceil(total / limit),
+                    hasNext: page < Math.ceil(total / limit),
+                    hasPrev: page > 1
+                }
+            };
         } catch (error) {
             this.logger.error('Error fetching users:', error.message);
-            throw new BadRequestException('Gagal mengambil daftar users');
+            throw new BadRequestException('Gagal mengambil daftar users: ' + error.message);
         }
     }
 
-    /**
-     * Find user by ID
-     */
     async findOne(userId: number): Promise<UserResponseDto> {
         try {
-            this.logger.debug(`Finding user by ID: ${userId}`);
-
             const user = await this.userRepository.findById(userId);
-
-            if (!user) {
-                throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
-            }
-
-            this.logger.debug(`Found user: ${user.username}`);
-
+            if (!user) throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
             return UserMapper.toResponseDto(user);
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-
+            if (error instanceof NotFoundException) throw error;
             this.logger.error(`Error finding user ID ${userId}:`, error.message);
             throw new BadRequestException('Gagal mengambil data user');
         }
     }
 
-    /**
-     * Find user by ID for authentication (returns full User entity)
-     * ⚠️ ONLY USE FOR AUTHENTICATION - Returns user with password and all relations
-     */
     async findOneForAuth(userId: number): Promise<User> {
         try {
-            this.logger.debug(`Finding user for auth by ID: ${userId}`);
-
             const user = await this.userRepository.findByIdWithPassword(userId);
-
-            if (!user) {
-                throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
-            }
-
-            this.logger.debug(`Found user for auth: ${user.username}`);
-
-            return user; // Return full entity untuk auth
+            if (!user) throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+            return user;
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-
+            if (error instanceof NotFoundException) throw error;
             this.logger.error(`Error finding user for auth ID ${userId}:`, error.message);
             throw new BadRequestException('Gagal mengambil data user');
         }
     }
 
-    /**
- * Find user by username FOR AUTHENTICATION
- * Returns the full entity with password
- */
     public async findByUsernameForAuth(username: string): Promise<User> {
-        this.logger.debug(`Mencari user untuk auth: ${username}`);
-
-        // Panggil method repository yang mengambil password
         const user = await this.userRepository.findByUsernameWithPassword(username);
-
-        if (!user) {
-            throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
-        }
-
-        this.logger.debug(`User auth ditemukan: ${user.username}`);
-        return user; // Kembalikan entity LENGKAP
+        if (!user) throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
+        return user;
     }
 
-    /**
-     * Find user by username
-     */
-    async findByUsername(username: string): Promise<UserResponseDto> {
+    async checkUsernameAvailability(username: string): Promise<{ available: boolean; message: string }> {
         try {
-            this.logger.debug(`Finding user by username: ${username}`);
-
-            const user = await this.userRepository.findByUsernameWithPassword(username);
-
-            if (!user) {
-                throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
-            }
-
-            this.logger.debug(`Found user: ${user.username}`);
-
-            return UserMapper.toResponseDto(user);
-        } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-
-            this.logger.error(`Error finding user by username ${username}:`, error.message);
-            throw new BadRequestException('Gagal mengambil data user');
-        }
-    }
-
-    /**
-     * Find users by role
-     */
-    async findByRole(roleName: string): Promise<UserResponseDto[]> {
-        try {
-            this.logger.debug(`Finding users by role: ${roleName}`);
-
-            const users = await this.userRepository.findAll({ role: roleName as any });
-
-            this.logger.log(`📋 Found ${users.length} users with role ${roleName}`);
-
-            return UserMapper.toResponseDtoArray(users);
-        } catch (error) {
-            this.logger.error(`Error finding users by role ${roleName}:`, error.message);
-            throw new BadRequestException('Gagal mengambil daftar users berdasarkan role');
-        }
-    }
-
-    /**
-     * Search users by name
-     */
-    async searchByName(searchTerm: string): Promise<UserResponseDto[]> {
-        try {
-            this.logger.debug(`Searching users by name: ${searchTerm}`);
-
-            if (!searchTerm || searchTerm.trim().length === 0) {
-                throw new BadRequestException('Search term tidak boleh kosong');
-            }
-
-            if (searchTerm.length < 2) {
-                throw new BadRequestException('Search term minimal 2 karakter');
-            }
-
-            const users = await this.userRepository.searchByName(searchTerm);
-
-            this.logger.log(`🔍 Found ${users.length} users matching "${searchTerm}"`);
-
-            return UserMapper.toResponseDtoArray(users);
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-
-            this.logger.error(`Error searching users by name:`, error.message);
-            throw new BadRequestException('Gagal mencari users');
-        }
-    }
-
-    /**
-     * Get user statistics
-     */
-    async getUserStatistics(): Promise<{
-        total: number;
-        byRole: Record<string, number>;
-        active: number;
-        inactive: number;
-    }> {
-        try {
-            this.logger.debug('Getting user statistics');
-
-            const stats = await this.userRepository.getStatistics();
-
-            this.logger.log(`📊 User statistics retrieved`);
-
-            return stats;
-        } catch (error) {
-            this.logger.error('Error getting user statistics:', error.message);
-            throw new BadRequestException('Gagal mengambil statistik users');
-        }
-    }
-
-    /**
-     * Check if username exists
-     */
-    async checkUsernameAvailability(username: string): Promise<{
-        available: boolean;
-        message: string;
-    }> {
-        try {
-            this.logger.debug(`Checking username availability: ${username}`);
-
             const exists = await this.userRepository.usernameExists(username);
-
             return {
                 available: !exists,
-                message: exists
-                    ? `Username "${username}" sudah digunakan`
-                    : `Username "${username}" tersedia`
+                message: exists ? `Username "${username}" sudah digunakan` : `Username "${username}" tersedia`
             };
         } catch (error) {
             this.logger.error('Error checking username availability:', error.message);
@@ -222,105 +95,41 @@ export class FindUsersService {
         }
     }
 
-    /**
-     * Get users with pagination
-     */
-    async findWithPagination(
-        page: number = 1,
-        limit: number = 10,
-        query?: FindUsersQueryDto
-    ): Promise<{
-        data: UserResponseDto[];
-        meta: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-        };
-    }> {
+    async getUserStatistics(): Promise<{ total: number; byRole: Record<string, number>; active: number; inactive: number; }> {
         try {
-            this.logger.debug(`Finding users with pagination: page=${page}, limit=${limit}`);
+            // Pastikan method ini ada di Repository atau implementasi ulang di sini
+            // Jika repository belum punya getStatistics yang lengkap, kita bisa pakai logic manual:
 
-            // Validate pagination params
-            if (page < 1) {
-                throw new BadRequestException('Page harus lebih dari 0');
-            }
+            // OPSI 1: Jika Repository punya getStatistics (Disarankan)
+            return await this.userRepository.getStatistics();
 
-            if (limit < 1 || limit > 100) {
-                throw new BadRequestException('Limit harus antara 1 dan 100');
-            }
-
-            const result = await this.userRepository.findWithPagination(page, limit, query);
-
-            this.logger.log(`📋 Retrieved page ${page} with ${result.data.length} users`);
-
-            return {
-                data: UserMapper.toResponseDtoArray(result.data),
-                meta: result.meta
-            };
+            // OPSI 2 (Fallback jika repo belum siap):
+            /*
+            const [total, active, inactive] = await Promise.all([
+                this.userRepository.count(),
+                this.userRepository.count({ where: { is_active: true } }),
+                this.userRepository.count({ where: { is_active: false } })
+            ]);
+            // byRole butuh query builder khusus
+            return { total, active, inactive, byRole: {} };
+            */
         } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-
-            this.logger.error('Error finding users with pagination:', error.message);
-            throw new BadRequestException('Gagal mengambil daftar users');
+            this.logger.error('Error getting user statistics:', error.message);
+            throw new BadRequestException('Gagal mengambil statistik users');
         }
     }
 
-    /**
-     * Get recently created users
-     */
     async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
         try {
-            this.logger.debug(`Getting ${limit} recently created users`);
+            if (limit < 1 || limit > 50) throw new BadRequestException('Limit harus antara 1 dan 50');
 
-            if (limit < 1 || limit > 50) {
-                throw new BadRequestException('Limit harus antara 1 dan 50');
-            }
-
+            // Gunakan method findRecentlyCreated dari repository
             const users = await this.userRepository.findRecentlyCreated(limit);
-
-            this.logger.log(`📋 Retrieved ${users.length} recently created users`);
-
             return UserMapper.toResponseDtoArray(users);
         } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-
+            if (error instanceof BadRequestException) throw error;
             this.logger.error('Error getting recently created users:', error.message);
             throw new BadRequestException('Gagal mengambil daftar user terbaru');
-        }
-    }
-
-    /**
-     * Get users by IDs (batch)
-     */
-    async findByIds(userIds: number[]): Promise<UserResponseDto[]> {
-        try {
-            this.logger.debug(`Finding users by IDs: ${userIds.join(', ')}`);
-
-            if (!userIds || userIds.length === 0) {
-                return [];
-            }
-
-            if (userIds.length > 100) {
-                throw new BadRequestException('Maksimal 100 user IDs per request');
-            }
-
-            const users = await this.userRepository.findByIds(userIds);
-
-            this.logger.log(`📋 Found ${users.length} users from ${userIds.length} IDs`);
-
-            return UserMapper.toResponseDtoArray(users);
-        } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-
-            this.logger.error('Error finding users by IDs:', error.message);
-            throw new BadRequestException('Gagal mengambil daftar users');
         }
     }
 }
