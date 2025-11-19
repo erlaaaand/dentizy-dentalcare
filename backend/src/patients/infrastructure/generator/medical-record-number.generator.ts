@@ -108,7 +108,7 @@ export class MedicalRecordNumberGenerator {
         if (parts.length === 2 && parts[0] === datePrefix) {
             const lastSequence = parseInt(parts[1], 10);
 
-            if (!isNaN(lastSequence) && lastSequence >= 1 && lastSequence < 999) {
+            if (!isNaN(lastSequence) && lastSequence >= 1 && lastSequence <= 999) {
                 return lastSequence + 1;
             }
         }

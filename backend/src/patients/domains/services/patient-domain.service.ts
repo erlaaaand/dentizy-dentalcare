@@ -46,7 +46,7 @@ export class PatientDomainService {
     /**
      * Calculate patient age with precision
      */
-    calculateAge(birthDate: Date): number | null {
+    calculateAge(birthDate: Date | null): number | null {
         if (!birthDate) return null;
 
         const today = new Date();

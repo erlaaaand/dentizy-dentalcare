@@ -46,11 +46,11 @@ export class Patient {
 
     @Column({ length: 250, nullable: true, unique: true })
     @Index('idx_patient_email')
-    email: string;
+    email: string | null;
 
     @Column({ length: 20, nullable: true })
     @Index('idx_patient_no_hp')
-    no_hp: string;
+    no_hp: string | null;
 
     @Column({
         type: 'enum',
