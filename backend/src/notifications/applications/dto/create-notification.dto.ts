@@ -1,6 +1,5 @@
-// applications/dto/create-notification.dto.ts
-import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { Transform } from 'class-transformer'; // Ganti Type dengan Transform
 import { NotificationType } from '../../domains/entities/notification.entity';
 
 export class CreateNotificationDto {
@@ -13,7 +12,9 @@ export class CreateNotificationDto {
     type: NotificationType;
 
     @IsNotEmpty()
-    @Type(() => Date)
+    @Transform(({ value }) => {
+        return typeof value === 'string' ? new Date(value) : value;
+    })
     @IsDate()
     send_at: Date;
 }

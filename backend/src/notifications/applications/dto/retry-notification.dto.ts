@@ -1,9 +1,20 @@
-// applications/dto/retry-notification.dto.ts
-import { IsNotEmpty, IsNumber } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsDefined } from 'class-validator';
+import { Transform } from 'class-transformer';
 
 export class RetryNotificationDto {
-    @IsNotEmpty()
-    @IsNumber()
-    notification_id: number;
-}
+  @Transform(({ value }) => {
+    if (value === null || value === undefined) return value;
+    if (value === '') return value;
+    if (typeof value === 'boolean') return value;
+    if (Array.isArray(value)) return value;
+    if (typeof value === 'object') return value;
+    const parsed = Number(value);
+    if (isNaN(parsed)) return value;
 
+    return parsed;
+  })
+  @IsDefined({ message: 'notification_id must be defined' })
+  @IsNotEmpty({ message: 'notification_id must not be empty' })
+  @IsNumber({}, { message: 'notification_id must be a number' })
+  notification_id: number;
+}
