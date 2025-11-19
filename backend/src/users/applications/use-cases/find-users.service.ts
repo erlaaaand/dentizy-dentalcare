@@ -15,16 +15,21 @@ export class FindUsersService {
 
     /**
      * Find all users with pagination, filters, and search
+     * Sesuai dengan FindUsersQueryDto
      */
-    async findAll(query: FindUsersQueryDto): Promise<{ data: UserResponseDto[]; meta: any }> {
+    async findAll(query: FindUsersQueryDto): Promise<{
+        data: UserResponseDto[];
+        meta: any;
+    }> {
         try {
             this.logger.debug(`Finding users with query: ${JSON.stringify(query)}`);
 
+            // Ambil nilai dari DTO (sudah tervalidasi dan ter-transform)
             const page = query.page || 1;
             const limit = query.limit || 10;
             const skip = (page - 1) * limit;
 
-            // Gunakan method baru findAndCountUsers
+            // Gunakan method repository yang sesuai dengan DTO
             const [users, total] = await this.userRepository.findAndCountUsers({
                 skip,
                 take: limit,
@@ -35,6 +40,7 @@ export class FindUsersService {
 
             this.logger.log(`📋 Retrieved ${users.length} users (Total: ${total})`);
 
+            // Return dengan struktur yang konsisten
             return {
                 data: UserMapper.toResponseDtoArray(users),
                 meta: {
@@ -52,42 +58,80 @@ export class FindUsersService {
         }
     }
 
+    /**
+     * Find single user by ID
+     * Return: UserResponseDto (tanpa password)
+     */
     async findOne(userId: number): Promise<UserResponseDto> {
         try {
             const user = await this.userRepository.findById(userId);
-            if (!user) throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+
+            if (!user) {
+                throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+            }
+
             return UserMapper.toResponseDto(user);
         } catch (error) {
-            if (error instanceof NotFoundException) throw error;
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
             this.logger.error(`Error finding user ID ${userId}:`, error.message);
             throw new BadRequestException('Gagal mengambil data user');
         }
     }
 
+    /**
+     * Find user for authentication (with password)
+     * Return: User entity (dengan password untuk validasi)
+     */
     async findOneForAuth(userId: number): Promise<User> {
         try {
             const user = await this.userRepository.findByIdWithPassword(userId);
-            if (!user) throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+
+            if (!user) {
+                throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
+            }
+
             return user;
         } catch (error) {
-            if (error instanceof NotFoundException) throw error;
+            if (error instanceof NotFoundException) {
+                throw error;
+            }
             this.logger.error(`Error finding user for auth ID ${userId}:`, error.message);
             throw new BadRequestException('Gagal mengambil data user');
         }
     }
 
-    public async findByUsernameForAuth(username: string): Promise<User> {
+    /**
+     * Find user by username for authentication (with password)
+     * Return: User entity (dengan password untuk login)
+     */
+    async findByUsernameForAuth(username: string): Promise<User> {
         const user = await this.userRepository.findByUsernameWithPassword(username);
-        if (!user) throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
+
+        if (!user) {
+            throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
+        }
+
         return user;
     }
 
-    async checkUsernameAvailability(username: string): Promise<{ available: boolean; message: string }> {
+    /**
+     * Check username availability
+     * Return: { available: boolean, message: string }
+     */
+    async checkUsernameAvailability(username: string): Promise<{
+        available: boolean;
+        message: string;
+    }> {
         try {
             const exists = await this.userRepository.usernameExists(username);
+
             return {
                 available: !exists,
-                message: exists ? `Username "${username}" sudah digunakan` : `Username "${username}" tersedia`
+                message: exists
+                    ? `Username "${username}" sudah digunakan`
+                    : `Username "${username}" tersedia`
             };
         } catch (error) {
             this.logger.error('Error checking username availability:', error.message);
@@ -95,39 +139,40 @@ export class FindUsersService {
         }
     }
 
-    async getUserStatistics(): Promise<{ total: number; byRole: Record<string, number>; active: number; inactive: number; }> {
+    /**
+     * Get user statistics
+     * Return: { total, byRole, active, inactive }
+     */
+    async getUserStatistics(): Promise<{
+        total: number;
+        byRole: Record<string, number>;
+        active: number;
+        inactive: number;
+    }> {
         try {
-            // Pastikan method ini ada di Repository atau implementasi ulang di sini
-            // Jika repository belum punya getStatistics yang lengkap, kita bisa pakai logic manual:
-
-            // OPSI 1: Jika Repository punya getStatistics (Disarankan)
             return await this.userRepository.getStatistics();
-
-            // OPSI 2 (Fallback jika repo belum siap):
-            /*
-            const [total, active, inactive] = await Promise.all([
-                this.userRepository.count(),
-                this.userRepository.count({ where: { is_active: true } }),
-                this.userRepository.count({ where: { is_active: false } })
-            ]);
-            // byRole butuh query builder khusus
-            return { total, active, inactive, byRole: {} };
-            */
         } catch (error) {
             this.logger.error('Error getting user statistics:', error.message);
             throw new BadRequestException('Gagal mengambil statistik users');
         }
     }
 
+    /**
+     * Get recently created users
+     * Return: UserResponseDto[]
+     */
     async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
         try {
-            if (limit < 1 || limit > 50) throw new BadRequestException('Limit harus antara 1 dan 50');
+            if (limit < 1 || limit > 50) {
+                throw new BadRequestException('Limit harus antara 1 dan 50');
+            }
 
-            // Gunakan method findRecentlyCreated dari repository
             const users = await this.userRepository.findRecentlyCreated(limit);
             return UserMapper.toResponseDtoArray(users);
         } catch (error) {
-            if (error instanceof BadRequestException) throw error;
+            if (error instanceof BadRequestException) {
+                throw error;
+            }
             this.logger.error('Error getting recently created users:', error.message);
             throw new BadRequestException('Gagal mengambil daftar user terbaru');
         }

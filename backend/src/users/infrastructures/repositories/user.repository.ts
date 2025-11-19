@@ -4,8 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { User } from '../../domains/entities/user.entity';
 import { Role } from '../../../roles/entities/role.entity';
-// Pastikan Anda import DTO Enhanced yang baru
-// import { FindUsersQueryDto } from '../../applications/dto/find-users-query.dto'; 
+import { UserRole } from '../../../roles/entities/role.entity';
 
 @Injectable()
 export class UserRepository {
@@ -18,33 +17,71 @@ export class UserRepository {
         private readonly roleRepository: Repository<Role>,
     ) { }
 
-    // ... (Method create, update, delete TETAP SAMA) ...
+    /**
+     * Create new user
+     */
+    async create(data: {
+        username: string;
+        nama_lengkap: string;
+        password: string;
+        roles: Role[];
+    }): Promise<User> {
+        const user = this.repository.create({
+            username: data.username,
+            nama_lengkap: data.nama_lengkap,
+            password: data.password,
+            roles: data.roles,
+            is_active: true
+        });
+
+        return this.repository.save(user);
+    }
 
     /**
-     * Find all users with advanced filtering (search, role, active status, pagination)
-     * REPLACES: findAll (old), searchByName, findWithPagination
+     * Update user
+     */
+    async update(user: User): Promise<User> {
+        return this.repository.save(user);
+    }
+
+    /**
+     * Delete user
+     */
+    async delete(user: User): Promise<void> {
+        await this.repository.remove(user);
+    }
+
+    /**
+     * Find and count users with advanced filtering
+     * Used by FindUsersQueryDto
      */
     async findAndCountUsers(params: {
         skip: number;
         take: number;
         search?: string;
-        role?: any; // Sesuaikan dengan tipe Enum Role Anda
+        role?: UserRole;
         isActive?: boolean;
     }): Promise<[User[], number]> {
         const qb = this.repository.createQueryBuilder('user');
 
-        // 1. Join Role (Wajib untuk response lengkap & filter role)
+        // Join roles
         qb.leftJoinAndSelect('user.roles', 'role');
 
-        // 2. Select Fields (Optimasi payload)
+        // Select fields (exclude password)
         qb.select([
-            'user.id', 'user.username', 'user.nama_lengkap',
-            'user.created_at', 'user.updated_at', 'user.profile_photo',
-            'user.is_active', // Pastikan field ini ada di Entity!
-            'role.id', 'role.name', 'role.description'
+            'user.id',
+            'user.username',
+            'user.nama_lengkap',
+            'user.created_at',
+            'user.updated_at',
+            'user.profile_photo',
+            'user.is_active',
+            'role.id',
+            'role.name',
+            'role.description'
         ]);
 
-        // 3. Filter Search (Partial Match pada Nama ATAU Username)
+        // Filter by search (nama_lengkap OR username)
         if (params.search) {
             qb.andWhere(
                 '(LOWER(user.nama_lengkap) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search))',
@@ -52,82 +89,140 @@ export class UserRepository {
             );
         }
 
-        // 4. Filter Role
+        // Filter by role
         if (params.role) {
             qb.andWhere('role.name = :roleName', { roleName: params.role });
         }
 
-        // 5. Filter Active Status
+        // Filter by active status
         if (params.isActive !== undefined) {
             qb.andWhere('user.is_active = :isActive', { isActive: params.isActive });
         }
 
-        // 6. Pagination & Sorting
+        // Pagination & sorting
         qb.orderBy('user.created_at', 'DESC')
             .skip(params.skip)
             .take(params.take);
 
-        // 7. Execute
         return qb.getManyAndCount();
     }
 
     /**
-     * Find users by IDs (Helper)
+     * Find user by ID (without password)
      */
-    async findByIds(userIds: number[]): Promise<User[]> {
-        return this.repository.createQueryBuilder('user')
-            .leftJoinAndSelect('user.roles', 'role')
-            .whereInIds(userIds)
-            .getMany();
-    }
-
     async findById(id: number): Promise<User | null> {
         return this.repository.findOne({
             where: { id },
-            relations: ['roles']
-        });
-    }
-
-    async findByIdWithPassword(id: number): Promise<User | null> {
-        return this.repository.findOne({
-            where: { id },
             relations: ['roles'],
-            // Pastikan select password jika kolomnya @Exclude
-            select: ['id', 'username', 'password', 'nama_lengkap', 'is_active'] // Sesuaikan
+            select: [
+                'id',
+                'username',
+                'nama_lengkap',
+                'created_at',
+                'updated_at',
+                'profile_photo',
+                'is_active'
+            ]
         });
     }
 
-    async findByUsernameWithPassword(username: string): Promise<User | null> {
+    /**
+     * Find user by ID (with password) - for password operations
+     */
+    async findByIdWithPassword(id: number): Promise<User | null> {
+        return this.repository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.roles', 'role')
+            .where('user.id = :id', { id })
+            .addSelect('user.password')
+            .getOne();
+    }
+
+    /**
+     * Find user by username (without password) - for username validation
+     */
+    async findByUsernameWithoutPassword(username: string): Promise<User | null> {
         return this.repository.findOne({
             where: { username },
-            relations: ['roles'],
-            // Tambahkan addSelect jika pakai QueryBuilder, atau select manual
-            select: {
-                id: true, username: true, password: true, nama_lengkap: true, roles: true, is_active: true
-            }
+            select: ['id', 'username']
         });
     }
 
+    /**
+     * Find user by username (with password) - for authentication
+     */
+    async findByUsernameWithPassword(username: string): Promise<User | null> {
+        return this.repository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.roles', 'role')
+            .where('user.username = :username', { username })
+            .addSelect('user.password')
+            .getOne();
+    }
+
+    /**
+     * Check if username exists
+     */
     async usernameExists(username: string): Promise<boolean> {
         const count = await this.repository.count({ where: { username } });
         return count > 0;
     }
 
+    /**
+     * Find roles by IDs
+     */
+    async findRolesByIds(roleIds: number[]): Promise<Role[]> {
+        return this.roleRepository.find({
+            where: { id: In(roleIds) }
+        });
+    }
+
+    /**
+     * Find recently created users
+     */
     async findRecentlyCreated(limit: number): Promise<User[]> {
         return this.repository.find({
             order: { created_at: 'DESC' },
             take: limit,
-            relations: ['roles']
+            relations: ['roles'],
+            select: [
+                'id',
+                'username',
+                'nama_lengkap',
+                'created_at',
+                'updated_at',
+                'profile_photo',
+                'is_active'
+            ]
         });
     }
 
-    async getStatistics() {
+    /**
+     * Get user statistics
+     */
+    async getStatistics(): Promise<{
+        total: number;
+        byRole: Record<string, number>;
+        active: number;
+        inactive: number;
+    }> {
         const total = await this.repository.count();
         const active = await this.repository.count({ where: { is_active: true } });
         const inactive = await this.repository.count({ where: { is_active: false } });
 
-        // Contoh simple byRole (bisa dioptimalkan dengan QueryBuilder groupBy)
-        const byRole = {};
+        // Get count by role
+        const roleStats = await this.repository
+            .createQueryBuilder('user')
+            .leftJoin('user.roles', 'role')
+            .select('role.name', 'roleName')
+            .addSelect('COUNT(DISTINCT user.id)', 'count')
+            .groupBy('role.name')
+            .getRawMany();
+
+        const byRole: Record<string, number> = {};
+        roleStats.forEach(stat => {
+            if (stat.roleName) {
+                byRole[stat.roleName] = parseInt(stat.count);
+            }
+        });
 
         return { total, active, inactive, byRole };
     }
