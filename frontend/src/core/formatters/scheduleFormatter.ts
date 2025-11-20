@@ -1,6 +1,6 @@
 import { format, parseISO, addMinutes, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { id } from 'date-fns/locale';
-import { CLINIC_HOURS } from '@/lib/constants';
+import { CLINIC_HOURS } from '@/core/constants';
 
 /**
  * Generate time slots for appointments

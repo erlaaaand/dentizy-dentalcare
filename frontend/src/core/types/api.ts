@@ -4,7 +4,7 @@
 // ============================================
 export type ID = number;
 export type ISODateString = string; // Format: YYYY-MM-DD
-export type ISODateTimeString = string; // Format: YYYY-MM-DDTHH:mm:ss
+export type ISODateTimeString = string; // Format: YYYY-MM-DDTHH:mm:ss.sssZ
 export type TimeString = string; // Format: HH:mm:ss
 
 // ============================================
@@ -50,15 +50,28 @@ export interface Role {
     description?: string;
 }
 
+// User Role DTO (dari swagger)
+export interface UserRoleDto {
+    id: number;
+    name: string;
+    description: string;
+}
+
 // User Entity (Swagger: UserResponseDto)
 export interface User {
     id: ID;
     username: string;
     nama_lengkap: string;
-    roles: Role[];
+    roles: UserRoleDto[];
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
     profile_photo?: string | null;
+}
+
+// User Summary DTO
+export interface UserSummaryDto {
+    id: number;
+    username: string;
 }
 
 // Patient Entity (Swagger: PatientResponseDto)
@@ -68,7 +81,7 @@ export interface Patient {
     nik: string;
     nama_lengkap: string;
     tanggal_lahir: ISODateString;
-    umur: number; // Computed field from backend
+    umur: number;
     jenis_kelamin: Gender;
     email: string;
     no_hp: string;
@@ -86,8 +99,48 @@ export interface Patient {
     is_new_patient: boolean;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    // Relations
-    appointments?: Appointment[];
+}
+
+// Patient Subset DTO (untuk relasi)
+export interface PatientSubsetDto {
+    id: number;
+    nama_lengkap: string;
+    no_rm: string;
+    tanggal_lahir?: ISODateString;
+}
+
+// Appointment Patient DTO
+export interface AppointmentPatientDto {
+    id: number;
+    nama_lengkap: string;
+    nomor_rekam_medis: string;
+    email?: string;
+    nomor_telepon?: string;
+}
+
+// Appointment Doctor DTO
+export interface AppointmentDoctorDto {
+    id: number;
+    nama_lengkap: string;
+    roles: string[];
+}
+
+// Doctor Subset DTO (untuk relasi)
+export interface DoctorSubsetDto {
+    id: number;
+    name: string;
+}
+
+// Appointment Medical Record DTO
+export interface AppointmentMedicalRecordDto {
+    id: number;
+    appointment_id: number;
+    subjektif: any; // JSON object
+    objektif: any;
+    assessment: any;
+    plan: any;
+    created_at: ISODateTimeString;
+    updated_at: ISODateTimeString;
 }
 
 // Appointment Entity (Swagger: AppointmentResponseDto)
@@ -101,20 +154,17 @@ export interface Appointment {
     keluhan?: string;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    // Relations
-    patient: {
-        id: ID;
-        nama_lengkap: string;
-        nomor_rekam_medis: string;
-        email?: string;
-        nomor_telepon?: string;
-    };
-    doctor: {
-        id: ID;
-        nama_lengkap: string;
-        roles: string[];
-    };
-    medical_record?: MedicalRecord;
+    patient: AppointmentPatientDto;
+    doctor: AppointmentDoctorDto;
+    medical_record?: AppointmentMedicalRecordDto;
+}
+
+// Appointment Subset DTO
+export interface AppointmentSubsetDto {
+    id: number;
+    appointment_date: ISODateTimeString;
+    status: AppointmentStatus;
+    patient?: PatientSubsetDto;
 }
 
 // Medical Record Entity (Swagger: MedicalRecordResponseDto)
@@ -123,36 +173,39 @@ export interface MedicalRecord {
     appointment_id: ID;
     doctor_id: ID;
     patient_id: ID;
-    subjektif?: string;
-    objektif?: string;
-    assessment?: string;
-    plan?: string;
+    subjektif?: any;
+    objektif?: any;
+    assessment?: any;
+    plan?: any;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
     deleted_at?: ISODateTimeString | null;
-    umur_rekam: number; // Age at time of record
-    // Relations
-    appointment: {
-        id: ID;
-        appointment_date: ISODateTimeString;
-        status: AppointmentStatus;
-        patient: {
-            id: ID;
-            nama_lengkap: string;
-            no_rm: string;
-            tanggal_lahir?: ISODateString;
-        };
-    };
-    doctor: {
-        id: ID;
-        name: string;
-    };
-    patient: {
-        id: ID;
-        nama_lengkap: string;
-        no_rm: string;
-        tanggal_lahir?: ISODateString;
-    };
+    umur_rekam: number;
+    appointment: AppointmentSubsetDto;
+    doctor: DoctorSubsetDto;
+    patient: PatientSubsetDto;
+}
+
+// Notification Patient DTO
+export interface NotificationPatientDto {
+    id: number;
+    nama_lengkap: string;
+    email: string;
+}
+
+// Notification Doctor DTO
+export interface NotificationDoctorDto {
+    id: number;
+    nama_lengkap: string;
+}
+
+// Notification Appointment DTO
+export interface NotificationAppointmentDto {
+    id: number;
+    tanggal_janji: ISODateString;
+    jam_janji: TimeString;
+    patient?: NotificationPatientDto;
+    doctor?: NotificationDoctorDto;
 }
 
 // Notification Entity (Swagger: NotificationResponseDto)
@@ -165,21 +218,24 @@ export interface Notification {
     sent_at?: ISODateTimeString | null;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    // Relations
-    appointment: {
-        id: ID;
-        tanggal_janji: ISODateString;
-        jam_janji: TimeString;
-        patient: {
-            id: ID;
-            nama_lengkap: string;
-            email: string;
-        };
-        doctor: {
-            id: ID;
-            nama_lengkap: string;
-        };
-    };
+    appointment: NotificationAppointmentDto;
+}
+
+// Notification Type Stat DTO
+export interface NotificationTypeStatDto {
+    type: NotificationType;
+    count: number;
+}
+
+// Notification Stats DTO
+export interface NotificationStatsDto {
+    total: number;
+    pending: number;
+    sent: number;
+    failed: number;
+    scheduled_today: number;
+    scheduled_this_week: number;
+    by_type?: NotificationTypeStatDto[];
 }
 
 // ============================================
@@ -202,7 +258,7 @@ export interface PaginatedResponse<T> {
 }
 
 export interface ApiResponse<T = unknown> {
-    success: boolean;
+    success?: boolean;
     data?: T;
     message?: string;
     error?: string;
@@ -219,7 +275,10 @@ export interface ApiError {
 // DTOs (Data Transfer Objects)
 // ============================================
 
-// Auth DTOs
+// ============================================
+// AUTH DTOs
+// ============================================
+
 export interface LoginDto {
     username: string;
     password: string;
@@ -227,12 +286,7 @@ export interface LoginDto {
 
 export interface LoginResponse {
     access_token: string;
-    user: {
-        id: ID;
-        username: string;
-        nama_lengkap: string;
-        roles: Role[];
-    };
+    refresh_token: string;
 }
 
 export interface VerifyTokenDto {
@@ -244,12 +298,15 @@ export interface UpdateProfileDto {
     nama_lengkap?: string;
 }
 
-// User DTOs
+// ============================================
+// USER DTOs
+// ============================================
+
 export interface CreateUserDto {
     nama_lengkap: string;
     username: string;
     password: string;
-    roles: ID[]; // Array of role IDs
+    roles: ID[];
 }
 
 export interface UpdateUserDto {
@@ -268,6 +325,12 @@ export interface ResetPasswordDto {
     newPassword: string;
 }
 
+export interface PasswordChangeResponseDto {
+    message: string;
+    timestamp: string;
+    user?: UserSummaryDto;
+}
+
 export interface UserFilters {
     role?: UserRole | '';
     search?: string;
@@ -276,7 +339,21 @@ export interface UserFilters {
     isActive?: boolean;
 }
 
-// Patient DTOs
+export interface UserStatistics {
+    total: number;
+    byRole: {
+        DOKTER: number;
+        STAF: number;
+        KEPALA_KLINIK: number;
+    };
+    active: number;
+    inactive: number;
+}
+
+// ============================================
+// PATIENT DTOs
+// ============================================
+
 export interface CreatePatientDto {
     nama_lengkap: string;
     nik?: string;
@@ -311,7 +388,17 @@ export interface PatientFilters {
     has_allergies?: boolean;
 }
 
-// Appointment DTOs
+export interface PatientStatistics {
+    total: number;
+    new_this_month: number;
+    active: number;
+    with_allergies: number;
+}
+
+// ============================================
+// APPOINTMENT DTOs
+// ============================================
+
 export interface CreateAppointmentDto {
     patient_id: ID;
     doctor_id: ID;
@@ -321,6 +408,8 @@ export interface CreateAppointmentDto {
 }
 
 export interface UpdateAppointmentDto {
+    patient_id?: ID;
+    doctor_id?: ID;
     status?: AppointmentStatus;
     tanggal_janji?: ISODateString;
     jam_janji?: TimeString;
@@ -335,7 +424,10 @@ export interface AppointmentFilters {
     limit?: number;
 }
 
-// Medical Record DTOs
+// ============================================
+// MEDICAL RECORD DTOs
+// ============================================
+
 export interface CreateMedicalRecordDto {
     appointment_id: ID;
     user_id_staff: ID;
@@ -345,7 +437,12 @@ export interface CreateMedicalRecordDto {
     plan?: string;
 }
 
-export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> {}
+export interface UpdateMedicalRecordDto {
+    subjektif?: string;
+    objektif?: string;
+    assessment?: string;
+    plan?: string;
+}
 
 export interface MedicalRecordFilters {
     patient_id?: ID;
@@ -361,7 +458,10 @@ export interface MedicalRecordFilters {
     sort_order?: 'ASC' | 'DESC';
 }
 
-// Notification DTOs
+// ============================================
+// NOTIFICATION DTOs
+// ============================================
+
 export interface NotificationFilters {
     status?: NotificationStatus | '';
     type?: NotificationType | '';
@@ -369,17 +469,15 @@ export interface NotificationFilters {
     limit?: number;
 }
 
-export interface NotificationStats {
-    total: number;
-    pending: number;
-    sent: number;
-    failed: number;
-    scheduled_today: number;
-    scheduled_this_week: number;
-    by_type: Array<{
-        type: NotificationType;
-        count: number;
-    }>;
+// ============================================
+// HEALTH CHECK
+// ============================================
+
+export interface HealthCheckResponse {
+    status: string;
+    timestamp: string;
+    uptime: number;
+    environment: string;
 }
 
 // ============================================

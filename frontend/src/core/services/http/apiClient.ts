@@ -2,7 +2,43 @@
 
 import { http } from './axiosInstance';
 import { API_ENDPOINTS } from '@/core/constants/api.constants';
-import { ApiResponse, PaginatedResponse } from '@/core/types/api';
+import type { 
+  ApiResponse, 
+  PaginatedResponse,
+  // Auth Types
+  LoginDto,
+  LoginResponse,
+  VerifyTokenDto,
+  UpdateProfileDto,
+  // User Types
+  User,
+  CreateUserDto,
+  UpdateUserDto,
+  ChangePasswordDto,
+  ResetPasswordDto,
+  PasswordChangeResponseDto,
+  UserStatistics,
+  // Patient Types
+  Patient,
+  CreatePatientDto,
+  UpdatePatientDto,
+  PatientStatistics,
+  // Appointment Types
+  Appointment,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  // Medical Record Types
+  MedicalRecord,
+  CreateMedicalRecordDto,
+  UpdateMedicalRecordDto,
+  // Notification Types
+  Notification,
+  NotificationStatsDto,
+  // Role Types
+  Role,
+  // Health Types
+  HealthCheckResponse,
+} from '@/core/types/api';
 
 /**
  * API Client Service
@@ -52,10 +88,7 @@ export const apiClient = {
   /**
    * GET with pagination
    */
-  async getPaginated<T>(
-    url: string,
-    params?: any
-  ): Promise<PaginatedResponse<T>> {
+  async getPaginated<T>(url: string, params?: any): Promise<PaginatedResponse<T>> {
     const response = await http.get<PaginatedResponse<T>>(url, { params });
     return response.data;
   },
@@ -94,149 +127,258 @@ export const apiClient = {
       responseType: 'blob',
     });
 
-    // Create blob link to download
     const blob = new Blob([response.data]);
     const link = document.createElement('a');
     link.href = window.URL.createObjectURL(blob);
     link.download = filename || 'download';
     link.click();
-
-    // Clean up
     window.URL.revokeObjectURL(link.href);
   },
 };
 
-/**
- * Specific API Services
- */
-
-// Health Check
+// ============================================
+// HEALTH CHECK API
+// ============================================
 export const healthApi = {
-  check: () => apiClient.get(API_ENDPOINTS.HEALTH.BASE),
+  check: () => apiClient.get<HealthCheckResponse>(API_ENDPOINTS.HEALTH.BASE),
   details: () => apiClient.get(API_ENDPOINTS.HEALTH.DETAILS),
   liveness: () => apiClient.get(API_ENDPOINTS.HEALTH.LIVE),
   readiness: () => apiClient.get(API_ENDPOINTS.HEALTH.READY),
 };
 
-// Auth API
+// ============================================
+// AUTH API
+// ============================================
 export const authApi = {
-  login: (data: any) => apiClient.post(API_ENDPOINTS.AUTH.LOGIN, data),
-  logout: () => apiClient.post(API_ENDPOINTS.AUTH.LOGOUT),
-  refresh: () => apiClient.post(API_ENDPOINTS.AUTH.REFRESH),
+  login: (data: LoginDto) => 
+    apiClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, data),
+  
+  logout: () => 
+    apiClient.post(API_ENDPOINTS.AUTH.LOGOUT),
+  
+  refresh: () => 
+    apiClient.post<{ access_token: string }>(API_ENDPOINTS.AUTH.REFRESH),
+  
   verify: (token: string) =>
-    apiClient.post(API_ENDPOINTS.AUTH.VERIFY, { token }),
-  me: () => apiClient.get(API_ENDPOINTS.AUTH.ME),
-  updateProfile: (data: any) =>
-    apiClient.patch(API_ENDPOINTS.AUTH.UPDATE_PROFILE, data),
+    apiClient.post<User>(API_ENDPOINTS.AUTH.VERIFY, { token }),
+  
+  me: () => 
+    apiClient.get<User>(API_ENDPOINTS.AUTH.ME),
+  
+  updateProfile: (data: UpdateProfileDto) =>
+    apiClient.patch<User>(API_ENDPOINTS.AUTH.UPDATE_PROFILE, data),
 };
 
-// Users API
+// ============================================
+// USERS API
+// ============================================
 export const usersApi = {
   getAll: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.USERS.BASE, params),
-  getById: (id: number) => apiClient.get(API_ENDPOINTS.USERS.DETAIL(id)),
-  create: (data: any) => apiClient.post(API_ENDPOINTS.USERS.BASE, data),
-  update: (id: number, data: any) =>
-    apiClient.patch(API_ENDPOINTS.USERS.DETAIL(id), data),
-  delete: (id: number) => apiClient.delete(API_ENDPOINTS.USERS.DETAIL(id)),
-  statistics: () => apiClient.get(API_ENDPOINTS.USERS.STATISTICS),
+    apiClient.getPaginated<User>(API_ENDPOINTS.USERS.BASE, params),
+  
+  getById: (id: number) => 
+    apiClient.get<User>(API_ENDPOINTS.USERS.DETAIL(id)),
+  
+  create: (data: CreateUserDto) => 
+    apiClient.post<User>(API_ENDPOINTS.USERS.BASE, data),
+  
+  update: (id: number, data: UpdateUserDto) =>
+    apiClient.patch<User>(API_ENDPOINTS.USERS.DETAIL(id), data),
+  
+  delete: (id: number) => 
+    apiClient.delete<{ message: string }>(API_ENDPOINTS.USERS.DETAIL(id)),
+  
+  statistics: () => 
+    apiClient.get<UserStatistics>(API_ENDPOINTS.USERS.STATISTICS),
+  
   recent: (limit?: number) =>
-    apiClient.get(API_ENDPOINTS.USERS.RECENT, { limit }),
+    apiClient.get<User[]>(API_ENDPOINTS.USERS.RECENT, { limit }),
+  
   checkUsername: (username: string) =>
-    apiClient.get(API_ENDPOINTS.USERS.CHECK_USERNAME(username)),
-  changePassword: (data: any) =>
-    apiClient.post(API_ENDPOINTS.USERS.CHANGE_PASSWORD, data),
-  resetPassword: (id: number, data: any) =>
-    apiClient.post(API_ENDPOINTS.USERS.RESET_PASSWORD(id), data),
+    apiClient.get<{ available: boolean; message: string }>(
+      API_ENDPOINTS.USERS.CHECK_USERNAME(username)
+    ),
+  
+  changePassword: (data: ChangePasswordDto) =>
+    apiClient.post<PasswordChangeResponseDto>(
+      API_ENDPOINTS.USERS.CHANGE_PASSWORD, 
+      data
+    ),
+  
+  resetPassword: (id: number, data: ResetPasswordDto) =>
+    apiClient.post<PasswordChangeResponseDto>(
+      API_ENDPOINTS.USERS.RESET_PASSWORD(id), 
+      data
+    ),
+  
   generateTempPassword: (id: number) =>
-    apiClient.post(API_ENDPOINTS.USERS.GENERATE_TEMP_PASSWORD(id)),
+    apiClient.post<{ temporaryPassword: string; message: string }>(
+      API_ENDPOINTS.USERS.GENERATE_TEMP_PASSWORD(id)
+    ),
 };
 
-// Roles API
+// ============================================
+// ROLES API
+// ============================================
 export const rolesApi = {
-  getAll: () => apiClient.get(API_ENDPOINTS.ROLES.BASE),
-  getById: (id: number) => apiClient.get(API_ENDPOINTS.ROLES.DETAIL(id)),
+  getAll: () => 
+    apiClient.get<Role[]>(API_ENDPOINTS.ROLES.BASE),
+  
+  getById: (id: number) => 
+    apiClient.get<Role>(API_ENDPOINTS.ROLES.DETAIL(id)),
 };
 
-// Patients API
+// ============================================
+// PATIENTS API
+// ============================================
 export const patientsApi = {
   getAll: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.PATIENTS.BASE, params),
-  getById: (id: number) => apiClient.get(API_ENDPOINTS.PATIENTS.DETAIL(id)),
-  create: (data: any) => apiClient.post(API_ENDPOINTS.PATIENTS.BASE, data),
-  update: (id: number, data: any) =>
-    apiClient.patch(API_ENDPOINTS.PATIENTS.DETAIL(id), data),
-  delete: (id: number) => apiClient.delete(API_ENDPOINTS.PATIENTS.DETAIL(id)),
+    apiClient.getPaginated<Patient>(API_ENDPOINTS.PATIENTS.BASE, params),
+  
+  getById: (id: number) => 
+    apiClient.get<Patient>(API_ENDPOINTS.PATIENTS.DETAIL(id)),
+  
+  create: (data: CreatePatientDto) => 
+    apiClient.post<Patient>(API_ENDPOINTS.PATIENTS.BASE, data),
+  
+  update: (id: number, data: UpdatePatientDto) =>
+    apiClient.patch<Patient>(API_ENDPOINTS.PATIENTS.DETAIL(id), data),
+  
+  delete: (id: number) => 
+    apiClient.delete<{ message: string }>(API_ENDPOINTS.PATIENTS.DETAIL(id)),
+  
   search: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.PATIENTS.SEARCH, params),
-  statistics: () => apiClient.get(API_ENDPOINTS.PATIENTS.STATISTICS),
+    apiClient.getPaginated<Patient>(API_ENDPOINTS.PATIENTS.SEARCH, params),
+  
+  statistics: () => 
+    apiClient.get<PatientStatistics>(API_ENDPOINTS.PATIENTS.STATISTICS),
+  
   getByMedicalRecord: (number: string) =>
-    apiClient.get(API_ENDPOINTS.PATIENTS.BY_MEDICAL_RECORD(number)),
-  getByNik: (nik: string) => apiClient.get(API_ENDPOINTS.PATIENTS.BY_NIK(nik)),
+    apiClient.get<Patient>(API_ENDPOINTS.PATIENTS.BY_MEDICAL_RECORD(number)),
+  
+  getByNik: (nik: string) => 
+    apiClient.get<Patient>(API_ENDPOINTS.PATIENTS.BY_NIK(nik)),
+  
   getByDoctor: (doctorId: number, params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.PATIENTS.BY_DOCTOR(doctorId), params),
+    apiClient.getPaginated<Patient>(
+      API_ENDPOINTS.PATIENTS.BY_DOCTOR(doctorId), 
+      params
+    ),
+  
   restore: (id: number) =>
-    apiClient.patch(API_ENDPOINTS.PATIENTS.RESTORE(id)),
+    apiClient.patch<{ message: string }>(API_ENDPOINTS.PATIENTS.RESTORE(id)),
 };
 
-// Appointments API
+// ============================================
+// APPOINTMENTS API
+// ============================================
 export const appointmentsApi = {
   getAll: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.APPOINTMENTS.BASE, params),
+    apiClient.getPaginated<Appointment>(API_ENDPOINTS.APPOINTMENTS.BASE, params),
+  
   getById: (id: number) =>
-    apiClient.get(API_ENDPOINTS.APPOINTMENTS.DETAIL(id)),
-  create: (data: any) => apiClient.post(API_ENDPOINTS.APPOINTMENTS.BASE, data),
-  update: (id: number, data: any) =>
-    apiClient.patch(API_ENDPOINTS.APPOINTMENTS.DETAIL(id), data),
+    apiClient.get<Appointment>(API_ENDPOINTS.APPOINTMENTS.DETAIL(id)),
+  
+  create: (data: CreateAppointmentDto) => 
+    apiClient.post<Appointment>(API_ENDPOINTS.APPOINTMENTS.BASE, data),
+  
+  update: (id: number, data: UpdateAppointmentDto) =>
+    apiClient.patch<Appointment>(API_ENDPOINTS.APPOINTMENTS.DETAIL(id), data),
+  
   delete: (id: number) =>
-    apiClient.delete(API_ENDPOINTS.APPOINTMENTS.DETAIL(id)),
+    apiClient.delete<{ message: string }>(API_ENDPOINTS.APPOINTMENTS.DETAIL(id)),
+  
   complete: (id: number) =>
-    apiClient.post(API_ENDPOINTS.APPOINTMENTS.COMPLETE(id)),
+    apiClient.post<Appointment>(API_ENDPOINTS.APPOINTMENTS.COMPLETE(id)),
+  
   cancel: (id: number) =>
-    apiClient.post(API_ENDPOINTS.APPOINTMENTS.CANCEL(id)),
+    apiClient.post<Appointment>(API_ENDPOINTS.APPOINTMENTS.CANCEL(id)),
 };
 
-// Medical Records API
+// ============================================
+// MEDICAL RECORDS API
+// ============================================
 export const medicalRecordsApi = {
   getAll: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.MEDICAL_RECORDS.BASE, params),
+    apiClient.getPaginated<MedicalRecord>(
+      API_ENDPOINTS.MEDICAL_RECORDS.BASE, 
+      params
+    ),
+  
   getById: (id: number) =>
-    apiClient.get(API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id)),
-  create: (data: any) =>
-    apiClient.post(API_ENDPOINTS.MEDICAL_RECORDS.BASE, data),
-  update: (id: number, data: any) =>
-    apiClient.patch(API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id), data),
+    apiClient.get<MedicalRecord>(API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id)),
+  
+  create: (data: CreateMedicalRecordDto) => 
+    apiClient.post<MedicalRecord>(API_ENDPOINTS.MEDICAL_RECORDS.BASE, data),
+  
+  update: (id: number, data: UpdateMedicalRecordDto) =>
+    apiClient.patch<MedicalRecord>(
+      API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id), 
+      data
+    ),
+  
   delete: (id: number) =>
-    apiClient.delete(API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id)),
+    apiClient.delete<{ message: string }>(
+      API_ENDPOINTS.MEDICAL_RECORDS.DETAIL(id)
+    ),
+  
   search: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.MEDICAL_RECORDS.SEARCH, params),
+    apiClient.getPaginated<MedicalRecord>(
+      API_ENDPOINTS.MEDICAL_RECORDS.SEARCH, 
+      params
+    ),
+  
   getByAppointment: (appointmentId: number) =>
-    apiClient.get(API_ENDPOINTS.MEDICAL_RECORDS.BY_APPOINTMENT(appointmentId)),
+    apiClient.get<MedicalRecord>(
+      API_ENDPOINTS.MEDICAL_RECORDS.BY_APPOINTMENT(appointmentId)
+    ),
+  
   restore: (id: number) =>
-    apiClient.post(API_ENDPOINTS.MEDICAL_RECORDS.RESTORE(id)),
+    apiClient.post<{ message: string }>(
+      API_ENDPOINTS.MEDICAL_RECORDS.RESTORE(id)
+    ),
+  
   permanentDelete: (id: number) =>
     apiClient.delete(API_ENDPOINTS.MEDICAL_RECORDS.PERMANENT_DELETE(id)),
 };
 
-// Notifications API
+// ============================================
+// NOTIFICATIONS API
+// ============================================
 export const notificationsApi = {
   getAll: (params?: any) =>
-    apiClient.getPaginated(API_ENDPOINTS.NOTIFICATIONS.BASE, params),
+    apiClient.getPaginated<Notification>(
+      API_ENDPOINTS.NOTIFICATIONS.BASE, 
+      params
+    ),
+  
   getById: (id: number) =>
-    apiClient.get(API_ENDPOINTS.NOTIFICATIONS.DETAIL(id)),
-  statistics: () => apiClient.get(API_ENDPOINTS.NOTIFICATIONS.STATISTICS),
+    apiClient.get<Notification>(API_ENDPOINTS.NOTIFICATIONS.DETAIL(id)),
+  
+  statistics: () => 
+    apiClient.get<NotificationStatsDto>(API_ENDPOINTS.NOTIFICATIONS.STATISTICS),
+  
   getFailed: (limit?: number) =>
-    apiClient.get(API_ENDPOINTS.NOTIFICATIONS.FAILED, { limit }),
+    apiClient.get<Notification[]>(API_ENDPOINTS.NOTIFICATIONS.FAILED, { limit }),
+  
   retry: (id: number) =>
     apiClient.post(API_ENDPOINTS.NOTIFICATIONS.RETRY(id)),
+  
   retryAllFailed: (limit?: number) =>
     apiClient.post(API_ENDPOINTS.NOTIFICATIONS.RETRY_ALL_FAILED, { limit }),
+  
   jobs: {
-    status: () => apiClient.get(API_ENDPOINTS.NOTIFICATIONS.JOBS.STATUS),
+    status: () => 
+      apiClient.get(API_ENDPOINTS.NOTIFICATIONS.JOBS.STATUS),
+    
     triggerManual: () =>
       apiClient.post(API_ENDPOINTS.NOTIFICATIONS.JOBS.TRIGGER_MANUAL),
-    stopAll: () => apiClient.post(API_ENDPOINTS.NOTIFICATIONS.JOBS.STOP_ALL),
-    startAll: () => apiClient.post(API_ENDPOINTS.NOTIFICATIONS.JOBS.START_ALL),
+    
+    stopAll: () => 
+      apiClient.post(API_ENDPOINTS.NOTIFICATIONS.JOBS.STOP_ALL),
+    
+    startAll: () => 
+      apiClient.post(API_ENDPOINTS.NOTIFICATIONS.JOBS.START_ALL),
   },
 };
 

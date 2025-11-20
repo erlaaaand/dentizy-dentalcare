@@ -109,7 +109,7 @@ export const HTTP_METHODS = {
     DELETE: 'DELETE',
 } as const;
 
-// HTTP status codes
+// HTTP status codes (dari swagger responses)
 export const HTTP_STATUS = {
     OK: 200,
     CREATED: 201,
@@ -130,3 +130,19 @@ export const DEFAULT_HEADERS = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
 } as const;
+
+// Export types untuk type safety
+export type ApiResponse<T = any> = {
+    success?: boolean;
+    data?: T;
+    message?: string;
+    error?: string;
+};
+
+export type PaginatedResponse<T = any> = {
+    data: T[];
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+};

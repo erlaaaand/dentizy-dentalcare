@@ -103,10 +103,10 @@ export function exportMedicalRecordToText(record: MedicalRecord): string {
   return `
 REKAM MEDIS PASIEN
 
-Nomor RM: ${record.appointment.patient.nomor_rekam_medis}
-Nama Pasien: ${record.appointment.patient.nama_lengkap}
-Tanggal Janji: ${record.appointment.tanggal_janji}
-Dokter: ${record.appointment.doctor.nama_lengkap}
+Nomor RM: ${record.patient.no_rm}
+Nama Pasien: ${record.patient.nama_lengkap}
+Tanggal Janji: ${record.appointment.appointment_date}
+Dokter: ${record.doctor_id}
 
 ${formatSOAPSection('SUBJEKTIF (Keluhan Pasien)', soap.subjektif)}
 ${formatSOAPSection('OBJEKTIF (Hasil Pemeriksaan)', soap.objektif)}
