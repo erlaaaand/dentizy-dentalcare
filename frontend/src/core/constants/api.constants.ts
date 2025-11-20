@@ -1,82 +1,102 @@
-// API endpoints configuration untuk Sistem Manajemen Klinik Gigi
+// frontend/src/core/constants/api.constants.ts
 
 export const API_ENDPOINTS = {
-    // Authentication
+    // ============================================
+    // HEALTH CHECK
+    // ============================================
+    HEALTH: {
+        BASE: '/health',
+        DETAILS: '/health/details',
+        LIVE: '/health/live',
+        READY: '/health/ready',
+    },
+
+    // ============================================
+    // AUTHENTICATION
+    // ============================================
     AUTH: {
         LOGIN: '/auth/login',
         LOGOUT: '/auth/logout',
         REFRESH: '/auth/refresh',
+        VERIFY: '/auth/verify',
         ME: '/auth/me',
-        CHANGE_PASSWORD: '/auth/change-password',
+        UPDATE_PROFILE: '/auth/me', // PATCH
     },
 
-    // Appointments (Janji Temu)
-    APPOINTMENTS: {
-        BASE: '/appointments',
-        DETAIL: (id: number | string) => `/appointments/${id}`,
-        BY_PATIENT: (patientId: number | string) => `/appointments/patient/${patientId}`,
-        BY_DENTIST: (dentistId: number | string) => `/appointments/dentist/${dentistId}`,
-        BY_DATE: '/appointments/by-date',
-        UPCOMING: '/appointments/upcoming',
-        TODAY: '/appointments/today',
-        UPDATE_STATUS: (id: number | string) => `/appointments/${id}/status`,
-        SCHEDULE: '/appointments/schedule',
-        AVAILABLE_SLOTS: '/appointments/available-slots',
+    // ============================================
+    // USERS
+    // ============================================
+    USERS: {
+        BASE: '/users',
+        DETAIL: (id: number | string) => `/users/${id}`,
+        STATISTICS: '/users/statistics',
+        RECENT: '/users/recent',
+        CHECK_USERNAME: (username: string) => `/users/check-username/${username}`,
+        CHANGE_PASSWORD: '/users/change-password',
+        RESET_PASSWORD: (id: number | string) => `/users/${id}/reset-password`,
+        GENERATE_TEMP_PASSWORD: (id: number | string) => `/users/${id}/generate-temp-password`,
     },
 
-    // Patients (Pasien)
+    // ============================================
+    // ROLES
+    // ============================================
+    ROLES: {
+        BASE: '/roles',
+        DETAIL: (id: number | string) => `/roles/${id}`,
+    },
+
+    // ============================================
+    // PATIENTS
+    // ============================================
     PATIENTS: {
         BASE: '/patients',
         DETAIL: (id: number | string) => `/patients/${id}`,
         SEARCH: '/patients/search',
-        BY_NIK: (nik: string) => `/patients/nik/${nik}`,
-        HISTORY: (id: number | string) => `/patients/${id}/history`,
-        ALLERGIES: (id: number | string) => `/patients/${id}/allergies`,
+        STATISTICS: '/patients/statistics',
+        BY_MEDICAL_RECORD: (number: string) => `/patients/by-medical-record/${number}`,
+        BY_NIK: (nik: string) => `/patients/by-nik/${nik}`,
+        BY_DOCTOR: (doctorId: number | string) => `/patients/by-doctor/${doctorId}`,
+        RESTORE: (id: number | string) => `/patients/${id}/restore`,
     },
 
-    // Medical Records (Rekam Medis Gigi)
+    // ============================================
+    // APPOINTMENTS
+    // ============================================
+    APPOINTMENTS: {
+        BASE: '/appointments',
+        DETAIL: (id: number | string) => `/appointments/${id}`,
+        COMPLETE: (id: number | string) => `/appointments/${id}/complete`,
+        CANCEL: (id: number | string) => `/appointments/${id}/cancel`,
+    },
+
+    // ============================================
+    // MEDICAL RECORDS
+    // ============================================
     MEDICAL_RECORDS: {
         BASE: '/medical-records',
         DETAIL: (id: number | string) => `/medical-records/${id}`,
-        BY_PATIENT: (patientId: number | string) => `/medical-records/patient/${patientId}`,
-        BY_APPOINTMENT: (appointmentId: number | string) => `/medical-records/appointment/${appointmentId}`,
-        DENTAL_CHART: (patientId: number | string) => `/medical-records/patient/${patientId}/dental-chart`,
+        SEARCH: '/medical-records/search',
+        BY_APPOINTMENT: (appointmentId: number | string) => `/medical-records/by-appointment/${appointmentId}`,
+        RESTORE: (id: number | string) => `/medical-records/${id}/restore`,
+        PERMANENT_DELETE: (id: number | string) => `/medical-records/${id}/permanent`,
     },
 
-    // Users (Pengguna: Dokter Gigi & Staf)
-    USERS: {
-        BASE: '/users',
-        DETAIL: (id: number | string) => `/users/${id}`,
-        DENTISTS: '/users/dentists',
-        STAFF: '/users/staff',
-        BY_ROLE: (role: string) => `/users/role/${role}`,
-        SCHEDULE: (id: number | string) => `/users/${id}/schedule`,
-    },
-
-    // Treatments (Tindakan Gigi)
-    TREATMENTS: {
-        BASE: '/treatments',
-        DETAIL: (id: number | string) => `/treatments/${id}`,
-        CATEGORIES: '/treatments/categories',
-        SEARCH: '/treatments/search',
-    },
-
-    // Reports (Laporan)
-    REPORTS: {
-        APPOINTMENTS: '/reports/appointments',
-        PATIENTS: '/reports/patients',
-        MEDICAL_RECORDS: '/reports/medical-records',
-        TREATMENTS: '/reports/treatments',
-        REVENUE: '/reports/revenue',
-        DASHBOARD: '/reports/dashboard',
-        EXPORT: '/reports/export',
-    },
-
-    // Settings
-    SETTINGS: {
-        BASE: '/settings',
-        CLINIC: '/settings/clinic',
-        SYSTEM: '/settings/system',
+    // ============================================
+    // NOTIFICATIONS
+    // ============================================
+    NOTIFICATIONS: {
+        BASE: '/notifications',
+        DETAIL: (id: number | string) => `/notifications/${id}`,
+        STATISTICS: '/notifications/statistics',
+        FAILED: '/notifications/failed',
+        RETRY: (id: number | string) => `/notifications/${id}/retry`,
+        RETRY_ALL_FAILED: '/notifications/retry-all-failed',
+        JOBS: {
+            STATUS: '/notifications/jobs/status',
+            TRIGGER_MANUAL: '/notifications/jobs/trigger-manual',
+            STOP_ALL: '/notifications/jobs/stop-all',
+            START_ALL: '/notifications/jobs/start-all',
+        },
     },
 } as const;
 
@@ -100,26 +120,10 @@ export const HTTP_STATUS = {
     NOT_FOUND: 404,
     CONFLICT: 409,
     UNPROCESSABLE_ENTITY: 422,
+    TOO_MANY_REQUESTS: 429,
     INTERNAL_SERVER_ERROR: 500,
     SERVICE_UNAVAILABLE: 503,
 } as const;
-
-// API response types
-export interface ApiResponse<T = any> {
-    success: boolean;
-    data?: T;
-    message?: string;
-    error?: string;
-    errors?: Record<string, string[]>;
-}
-
-export interface PaginatedResponse<T = any> {
-    data: T[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-}
 
 // Request headers
 export const DEFAULT_HEADERS = {

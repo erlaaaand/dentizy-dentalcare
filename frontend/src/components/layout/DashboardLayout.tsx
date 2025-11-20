@@ -2,7 +2,7 @@ import React from 'react';
 import Sidebar from '@/components/ui/layout/Sidebar';
 import Header from '@/components/ui/layout/Header';
 import Footer from '@/components/ui/layout/footer/Footer';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 
 export interface DashboardLayoutProps {
     children: React.ReactNode;

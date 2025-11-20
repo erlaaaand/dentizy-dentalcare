@@ -221,7 +221,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
             {/* Breadcrumb */}
             {breadcrumbItems.length > 0 && (
               <div className="flex items-center justify-between">
-                <Breadcrumb items={breadcrumbItems} />
+                <Breadcrumb items={breadcrumbItems ?? undefined} />
                 {headerAction && (
                   <div className="flex-shrink-0">
                     {headerAction}

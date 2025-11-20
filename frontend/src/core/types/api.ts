@@ -1,3 +1,4 @@
+// frontend/src/core/types/api.ts
 // ============================================
 // BASE TYPES
 // ============================================
@@ -5,7 +6,6 @@ export type ID = number;
 export type ISODateString = string; // Format: YYYY-MM-DD
 export type ISODateTimeString = string; // Format: YYYY-MM-DDTHH:mm:ss
 export type TimeString = string; // Format: HH:mm:ss
-import { useAuthStore } from '@/stores/authStore';
 
 // ============================================
 // ENUMS
@@ -40,50 +40,57 @@ export enum NotificationStatus {
 }
 
 // ============================================
-// ENTITY TYPES
+// ENTITY TYPES (Sesuai Swagger)
 // ============================================
+
+// Role Entity
 export interface Role {
     id: ID;
     name: UserRole;
     description?: string;
 }
 
+// User Entity (Swagger: UserResponseDto)
 export interface User {
     id: ID;
-    nama_lengkap: string;
     username: string;
+    nama_lengkap: string;
+    roles: Role[];
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    roles: Role[];
+    profile_photo?: string | null;
 }
 
-export function useRole() {
-    const { hasRole, isKepalaKlinik, isDokter, isStaf } = useAuthStore();
-
-    return {
-        hasRole,
-        isKepalaKlinik,
-        isDokter,
-        isStaf,
-    };
-}
-
+// Patient Entity (Swagger: PatientResponseDto)
 export interface Patient {
     id: ID;
     nomor_rekam_medis: string;
-    nik?: string;
+    nik: string;
     nama_lengkap: string;
-    tanggal_lahir?: ISODateString;
-    alamat?: string;
-    email?: string;
-    no_hp?: string;
-    jenis_kelamin?: Gender;
+    tanggal_lahir: ISODateString;
+    umur: number; // Computed field from backend
+    jenis_kelamin: Gender;
+    email: string;
+    no_hp: string;
+    alamat: string;
+    riwayat_alergi?: string;
+    riwayat_penyakit?: string;
+    catatan_khusus?: string;
+    golongan_darah?: string;
+    pekerjaan?: string;
+    kontak_darurat_nama?: string;
+    kontak_darurat_nomor?: string;
+    kontak_darurat_relasi?: string;
     is_registered_online: boolean;
+    is_active: boolean;
+    is_new_patient: boolean;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
+    // Relations
     appointments?: Appointment[];
 }
 
+// Appointment Entity (Swagger: AppointmentResponseDto)
 export interface Appointment {
     id: ID;
     patient_id: ID;
@@ -94,40 +101,91 @@ export interface Appointment {
     keluhan?: string;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    patient: Patient;
-    doctor: User;
+    // Relations
+    patient: {
+        id: ID;
+        nama_lengkap: string;
+        nomor_rekam_medis: string;
+        email?: string;
+        nomor_telepon?: string;
+    };
+    doctor: {
+        id: ID;
+        nama_lengkap: string;
+        roles: string[];
+    };
     medical_record?: MedicalRecord;
 }
 
+// Medical Record Entity (Swagger: MedicalRecordResponseDto)
 export interface MedicalRecord {
     id: ID;
     appointment_id: ID;
-    user_id_staff?: ID;
+    doctor_id: ID;
+    patient_id: ID;
     subjektif?: string;
     objektif?: string;
     assessment?: string;
     plan?: string;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    appointment: Appointment;
-    user_staff?: User;
+    deleted_at?: ISODateTimeString | null;
+    umur_rekam: number; // Age at time of record
+    // Relations
+    appointment: {
+        id: ID;
+        appointment_date: ISODateTimeString;
+        status: AppointmentStatus;
+        patient: {
+            id: ID;
+            nama_lengkap: string;
+            no_rm: string;
+            tanggal_lahir?: ISODateString;
+        };
+    };
+    doctor: {
+        id: ID;
+        name: string;
+    };
+    patient: {
+        id: ID;
+        nama_lengkap: string;
+        no_rm: string;
+        tanggal_lahir?: ISODateString;
+    };
 }
 
+// Notification Entity (Swagger: NotificationResponseDto)
 export interface Notification {
     id: ID;
     appointment_id: ID;
     type: NotificationType;
     status: NotificationStatus;
-    send_at?: ISODateTimeString;
-    sent_at?: ISODateTimeString;
+    send_at: ISODateTimeString;
+    sent_at?: ISODateTimeString | null;
     created_at: ISODateTimeString;
     updated_at: ISODateTimeString;
-    appointment: Appointment;
+    // Relations
+    appointment: {
+        id: ID;
+        tanggal_janji: ISODateString;
+        jam_janji: TimeString;
+        patient: {
+            id: ID;
+            nama_lengkap: string;
+            email: string;
+        };
+        doctor: {
+            id: ID;
+            nama_lengkap: string;
+        };
+    };
 }
 
 // ============================================
 // API RESPONSE TYPES
 // ============================================
+
 export interface PaginationMeta {
     total: number;
     page: number;
@@ -137,7 +195,10 @@ export interface PaginationMeta {
 
 export interface PaginatedResponse<T> {
     data: T[];
-    pagination: PaginationMeta;
+    count: number;
+    page: number;
+    limit: number;
+    totalPages: number;
 }
 
 export interface ApiResponse<T = unknown> {
@@ -170,71 +231,25 @@ export interface LoginResponse {
         id: ID;
         username: string;
         nama_lengkap: string;
-        roles: UserRole[];
+        roles: Role[];
     };
 }
 
-// Appointment DTOs
-export interface CreateAppointmentDto {
-    patient_id: ID;
-    doctor_id: ID;
-    tanggal_janji: ISODateString;
-    jam_janji: TimeString;
-    keluhan?: string;
+export interface VerifyTokenDto {
+    token: string;
 }
 
-export interface UpdateAppointmentDto {
-    status?: AppointmentStatus;
-    tanggal_janji?: ISODateString;
-    jam_janji?: TimeString;
-    keluhan?: string;
+export interface UpdateProfileDto {
+    username?: string;
+    nama_lengkap?: string;
 }
-
-export interface AppointmentFilters {
-    doctorId?: ID;
-    date?: ISODateString;
-    status?: AppointmentStatus | '';
-    page?: number;
-    limit?: number;
-}
-
-// Patient DTOs
-export interface CreatePatientDto {
-    nama_lengkap: string;
-    nik?: string;
-    email?: string;
-    no_hp?: string;
-    tanggal_lahir?: ISODateString;
-    jenis_kelamin?: Gender;
-    alamat?: string;
-}
-
-export interface UpdatePatientDto extends Partial<CreatePatientDto> { }
-
-export interface SearchPatientDto {
-    search?: string;
-    page?: number;
-    limit?: number;
-}
-
-// Medical Record DTOs
-export interface CreateMedicalRecordDto {
-    appointment_id: ID;
-    user_id_staff: ID;
-    subjektif?: string;
-    objektif?: string;
-    assessment?: string;
-    plan?: string;
-}
-
-export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> { }
 
 // User DTOs
 export interface CreateUserDto {
     nama_lengkap: string;
     username: string;
     password: string;
-    roles: ID[];
+    roles: ID[]; // Array of role IDs
 }
 
 export interface UpdateUserDto {
@@ -254,7 +269,117 @@ export interface ResetPasswordDto {
 }
 
 export interface UserFilters {
-    role?: UserRole;
+    role?: UserRole | '';
+    search?: string;
+    page?: number;
+    limit?: number;
+    isActive?: boolean;
+}
+
+// Patient DTOs
+export interface CreatePatientDto {
+    nama_lengkap: string;
+    nik?: string;
+    email?: string;
+    no_hp?: string;
+    tanggal_lahir?: ISODateString;
+    jenis_kelamin?: Gender;
+    alamat?: string;
+    riwayat_alergi?: string;
+    riwayat_penyakit?: string;
+    catatan_khusus?: string;
+}
+
+export interface UpdatePatientDto extends Partial<CreatePatientDto> {
+    is_active?: boolean;
+}
+
+export interface PatientFilters {
+    search?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: 'nama_lengkap' | 'nomor_rekam_medis' | 'tanggal_lahir' | 'created_at' | 'umur';
+    sortOrder?: 'asc' | 'desc';
+    jenis_kelamin?: Gender | '';
+    umur_min?: number;
+    umur_max?: number;
+    tanggal_daftar_dari?: ISODateString;
+    tanggal_daftar_sampai?: ISODateString;
+    doctor_id?: ID;
+    is_active?: boolean;
+    is_new?: boolean;
+    has_allergies?: boolean;
+}
+
+// Appointment DTOs
+export interface CreateAppointmentDto {
+    patient_id: ID;
+    doctor_id: ID;
+    tanggal_janji: ISODateString;
+    jam_janji: TimeString;
+    keluhan?: string;
+}
+
+export interface UpdateAppointmentDto {
+    status?: AppointmentStatus;
+    tanggal_janji?: ISODateString;
+    jam_janji?: TimeString;
+    keluhan?: string;
+}
+
+export interface AppointmentFilters {
+    status?: AppointmentStatus | '';
+    date?: ISODateString;
+    doctorId?: ID;
+    page?: number;
+    limit?: number;
+}
+
+// Medical Record DTOs
+export interface CreateMedicalRecordDto {
+    appointment_id: ID;
+    user_id_staff: ID;
+    subjektif?: string;
+    objektif?: string;
+    assessment?: string;
+    plan?: string;
+}
+
+export interface UpdateMedicalRecordDto extends Partial<Omit<CreateMedicalRecordDto, 'appointment_id' | 'user_id_staff'>> {}
+
+export interface MedicalRecordFilters {
+    patient_id?: ID;
+    doctor_id?: ID;
+    appointment_id?: ID;
+    search?: string;
+    start_date?: ISODateString;
+    end_date?: ISODateString;
+    appointment_status?: AppointmentStatus | '';
+    page?: number;
+    limit?: number;
+    sort_by?: string;
+    sort_order?: 'ASC' | 'DESC';
+}
+
+// Notification DTOs
+export interface NotificationFilters {
+    status?: NotificationStatus | '';
+    type?: NotificationType | '';
+    page?: number;
+    limit?: number;
+}
+
+export interface NotificationStats {
+    total: number;
+    pending: number;
+    sent: number;
+    failed: number;
+    scheduled_today: number;
+    scheduled_this_week: number;
+    by_type: Array<{
+        type: NotificationType;
+        count: number;
+    }>;
 }
 
 // ============================================
