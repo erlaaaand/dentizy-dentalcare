@@ -44,11 +44,11 @@ export class Patient {
     @Column({ type: 'text', nullable: true })
     alamat: string | null;
 
-    @Column({ length: 250, nullable: true, unique: true })
+    @Column({ type: 'varchar', length: 250, nullable: true, unique: true })
     @Index('idx_patient_email')
     email: string | null;
 
-    @Column({ length: 20, nullable: true })
+    @Column({ type: 'varchar', length: 20, nullable: true })
     @Index('idx_patient_no_hp')
     no_hp: string | null;
 

@@ -23,6 +23,8 @@ import {
     ApiBearerAuth,
     ApiQuery,
     ApiParam,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
@@ -42,10 +44,12 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('Users')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('users')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
+@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
@@ -83,29 +87,7 @@ export class UsersController {
     @ApiResponse({
         status: 200,
         description: 'Daftar user berhasil diambil',
-        schema: {
-            example: {
-                data: [
-                    {
-                        id: 1,
-                        username: 'johndoe',
-                        nama_lengkap: 'Dr. John Doe',
-                        roles: [{ id: 1, name: 'DOKTER', description: 'Dokter' }],
-                        created_at: '2023-11-19T10:00:00.000Z',
-                        updated_at: '2023-11-19T10:00:00.000Z',
-                        profile_photo: null
-                    }
-                ],
-                meta: {
-                    total: 50,
-                    page: 1,
-                    limit: 10,
-                    lastPage: 5,
-                    hasNext: true,
-                    hasPrev: false
-                }
-            }
-        }
+        type: '' // ✅ Type safe & auto-generated docs
     })
     async findAll(@Query() query: FindUsersQueryDto): Promise<{
         data: UserResponseDto[];

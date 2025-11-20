@@ -98,19 +98,19 @@ export class SeederService {
             const users = [
                 {
                     nama_lengkap: 'Dr. Anisa Putri',
-                    username: 'anisa.putri',
+                    username: 'anisa_putri',
                     password: hashedPassword,
                     roles: [dokterRole],
                 },
                 {
                     nama_lengkap: 'Budi Santoso',
-                    username: 'budi.staf',
+                    username: 'budi_staf',
                     password: hashedPassword,
                     roles: [stafRole],
                 },
                 {
                     nama_lengkap: 'Siti Rahma',
-                    username: 'siti.kepala',
+                    username: 'siti_kepala',
                     password: hashedPassword,
                     roles: [kepalaKlinikRole],
                 },
@@ -274,9 +274,17 @@ export class SeederService {
             // Seed medical record untuk appointment yang sudah selesai
             const completedAppointment = savedAppointments[0];
 
+            // --- PERBAIKAN DI SINI ---
             await this.medicalRecordRepo.save({
-                appointment_id: completedAppointment.id,
-                user_id_staff: dokter.id,
+                appointment: completedAppointment, // Gunakan object relasi
+
+                // 1. TAMBAHKAN INI: Masukkan object Dokter (User)
+                doctor: dokter,
+
+                // 2. TAMBAHKAN INI: Masukkan object Pasien (WAJIB agar error patient_id hilang)
+                patient: patient1,
+
+                // Data medis
                 subjektif: 'Pasien mengeluh sakit gigi sejak 3 hari yang lalu, terutama saat makan dan minum dingin',
                 objektif: 'Terdapat karies profunda pada gigi 36 (geraham pertama bawah kiri), tidak ada pembengkakan gusi',
                 assessment: 'Karies profunda gigi 36, perlu perawatan saluran akar (root canal treatment)',

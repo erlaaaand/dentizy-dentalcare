@@ -5,6 +5,7 @@ import { NotificationMapper } from '../../domains/mappers/notification.mapper';
 import { QueryNotificationsDto } from '../dto/query-notifications.dto';
 import { NotificationResponseDto } from '../dto/notification-response.dto';
 import { NotificationStatsDto } from '../dto/notification-stats.dto';
+import { NotificationType } from '../../../notifications/domains/entities/notification.entity';
 
 @Injectable()
 export class GetNotificationsService {
@@ -63,7 +64,16 @@ export class GetNotificationsService {
 
             this.logger.log('📊 Notification statistics retrieved');
 
-            return stats;
+            // LAKUKAN MAPPING DI SINI
+            return {
+                ...stats,
+                by_type: stats.by_type?.map((item) => ({
+                    // Konversi 'string' ke 'NotificationType' menggunakan 'as'
+                    type: item.type as NotificationType,
+                    // Pastikan count berupa number
+                    count: Number(item.count)
+                })),
+            };
 
         } catch (error) {
             this.logger.error('Error getting notification statistics:', error.message);

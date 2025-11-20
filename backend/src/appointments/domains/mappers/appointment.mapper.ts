@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Appointment } from '../entities/appointment.entity';
-import { AppointmentResponseDto } from '../../applications/dto/appointment-response.dto';
+import {
+    AppointmentResponseDto,
+    PaginatedAppointmentResponseDto
+} from '../../applications/dto/appointment-response.dto';
 
 /**
  * Mapper untuk konversi Entity ↔ DTO
@@ -27,8 +30,8 @@ export class AppointmentMapper {
                 id: appointment.patient.id,
                 nama_lengkap: appointment.patient.nama_lengkap,
                 nomor_rekam_medis: appointment.patient.nomor_rekam_medis,
-                email: appointment.patient.email,
-                nomor_telepon: appointment.patient.no_hp,
+                email: appointment.patient.email ?? undefined,
+                nomor_telepon: appointment.patient.no_hp ?? undefined,
             } : undefined,
 
             doctor: appointment.doctor ? {
@@ -47,8 +50,6 @@ export class AppointmentMapper {
                     plan: appointment.medical_record.plan,
                     created_at: appointment.medical_record.created_at,
                     updated_at: appointment.medical_record.updated_at,
-                    patient_id: appointment.medical_record.patient_id,
-                    doctor_id: appointment.medical_record.doctor_id,
                 }
                 : undefined,
         };
@@ -69,12 +70,12 @@ export class AppointmentMapper {
         total: number,
         page: number,
         limit: number
-    ) {
+    ): PaginatedAppointmentResponseDto {
         return {
             data: this.toResponseDtoList(appointments),
             count: total,
-            page,
-            limit,
+            page: Number(page),
+            limit: Number(limit),
             totalPages: Math.ceil(total / limit),
         };
     }

@@ -1,13 +1,15 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { 
+    Controller, 
+    Get, 
+    ServiceUnavailableException 
+} from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
-import { Throttle } from '@nestjs/throttler';
+import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-/**
- * ✅ FIX: Tambah rate limiting untuk prevent DDoS
- */
+@ApiTags('Health Check')
 @Controller('health')
-@Throttle({ default: { limit: 10, ttl: 60000 } }) // Max 10 requests per minute
 export class HealthController {
     constructor(
         @InjectDataSource()
@@ -16,8 +18,23 @@ export class HealthController {
 
     /**
      * Basic health check
+     * Disarankan SkipThrottle agar monitoring tools tidak terblokir
      */
     @Get()
+    @SkipThrottle() 
+    @ApiOperation({ summary: 'Cek status dasar aplikasi' })
+    @ApiResponse({ 
+        status: 200, 
+        description: 'Aplikasi berjalan normal',
+        schema: {
+            example: {
+                status: 'ok',
+                timestamp: '2024-11-20T10:00:00.000Z',
+                uptime: 120.5,
+                environment: 'development'
+            }
+        }
+    })
     check() {
         return {
             status: 'ok',
@@ -28,20 +45,23 @@ export class HealthController {
     }
 
     /**
-     * Detailed health check
+     * Detailed health check (DB & Memory)
+     * Karena ini berat (query DB), boleh di-throttle tapi jangan terlalu ketat
      */
     @Get('details')
+    @Throttle({ default: { limit: 5, ttl: 60000 } }) // Max 5 request/menit
+    @ApiOperation({ summary: 'Cek kesehatan detail (DB & Memory)' })
+    @ApiResponse({ status: 200, description: 'Detail sistem' })
     async checkDetails() {
         const startTime = Date.now();
-
-        // Check database connection
         let dbStatus = 'down';
         let dbMessage = 'Database connection failed';
         let dbResponseTime = 0;
 
         try {
             const dbStartTime = Date.now();
-            await this.dataSource.query('SELECT 1');
+            // Query ringan untuk tes koneksi
+            await this.dataSource.query('SELECT 1'); 
             dbResponseTime = Date.now() - dbStartTime;
             dbStatus = 'up';
             dbMessage = 'Database connection successful';
@@ -77,7 +97,14 @@ export class HealthController {
         };
     }
 
+    /**
+     * Liveness Probe (K8s)
+     * Apakah container hidup?
+     */
     @Get('live')
+    @SkipThrottle()
+    @ApiOperation({ summary: 'Liveness Probe (Kubernetes)' })
+    @ApiResponse({ status: 200, description: 'Container hidup' })
     liveness() {
         return {
             status: 'alive',
@@ -85,21 +112,30 @@ export class HealthController {
         };
     }
 
+    /**
+     * Readiness Probe (K8s)
+     * Apakah aplikasi siap menerima traffic? (Cek DB)
+     * PENTING: Harus return 503 jika DB mati.
+     */
     @Get('ready')
+    @SkipThrottle()
+    @ApiOperation({ summary: 'Readiness Probe (Kubernetes)' })
+    @ApiResponse({ status: 200, description: 'Siap menerima traffic' })
+    @ApiResponse({ status: 503, description: 'Tidak siap (DB Down)' })
     async readiness() {
         try {
             await this.dataSource.query('SELECT 1');
-            
             return {
                 status: 'ready',
                 timestamp: new Date().toISOString(),
             };
         } catch (error) {
-            return {
+            // Throw HTTP Exception agar status code jadi 503
+            throw new ServiceUnavailableException({
                 status: 'not_ready',
                 reason: 'Database connection failed',
                 timestamp: new Date().toISOString(),
-            };
+            });
         }
     }
 }

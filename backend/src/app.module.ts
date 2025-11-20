@@ -1,120 +1,135 @@
-// users.module.ts
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EventEmitterModule } from '@nestjs/event-emitter';
-import { CacheModule } from '@nestjs/cache-manager';
-import { ThrottlerModule } from '@nestjs/throttler';
+import { UsersModule } from './users/users.module';
+import { RolesModule } from './roles/roles.module';
+import { PatientsModule } from './patients/patients.module';
+import { AppointmentsModule } from './appointments/appointments.module';
+import { MedicalRecordsModule } from './medical_records/medical_records.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { SeederModule } from './seeder/seeder.module';
 import { AuthModule } from './auth/auth.module';
-
-// Entities
-import { User } from './users/domains/entities/user.entity';
-import { Role } from './roles/entities/role.entity';
-
-// Controllers
-import { UsersController } from './users/interface/http/users.controller';
-
-// Orchestrator
-import { UsersService } from './users/applications/orchestrator/users.service';
-
-// Use Cases
-import { CreateUserService } from './users/applications/use-cases/create-user.service';
-import { UpdateUserService } from './users/applications/use-cases/update-user.service';
-import { DeleteUserService } from './users/applications/use-cases/delete-user.service';
-import { FindUsersService } from './users/applications/use-cases/find-users.service';
-import { ChangePasswordService } from './users/applications/use-cases/change-password.service';
-import { ResetPasswordService } from './users/applications/use-cases/reset-password.service';
-
-// Domain Services
-import { UserValidationService } from './users/domains/services/user-validation.service';
-import { PasswordPolicyService } from './users/domains/services/password-policy.service';
-
-// Infrastructure
-import { UserRepository } from './users/infrastructures/repositories/user.repository';
-
-// Security Services from Auth Module
-import { PasswordHasherService } from './auth/infrastructures/security/password-hasher.service';
-import { TimingDefenseService } from './auth/infrastructures/security/timing-defense.service';
-
-// Exception Filters
-import { APP_FILTER } from '@nestjs/core';
-import { UserExceptionFilter } from './users/interface/filters/user-exception.filter';
-import { ValidationExceptionFilter } from './users/interface/filters/validation-exception.filter';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD, APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { CacheModule } from '@nestjs/cache-manager';
+import { LoggingInterceptor } from './common/interceptors/logging/logging.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { envValidationSchema } from './config/env.validation';
+import databaseConfig from './config/database.config';
+import jwtConfig from './config/jwt.config';
+import { HealthController } from './health/health.controller';
+import { DataSource } from 'typeorm';
 
 @Module({
   imports: [
-    // Forward reference to avoid circular dependency
-    forwardRef(() => AuthModule),
-
-    // TypeORM entities
-    TypeOrmModule.forFeature([User, Role]),
-
-    // Event system
-    EventEmitterModule.forRoot({
-      // Use wildcards
-      wildcard: true,
-      // Set this to `true` to use wildcards
-      delimiter: '.',
-      // Maximum listeners for event emitter
-      maxListeners: 10,
-      // Show event name in memory leak message when more than maximum listeners
-      verboseMemoryLeak: true,
+    // ✅ Config Module dengan validasi
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+      cache: true,
+      validationSchema: envValidationSchema,
+      validationOptions: {
+        allowUnknown: true,
+        abortEarly: false,
+      },
+      load: [databaseConfig, jwtConfig],
     }),
 
-    // Caching for GET endpoints
-    CacheModule.register({
-      ttl: 60, // seconds
-      max: 100, // maximum items in cache
+    // ✅ Throttling untuk rate limiting
+    ThrottlerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => [{
+        ttl: configService.get<number>('THROTTLE_TTL', 60000),
+        limit: configService.get<number>('THROTTLE_LIMIT', 100),
+      }],
     }),
 
-    // Rate limiting
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 60 seconds
-      limit: 10, // 10 requests per ttl
-    }]),
+    // ✅ Caching global
+    CacheModule.registerAsync({
+      isGlobal: true,
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        ttl: configService.get<number>('CACHE_TTL', 300),
+        max: configService.get<number>('CACHE_MAX', 100),
+      }),
+    }),
+
+    // ✅ Database dengan connection pooling
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        type: 'mysql',
+        host: configService.get('DB_HOST'),
+        port: configService.get('DB_PORT'),
+        username: configService.get('DB_USERNAME'),
+        password: configService.get('DB_PASSWORD'),
+        database: configService.get('DB_NAME'),
+        autoLoadEntities: true,
+        synchronize: configService.get('NODE_ENV') !== 'production',
+        logging: configService.get('NODE_ENV') === 'development',
+        extra: {
+          connectionLimit: 10,
+          connectTimeout: 60000,
+        },
+        retryAttempts: 3,
+        retryDelay: 3000,
+      }),
+    }),
+
+    // ✅ Mailer dengan retry mechanism
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('EMAIL_HOST'),
+          port: configService.get<number>('EMAIL_PORT'),
+          secure: configService.get<string>('EMAIL_SECURE') === 'true',
+          auth: {
+            user: configService.get<string>('EMAIL_USER'),
+            pass: configService.get<string>('EMAIL_PASS'),
+          },
+        },
+        defaults: {
+          from: `"Klinik Dentizy" <${configService.get<string>('EMAIL_USER')}>`,
+        },
+      }),
+    }),
+
+    // Modules
+    UsersModule,
+    RolesModule,
+    PatientsModule,
+    AppointmentsModule,
+    MedicalRecordsModule,
+    NotificationsModule,
+    ScheduleModule.forRoot(),
+    SeederModule,
+    AuthModule,
   ],
-
-  controllers: [UsersController],
-
+  // ✅ FIX: Add HealthController here
+  controllers: [HealthController],
   providers: [
-    // ===== Orchestrator =====
-    UsersService,
-
-    // ===== Use Cases =====
-    CreateUserService,
-    UpdateUserService,
-    DeleteUserService,
-    FindUsersService,
-    ChangePasswordService,
-    ResetPasswordService,
-
-    // ===== Domain Services =====
-    UserValidationService,
-    PasswordPolicyService,
-
-    // ===== Infrastructure =====
-    UserRepository,
-
-    // ===== Shared Services from Auth Module =====
-    PasswordHasherService,
-    TimingDefenseService,
-
-    // ===== Exception Filters =====
+    // ✅ Global rate limiting guard
     {
-      provide: APP_FILTER,
-      useClass: UserExceptionFilter,
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
+    // ✅ Global logging interceptor
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+    // ✅ Global exception filter
     {
       provide: APP_FILTER,
-      useClass: ValidationExceptionFilter,
+      useClass: HttpExceptionFilter,
     },
   ],
-
-  exports: [
-    // Export orchestrator for other modules
-    UsersService,
-
-    // Export repository if needed by other modules
-    UserRepository,
-  ]
 })
-export class UsersModule { }
+export class AppModule { }
