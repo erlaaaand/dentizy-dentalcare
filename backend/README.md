@@ -1,166 +1,171 @@
-# 🦷 Dentizy Backend API
+<div align="center">
 
-<p align="center">
   <img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" />
-</p>
 
-<p align="center">
-  A robust and scalable backend API built with <strong>NestJS</strong> for the Dentizy dental management platform.
-</p>
+  <h1>Dentizy Backend API</h1>
 
-<p align="center">
-  <img src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" alt="NestJS" />
-  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
-  <img src="https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white" alt="JWT" />
-</p>
+  <p>
+    A robust and scalable backend API built with <strong>NestJS</strong> for the Dentizy dental management platform.<br>
+    Designed for security, efficiency, and maintainability.
+  </p>
 
----
+  <p>
+    <a href="https://nestjs.com"><img src="https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS" /></a>
+    <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-007ACC?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+    <a href="https://www.mysql.com/"><img src="https://img.shields.io/badge/MySQL-4479A1?style=flat-square&logo=mysql&logoColor=white" alt="MySQL" /></a>
+    <a href="https://jwt.io/"><img src="https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white" alt="JWT" /></a>
+    <a href="https://typeorm.io/"><img src="https://img.shields.io/badge/TypeORM-FE0626?style=flat-square&logo=typeorm&logoColor=white" alt="TypeORM" /></a>
+  </p>
 
-## 📋 Table of Contents
+</div>
 
-- [About](#-about)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Prerequisites](#-prerequisites)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Running the Application](#-running-the-application)
-- [Testing](#-testing)
-- [API Documentation](#-api-documentation)
-- [Security](#-security)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
-- [Developer](#-developer)
+<br />
 
----
+## Table of Contents
 
-## 🎯 About
-
-**Dentizy Backend** is a comprehensive RESTful API built with NestJS framework, designed to power dental clinic management systems. The application provides secure authentication, efficient data management, and scalable architecture following best practices and industry standards.
-
----
-
-## ✨ Features
-
-- **🔐 JWT Authentication** - Secure token-based authentication system
-- **👥 User Management** - Complete user CRUD operations with role-based access
-- **📧 Email Service** - Automated email notifications using Nodemailer
-- **💾 Database Integration** - TypeORM with MySQL for robust data persistence
-- **🛡️ Security Features**:
-  - Helmet for securing HTTP headers
-  - CSRF protection
-  - Rate limiting with Throttler
-  - Password hashing with Bcrypt
-- **📊 API Documentation** - Interactive Swagger/OpenAPI documentation
-- **⚡ Caching** - Redis-ready cache implementation
-- **🔔 Event System** - Event-driven architecture support
-- **⏰ Task Scheduling** - Cron jobs for automated tasks
-- **✅ Validation** - Request validation with class-validator
-- **🧪 Testing** - Unit and E2E testing with Jest
+- [About](#about)
+- [Key Features](#key-features)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Running the Application](#running-the-application)
+- [Testing](#testing)
+- [API Documentation](#api-documentation)
+- [Security Implementation](#security-implementation)
+- [Deployment](#deployment)
+- [Contributing](#contributing)
+- [Developer & Contact](#developer--contact)
 
 ---
 
-## 🛠 Tech Stack
+## About
+
+**Dentizy Backend** is a comprehensive RESTful API engineered with the NestJS framework. It serves as the backbone for dental clinic management systems, providing secure authentication, efficient patient data management, and a scalable architecture that adheres to industry-standard best practices.
+
+---
+
+## Key Features
+
+The application is built with a focus on modularity and performance.
+
+* **Authentication & Authorization**: Secure JWT token-based system with granular Role-Based Access Control (RBAC).
+* **User Management**: Complete lifecycle management for clinic staff and administrators.
+* **Communication**: Integrated Email Service using Nodemailer for automated notifications.
+* **Data Persistence**: TypeORM implementation with MySQL for reliable relational data storage.
+* **Advanced Security**:
+    * Helmet for HTTP header security.
+    * CSRF protection and Rate Limiting (Throttler).
+    * Bcrypt password hashing.
+* **Documentation**: Auto-generated, interactive Swagger/OpenAPI documentation.
+* **Performance**: Redis-ready caching mechanism and Event-driven architecture.
+* **Automation**: Task scheduling via Cron jobs.
+* **Quality Assurance**: Comprehensive Unit and E2E testing suites using Jest.
+
+---
+
+## Tech Stack
 
 | Technology | Purpose |
-|------------|---------|
-| **NestJS** | Progressive Node.js framework |
-| **TypeScript** | Type-safe JavaScript |
-| **TypeORM** | Object-Relational Mapping |
-| **MySQL** | Relational database |
-| **Passport JWT** | Authentication strategy |
-| **Swagger** | API documentation |
-| **Jest** | Testing framework |
-| **Nodemailer** | Email service |
-| **Helmet** | Security middleware |
+| :--- | :--- |
+| **NestJS** | Progressive Node.js framework for backend logic |
+| **TypeScript** | Strongly typed superset of JavaScript |
+| **TypeORM** | Object-Relational Mapper for database interaction |
+| **MySQL** | Primary relational database management system |
+| **Passport JWT** | Authentication strategy middleware |
+| **Swagger** | API documentation and interface testing |
+| **Jest** | Testing framework for Unit and E2E tests |
+| **Nodemailer** | Module for sending e-mails |
+| **Helmet** | Middleware for securing HTTP headers |
 
 ---
 
-## 📦 Prerequisites
+## Prerequisites
 
-Before you begin, ensure you have the following installed:
+Ensure your development environment meets the following requirements:
 
-- **Node.js** (v18.x or higher) - [Download](https://nodejs.org/)
-- **npm** (v9.x or higher) - Comes with Node.js
-- **MySQL** (v8.x or higher) - [Download](https://dev.mysql.com/downloads/)
-- **Git** - [Download](https://git-scm.com/)
-
----
-
-## 🚀 Installation
-
-### 1. Clone the Repository
-
-```bash
-git clone <repository-url>
-cd backend
-```
-
-### 2. Install Dependencies
-
-```bash
-npm install
-```
-
-### 3. Database Setup
-
-Create a MySQL database:
-
-```sql
-CREATE DATABASE dentizy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-```
+* **Node.js**: v18.x or higher
+* **npm**: v9.x or higher
+* **MySQL**: v8.x or higher
+* **Git**: Latest version
 
 ---
 
-## ⚙️ Configuration
+## Installation
 
-### Environment Variables
+Follow these steps to set up the development environment:
 
-1. Copy the example environment file:
+1.  **Clone the Repository**
+    ```bash
+    git clone <repository-url>
+    cd backend
+    ```
 
-```bash
-cp .env.example .env
-```
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
 
-2. Edit `.env` file with your configuration:
+3.  **Database Setup**
+    Execute the following SQL command to create the database:
+    ```sql
+    CREATE DATABASE dentizy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
 
-```env
-# Node Configuration
-NODE_ENV=development
-PORT=3000
+---
 
-# Database Configuration
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=your_password
-DB_NAME=dentizy_db
+## Configuration
 
-# JWT Configuration
-JWT_SECRET=your_super_secret_key
-JWT_EXPIRES_IN=24h
+<details>
+<summary><strong>Click to view Environment Variables Setup</strong></summary>
+<br>
 
-# Email Configuration
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
-EMAIL_SECURE=false
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
+1.  Duplicate the example environment file:
+    ```bash
+    cp .env.example .env
+    ```
 
-# Frontend URL
-FRONTEND_URL=http://localhost:3001
-```
+2.  Configure your `.env` file:
 
-### 🔑 Generating JWT Secret
+    ```env
+    # Node Configuration
+    NODE_ENV=development
+    PORT=3000
 
-Generate a secure JWT secret:
+    # Database Configuration
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_USERNAME=root
+    DB_PASSWORD=your_password
+    DB_NAME=dentizy_db
 
+    # JWT Configuration
+    JWT_SECRET=your_super_secret_key
+    JWT_EXPIRES_IN=24h
+
+    # Email Configuration
+    EMAIL_HOST=smtp.gmail.com
+    EMAIL_PORT=587
+    EMAIL_SECURE=false
+    EMAIL_USER=your_email@gmail.com
+    EMAIL_PASS=your_app_password
+
+    # Frontend URL
+    FRONTEND_URL=http://localhost:3001
+    ```
+
+</details>
+
+<details>
+<summary><strong>Click to view Helper Scripts</strong></summary>
+<br>
+
+**Generate a secure JWT Secret:**
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### 📧 Gmail Configuration
+### Gmail Configuration
 
 For Gmail, you need to generate an **App Password**:
 
@@ -171,7 +176,7 @@ For Gmail, you need to generate an **App Password**:
 
 ---
 
-## 🎬 Running the Application
+## Running the Application
 
 ### Development Mode
 
@@ -199,7 +204,7 @@ npm run start:debug
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Run Unit Tests
 
@@ -227,7 +232,7 @@ npm run test:watch
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 Once the application is running, access the interactive API documentation:
 
@@ -241,11 +246,11 @@ The Swagger documentation provides:
 
 ---
 
-## 🔒 Security
+## Security
 
 This application implements multiple security layers:
 
-### 🛡️ Security Features
+### Security Features
 
 - **Helmet** - Sets secure HTTP headers
 - **CSRF Protection** - Prevents Cross-Site Request Forgery
@@ -255,7 +260,7 @@ This application implements multiple security layers:
 - **Input Validation** - Request data sanitization
 - **CORS** - Configurable Cross-Origin Resource Sharing
 
-### 🔐 Best Practices
+### Best Practices
 
 1. **Never commit `.env` file** - Keep secrets safe
 2. **Use strong JWT secrets** - Generate cryptographically secure keys
@@ -265,7 +270,7 @@ This application implements multiple security layers:
 
 ---
 
-## 🚢 Deployment
+## Deployment
 
 ### Using NestJS Mau (AWS)
 
@@ -329,7 +334,7 @@ npm run lint
 
 ---
 
-## 👨‍💻 Developer
+## Developer
 
 <p align="center">
   <img src="https://img.shields.io/badge/Developer-Erland%20Agsya%20Agustian-blue?style=for-the-badge" alt="Developer" />
@@ -339,9 +344,9 @@ npm run lint
 
 - 📧 Email: [erlandagsya458@gmail.com](mailto:erlandagsya458@gmail.com)
 - 📱 Instagram: [@erlaaaand_](https://instagram.com/erlaaaand_)
-- 💼 LinkedIn: [Connect with me](https://linkedin.com/in/erland-agsya-agustian)
+- 💼 LinkedIn: [Connect with me](https://www.linkedin.com/in/erland-agsya-6619892a1?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)
 
-### 💌 Get in Touch
+### Get in Touch
 
 Feel free to reach out for:
 - Bug reports
@@ -351,7 +356,7 @@ Feel free to reach out for:
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [NestJS](https://nestjs.com/) - The progressive Node.js framework
 - [TypeORM](https://typeorm.io/) - Amazing ORM for TypeScript
@@ -360,7 +365,7 @@ Feel free to reach out for:
 
 ---
 
-## 📞 Support
+## Support
 
 If you encounter any issues or have questions:
 
