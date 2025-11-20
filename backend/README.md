@@ -352,12 +352,6 @@ Feel free to reach out for:
 
 ---
 
-## 📄 License
-
-This project is licensed under the **UNLICENSED** License - see the [LICENSE](LICENSE) file for details.
-
----
-
 ## 🙏 Acknowledgments
 
 - [NestJS](https://nestjs.com/) - The progressive Node.js framework
