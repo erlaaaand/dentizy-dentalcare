@@ -32,7 +32,6 @@
 - [Deployment](#-deployment)
 - [Contributing](#-contributing)
 - [Developer](#-developer)
-- [License](#-license)
 
 ---
 
