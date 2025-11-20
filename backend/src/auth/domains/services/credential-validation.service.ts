@@ -14,27 +14,35 @@ export class CredentialValidationService {
      * Validate username format
      */
     validateUsername(username: string): { valid: boolean; message?: string } {
-        if (!username || username.trim().length === 0) {
+
+        if (!username) {
             return { valid: false, message: 'Username tidak boleh kosong' };
         }
 
-        if (username.length < this.MIN_USERNAME_LENGTH) {
+        // 2. Lakukan trim SATU KALI dan simpan
+        const trimmedUsername = username.trim();
+
+        // 3. Gunakan 'trimmedUsername' untuk SEMUA validasi di bawah ini
+        if (trimmedUsername.length === 0) {
+            return { valid: false, message: 'Username tidak boleh kosong' };
+        }
+
+        if (trimmedUsername.length < this.MIN_USERNAME_LENGTH) {
             return {
                 valid: false,
                 message: `Username minimal ${this.MIN_USERNAME_LENGTH} karakter`
             };
         }
 
-        if (username.length > this.MAX_USERNAME_LENGTH) {
+        if (trimmedUsername.length > this.MAX_USERNAME_LENGTH) {
             return {
                 valid: false,
                 message: `Username maksimal ${this.MAX_USERNAME_LENGTH} karakter`
             };
         }
 
-        // Username hanya boleh alphanumeric dan underscore
         const usernameRegex = /^[a-zA-Z0-9_]+$/;
-        if (!usernameRegex.test(username)) {
+        if (!usernameRegex.test(trimmedUsername)) {
             return {
                 valid: false,
                 message: 'Username hanya boleh mengandung huruf, angka, dan underscore'

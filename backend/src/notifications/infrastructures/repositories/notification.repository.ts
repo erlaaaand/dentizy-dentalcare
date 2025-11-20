@@ -195,6 +195,8 @@ export class NotificationRepository {
         failed: number;
         scheduled_today: number;
         scheduled_this_week: number;
+        // 1. Definisikan tipenya di sini
+        by_type?: { type: string; count: number }[];
     }> {
         const now = new Date();
         const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -206,25 +208,46 @@ export class NotificationRepository {
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekEnd.getDate() + 7);
 
-        const [total, pending, sent, failed, scheduled_today, scheduled_this_week] =
-            await Promise.all([
-                this.repository.count(),
-                this.repository.count({ where: { status: NotificationStatus.PENDING } }),
-                this.repository.count({ where: { status: NotificationStatus.SENT } }),
-                this.repository.count({ where: { status: NotificationStatus.FAILED } }),
-                this.repository.count({
-                    where: {
-                        status: NotificationStatus.PENDING,
-                        send_at: Between(today, tomorrow),
-                    },
-                }),
-                this.repository.count({
-                    where: {
-                        status: NotificationStatus.PENDING,
-                        send_at: Between(weekStart, weekEnd),
-                    },
-                }),
-            ]);
+        // 2. Tambahkan query aggregation ke dalam Promise.all
+        const [
+            total,
+            pending,
+            sent,
+            failed,
+            scheduled_today,
+            scheduled_this_week,
+            byTypeRaw // <--- Hasil raw dari query builder
+        ] = await Promise.all([
+            this.repository.count(),
+            this.repository.count({ where: { status: NotificationStatus.PENDING } }),
+            this.repository.count({ where: { status: NotificationStatus.SENT } }),
+            this.repository.count({ where: { status: NotificationStatus.FAILED } }),
+            this.repository.count({
+                where: {
+                    status: NotificationStatus.PENDING,
+                    send_at: Between(today, tomorrow),
+                },
+            }),
+            this.repository.count({
+                where: {
+                    status: NotificationStatus.PENDING,
+                    send_at: Between(weekStart, weekEnd),
+                },
+            }),
+            // Query untuk by_type (Group By)
+            this.repository
+                .createQueryBuilder('notification')
+                .select('notification.type', 'type')
+                .addSelect('COUNT(notification.id)', 'count')
+                .groupBy('notification.type')
+                .getRawMany(),
+        ]);
+
+        // 3. Format hasil raw query agar count menjadi number (biasanya return string dari DB driver)
+        const by_type = byTypeRaw.map(item => ({
+            type: item.type,
+            count: parseInt(item.count, 10) || 0
+        }));
 
         return {
             total,
@@ -233,6 +256,7 @@ export class NotificationRepository {
             failed,
             scheduled_today,
             scheduled_this_week,
+            by_type, // <--- Masukkan hasilnya di sini
         };
     }
 }

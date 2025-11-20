@@ -39,14 +39,22 @@ export class TransactionManager {
                     throw error;
                 }
 
-                // Retry on deadlock or lock timeout
-                if (this.isRetryableError(error) && attempts < this.MAX_RETRY_ATTEMPTS) {
-                    const backoffTime = Math.min(100 * Math.pow(2, attempts - 1), 1000);
-                    this.logger.warn(`⚠️ Retry attempt ${attempts}/${this.MAX_RETRY_ATTEMPTS} after ${backoffTime}ms`);
-                    await new Promise(resolve => setTimeout(resolve, backoffTime));
-                    continue;
+                // PERBAIKAN LOGIC DISINI:
+                if (this.isRetryableError(error)) {
+                    // Jika masih ada sisa percobaan -> Retry
+                    if (attempts < this.MAX_RETRY_ATTEMPTS) {
+                        const backoffTime = Math.min(100 * Math.pow(2, attempts - 1), 1000);
+                        this.logger.warn(`⚠️ Retry attempt ${attempts}/${this.MAX_RETRY_ATTEMPTS} after ${backoffTime}ms`);
+                        await new Promise(resolve => setTimeout(resolve, backoffTime));
+                        continue; // Ulangi loop
+                    } else {
+                        // Jika percobaan habis tapi error retryable -> Break loop
+                        // Ini akan membiarkan kode mengeksekusi throw di luar loop
+                        break;
+                    }
                 }
 
+                // Jika error TIDAK retryable (misal syntax error), lempar error generic langsung
                 this.logger.error('❌ Transaction error:', error);
                 throw new BadRequestException('Operasi gagal dilakukan');
             } finally {
@@ -54,6 +62,7 @@ export class TransactionManager {
             }
         }
 
+        // Kode ini sekarang bisa dijangkau jika loop di-break karena limit habis
         this.logger.error(`❌ Failed after ${this.MAX_RETRY_ATTEMPTS} attempts:`, lastError);
         throw new BadRequestException('Operasi gagal setelah beberapa percobaan');
     }

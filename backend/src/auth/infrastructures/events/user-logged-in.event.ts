@@ -6,5 +6,5 @@ export class UserLoggedInEvent {
         public readonly timestamp: Date = new Date(),
         public readonly ipAddress?: string,
         public readonly userAgent?: string,
-    ) { }
+    ) { Object.freeze(this); }
 }

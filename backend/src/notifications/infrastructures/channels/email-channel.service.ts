@@ -76,7 +76,7 @@ export class EmailChannelService {
         });
 
         return {
-            to: patient.email,
+            to: patient?.email!,
             subject: 'Pengingat Janji Temu - Klinik Dentizy',
             html: this.getReminderTemplate({
                 patientName: patient.nama_lengkap,

@@ -13,6 +13,7 @@ import {
     HttpCode,
     HttpStatus,
     UseInterceptors,
+    ClassSerializerInterceptor,
     // ClassSerializerInterceptor DIHAPUS
 } from '@nestjs/common';
 import {
@@ -22,6 +23,8 @@ import {
     ApiBearerAuth,
     ApiQuery,
     ApiParam,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { MedicalRecordsService } from '../../applications/orchestrator/medical_records.service';
 import { CreateMedicalRecordDto } from '../../applications/dto/create-medical-record.dto';
@@ -40,9 +43,12 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { FindAllMedicalRecordQueryDto } from 'src/medical_records/applications/dto/find-all-medical-record.dto';
 
 @ApiTags('Medical Records')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('medical-records')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
+@ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
+@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
 // @UseInterceptors(ClassSerializerInterceptor) // <-- BARIS INI DIHAPUS
 export class MedicalRecordsController {
     constructor(

@@ -13,14 +13,18 @@ export class AppointmentTimeValidator {
     /**
      * Validasi tanggal tidak boleh di masa lalu
      */
-    validateDateNotInPast(tanggalJanji: string | Date): void {
-        const appointmentDate = new Date(tanggalJanji);
-        appointmentDate.setHours(0, 0, 0, 0);
-
+    validateDateNotInPast(tanggalJanji: Date) {
+        // 1. Buat tanggal 'today' dan setel ke tengah malam
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0); // <-- Kunci perbaikan
 
-        if (appointmentDate < today) {
+        // 2. Buat salinan tanggal janji temu dan setel ke tengah malam
+        //    (Penting untuk membuat salinan agar tidak mengubah data aslinya)
+        const appointmentDateOnly = new Date(tanggalJanji.getTime());
+        appointmentDateOnly.setHours(0, 0, 0, 0); // <-- Kunci perbaikan
+
+        // 3. Sekarang perbandingan akan adil (hanya membandingkan tanggal)
+        if (appointmentDateOnly < today) {
             throw new BadRequestException('Tanggal janji temu tidak boleh di masa lalu');
         }
     }
@@ -29,17 +33,31 @@ export class AppointmentTimeValidator {
      * Validasi jam kerja klinik (08:00 - 16:30)
      */
     validateWorkingHours(jamJanji: string): void {
-        const [hours, minutes] = jamJanji.split(':').map(Number);
+        // 1. Baca jam, menit, dan DETIK. Beri default 0 jika detik tidak ada.
+        const [hours, minutes, seconds = 0] = jamJanji.split(':').map(Number);
 
-        if (
-            hours < this.WORKING_HOURS_START ||
-            hours >= this.WORKING_HOURS_END ||
-            (hours === this.LAST_APPOINTMENT_HOUR && minutes > this.LAST_APPOINTMENT_MINUTE)
-        ) {
+        // Cek kondisi jam di luar jam buka (sebelum 08:00 atau setelah/sama dengan 17:00)
+        const isBeforeStart = hours < this.WORKING_HOURS_START;
+        const isAfterEnd = hours >= this.WORKING_HOURS_END;
+
+        // Cek kondisi jam setelah waktu janji terakhir (16:30:00)
+        const isAfterLastAppointment =
+            // Kasus 1: Jam 16, menit di atas 30 (misal 16:31:00)
+            (hours === this.LAST_APPOINTMENT_HOUR && minutes > this.LAST_APPOINTMENT_MINUTE) ||
+
+            // Kasus 2: Jam 16, menit 30, TAPI detik di atas 0 (misal 16:30:01)
+            (hours === this.LAST_APPOINTMENT_HOUR &&
+                minutes === this.LAST_APPOINTMENT_MINUTE &&
+                seconds > 0);
+
+        // Jika salah satu kondisi benar, lempar error
+        if (isBeforeStart || isAfterEnd || isAfterLastAppointment) {
             throw new BadRequestException(
                 `Jam janji harus antara ${this.WORKING_HOURS_START}:00 - ${this.LAST_APPOINTMENT_HOUR}:${this.LAST_APPOINTMENT_MINUTE}`
             );
         }
+
+        // Jika lolos semua (misal 16:30:00 atau 08:00:00), maka tidak melempar error
     }
 
     /**
@@ -94,7 +112,20 @@ export class AppointmentTimeValidator {
      * Validasi komprehensif untuk create appointment
      */
     validateAppointmentTime(tanggalJanji: string | Date, jamJanji: string): void {
-        this.validateDateNotInPast(tanggalJanji);
+        // --- PERBAIKAN ---
+        // Selalu konversi input menjadi objek Date yang valid
+        // sebelum meneruskannya ke validator lain.
+        const appointmentDate = new Date(tanggalJanji);
+
+        // Periksa apakah konversi tanggal berhasil (jika string-nya tidak valid)
+        if (isNaN(appointmentDate.getTime())) {
+            throw new BadRequestException('Format tanggal janji temu tidak valid');
+        }
+
+        // Sekarang teruskan objek 'appointmentDate' yang sudah pasti
+        this.validateDateNotInPast(appointmentDate);
+        // ------------------
+
         this.validateWorkingHours(jamJanji);
     }
 }

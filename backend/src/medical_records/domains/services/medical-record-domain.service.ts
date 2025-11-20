@@ -22,7 +22,7 @@ export class MedicalRecordDomainService {
     /**
      * Validate appointment is eligible for medical record creation
      */
-    validateAppointmentEligibility(appointment: Appointment): void {
+    validateAppointmentEligibility(appointment: Appointment | undefined | null): void {
         if (!appointment) {
             throw new BadRequestException('Appointment tidak ditemukan');
         }

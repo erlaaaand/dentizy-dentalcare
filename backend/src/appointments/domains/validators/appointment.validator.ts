@@ -81,8 +81,8 @@ export class AppointmentValidator {
      * Cek apakah user adalah dokter (bukan kepala klinik)
      */
     isDoctorOnly(user: User): boolean {
-        const isDoctor = user.roles.some(role => role.name === UserRole.DOKTER);
-        const isKepalaKlinik = user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+        const isDoctor = user.roles?.some(role => role.name === UserRole.DOKTER) ?? false;
+        const isKepalaKlinik = user.roles?.some(role => role.name === UserRole.KEPALA_KLINIK) ?? false;
         return isDoctor && !isKepalaKlinik;
     }
 
@@ -90,6 +90,6 @@ export class AppointmentValidator {
      * Cek apakah user adalah kepala klinik
      */
     isKepalaKlinik(user: User): boolean {
-        return user.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+        return user.roles?.some(role => role.name === UserRole.KEPALA_KLINIK) ?? false;
     }
 }

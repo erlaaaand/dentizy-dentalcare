@@ -4,7 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { User } from '../../domains/entities/user.entity';
 import { Role } from '../../../roles/entities/role.entity';
-import { FindUsersQueryDto } from '../../applications/dto/find-users-query.dto';
+import { UserRole } from '../../../roles/entities/role.entity';
 
 @Injectable()
 export class UserRepository {
@@ -30,7 +30,8 @@ export class UserRepository {
             username: data.username,
             nama_lengkap: data.nama_lengkap,
             password: data.password,
-            roles: data.roles
+            roles: data.roles,
+            is_active: true
         });
 
         return this.repository.save(user);
@@ -51,124 +52,117 @@ export class UserRepository {
     }
 
     /**
-     * Find all users with optional role filter
+     * Find and count users with advanced filtering
+     * Used by FindUsersQueryDto
      */
-    async findAll(query: FindUsersQueryDto): Promise<User[]> {
-        const queryBuilder = this.repository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.roles', 'role')
-            .select([
-                'user.id',
-                'user.username',
-                'user.nama_lengkap',
-                'user.created_at',
-                'user.updated_at',
-                'user.profile_photo',
-                'role.id',
-                'role.name',
-                'role.description'
-            ]);
+    async findAndCountUsers(params: {
+        skip: number;
+        take: number;
+        search?: string;
+        role?: UserRole;
+        isActive?: boolean;
+    }): Promise<[User[], number]> {
+        const qb = this.repository.createQueryBuilder('user');
 
-        if (query.role) {
-            queryBuilder.where('role.name = :roleName', { roleName: query.role });
+        // Join roles
+        qb.leftJoinAndSelect('user.roles', 'role');
+
+        // Select fields (exclude password)
+        qb.select([
+            'user.id',
+            'user.username',
+            'user.nama_lengkap',
+            'user.created_at',
+            'user.updated_at',
+            'user.profile_photo',
+            'user.is_active',
+            'role.id',
+            'role.name',
+            'role.description'
+        ]);
+
+        // Filter by search (nama_lengkap OR username)
+        if (params.search) {
+            qb.andWhere(
+                '(LOWER(user.nama_lengkap) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search))',
+                { search: `%${params.search}%` }
+            );
         }
 
-        return queryBuilder.getMany();
+        // Filter by role
+        if (params.role) {
+            qb.andWhere('role.name = :roleName', { roleName: params.role });
+        }
+
+        // Filter by active status
+        if (params.isActive !== undefined) {
+            qb.andWhere('user.is_active = :isActive', { isActive: params.isActive });
+        }
+
+        // Pagination & sorting
+        qb.orderBy('user.created_at', 'DESC')
+            .skip(params.skip)
+            .take(params.take);
+
+        return qb.getManyAndCount();
     }
 
     /**
-     * Find user by ID
+     * Find user by ID (without password)
      */
     async findById(id: number): Promise<User | null> {
         return this.repository.findOne({
             where: { id },
             relations: ['roles'],
-            select: {
-                id: true,
-                username: true,
-                nama_lengkap: true,
-                created_at: true,
-                updated_at: true,
-                profile_photo: true
-            }
+            select: [
+                'id',
+                'username',
+                'nama_lengkap',
+                'created_at',
+                'updated_at',
+                'profile_photo',
+                'is_active'
+            ]
         });
     }
 
     /**
-     * Find user by ID with password (for authentication)
+     * Find user by ID (with password) - for password operations
      */
     async findByIdWithPassword(id: number): Promise<User | null> {
-        return this.repository.findOne({
-            where: { id },
-            relations: ['roles']
-        });
+        return this.repository.createQueryBuilder('user')
+            .leftJoinAndSelect('user.roles', 'role')
+            .where('user.id = :id', { id })
+            .addSelect('user.password')
+            .getOne();
     }
 
     /**
-     * Find user by username without password
+     * Find user by username (without password) - for username validation
      */
     async findByUsernameWithoutPassword(username: string): Promise<User | null> {
         return this.repository.findOne({
             where: { username },
-            relations: ['roles'],
-            select: {
-                id: true,
-                username: true,
-                nama_lengkap: true,
-                created_at: true,
-                updated_at: true,
-                profile_photo: true
-            }
+            select: ['id', 'username']
         });
     }
 
     /**
-     * Find user by username with password (for authentication)
+     * Find user by username (with password) - for authentication
      */
     async findByUsernameWithPassword(username: string): Promise<User | null> {
-        return this.repository
-            .createQueryBuilder('user') // Gunakan Query Builder
-            .where('user.username = :username', { username })
-            .addSelect('user.password') // <-- PAKSA 'select' kolom password
-            .leftJoinAndSelect('user.roles', 'role') // Load relasi roles
-            .getOne(); // Ambil hasilnya
-    }
-
-    /**
-     * Search users by name (partial match)
-     */
-    async searchByName(searchTerm: string): Promise<User[]> {
-        return this.repository
-            .createQueryBuilder('user')
+        return this.repository.createQueryBuilder('user')
             .leftJoinAndSelect('user.roles', 'role')
-            .where('LOWER(user.nama_lengkap) LIKE LOWER(:searchTerm)', {
-                searchTerm: `%${searchTerm}%`
-            })
-            .orWhere('LOWER(user.username) LIKE LOWER(:searchTerm)', {
-                searchTerm: `%${searchTerm}%`
-            })
-            .select([
-                'user.id',
-                'user.username',
-                'user.nama_lengkap',
-                'user.created_at',
-                'user.updated_at',
-                'user.profile_photo',
-                'role.id',
-                'role.name',
-                'role.description'
-            ])
-            .orderBy('user.nama_lengkap', 'ASC')
-            .getMany();
+            .where('user.username = :username', { username })
+            .addSelect('user.password')
+            .getOne();
     }
 
     /**
      * Check if username exists
      */
     async usernameExists(username: string): Promise<boolean> {
-        const count = await this.repository.count({
-            where: { username }
-        });
+        const count = await this.repository.count({ where: { username } });
         return count > 0;
     }
 
@@ -176,8 +170,28 @@ export class UserRepository {
      * Find roles by IDs
      */
     async findRolesByIds(roleIds: number[]): Promise<Role[]> {
-        return this.roleRepository.findBy({
-            id: In(roleIds)
+        return this.roleRepository.find({
+            where: { id: In(roleIds) }
+        });
+    }
+
+    /**
+     * Find recently created users
+     */
+    async findRecentlyCreated(limit: number): Promise<User[]> {
+        return this.repository.find({
+            order: { created_at: 'DESC' },
+            take: limit,
+            relations: ['roles'],
+            select: [
+                'id',
+                'username',
+                'nama_lengkap',
+                'created_at',
+                'updated_at',
+                'profile_photo',
+                'is_active'
+            ]
         });
     }
 
@@ -191,126 +205,25 @@ export class UserRepository {
         inactive: number;
     }> {
         const total = await this.repository.count();
+        const active = await this.repository.count({ where: { is_active: true } });
+        const inactive = await this.repository.count({ where: { is_active: false } });
 
-        // Count by role
+        // Get count by role
         const roleStats = await this.repository
             .createQueryBuilder('user')
             .leftJoin('user.roles', 'role')
             .select('role.name', 'roleName')
-            .addSelect('COUNT(user.id)', 'count')
+            .addSelect('COUNT(DISTINCT user.id)', 'count')
             .groupBy('role.name')
             .getRawMany();
 
         const byRole: Record<string, number> = {};
         roleStats.forEach(stat => {
-            byRole[stat.roleName || 'No Role'] = parseInt(stat.count);
+            if (stat.roleName) {
+                byRole[stat.roleName] = parseInt(stat.count);
+            }
         });
 
-        return {
-            total,
-            byRole,
-            active: total, // Implement actual active logic if needed
-            inactive: 0    // Implement actual inactive logic if needed
-        };
-    }
-
-    /**
-     * Find with pagination
-     */
-    async findWithPagination(
-        page: number,
-        limit: number,
-        query?: FindUsersQueryDto
-    ): Promise<{
-        data: User[];
-        meta: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-        };
-    }> {
-        const queryBuilder = this.repository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.roles', 'role')
-            .select([
-                'user.id',
-                'user.username',
-                'user.nama_lengkap',
-                'user.created_at',
-                'user.updated_at',
-                'user.profile_photo',
-                'role.id',
-                'role.name',
-                'role.description'
-            ]);
-
-        if (query?.role) {
-            queryBuilder.where('role.name = :roleName', { roleName: query.role });
-        }
-
-        const total = await queryBuilder.getCount();
-        const skip = (page - 1) * limit;
-
-        const data = await queryBuilder
-            .skip(skip)
-            .take(limit)
-            .orderBy('user.created_at', 'DESC')
-            .getMany();
-
-        return {
-            data,
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit)
-            }
-        };
-    }
-
-    /**
-     * Find recently created users
-     */
-    async findRecentlyCreated(limit: number): Promise<User[]> {
-        return this.repository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.roles', 'role')
-            .select([
-                'user.id',
-                'user.username',
-                'user.nama_lengkap',
-                'user.created_at',
-                'user.updated_at',
-                'user.profile_photo',
-                'role.id',
-                'role.name',
-                'role.description'
-            ])
-            .orderBy('user.created_at', 'DESC')
-            .take(limit)
-            .getMany();
-    }
-
-    /**
-     * Find users by IDs
-     */
-    async findByIds(userIds: number[]): Promise<User[]> {
-        return this.repository
-            .createQueryBuilder('user')
-            .leftJoinAndSelect('user.roles', 'role')
-            .whereInIds(userIds)
-            .select([
-                'user.id',
-                'user.username',
-                'user.nama_lengkap',
-                'user.created_at',
-                'user.updated_at',
-                'user.profile_photo',
-                'role.id',
-                'role.name',
-                'role.description'
-            ])
-            .getMany();
+        return { total, active, inactive, byRole };
     }
 }

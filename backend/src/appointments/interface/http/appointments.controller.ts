@@ -13,6 +13,7 @@ import {
     HttpCode,
     HttpStatus,
     UseInterceptors,
+    ClassSerializerInterceptor,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -21,6 +22,8 @@ import {
     ApiBearerAuth,
     ApiQuery,
     ApiParam,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { AppointmentsService } from '../../applications/orchestrator/appointments.service';
 import { CreateAppointmentDto } from '../../applications/dto/create-appointment.dto';
@@ -36,9 +39,12 @@ import { User } from '../../../users/domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 
 @ApiTags('Appointments')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('appointments')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
+@ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
+@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
 export class AppointmentsController {
     constructor(private readonly appointmentsService: AppointmentsService) { }
 

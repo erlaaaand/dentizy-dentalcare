@@ -30,8 +30,8 @@ export class AppointmentCreateValidator {
      * Validasi user adalah dokter atau kepala klinik
      */
     validateDoctorRole(doctor: User, doctorId: number): void {
-        const isDokter = doctor.roles.some(role => role.name === UserRole.DOKTER);
-        const isKepalaKlinik = doctor.roles.some(role => role.name === UserRole.KEPALA_KLINIK);
+        const isDokter = doctor.roles?.some(role => role.name === UserRole.DOKTER) ?? false;
+        const isKepalaKlinik = doctor.roles?.some(role => role.name === UserRole.KEPALA_KLINIK) ?? false;
 
         if (!isDokter && !isKepalaKlinik) {
             throw new ForbiddenException(

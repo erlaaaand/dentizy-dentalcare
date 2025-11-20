@@ -12,11 +12,6 @@ export class RolesService {
         private readonly roleRepository: Repository<Role>,
     ) { }
 
-    create(createRoleDto: CreateRoleDto): Promise<Role> {
-        const role = this.roleRepository.create(createRoleDto);
-        return this.roleRepository.save(role);
-    }
-
     findAll(): Promise<Role[]> {
         return this.roleRepository.find();
     }
@@ -27,16 +22,5 @@ export class RolesService {
             throw new NotFoundException(`Peran dengan ID #${id} tidak ditemukan`);
         }
         return role;
-    }
-
-    async update(id: number, updateRoleDto: UpdateRoleDto): Promise<Role> {
-        const role = await this.findOne(id);
-        Object.assign(role, updateRoleDto);
-        return this.roleRepository.save(role);
-    }
-
-    async remove(id: number): Promise<void> {
-        const role = await this.findOne(id);
-        await this.roleRepository.remove(role);
     }
 }

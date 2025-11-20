@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
+import { writeFileSync } from 'fs';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -108,6 +109,9 @@ async function bootstrap() {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
+            name: 'JWT',
+            description: 'Masukkan JWT Token di sini',
+            in: 'header'
           },
           'access-token',
         )
@@ -127,6 +131,17 @@ async function bootstrap() {
           filter: true,
         },
       });
+
+      try {
+        logger.log('📝 Generating swagger.json file...');
+        writeFileSync(
+          'D:/bengkel_kode/swagger.json',   // <- path absolut
+          JSON.stringify(document, null, 2)
+        );
+        logger.log('✅ swagger.json generated successfully in root directory');
+      } catch (err) {
+        logger.error('❌ Failed to generate swagger.json:', err.message);
+      }
 
       logger.log('📚 Swagger available at: /api-docs');
     }

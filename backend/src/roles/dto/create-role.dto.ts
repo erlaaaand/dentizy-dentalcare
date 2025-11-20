@@ -2,11 +2,11 @@ import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { UserRole } from '../entities/role.entity';
 
 export class CreateRoleDto {
-    @IsNotEmpty()
-    @IsEnum(UserRole)
+    @IsNotEmpty({ message: 'Role name is required' })
+    @IsEnum(UserRole, { message: 'Invalid role type' })
     name: UserRole;
 
     @IsOptional()
-    @IsString()
-    description: string;
+    @IsString({ message: 'Description must be a string' })
+    description?: string;
 }

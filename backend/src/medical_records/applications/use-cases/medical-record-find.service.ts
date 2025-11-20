@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalRecord } from '../../domains/entities/medical-record.entity';
@@ -46,6 +46,10 @@ export class MedicalRecordFindService {
             throw new NotFoundException(
                 `Rekam medis dengan ID #${id} tidak ditemukan atau Anda tidak memiliki akses`
             );
+        }
+        
+        if (!record.appointment) {
+            throw new BadRequestException(`Appointment untuk rekam medis #${id} tidak ditemukan`);
         }
 
         // Double-check authorization at domain level

@@ -72,7 +72,7 @@ export class AuthController {
 
     @Post('refresh')
     @UseGuards(AuthGuard('jwt'))
-    @ApiBearerAuth() // : Menandakan endpoint ini butuh token
+    @ApiBearerAuth('access-token') // : Menandakan endpoint ini butuh token
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Refresh access token' })
     @ApiResponse({
@@ -102,7 +102,7 @@ export class AuthController {
 
     @Post('logout')
     @UseGuards(AuthGuard('jwt'))
-    @ApiBearerAuth() // 
+    @ApiBearerAuth('access-token') // 
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Logout pengguna' })
     @ApiResponse({
@@ -119,7 +119,7 @@ export class AuthController {
 
     @Get('me')
     @UseGuards(AuthGuard('jwt'))
-    @ApiBearerAuth() // 
+    @ApiBearerAuth('access-token') // 
     @ApiOperation({ summary: 'Dapatkan profil pengguna saat ini' })
     @ApiResponse({
         status: 200,
@@ -136,7 +136,7 @@ export class AuthController {
 
     @Patch('me')
     @UseGuards(AuthGuard('jwt'))
-    @ApiBearerAuth()
+    @ApiBearerAuth('access-token')
     @ApiOperation({ summary: 'Update profil pengguna saat ini' })
     @ApiResponse({
         status: 200,

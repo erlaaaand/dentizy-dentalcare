@@ -9,6 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   Index,
+  DeleteDateColumn
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { MedicalRecord } from '../../../medical_records/domains/entities/medical-record.entity';
@@ -36,6 +37,13 @@ export class User {
 
   @UpdateDateColumn()
   updated_at: Date;
+
+  @Column({ default: true })
+  @Index('idx_user_active') // Index agar filter isActive cepat
+  is_active: boolean;
+
+  @DeleteDateColumn() // Fitur Soft Delete bawaan TypeORM
+  deleted_at: Date;
 
   @Column({ type: 'text', nullable: true })
   profile_photo: string;

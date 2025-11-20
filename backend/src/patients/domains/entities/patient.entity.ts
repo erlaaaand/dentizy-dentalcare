@@ -39,18 +39,18 @@ export class Patient {
     nama_lengkap: string;
 
     @Column({ type: 'date', nullable: true })
-    tanggal_lahir: Date;
+    tanggal_lahir: Date | null;
 
     @Column({ type: 'text', nullable: true })
-    alamat: string;
+    alamat: string | null;
 
-    @Column({ length: 250, nullable: true, unique: true })
+    @Column({ type: 'varchar', length: 250, nullable: true, unique: true })
     @Index('idx_patient_email')
-    email: string;
+    email: string | null;
 
-    @Column({ length: 20, nullable: true })
+    @Column({ type: 'varchar', length: 20, nullable: true })
     @Index('idx_patient_no_hp')
-    no_hp: string;
+    no_hp: string | null;
 
     @Column({
         type: 'enum',

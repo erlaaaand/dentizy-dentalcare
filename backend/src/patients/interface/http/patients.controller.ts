@@ -21,6 +21,8 @@ import {
     ApiBearerAuth,
     ApiQuery,
     ApiParam,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
@@ -35,10 +37,12 @@ import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
 @ApiTags('Patients')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @Controller('patients')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
+@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
 export class PatientsController {
     constructor(private readonly patientsService: PatientsService) { }
 

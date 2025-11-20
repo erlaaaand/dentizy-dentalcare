@@ -31,11 +31,18 @@ export class TransactionManager {
 
             return result;
         } catch (error) {
-            await queryRunner.rollbackTransaction();
-            this.logger.error(
-                `❌ Transaction rolled back: ${operationName}`,
-                error.stack
-            );
+            try {
+                await queryRunner.rollbackTransaction();
+                this.logger.error(
+                    `❌ Transaction rolled back: ${operationName}`,
+                    error.stack
+                );
+            } catch (rollbackError) {
+                this.logger.error(
+                    `⚠️ CRITICAL: Rollback failed for transaction: ${operationName}`,
+                    rollbackError.stack
+                );
+            }
             throw error;
         } finally {
             await queryRunner.release();
@@ -68,14 +75,21 @@ export class TransactionManager {
 
             return results;
         } catch (error) {
-            await queryRunner.rollbackTransaction();
-            this.logger.error(
-                `❌ All operations rolled back: ${operationName}`,
-                error.stack
-            );
+            try {
+                await queryRunner.rollbackTransaction();
+                this.logger.error(`❌ Transaction rolled back: ${operationName}`);
+            } catch (rollbackError) {
+                // rollback gagal, tapi jangan ganti error asli
+                this.logger.error(
+                    `⚠️ Rollback failed for transaction: ${operationName}`,
+                    rollbackError.stack
+                );
+            }
+            // lempar error asli agar caller tahu terjadi kegagalan
             throw error;
         } finally {
             await queryRunner.release();
+            this.logger.debug(`🔌 Connection released: ${operationName}`);
         }
     }
 

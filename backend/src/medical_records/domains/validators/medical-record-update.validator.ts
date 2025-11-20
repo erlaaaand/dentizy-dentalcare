@@ -45,23 +45,23 @@ export class MedicalRecordUpdateValidator {
      */
     validateSOAPFields(dto: UpdateMedicalRecordDto): void {
         // Validate individual field lengths
-        this.validateFieldLength('Subjektif', dto.subjektif, 5000);
-        this.validateFieldLength('Objektif', dto.objektif, 5000);
-        this.validateFieldLength('Assessment', dto.assessment, 5000);
-        this.validateFieldLength('Plan', dto.plan, 5000);
+        this.validateFieldLength('Subjektif', dto.subjektif ?? undefined, 5000);
+        this.validateFieldLength('Objektif', dto.objektif ?? undefined, 5000);
+        this.validateFieldLength('Assessment', dto.assessment ?? undefined, 5000);
+        this.validateFieldLength('Plan', dto.plan ?? undefined, 5000);
 
         // Validate field content
         if (dto.subjektif !== undefined) {
-            this.validateFieldContent('Subjektif', dto.subjektif);
+            this.validateFieldContent('Subjektif', dto.subjektif ?? undefined);
         }
         if (dto.objektif !== undefined) {
-            this.validateFieldContent('Objektif', dto.objektif);
+            this.validateFieldContent('Objektif', dto.objektif ?? undefined);
         }
         if (dto.assessment !== undefined) {
-            this.validateFieldContent('Assessment', dto.assessment);
+            this.validateFieldContent('Assessment', dto.assessment ?? undefined);
         }
         if (dto.plan !== undefined) {
-            this.validateFieldContent('Plan', dto.plan);
+            this.validateFieldContent('Plan', dto.plan ?? undefined);
         }
     }
 
@@ -262,7 +262,7 @@ export class MedicalRecordUpdateValidator {
 
         // Warn if record is old
         const recordAge = this.calculateRecordAge(record.created_at);
-        if (recordAge > 30) {
+        if (recordAge >= 30) {
             warnings.push(`Rekam medis ini sudah berumur ${recordAge} hari`);
         }
 
