@@ -107,6 +107,7 @@ Follow these steps to set up the development environment:
     ```
 
 3.  **Database Setup**
+    
     Execute the following SQL command to create the database:
     ```sql
     CREATE DATABASE dentizy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -165,7 +166,7 @@ Follow these steps to set up the development environment:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-### Gmail Configuration
+**Gmail Configuration:**
 
 For Gmail, you need to generate an **App Password**:
 
@@ -173,6 +174,8 @@ For Gmail, you need to generate an **App Password**:
 2. Go to [Google App Passwords](https://myaccount.google.com/apppasswords)
 3. Generate a new app password
 4. Use this password in `EMAIL_PASS`
+
+</details>
 
 ---
 
@@ -246,7 +249,7 @@ The Swagger documentation provides:
 
 ---
 
-## Security
+## Security Implementation
 
 This application implements multiple security layers:
 
@@ -307,7 +310,7 @@ mau deploy
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -334,17 +337,19 @@ npm run lint
 
 ---
 
-## Developer
+## Developer & Contact
 
-<p align="center">
+<div align="center">
   <img src="https://img.shields.io/badge/Developer-Erland%20Agsya%20Agustian-blue?style=for-the-badge" alt="Developer" />
-</p>
+</div>
+
+<br>
 
 **Erland Agsya Agustian**
 
-- 📧 Email: [erlandagsya458@gmail.com](mailto:erlandagsya458@gmail.com)
-- 📱 Instagram: [@erlaaaand_](https://instagram.com/erlaaaand_)
-- 💼 LinkedIn: [Connect with me](https://www.linkedin.com/in/erland-agsya-6619892a1?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app)
+- Email: [erlandagsya458@gmail.com](mailto:erlandagsya458@gmail.com)
+- Instagram: [@erlaaaand_](https://instagram.com/erlaaaand_)
+- LinkedIn: [Connect with me](https://www.linkedin.com/in/erland-agsya-6619892a1)
 
 ### Get in Touch
 
@@ -372,14 +377,11 @@ If you encounter any issues or have questions:
 1. Check the [API Documentation](http://localhost:3000/api)
 2. Review this README
 3. Open an [Issue](https://github.com/your-repo/issues)
-4. Contact the [Developer](#-developer)
+4. Contact the [Developer](#developer--contact)
 
 ---
 
-<p align="center">
-  Develop <strong>Erland Agsya Agustian</strong>
-</p>
-
-<p align="center">
-  <strong>⭐ Star this repository if you find it helpful!</strong>
-</p>
+<div align="center">
+  <p>Developed by <strong>Erland Agsya Agustian</strong></p>
+  <p><strong>Star this repository if you find it helpful!</strong></p>
+</div>
