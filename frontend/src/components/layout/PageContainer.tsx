@@ -4,18 +4,13 @@ import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Breadcrumb, Button, Card, LoadingSpinner } from '@/components/ui';
 import { ArrowLeft } from 'lucide-react';
-import { ROUTES } from '@/core';
-import { cn } from '@/core';
-
-// ============================================
-// TYPES
-// ============================================
+import { ROUTES, cn } from '@/core';
 
 export interface PageAction {
   label: string;
   icon?: React.ReactNode;
   onClick: () => void;
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'success' | 'warning';
   size?: 'sm' | 'md' | 'lg';
   loading?: boolean;
   disabled?: boolean;
@@ -30,6 +25,7 @@ export interface PageContainerProps {
       label: string;
       href?: string;
       active?: boolean;
+      icon?: React.ReactNode;
     }>;
   };
   actions?: PageAction[];
@@ -43,10 +39,6 @@ export interface PageContainerProps {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   showHeader?: boolean;
 }
-
-// ============================================
-// STYLE CONFIGURATION
-// ============================================
 
 const maxWidthClasses = {
   sm: 'max-w-2xl',
@@ -62,10 +54,6 @@ const paddingClasses = {
   md: 'px-6 py-6',
   lg: 'px-8 py-8',
 };
-
-// ============================================
-// AUTO BREADCRUMB GENERATOR
-// ============================================
 
 const generateBreadcrumbFromPath = (pathname: string) => {
   const paths = pathname.split('/').filter(Boolean);
@@ -115,10 +103,6 @@ const getPageTitleFromPath = (pathname: string): string => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
-
-// ============================================
-// MAIN COMPONENT
-// ============================================
 
 export const PageContainer: React.FC<PageContainerProps> = ({
   children,

@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Bell } from 'lucide-react';
 import { cn } from '@/core';
-import { AlertBannerProps } from './alert-banner.types';
+import type { AlertBannerProps } from './alert-banner.types';
 import { alertStyles, sizeClasses, variantClasses } from './alert-banner.styles';
 
-// Sub-components imports
 import { AlertContainer } from './AlertContainer';
 import { SuccessAlert } from './SuccessAlert';
 import { ErrorAlert } from './ErrorAlert';
@@ -40,7 +39,6 @@ export default function AlertBanner({
     const styles = alertStyles[type];
     const sizeClass = sizeClasses[size];
 
-    // Auto-close logic
     useEffect(() => {
         if (autoClose && onClose) {
             const timer = setTimeout(onClose, autoClose);
@@ -64,19 +62,18 @@ export default function AlertBanner({
                 className
             )}
         >
-            {/* Accent Bar for Banner Variant */}
             {variant === 'banner' && (
                 <div className={cn("absolute left-0 top-0 bottom-0 w-1", styles.accent)} />
             )}
 
-            {/* Icon */}
             {showIcon && (
                 <div className={cn('flex-shrink-0 mr-3', styles.icon)}>
-                    {React.isValidElement(IconComponent) ? IconComponent : <IconComponent className={sizeClass.icon} />}
+                    {React.isValidElement(IconComponent)
+                        ? IconComponent
+                        : <IconComponent className={sizeClass.icon} />}
                 </div>
             )}
 
-            {/* Content */}
             <div className="flex-1 min-w-0">
                 {title && (
                     <h5 className={cn('font-semibold mb-1', sizeClass.title, styles.title)}>
@@ -89,12 +86,12 @@ export default function AlertBanner({
                 {action && <div className="mt-3">{action}</div>}
             </div>
 
-            {/* Close Button */}
             {dismissible && onClose && (
                 <button
                     onClick={onClose}
                     className={cn(
-                        'flex-shrink-0 ml-3 rounded-md p-1 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1',
+                        'flex-shrink-0 ml-3 rounded-md p-1 transition-colors',
+                        'focus:outline-none focus:ring-2 focus:ring-offset-1',
                         styles.icon,
                         'hover:bg-black/5'
                     )}
@@ -107,7 +104,6 @@ export default function AlertBanner({
     );
 }
 
-// Attach Sub-components
 AlertBanner.Container = AlertContainer;
 AlertBanner.Success = SuccessAlert;
 AlertBanner.Error = ErrorAlert;

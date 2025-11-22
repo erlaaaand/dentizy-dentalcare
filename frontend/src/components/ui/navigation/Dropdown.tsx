@@ -25,21 +25,44 @@ const sizeClasses = {
     lg: 'px-4 py-3 text-lg',
 };
 
-export const Dropdown: React.FC<DropdownProps> = ({
-    options, value, onChange, placeholder = 'Pilih opsi...',
-    disabled = false, className = '', label, error, size = 'md',
-}) => {
+export function Dropdown({
+    options,
+    value,
+    onChange,
+    placeholder = 'Pilih opsi...',
+    disabled = false,
+    className = '',
+    label,
+    error,
+    size = 'md',
+}: DropdownProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    // useRef diinisialisasi dengan null, jadi tipenya adalah RefObject<HTMLDivElement | null>
     const dropdownRef = useRef<HTMLDivElement>(null);
+
     const selectedOption = options.find(opt => opt.value === value);
 
-    useClickOutside(dropdownRef, () => {
-        if (isOpen) setIsOpen(false);
-    });
+    useClickOutside<HTMLDivElement>(
+        dropdownRef as React.RefObject<HTMLDivElement>,
+        () => {
+            if (isOpen) setIsOpen(false);
+        },
+        isOpen
+    );
 
     const handleSelect = (optionValue: string) => {
         onChange?.(optionValue);
         setIsOpen(false);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setIsOpen(!isOpen);
+        } else if (e.key === 'Escape') {
+            setIsOpen(false);
+        }
     };
 
     return (
@@ -54,6 +77,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 <button
                     type="button"
                     onClick={() => !disabled && setIsOpen(!isOpen)}
+                    onKeyDown={handleKeyDown}
                     disabled={disabled}
                     className={cn(
                         'w-full text-left bg-white border rounded-lg',
@@ -65,6 +89,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                         error ? 'border-red-500' : 'border-gray-300',
                         isOpen && 'ring-2 ring-blue-500 border-transparent'
                     )}
+                    aria-haspopup="listbox"
+                    aria-expanded={isOpen}
                 >
                     <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
                         {selectedOption ? selectedOption.label : placeholder}
@@ -78,12 +104,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
                         stroke="currentColor"
                         viewBox="0 0 24 24"
                     >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                        />
                     </svg>
                 </button>
 
                 {isOpen && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto animate-fade-in">
+                    <div
+                        className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto animate-fade-in"
+                        role="listbox"
+                    >
                         {options.length === 0 ? (
                             <div className="px-4 py-3 text-sm text-gray-500">
                                 Tidak ada opsi tersedia
@@ -95,6 +129,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                                     type="button"
                                     onClick={() => !option.disabled && handleSelect(option.value)}
                                     disabled={option.disabled}
+                                    role="option"
+                                    aria-selected={option.value === value}
                                     className={cn(
                                         'w-full px-4 py-2 text-left text-sm transition-colors duration-150',
                                         option.disabled
@@ -111,7 +147,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 )}
             </div>
 
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+            {error && (
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                        />
+                    </svg>
+                    {error}
+                </p>
+            )}
         </div>
     );
-};
+}
+
+export default Dropdown;

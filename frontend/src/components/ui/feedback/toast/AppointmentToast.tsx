@@ -1,6 +1,8 @@
 import { AppointmentToastProps } from "./toast.types";
-import { type ToastType } from "@/core";
 import { Toast } from "./Toast";
+
+// Define ToastType locally since it's not exported from @/core
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export function AppointmentToast({
     id,
@@ -10,7 +12,6 @@ export function AppointmentToast({
     onClose,
     onViewDetails,
 }: AppointmentToastProps) {
-    // Mapping type appointment ke tipe Toast core
     const toastTypeMap: Record<string, ToastType> = {
         confirmed: 'success',
         reminder: 'info',
@@ -22,20 +23,20 @@ export function AppointmentToast({
 
     const toastConfig = {
         confirmed: {
-            message: `Appointment confirmed for ${patientName} at ${appointmentTime}`,
-            action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
+            message: `Janji temu dikonfirmasi untuk ${patientName} pada ${appointmentTime}`,
+            action: onViewDetails ? { label: 'Lihat Detail', onClick: onViewDetails } : undefined,
         },
         reminder: {
-            message: `Reminder: ${patientName} has an appointment at ${appointmentTime}`,
-            action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
+            message: `Pengingat: ${patientName} memiliki janji temu pada ${appointmentTime}`,
+            action: onViewDetails ? { label: 'Lihat Detail', onClick: onViewDetails } : undefined,
         },
         cancelled: {
-            message: `Appointment cancelled for ${patientName} at ${appointmentTime}`,
+            message: `Janji temu dibatalkan untuk ${patientName} pada ${appointmentTime}`,
             action: undefined,
         },
         rescheduled: {
-            message: `Appointment rescheduled for ${patientName} at ${appointmentTime}`,
-            action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
+            message: `Janji temu dijadwalkan ulang untuk ${patientName} pada ${appointmentTime}`,
+            action: onViewDetails ? { label: 'Lihat Detail', onClick: onViewDetails } : undefined,
         },
     };
 

@@ -1,9 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
 import { cn } from '@/core';
-import { defaultSeparator } from './index';
-import { BreadcrumbProps } from './breadcrumb.types';
+import { defaultSeparator } from './DefaultSeparator.styles';
+import type { BreadcrumbProps } from './breadcrumb.types';
 import { sizeClasses, variantClasses } from './breadcrumb.styles';
+
 import { BreadcrumbItem } from './BreadcrumbItem';
 import { PageBreadcrumb } from './PageBreadcrumb';
 import { CompactBreadcrumb } from './CompactBreadcrumb';
@@ -20,39 +21,33 @@ export function Breadcrumb({
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    // Filter items if showCurrentPage is false
     const displayItems = showCurrentPage ? items : items.slice(0, -1);
 
     if (displayItems.length === 0) return null;
 
     return (
-        <nav
-            aria-label="Breadcrumb"
-            className={cn('flex items-center', className)}
-        >
-            <ol className="flex items-center flex-wrap">
+        <nav aria-label="Breadcrumb" className={cn('flex items-center', className)}>
+            <ol className="flex items-center flex-wrap gap-1">
                 {displayItems.map((item, index) => {
                     const isLast = index === displayItems.length - 1;
                     const isLink = item.href && !isLast;
 
                     return (
                         <li key={index} className="flex items-center">
-                            {/* Separator */}
                             {index > 0 && (
                                 <span
-                                    className={cn('flex-shrink-0 text-gray-400', sizeClass.separator)}
+                                    className={cn('flex-shrink-0 text-gray-400 mx-2', sizeClass.separator)}
                                     aria-hidden="true"
                                 >
                                     {separator}
                                 </span>
                             )}
 
-                            {/* Breadcrumb Item */}
                             {isLink ? (
                                 <Link
                                     href={item.href ?? '#'}
                                     className={cn(
-                                        'flex items-center gap-1.5 font-medium',
+                                        'flex items-center gap-1.5 font-medium transition-colors',
                                         sizeClass.item,
                                         variantClass.link
                                     )}
@@ -89,7 +84,6 @@ export function Breadcrumb({
     );
 }
 
-// Create main component with compound pattern
 const BreadcrumbComponent = Object.assign(Breadcrumb, {
     Item: BreadcrumbItem,
     Page: PageBreadcrumb,

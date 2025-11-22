@@ -1,10 +1,8 @@
-// frontend/src/components/ui/index.ts
-
-// ===== Buttons =====
+// Buttons
 export { default as Button } from './button/Button';
 export * from './button';
 
-// ===== Data Display =====
+// Data Display
 export { default as Avatar } from './data-display/avatar/Avatar';
 export { default as Badge } from './data-display/badge/Badge';
 export { default as Card } from './data-display/card/Card';
@@ -15,14 +13,14 @@ export { default as StatusIndicator } from './data-display/status-indicator/Stat
 export { default as Table } from './data-display/table/Table';
 
 export * from './data-display/avatar';
-export * from './data-display/badge';
+export {} from './data-display/badge';
 export * from './data-display/card';
 export * from './data-display/empty-state';
 export * from './data-display/skeleton';
 export * from './data-display/status-indicator';
 export * from './data-display/table';
 
-// ===== Feedback =====
+// Feedback
 export { default as AlertBanner } from './feedback/alert-banner/AlertBanner';
 export { default as ConfirmDialog } from './feedback/confirm-dialog/ConfirmDialog';
 export { ErrorMessage } from './feedback/error-message/ErrorMessage';
@@ -39,7 +37,7 @@ export * from './feedback/modal';
 export * from './feedback/progress-bar';
 export * from './feedback/toast';
 
-// ===== Forms =====
+// Forms
 export { default as Checkbox } from './forms/checkbox/Checkbox';
 export { default as DatePicker } from './forms/date-picker/DatePicker';
 export { default as FileUpload } from './forms/file-upload/FileUpload';
@@ -58,10 +56,7 @@ export * from './forms/search-input';
 export * from './forms/select';
 export * from './forms/text-area';
 
-// Re-export file upload utilities
-export { formatFileSize, getFileIcon } from './forms/file-upload/file-upload.utils';
-
-// ===== Layout =====
+// Layout
 export { default as Breadcrumb } from './layout/breadcrumb/Breadcrumb';
 export { default as Footer } from './layout/footer/Footer';
 export { default as Header } from './layout/header/Header';
@@ -74,13 +69,13 @@ export * from './layout/header';
 export * from './layout/page-header';
 export * from './layout/sidebar';
 
-// ===== Navigation =====
+// Navigation
 export { default as Accordion } from './navigation/Accordion';
 export { default as Dropdown } from './navigation/Dropdown';
 export { Pagination } from './navigation/Pagination';
 export { Tabs, TabPanel } from './navigation/Tabs';
 
-// ===== Overlays =====
+// Overlays
 export { default as CopyButton } from './overlays/CopyButton';
-export { default as Popover } from './overlays/Popover';
+export { Popover } from './overlays/Popover';
 export { default as Tooltip } from './overlays/Tooltip';

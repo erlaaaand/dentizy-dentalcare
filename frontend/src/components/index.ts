@@ -1,10 +1,4 @@
-// frontend/src/components/index.ts
-
-// Re-export all UI components
-export * from './ui';
-
-// Re-export layouts
+// components/index.ts
 export * from './layout';
-
-// Re-export providers
 export * from './providers';
+export * from './ui';

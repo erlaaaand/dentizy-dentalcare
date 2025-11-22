@@ -6,7 +6,7 @@ export interface AlertBannerProps {
     message?: string | React.ReactNode;
     onClose?: () => void;
     className?: string;
-    icon?: React.ReactNode | LucideIcon;
+    icon?: React.ElementType | React.ReactElement | LucideIcon;
     action?: React.ReactNode;
     size?: 'sm' | 'md' | 'lg';
     variant?: 'banner' | 'inline' | 'toast' | 'floating';

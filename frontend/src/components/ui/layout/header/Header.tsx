@@ -4,7 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn, useAuth, useConfirm, useToast, useClickOutside, getInitials, ROUTES, ROLE_LABELS } from '@/core';
 import { useGetProfile } from '@/core/services/api/auth.api';
-import { HeaderProps } from './header.types';
+import type { HeaderProps } from './header.types';
 import { sizeClasses, variantClasses } from './header.styles';
 import { ChevronIcon } from './header.icon';
 import { ProfileDropdown } from './ProfileDropdown';
@@ -38,51 +38,100 @@ export function Header({
     const profileRef = useRef<HTMLDivElement>(null);
     const { data: profileData } = useGetProfile();
 
-    useClickOutside(profileRef, () => showProfileDropdown && setShowProfileDropdown(false));
+    useClickOutside(profileRef as React.RefObject<HTMLDivElement>, () => {
+        if (showProfileDropdown) setShowProfileDropdown(false);
+    });
 
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
     const handleMenuSelect = async (value: string) => {
         setShowProfileDropdown(false);
-        switch (value) {
-            case 'profile':
-                onProfileClick ? onProfileClick() : router.push(ROUTES.PROFILE || '/dashboard/profile');
-                break;
-            case 'settings':
-                onSettingsClick ? onSettingsClick() : router.push('/dashboard/settings');
-                break;
-            case 'logout':
-                onLogoutClick ? onLogoutClick() : await handleLogout();
-                break;
+
+        try {
+            switch (value) {
+                case 'profile':
+                    if (onProfileClick) {
+                        onProfileClick();
+                    } else {
+                        router.push(ROUTES.PROFILE || '/dashboard/profile');
+                    }
+                    break;
+                case 'settings':
+                    if (onSettingsClick) {
+                        onSettingsClick();
+                    } else {
+                        router.push('/dashboard/settings');
+                    }
+                    break;
+                case 'logout':
+                    if (onLogoutClick) {
+                        onLogoutClick();
+                    } else {
+                        await handleLogout();
+                    }
+                    break;
+            }
+        } catch (error) {
+            console.error('Menu action error:', error);
+            showError('Terjadi kesalahan. Silakan coba lagi.');
         }
     };
 
     const handleLogout = async () => {
-        const isConfirmed = await confirm({
-            title: 'Konfirmasi Logout',
-            message: 'Apakah Anda yakin ingin keluar dari sistem?',
-            type: 'danger',
-            confirmText: 'Ya, Keluar',
-        });
-        if (isConfirmed) {
-            try {
+        try {
+            const isConfirmed = await confirm({
+                title: 'Konfirmasi Logout',
+                message: 'Apakah Anda yakin ingin keluar dari sistem?',
+                type: 'danger',
+                confirmText: 'Ya, Keluar',
+            });
+
+            if (isConfirmed) {
                 await authLogout();
                 showSuccess('Logout berhasil! Sampai jumpa kembali.');
                 router.push(ROUTES.LOGIN);
-            } catch {
-                showError('Gagal logout! Silakan coba lagi.');
             }
+        } catch (error) {
+            console.error('Logout error:', error);
+            showError('Gagal logout! Silakan coba lagi.');
         }
     };
 
-    const getUserRoleLabel = () => (user?.role ? ROLE_LABELS[user.role] || user.role : 'User');
-    const getUserName = () => userName || profileData?.nama_lengkap || user?.nama_lengkap || 'User';
-    const getUserRole = () => userRole || getUserRoleLabel();
-    const getWelcomeText = () => welcomeText || 'Selamat datang kembali di dashboard Dentizy';
+    const getUserRoleLabel = () => {
+        const role = user?.role as keyof typeof ROLE_LABELS | undefined;
+
+        if (role && ROLE_LABELS[role]) {
+            return ROLE_LABELS[role];
+        }
+
+        return role || 'User';
+    };
+
+
+    const getUserName = (): string => {
+        return (
+            (userName as string | undefined) ??
+            (profileData?.nama_lengkap as string | undefined) ??
+            (user?.nama_lengkap as string | undefined) ??
+            'User'
+        );
+    };
+
+    const getUserRole = () => {
+        return userRole || getUserRoleLabel();
+    };
+
+    const getWelcomeText = () => {
+        return welcomeText || 'Selamat datang kembali di dashboard Dentizy';
+    };
 
     if (children) {
-        return <header id="app-header" className={cn(variantClass, sizeClass.container, className)}>{children}</header>;
+        return (
+            <header id="app-header" className={cn(variantClass, sizeClass.container, className)}>
+                {children}
+            </header>
+        );
     }
 
     if (!isAuthenticated) return null;
@@ -92,10 +141,15 @@ export function Header({
             <div className="flex items-center justify-between">
                 {showWelcome && (
                     <div className="min-w-0 flex-1">
-                        <h1 className={cn('font-bold text-gray-900', sizeClass.title)}>Halo, {getUserName()}!</h1>
-                        <p className={cn('text-gray-600 mt-1', sizeClass.subtitle)}>{getWelcomeText()}</p>
+                        <h1 className={cn('font-bold text-gray-900', sizeClass.title)}>
+                            Halo, {getUserName()}!
+                        </h1>
+                        <p className={cn('text-gray-600 mt-1', sizeClass.subtitle)}>
+                            {getWelcomeText()}
+                        </p>
                     </div>
                 )}
+
                 {showProfile && (
                     <div className="relative" ref={profileRef}>
                         <button
@@ -104,17 +158,30 @@ export function Header({
                             aria-label="Menu profil"
                             aria-expanded={showProfileDropdown}
                         >
-                            <div className={cn('bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center shadow-sm text-white font-medium', sizeClass.avatar)}>
-                                {userAvatar ? <img src={userAvatar} alt={getUserName()} className="rounded-full" /> : <span>{getInitials(getUserName())}</span>}
+                            <div className={cn(
+                                'bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full',
+                                'flex items-center justify-center shadow-sm text-white font-medium',
+                                sizeClass.avatar
+                            )}>
+                                {userAvatar ? (
+                                    <img
+                                        src={userAvatar}
+                                        alt={getUserName()}
+                                        className="rounded-full w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span>{getInitials(getUserName())}</span>
+                                )}
                             </div>
                             <ChevronIcon isOpen={showProfileDropdown} />
                         </button>
+
                         <ProfileDropdown
                             isOpen={showProfileDropdown}
                             onClose={() => setShowProfileDropdown(false)}
                             userName={getUserName()}
                             userRole={getUserRole()}
-                            username={user?.username}
+                            username={user?.username as string | undefined}
                             onMenuSelect={handleMenuSelect}
                             size={size}
                         />

@@ -23,7 +23,7 @@ export interface HeaderMenuOption {
 export interface ProfileDropdownProps {
     isOpen: boolean;
     onClose: () => void;
-    userName?: string;
+    userName?: string | undefined;
     userRole?: string;
     username?: string;
     menuOptions?: HeaderMenuOption[];

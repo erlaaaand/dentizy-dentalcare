@@ -2,20 +2,17 @@ export interface BreadcrumbItem {
     label: string;
     href?: string;
     icon?: React.ReactNode;
+    active?: boolean;
 }
 
 export interface BreadcrumbProps {
-    items: BreadcrumbItemComponentProps[];
+    items: BreadcrumbItem[];
     separator?: React.ReactNode;
     className?: string;
     size?: 'sm' | 'md' | 'lg';
     variant?: 'default' | 'minimal' | 'bold';
     showCurrentPage?: boolean;
 }
-
-// ============================================
-// BREADCRUMB ITEM COMPONENT (for compound pattern)
-// ============================================
 
 export interface BreadcrumbItemComponentProps {
     children: React.ReactNode;
@@ -31,9 +28,9 @@ export interface PageBreadcrumbProps extends Omit<BreadcrumbProps, 'variant' | '
     description?: string;
 }
 
-// Breadcrumb with home icon
 export interface HomeBreadcrumbProps extends Omit<BreadcrumbProps, 'items'> {
     items: Omit<BreadcrumbItem, 'icon'>[];
     homeHref?: string;
     homeLabel?: string;
+    homeIcon?: React.ReactNode; // ✅ Added this
 }
