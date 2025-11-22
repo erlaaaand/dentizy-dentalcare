@@ -3,7 +3,7 @@
 // ============================================
 
 import { SectionHeaderProps } from "./page-header.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function SectionHeader({
     title,

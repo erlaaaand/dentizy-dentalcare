@@ -1,6 +1,6 @@
 // components/ui/data-display/Card.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { CardProps } from './card.types';
 import { paddingClasses, shadowClasses, roundedClasses, variantClasses } from './card.styles';
 import { CardHeader } from './CardHeader';

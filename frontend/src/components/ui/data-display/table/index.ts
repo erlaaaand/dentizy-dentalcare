@@ -4,7 +4,6 @@ export { default } from './Table';
 export * from './TableActions';
 export * from './TableContainer';
 export * from './TableFooter';
-export * from './TableSkeleton';
 export * from './SortIcon';
 
 // Interface

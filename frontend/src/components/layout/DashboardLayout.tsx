@@ -1,8 +1,8 @@
 import React from 'react';
-import Sidebar from '@/components/ui/layout/Sidebar';
-import Header from '@/components/ui/layout/Header';
+import Sidebar from '@/components/ui/layout/sidebar/Sidebar';
+import Header from '@/components/ui/layout/header/Header';
 import Footer from '@/components/ui/layout/footer/Footer';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 
 export interface DashboardLayoutProps {
     children: React.ReactNode;

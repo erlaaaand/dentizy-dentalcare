@@ -1,5 +1,5 @@
 import { SelectGroupProps } from "./select.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function SelectGroup({
     children,

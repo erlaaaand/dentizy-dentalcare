@@ -1,6 +1,6 @@
 import React from 'react';
 import { useDebounce } from '@/core/hooks';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { SearchInputProps } from './search-input.types';
 import { sizeClasses, variantClasses } from './search-input.styles';
 import { LoadingSpinner, SearchIcon, ClearIcon } from './Icon.styles';

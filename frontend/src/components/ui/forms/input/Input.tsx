@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { InputProps } from './input.types';
 import { PasswordInput } from './PasswordInput';
 import { inputSizeClasses, inputVariantClasses } from './input.styles';

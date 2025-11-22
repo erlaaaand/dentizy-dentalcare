@@ -37,9 +37,9 @@ export { default as TimePicker } from './forms/time-picker/TimePicker';
 // ===== Layout =====
 export { default as Breadcrumb } from './layout/breadcrumb/Breadcrumb';
 export { default as Footer } from './layout/footer/Footer';
-export { default as Header } from './layout/Header';
+export { default as Header } from './layout/header/Header';
 export { default as PageHeader } from './layout/page-header/PageHeader';
-export { default as Sidebar } from './layout/Sidebar';
+export { default as Sidebar } from './layout/sidebar/Sidebar';
 
 // ===== Navigation =====
 export { default as Accordion } from './navigation/Accordion';

@@ -1,7 +1,7 @@
 // components/ui/data-display/Avatar.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
-import { getInitials } from '@/core/utils';
+import { cn } from '@/core';
+import { getInitials } from '@/core';
 import { AvatarProps } from './avatar.types';
 import {
     getColorFromString, 

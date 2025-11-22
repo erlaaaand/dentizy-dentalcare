@@ -1,4 +1,4 @@
-import { DatePicker } from "./DatePicker";
+import { default as DatePicker } from "./DatePicker";
 import { BirthDatePickerProps } from "./date-picker.types";
 
 export function BirthDatePicker({

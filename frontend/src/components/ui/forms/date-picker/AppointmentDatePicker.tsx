@@ -1,5 +1,5 @@
 import { AppointmentDatePickerProps } from "./date-picker.types";
-import { DatePicker } from "./DatePicker";
+import { default as DatePicker } from "./DatePicker";
 
 export function AppointmentDatePicker({
     appointmentType = 'consultation',

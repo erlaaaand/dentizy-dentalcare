@@ -1,5 +1,5 @@
 import { ButtonGroupProps } from './button.types';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 
 export const ButtonGroup: React.FC<ButtonGroupProps> = ({
     children,

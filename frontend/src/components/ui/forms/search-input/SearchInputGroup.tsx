@@ -1,6 +1,6 @@
 import { SearchInputGroupProps } from "./search-input.types";
 import { SearchInput } from "./SearchInput";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function SearchInputGroup({
     search,

@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { defaultSeparator } from './index';
 import { BreadcrumbProps } from './breadcrumb.types';
 import { sizeClasses, variantClasses } from './breadcrumb.styles';

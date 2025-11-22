@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { ButtonProps } from './button.types';
 import { LoadingSpinner } from '../feedback/loading-spinner/LoadingSpinner';
 import {

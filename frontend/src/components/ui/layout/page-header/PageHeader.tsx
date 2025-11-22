@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { Breadcrumb } from '@/components/ui/layout/breadcrumb';
 import { PageHeaderProps } from './page-header.types';
 import { CompactPageHeader } from './CompactPageHeader';

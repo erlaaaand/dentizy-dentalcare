@@ -2,13 +2,13 @@
 'use client';
 
 import React, { useRef, useState } from 'react';
-import { cn } from '@/core/utils';
-import { formatFileSize, getFileIcon } from '@/core/utils';
+import { cn } from '@/core';
+import { formatFileSize, getFileIcon } from '@/core/utils/date/format.utils';
 import { FileUploadContainer } from './FileUploadContainer';
 import { PatientDocumentUpload } from './PatientDocumentUpload';
-import { TreatmentPhotoUpload } from './TreatmentPhotoUpload';
 import { FileUploadProps } from './file-upload.types';
 import { sizeClasses, variantClasses } from './file-upload.styles';
+
 
 export default function FileUpload({
     accept,
@@ -230,4 +230,3 @@ export default function FileUpload({
 
 FileUpload.Container = FileUploadContainer;
 FileUpload.PatientDocument = PatientDocumentUpload;
-FileUpload.TreatmentPhoto = TreatmentPhotoUpload;

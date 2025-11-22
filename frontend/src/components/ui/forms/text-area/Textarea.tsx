@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import type { TextareaProps } from './text-area.types';
 import { ErrorIcon } from './Icon.styles';
 import { CompactTextarea } from './CompactTextarea';

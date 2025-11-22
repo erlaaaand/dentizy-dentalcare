@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { cn } from '@/core/utils';
-import { copyToClipboard } from '@/core/utils';
+import { cn } from '@/core';
+import { copyToClipboard } from '@/core/utils/copy-to-clipboard/ctc';
 
 export interface CopyButtonProps {
     text: string;

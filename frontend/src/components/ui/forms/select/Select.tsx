@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { SelectProps, SelectOption } from './select.types';
 import { ChevronDownIcon, LoadingSpinner, ErrorIcon } from './Icon.styles';
 import { sizeClasses, variantClasses, stateClasses } from './select.styles';

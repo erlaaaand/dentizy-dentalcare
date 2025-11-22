@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 
 export interface AccordionItem {
     id: string;

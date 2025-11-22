@@ -1,4 +1,4 @@
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { CheckboxGroupProps } from "./checkbox.types";
 
 export function CheckboxGroup({

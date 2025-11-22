@@ -1,5 +1,5 @@
 import { SkeletonCardProps } from "./skeleton.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import Skeleton from "./Skeleton";
 
 export function SkeletonCard({

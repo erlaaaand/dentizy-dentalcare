@@ -1,5 +1,5 @@
 // frontend/src/core/validators/appointment.schema.ts
-import { isPastDate, isPastTime } from '@/core/formatters/scheduleFormatter';
+import { isPastDate, isPastTime } from '@/core/formatters/schedule.formatter';
 
 interface AppointmentFormData {
   patient_id?: number;

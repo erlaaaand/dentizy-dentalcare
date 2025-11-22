@@ -1,3 +1,6 @@
+import { PatientDocumentUploadProps } from './file-upload.types'
+import FileUpload from './FileUpload';
+
 export function PatientDocumentUpload({
     documentType = 'medical_record',
     maxSize = 5 * 1024 * 1024,

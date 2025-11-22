@@ -3,10 +3,17 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/core/hooks/auth/useAuth'
-import { Badge } from '../data-display/badge/'
-import Avatar from '../data-display/avatar/Avatar'
-import { Role } from '@/core/types/api'
+import { Badge } from '../../data-display/badge'
+import Avatar from '../../data-display/avatar/Avatar'
+import {
+    useAuth,
+    useConfirm,
+    useToast,
+    useClickOutside,
+    getInitials,    // Utils Formatting
+    ROUTES,         // Constants Routes
+    ROLE_LABELS     // Constants Roles
+} from '@/core';
 
 // ============================================
 // TYPES
@@ -266,8 +273,8 @@ export default function Sidebar() {
                                     <Link
                                         href={item.href}
                                         className={`flex items-center p-3 rounded-lg transition-all hover-lift relative group ${isActive
-                                                ? 'bg-blue-600 text-white shadow-lg'
-                                                : 'hover:bg-gray-700'
+                                            ? 'bg-blue-600 text-white shadow-lg'
+                                            : 'hover:bg-gray-700'
                                             } ${isMinimized ? 'justify-center' : 'space-x-3'}`}
                                     >
                                         <span className={isActive ? 'animate-pulse' : ''}>

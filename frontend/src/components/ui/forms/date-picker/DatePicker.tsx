@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { useClickOutside } from '@/domains/shared/hooks/useClickOutside';
 import { DatePickerProps } from './date-picker.types';
 import { sizeClasses, variantClasses } from './date-picker.styles';

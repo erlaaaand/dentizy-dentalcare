@@ -1,5 +1,5 @@
 import { CardTitleProps } from "./card.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { titleSizeClasses } from "./card.styles";
 
 export function CardTitle({

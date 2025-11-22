@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 
 export interface TooltipProps {
     children: React.ReactElement;

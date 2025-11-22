@@ -1,4 +1,4 @@
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { TableActionsProps } from "./table.types";
 
 export function TableActions({ children, className }: TableActionsProps) {

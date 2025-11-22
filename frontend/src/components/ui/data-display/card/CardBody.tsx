@@ -1,6 +1,6 @@
 import { CardBodyProps } from "./card.types";
 import { bodyPaddingClasses } from "./card.styles";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function CardBody({
     children,

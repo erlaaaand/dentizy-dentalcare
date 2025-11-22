@@ -1,6 +1,6 @@
 import { Breadcrumb } from '@/components/ui/layout/breadcrumb';
 import { PageHeaderWithTabsProps } from './page-header.types';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { sizeClasses, tabVariantClasses } from './page-header.styles';
 
 export function PageHeaderWithTabs({

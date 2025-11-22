@@ -1,6 +1,6 @@
 import { BreadcrumbItemComponentProps } from "./breadcrumb.types";
 import Link from "next/link";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { sizeClasses, variantClasses } from "./breadcrumb.styles";
 
 export function BreadcrumbItem({

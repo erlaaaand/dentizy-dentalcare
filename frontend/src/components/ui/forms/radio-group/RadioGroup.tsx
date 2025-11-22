@@ -1,5 +1,5 @@
 import React, { InputHTMLAttributes } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 
 export interface RadioOption {
     value: string | number;

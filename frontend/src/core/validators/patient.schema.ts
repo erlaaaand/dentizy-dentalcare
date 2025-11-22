@@ -1,6 +1,6 @@
 // frontend/src/core/validators/patient.schema.ts
 import { VALIDATION_RULES } from '@/core/constants/validation.constants';
-import { validatePhoneNumber } from '@/core/formatters/phoneFormatter';
+import { validatePhoneNumber } from '@/core/formatters/phone.formatter';
 
 type JenisKelamin = 'L' | 'P';
 

@@ -8,3 +8,10 @@ export { APPOINTMENT_STATUS, GENDER_LABELS, STATUS_COLORS, STATUS_LABELS } from 
 export * from './storage.constants';
 export { SUCCESS_MESSAGES } from './success.constants';
 export { VALIDATION_MESSAGES, VALIDATION_RULES } from './validation.constants';
+export {
+    CLINIC_HOURS,
+    TIME_SLOTS,
+    CLINIC_INFO,
+    isClinicOpen,
+    getClinicStatus
+} from './clinic.constants';

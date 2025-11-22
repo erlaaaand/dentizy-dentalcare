@@ -1,5 +1,5 @@
 import { CompactPageHeaderProps } from "./page-header.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { CloseIcon } from "./Icon.styles";
 
 export function CompactPageHeader({

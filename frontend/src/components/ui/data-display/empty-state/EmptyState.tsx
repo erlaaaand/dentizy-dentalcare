@@ -1,6 +1,6 @@
 // components/ui/data-display/EmptyState.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { EmptyStateProps } from './empty-state.types';
 import { sizeClasses, variantClasses, alignClasses, iconSizeClasses, titleSizeClasses, descriptionSizeClasses, iconTypeClasses } from './empty-state.styles';
 import { EmptyAppointmentsState } from './EmptyAppointmentsState';
