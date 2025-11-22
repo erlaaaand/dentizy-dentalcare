@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/core';
+import { cn} from '@/core'; // ✅ Import terpusat
 import { copyToClipboard } from '@/core/utils/copy-to-clipboard/ctc';
 
 export interface CopyButtonProps {
@@ -34,12 +34,13 @@ export default function CopyButton({
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
+        // ✅ Menggunakan fungsi utility dari core
         const success = await copyToClipboard(text);
-        
+
         if (success) {
             setCopied(true);
             onCopy?.();
-            
+
             setTimeout(() => {
                 setCopied(false);
             }, 2000);

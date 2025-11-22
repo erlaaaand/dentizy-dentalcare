@@ -1,15 +1,14 @@
 // components/ui/data-display/Avatar.tsx
 import React from 'react';
-import { cn } from '@/core';
-import { getInitials } from '@/core';
+import { cn, getInitials } from '@/core'; // ✅ Import getInitials dari core
 import { AvatarProps } from './avatar.types';
 import {
-    getColorFromString, 
-    statusPositionClasses, sizeClasses, 
-    shapeClasses, 
-    borderClasses, 
-    shadowClasses, 
-    statusSizeClasses, 
+    getColorFromString,
+    statusPositionClasses, sizeClasses,
+    shapeClasses,
+    borderClasses,
+    shadowClasses,
+    statusSizeClasses,
     statusColorClasses,
     getStatusBorderColor
 } from './avatar.styles';
@@ -34,7 +33,9 @@ export default function Avatar({
     const [imageError, setImageError] = React.useState(false);
     const [imageLoaded, setImageLoaded] = React.useState(false);
 
+    // ✅ Menggunakan fungsi dari core, fallback ke '?' jika nama kosong
     const initials = name ? getInitials(name) : '?';
+
     const bgGradient = fallbackColor || (name ? getColorFromString(name, 'gradient') : 'from-gray-500 to-gray-600');
     const bgSolid = fallbackColor || (name ? getColorFromString(name, 'solid') : 'bg-gray-500');
 
@@ -84,7 +85,6 @@ export default function Avatar({
                     )}
                     aria-label={name || 'Avatar'}
                 >
-                    {/* Fallback with solid background for better readability */}
                     <div
                         className={cn(
                             'flex items-center justify-center w-full h-full',
@@ -108,7 +108,7 @@ export default function Avatar({
                 </div>
             )}
 
-            {/* Loading Skeleton */}
+            {/* Loading Skeleton (hanya muncul saat gambar loading dan belum error) */}
             {src && !imageError && !imageLoaded && (
                 <div
                     className={cn(

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core'; // ✅ Import langsung dari @/core
 import { FooterProps } from './footer.types';
 import { sizeClasses, variantClasses, statusText } from './footer.styles';
 import { StatusIndicator, SyncIcon } from './Icon.styles';
@@ -28,7 +28,6 @@ export function Footer({
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    // If children are provided, render custom content
     if (children) {
         return (
             <footer
@@ -110,7 +109,6 @@ export function Footer({
     );
 }
 
-// Create main component with compound pattern
 const FooterComponent = Object.assign(Footer, {
     Minimal: MinimalFooter,
     Centered: CenteredFooter,

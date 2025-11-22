@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
+import { cn, useClickOutside } from '@/core'; // ✅ Pakai hook core
 
 interface DropdownOption {
     value: string;
@@ -32,16 +33,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     const selectedOption = options.find(opt => opt.value === value);
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    // ✅ Menggunakan useClickOutside dari Core
+    useClickOutside(dropdownRef, () => {
+        if (isOpen) setIsOpen(false);
+    });
 
     const handleSelect = (optionValue: string) => {
         if (onChange) {
@@ -60,7 +55,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
     };
 
     return (
-        <div className={`relative ${className}`}>
+        <div className={cn('relative', className)}>
             {label && (
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     {label}
@@ -73,24 +68,24 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     onKeyDown={handleKeyDown}
                     disabled={disabled}
-                    className={`
-            w-full px-4 py-2 text-left bg-white border rounded-lg
-            flex items-center justify-between
-            transition-all duration-200
-            ${disabled
+                    className={cn(
+                        'w-full px-4 py-2 text-left bg-white border rounded-lg',
+                        'flex items-center justify-between transition-all duration-200',
+                        disabled
                             ? 'bg-gray-100 cursor-not-allowed opacity-60'
-                            : 'hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
-                        }
-            ${error ? 'border-red-500' : 'border-gray-300'}
-            ${isOpen ? 'ring-2 ring-blue-500 border-transparent' : ''}
-          `}
+                            : 'hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
+                        error ? 'border-red-500' : 'border-gray-300',
+                        isOpen ? 'ring-2 ring-blue-500 border-transparent' : ''
+                    )}
                 >
                     <span className={selectedOption ? 'text-gray-900' : 'text-gray-400'}>
                         {selectedOption ? selectedOption.label : placeholder}
                     </span>
                     <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
-                            }`}
+                        className={cn(
+                            'w-5 h-5 text-gray-400 transition-transform duration-200',
+                            isOpen && 'transform rotate-180'
+                        )}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -100,7 +95,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 </button>
 
                 {isOpen && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto animate-fade-in">
                         {options.length === 0 ? (
                             <div className="px-4 py-3 text-sm text-gray-500">
                                 Tidak ada opsi tersedia
@@ -112,15 +107,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
                                     type="button"
                                     onClick={() => !option.disabled && handleSelect(option.value)}
                                     disabled={option.disabled}
-                                    className={`
-                    w-full px-4 py-2 text-left text-sm
-                    transition-colors duration-150
-                    ${option.disabled
+                                    className={cn(
+                                        'w-full px-4 py-2 text-left text-sm transition-colors duration-150',
+                                        option.disabled
                                             ? 'text-gray-400 cursor-not-allowed'
-                                            : 'text-gray-900 hover:bg-blue-50 cursor-pointer'
-                                        }
-                    ${option.value === value ? 'bg-blue-100 font-medium' : ''}
-                  `}
+                                            : 'text-gray-900 hover:bg-blue-50 cursor-pointer',
+                                        option.value === value && 'bg-blue-100 font-medium text-blue-700'
+                                    )}
                                 >
                                     {option.label}
                                 </button>

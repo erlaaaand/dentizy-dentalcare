@@ -1,33 +1,88 @@
-import { Check, X, Clock, AlertTriangle, Info, Circle } from 'lucide-react';
+import { Check, X, Clock, AlertTriangle, Info, Circle, HelpCircle } from 'lucide-react';
+import { STATUS_COLORS, APPOINTMENT_STATUS } from '@/core/constants/status.constants';
 
-export const statusConfig = {
-    dijadwalkan: {
-        color: 'bg-green-500',
-        textColor: 'text-green-700',
-        bgColor: 'bg-green-50',
-        borderColor: 'border-green-200',
-        ringColor: 'ring-green-500',
-        label: 'Active',
-        icon: Check,
-    },
-    dibatalkan: {
-        color: 'bg-red-500',
-        textColor: 'text-red-700',
-        bgColor: 'bg-red-50',
-        borderColor: 'border-red-200',
-        ringColor: 'ring-red-500',
-        label: 'Error',
-        icon: X,
-    },
-    selesai: {
+// Mapping warna dari Core ke Tailwind classes
+const colorMap = {
+    blue: {
         color: 'bg-blue-500',
         textColor: 'text-blue-700',
         bgColor: 'bg-blue-50',
         borderColor: 'border-blue-200',
         ringColor: 'ring-blue-500',
+    },
+    green: {
+        color: 'bg-green-500',
+        textColor: 'text-green-700',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        ringColor: 'ring-green-500',
+    },
+    red: {
+        color: 'bg-red-500',
+        textColor: 'text-red-700',
+        bgColor: 'bg-red-50',
+        borderColor: 'border-red-200',
+        ringColor: 'ring-red-500',
+    },
+    yellow: {
+        color: 'bg-yellow-500',
+        textColor: 'text-yellow-700',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-200',
+        ringColor: 'ring-yellow-500',
+    },
+    gray: {
+        color: 'bg-gray-500',
+        textColor: 'text-gray-700',
+        bgColor: 'bg-gray-50',
+        borderColor: 'border-gray-200',
+        ringColor: 'ring-gray-500',
+    }
+};
+
+export const statusConfig = {
+    // Menggunakan konstanta dari Core
+    [APPOINTMENT_STATUS.DIJADWALKAN]: {
+        ...colorMap[STATUS_COLORS[APPOINTMENT_STATUS.DIJADWALKAN] || 'blue'],
+        label: 'Dijadwalkan',
+        icon: Clock,
+    },
+    [APPOINTMENT_STATUS.SELESAI]: {
+        ...colorMap[STATUS_COLORS[APPOINTMENT_STATUS.SELESAI] || 'green'],
+        label: 'Selesai',
+        icon: Check,
+    },
+    [APPOINTMENT_STATUS.DIBATALKAN]: {
+        ...colorMap[STATUS_COLORS[APPOINTMENT_STATUS.DIBATALKAN] || 'red'],
+        label: 'Dibatalkan',
+        icon: X,
+    },
+    // Fallback/Generic statuses
+    active: {
+        ...colorMap.green,
+        label: 'Active',
+        icon: Check,
+    },
+    inactive: {
+        ...colorMap.gray,
+        label: 'Inactive',
+        icon: Circle,
+    },
+    error: {
+        ...colorMap.red,
+        label: 'Error',
+        icon: AlertTriangle,
+    },
+    info: {
+        ...colorMap.blue,
         label: 'Info',
         icon: Info,
     },
+    unknown: {
+        ...colorMap.gray,
+        label: 'Unknown',
+        icon: HelpCircle,
+    }
 };
 
 export const sizeClasses = {
