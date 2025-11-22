@@ -1,6 +1,7 @@
+// frontend/src/core/hooks/data/useTable.ts
 import { useState, useMemo, useCallback } from 'react';
-import { PaginationParams, SortOrder } from '../../types/api';
-import { APP_CONFIG } from '../../config/app.config';
+import { PaginationParams, SortOrder } from '@/core/types/api';
+import { PAGINATION } from '@/core/config/app.config';
 
 interface UseTableOptions {
   defaultPage?: number;
@@ -10,8 +11,8 @@ interface UseTableOptions {
 }
 
 export function useTable(options: UseTableOptions = {}) {
-  const [page, setPage] = useState(options.defaultPage || APP_CONFIG.PAGINATION.DEFAULT_PAGE);
-  const [limit, setLimit] = useState(options.defaultLimit || APP_CONFIG.PAGINATION.DEFAULT_LIMIT);
+  const [page, setPage] = useState(options.defaultPage || PAGINATION.DEFAULT_PAGE);
+  const [limit, setLimit] = useState(options.defaultLimit || PAGINATION.DEFAULT_LIMIT);
   const [sortBy, setSortBy] = useState(options.defaultSortBy);
   const [sortOrder, setSortOrder] = useState<SortOrder>(options.defaultSortOrder || 'asc');
 
@@ -31,7 +32,7 @@ export function useTable(options: UseTableOptions = {}) {
 
   const handleLimitChange = useCallback((newLimit: number) => {
     setLimit(newLimit);
-    setPage(1); // Reset to first page
+    setPage(1);
   }, []);
 
   const handleSort = useCallback((field: string) => {
@@ -45,7 +46,7 @@ export function useTable(options: UseTableOptions = {}) {
 
   const reset = useCallback(() => {
     setPage(options.defaultPage || 1);
-    setLimit(options.defaultLimit || APP_CONFIG.PAGINATION.DEFAULT_LIMIT);
+    setLimit(options.defaultLimit || PAGINATION.DEFAULT_LIMIT);
     setSortBy(options.defaultSortBy);
     setSortOrder(options.defaultSortOrder || 'asc');
   }, [options]);

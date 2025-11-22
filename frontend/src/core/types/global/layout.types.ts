@@ -1,6 +1,6 @@
+// frontend/src/core/types/global/layout.types.ts
 import { ReactNode } from 'react';
 
-// Layout Types
 export interface LayoutConfig {
   title?: string;
   description?: string;

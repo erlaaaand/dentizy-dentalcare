@@ -1,198 +1,123 @@
 // frontend/src/core/services/http/axiosInstance.ts
-
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosError } from 'axios';
 import { API_CONFIG } from '@/core/config/api.config';
 import { AUTH_CONFIG } from '@/core/config/auth.config';
 import { parseApiError } from '@/core/errors/api.error';
+import { ROUTES } from '@/core/constants/routes.constants';
 
-/**
- * Create Axios instance with default config
- */
 const axiosInstance: AxiosInstance = axios.create({
-  baseURL: API_CONFIG.baseURL,
-  timeout: API_CONFIG.timeout,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
+    baseURL: API_CONFIG.baseURL,
+    timeout: API_CONFIG.timeout,
+    headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+    },
 });
 
-/**
- * Request Interceptor - Add auth token
- */
 axiosInstance.interceptors.request.use(
-  (config: any) => {
-    // Get token from localStorage
-    const token = typeof window !== 'undefined' ? localStorage.getItem(AUTH_CONFIG.tokenKey) : null;
+    (config: any) => {
+        const token = typeof window !== 'undefined' 
+            ? localStorage.getItem(AUTH_CONFIG.TOKEN_KEY) 
+            : null;
 
-    // Add token to headers if exists
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+        if (token && config.headers) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+
+        if (process.env.NODE_ENV === 'development') {
+            console.log('🚀 API Request:', {
+                method: config.method?.toUpperCase(),
+                url: config.url,
+                params: config.params,
+            });
+        }
+
+        return config;
+    },
+    (error: AxiosError) => {
+        console.error('❌ Request Error:', error);
+        return Promise.reject(error);
     }
-
-    // Log request in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🚀 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        params: config.params,
-        data: config.data,
-      });
-    }
-
-    return config;
-  },
-  (error: AxiosError) => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
 );
 
-/**
- * Response Interceptor - Handle errors and token refresh
- */
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse) => {
-    // Log response in development
-    if (process.env.NODE_ENV === 'development') {
-      console.log('✅ API Response:', {
-        url: response.config.url,
-        status: response.status,
-        data: response.data,
-      });
-    }
+    (response) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('✅ API Response:', {
+                url: response.config.url,
+                status: response.status,
+            });
+        }
+        return response;
+    },
+    async (error: AxiosError) => {
+        const originalRequest: any = error.config;
 
-    return response;
-  },
-  async (error: AxiosError) => {
-    const originalRequest: any = error.config;
+        if (process.env.NODE_ENV === 'development') {
+            console.error('❌ API Error:', {
+                url: error.config?.url,
+                status: error.response?.status,
+                message: error.message,
+            });
+        }
 
-    // Log error in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('❌ API Error:', {
-        url: error.config?.url,
-        status: error.response?.status,
-        message: error.message,
-        data: error.response?.data,
-      });
-    }
+        if (error.response?.status === 401 && !originalRequest._retry) {
+            originalRequest._retry = true;
 
-    // Handle 401 Unauthorized - Token expired
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
+            try {
+                const refreshToken = typeof window !== 'undefined'
+                    ? localStorage.getItem(AUTH_CONFIG.REFRESH_TOKEN_KEY)
+                    : null;
 
-      try {
-        // Try to refresh token
-        const refreshToken = localStorage.getItem('refresh_token');
-        
-        if (refreshToken) {
-          // Note: We use pure axios here to avoid infinite loop with interceptors
-          const response = await axios.post(
-            `${API_CONFIG.baseURL}/auth/refresh`,
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${refreshToken}`,
-              },
+                if (refreshToken) {
+                    const response = await axios.post(
+                        `${API_CONFIG.baseURL}/auth/refresh`,
+                        {},
+                        {
+                            headers: {
+                                Authorization: `Bearer ${refreshToken}`,
+                            },
+                        }
+                    );
+
+                    const { access_token } = response.data;
+                    localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, access_token);
+
+                    originalRequest.headers.Authorization = `Bearer ${access_token}`;
+                    return axiosInstance(originalRequest);
+                }
+            } catch (refreshError) {
+                localStorage.clear();
+                if (typeof window !== 'undefined') {
+                    window.location.href = ROUTES.LOGIN;
+                }
+                return Promise.reject(refreshError);
             }
-          );
-
-          const { access_token } = response.data;
-
-          // Save new token
-          localStorage.setItem(AUTH_CONFIG.tokenKey, access_token);
-
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${access_token}`;
-          return axiosInstance(originalRequest);
         }
-      } catch (refreshError) {
-        // Refresh failed - redirect to login
-        localStorage.removeItem(AUTH_CONFIG.tokenKey);
-        localStorage.removeItem(AUTH_CONFIG.userKey);
-        localStorage.removeItem('refresh_token'); // Hapus refresh token juga
-        
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        
-        return Promise.reject(refreshError);
-      }
-    }
 
-    // Handle 403 Forbidden
-    if (error.response?.status === 403) {
-      console.warn('⛔ Access Denied');
+        const apiError = parseApiError(error);
+        return Promise.reject(apiError);
     }
-
-    // Parse and reject with ApiError
-    const apiError = parseApiError(error);
-    return Promise.reject(apiError);
-  }
 );
 
-// ============================================================================
-// ORVAL CUSTOM MUTATOR (Bagian Baru)
-// ============================================================================
-/**
- * Custom instance wrapper for Orval generated hooks.
- * This handles unwrapping the response data and query cancellation.
- */
 export const customInstance = <T>(
-  config: AxiosRequestConfig,
-  options?: AxiosRequestConfig,
+    config: AxiosRequestConfig,
+    options?: AxiosRequestConfig,
 ): Promise<T> => {
-  const source = axios.CancelToken.source();
-  
-  const promise = axiosInstance({
-    ...config,
-    ...options,
-    cancelToken: source.token,
-  }).then(({ data }) => data);
+    const source = axios.CancelToken.source();
 
-  // @ts-ignore - Ini diperlukan agar fitur 'cancel' React Query bekerja
-  promise.cancel = () => {
-    source.cancel('Query was cancelled');
-  };
+    const promise = axiosInstance({
+        ...config,
+        ...options,
+        cancelToken: source.token,
+    }).then(({ data }) => data);
 
-  return promise;
-};
+    // @ts-ignore
+    promise.cancel = () => {
+        source.cancel('Query was cancelled');
+    };
 
-// ============================================================================
-// Legacy Exports (Tetap disimpan jika ada kode lama yang pakai)
-// ============================================================================
-
-/**
- * Generic request wrapper with error handling
- */
-export async function request<T = any>(
-  config: AxiosRequestConfig
-): Promise<AxiosResponse<T>> {
-  try {
-    return await axiosInstance.request<T>(config);
-  } catch (error) {
-    throw parseApiError(error);
-  }
-}
-
-/**
- * HTTP Methods helper
- */
-export const http = {
-  get: <T = any>(url: string, config?: AxiosRequestConfig) =>
-    axiosInstance.get<T>(url, config),
-
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
-    axiosInstance.post<T>(url, data, config),
-
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
-    axiosInstance.put<T>(url, data, config),
-
-  patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) =>
-    axiosInstance.patch<T>(url, data, config),
-
-  delete: <T = any>(url: string, config?: AxiosRequestConfig) =>
-    axiosInstance.delete<T>(url, config),
+    return promise;
 };
 
 export default axiosInstance;

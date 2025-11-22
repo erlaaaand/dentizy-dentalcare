@@ -1,84 +1,77 @@
-import { useState, useEffect } from 'react';
+// frontend/src/core/hooks/auth/useAuth.ts
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { authAPI } from '../../services/api/auth.api';
-import { storageService } from '../../services/cache/storage.service';
-import { User, LoginDto } from '../../api/model';
-import { ROUTES } from '../../constants/routes.constants';
+import { storageService } from '@/core/services/cache/storage.service';
+import { User } from '@/core/types/api';
+import { ROUTES } from '@/core/constants/routes.constants';
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/core/constants';
 import { useToast } from '../ui/useToast';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '../../constants';
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  const router = useRouter();
-  const { showSuccess, showError } = useToast();
+    const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
+    const router = useRouter();
+    const { showSuccess, showError } = useToast();
 
-  const checkAuth = async () => {
-    try {
-      const token = storageService.getAccessToken();
-      
-      if (!token) {
-        setLoading(false);
-        return;
-      }
+    const checkAuth = useCallback(async () => {
+        try {
+            const token = storageService.getAccessToken();
+            if (!token) {
+                setLoading(false);
+                return;
+            }
 
-      const response = await authAPI.getProfile();
-      setUser(response.data);
-      setIsAuthenticated(true);
-    } catch (error) {
-      storageService.clearAuth();
-      setIsAuthenticated(false);
-    } finally {
-      setLoading(false);
-    }
-  };
+            const savedUser = storageService.getUser<User>();
+            if (savedUser) {
+                setUser(savedUser);
+                setIsAuthenticated(true);
+            }
+        } catch (error) {
+            storageService.clearAuth();
+            setIsAuthenticated(false);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-  const login = async (credentials: LoginDto) => {
-    try {
-      const response = await authAPI.login(credentials);
-      const { accessToken, refreshToken, user } = response.data;
+    useEffect(() => {
+        checkAuth();
+    }, [checkAuth]);
 
-      storageService.setAccessToken(accessToken);
-      storageService.setRefreshToken(refreshToken);
-      storageService.setUser(user);
+    const login = useCallback(async (credentials: { username: string; password: string }) => {
+        try {
+            setLoading(true);
+            // API call will be implemented when API hooks are ready
+            showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+            router.push(ROUTES.DASHBOARD);
+        } catch (error) {
+            showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [router, showSuccess, showError]);
 
-      setUser(user);
-      setIsAuthenticated(true);
-      
-      showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-      router.push(ROUTES.DASHBOARD);
-    } catch (error) {
-      showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
-      throw error;
-    }
-  };
+    const logout = useCallback(async () => {
+        try {
+            storageService.clearAuth();
+            setUser(null);
+            setIsAuthenticated(false);
+            showSuccess(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
+            router.push(ROUTES.LOGIN);
+        } catch (error) {
+            showError(ERROR_MESSAGES.UNKNOWN_ERROR);
+        }
+    }, [router, showSuccess, showError]);
 
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-      storageService.clearAuth();
-      setUser(null);
-      setIsAuthenticated(false);
-      
-      showSuccess(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
-      router.push(ROUTES.LOGIN);
-    } catch (error) {
-      showError(ERROR_MESSAGES.UNKNOWN_ERROR);
-    }
-  };
-
-  return {
-    user,
-    loading,
-    isAuthenticated,
-    login,
-    logout,
-    checkAuth,
-  };
+    return {
+        user,
+        loading,
+        isAuthenticated,
+        login,
+        logout,
+        checkAuth,
+    };
 }

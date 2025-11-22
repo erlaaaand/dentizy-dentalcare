@@ -1,11 +1,11 @@
 import { AppError } from './app.error';
-import { ERROR_CODES } from '../constants/error.constants';
+import { ERROR_MESSAGES } from '../constants/error.constants';
 
 export class ValidationError extends AppError {
   public readonly fields: Record<string, string>;
 
   constructor(message: string, fields: Record<string, string> = {}) {
-    super(message, ERROR_CODES.VALIDATION_ERROR, 400);
+    super(message, ERROR_MESSAGES.VALIDATION_ERROR, 400);
     this.fields = fields;
     Object.setPrototypeOf(this, ValidationError.prototype);
   }

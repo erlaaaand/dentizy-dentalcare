@@ -56,7 +56,7 @@ export class ErrorHandler {
     }
 
     // Unknown error
-    return new ApiError(ERROR_MESSAGES.unknown);
+    return new ApiError(ERROR_MESSAGES.UNKNOWN_ERROR);
   }
 
   /**

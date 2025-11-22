@@ -1,7 +1,8 @@
+// frontend/src/core/hooks/ui/useDebounce.ts
 import { useState, useEffect } from 'react';
-import { APP_CONFIG } from '../../config/app.config';
+import { DEBOUNCE_DELAY } from '@/core/config/app.config';
 
-export function useDebounce<T>(value: T, delay: number = APP_CONFIG.DEBOUNCE_DELAY): T {
+export function useDebounce<T>(value: T, delay: number = DEBOUNCE_DELAY): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {

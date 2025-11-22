@@ -1,3 +1,4 @@
+// frontend/src/core/hooks/ui/useModal.ts
 import { useState, useCallback } from 'react';
 
 interface UseModalOptions {

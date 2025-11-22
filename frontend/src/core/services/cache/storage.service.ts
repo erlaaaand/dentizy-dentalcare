@@ -1,72 +1,199 @@
-import { STORAGE_KEYS } from '../../constants/storage.constants';
+// frontend/src/core/services/cache/storage.service.ts
+
+import { 
+  LOCAL_STORAGE_KEYS, 
+  SESSION_STORAGE_KEYS, 
+  StorageType 
+} from '@/core/constants/storage.constants';
 
 export class StorageService {
   private storage: Storage;
+  private type: StorageType;
 
-  constructor(storageType: 'localStorage' | 'sessionStorage' = 'localStorage') {
-    this.storage = typeof window !== 'undefined' 
-      ? window[storageType] 
+  constructor(type: StorageType = StorageType.LOCAL) {
+    this.type = type;
+    this.storage = typeof window !== 'undefined'
+      ? (type === StorageType.LOCAL ? window.localStorage : window.sessionStorage)
       : {} as Storage;
   }
 
-  // Generic Methods
+  // ============================================================================
+  // Core Generic Methods
+  // ============================================================================
+
+  /**
+   * Menyimpan data ke storage (otomatis stringify)
+   */
   set(key: string, value: unknown): void {
     try {
       const serialized = JSON.stringify(value);
       this.storage.setItem(key, serialized);
     } catch (error) {
-      console.error('Storage set error:', error);
+      console.error(`StorageService (${this.type}) set error:`, error);
     }
   }
 
+  /**
+   * Mengambil data dari storage (otomatis parse JSON)
+   */
   get<T>(key: string): T | null {
     try {
       const item = this.storage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      if (!item) return null;
+      return JSON.parse(item) as T;
     } catch (error) {
-      console.error('Storage get error:', error);
+      console.error(`StorageService (${this.type}) get error:`, error);
       return null;
     }
   }
 
+  /**
+   * Menghapus item berdasarkan key
+   */
   remove(key: string): void {
-    this.storage.removeItem(key);
+    try {
+      this.storage.removeItem(key);
+    } catch (error) {
+      console.error(`StorageService (${this.type}) remove error:`, error);
+    }
   }
 
+  /**
+   * Mengecek apakah key ada di storage
+   */
+  has(key: string): boolean {
+    return this.storage.getItem(key) !== null;
+  }
+
+  /**
+   * Membersihkan seluruh storage
+   */
   clear(): void {
-    this.storage.clear();
+    try {
+      this.storage.clear();
+    } catch (error) {
+      console.error(`StorageService (${this.type}) clear error:`, error);
+    }
   }
 
-  // Auth Methods
+  // ============================================================================
+  // Authentication & User (LocalStorage Specific)
+  // ============================================================================
+
   setAccessToken(token: string): void {
-    this.set(STORAGE_KEYS.ACCESS_TOKEN, token);
+    this.set(LOCAL_STORAGE_KEYS.ACCESS_TOKEN, token);
   }
 
   getAccessToken(): string | null {
-    return this.get<string>(STORAGE_KEYS.ACCESS_TOKEN);
+    return this.get<string>(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
   }
 
   setRefreshToken(token: string): void {
-    this.set(STORAGE_KEYS.REFRESH_TOKEN, token);
+    this.set(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, token);
   }
 
   getRefreshToken(): string | null {
-    return this.get<string>(STORAGE_KEYS.REFRESH_TOKEN);
+    return this.get<string>(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
   }
 
   setUser(user: unknown): void {
-    this.set(STORAGE_KEYS.USER, user);
+    this.set(LOCAL_STORAGE_KEYS.USER, user);
   }
 
   getUser<T>(): T | null {
-    return this.get<T>(STORAGE_KEYS.USER);
+    return this.get<T>(LOCAL_STORAGE_KEYS.USER);
   }
 
+  setUserRole(role: string): void {
+    this.set(LOCAL_STORAGE_KEYS.USER_ROLE, role);
+  }
+
+  getUserRole(): string | null {
+    return this.get<string>(LOCAL_STORAGE_KEYS.USER_ROLE);
+  }
+
+  setLastLogin(timestamp: string): void {
+    this.set(LOCAL_STORAGE_KEYS.LAST_LOGIN, timestamp);
+  }
+
+  /**
+   * Hapus semua data terkait Autentikasi dan User
+   */
   clearAuth(): void {
-    this.remove(STORAGE_KEYS.ACCESS_TOKEN);
-    this.remove(STORAGE_KEYS.REFRESH_TOKEN);
-    this.remove(STORAGE_KEYS.USER);
+    this.remove(LOCAL_STORAGE_KEYS.ACCESS_TOKEN);
+    this.remove(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+    this.remove(LOCAL_STORAGE_KEYS.USER);
+    this.remove(LOCAL_STORAGE_KEYS.USER_ROLE);
+    this.remove(LOCAL_STORAGE_KEYS.LAST_LOGIN);
+  }
+
+  // ============================================================================
+  // UI & Preferences (LocalStorage Specific)
+  // ============================================================================
+
+  setTheme(theme: 'light' | 'dark' | 'system'): void {
+    this.set(LOCAL_STORAGE_KEYS.THEME, theme);
+  }
+
+  getTheme(): string | null {
+    return this.get<string>(LOCAL_STORAGE_KEYS.THEME);
+  }
+
+  setLanguage(lang: string): void {
+    this.set(LOCAL_STORAGE_KEYS.LANGUAGE, lang);
+  }
+
+  getLanguage(): string | null {
+    return this.get<string>(LOCAL_STORAGE_KEYS.LANGUAGE);
+  }
+
+  setSidebarCollapsed(collapsed: boolean): void {
+    this.set(LOCAL_STORAGE_KEYS.SIDEBAR_COLLAPSED, collapsed);
+  }
+
+  getSidebarCollapsed(): boolean {
+    return this.get<boolean>(LOCAL_STORAGE_KEYS.SIDEBAR_COLLAPSED) ?? false;
+  }
+
+  setDentalChartView(viewMode: string): void {
+    this.set(LOCAL_STORAGE_KEYS.DENTAL_CHART_VIEW, viewMode);
+  }
+
+  getDentalChartView(): string | null {
+    return this.get<string>(LOCAL_STORAGE_KEYS.DENTAL_CHART_VIEW);
+  }
+
+  // ============================================================================
+  // Session Data (SessionStorage Specific Helpers)
+  // Note: Method ini sebaiknya dipanggil dari instance 'sessionStorageService'
+  // ============================================================================
+
+  setRedirectUrl(url: string): void {
+    this.set(SESSION_STORAGE_KEYS.REDIRECT_URL, url);
+  }
+
+  getRedirectUrl(): string | null {
+    return this.get<string>(SESSION_STORAGE_KEYS.REDIRECT_URL);
+  }
+
+  /**
+   * Helper khusus untuk Form Data (Autosave)
+   */
+  setFormData(formId: string, data: unknown): void {
+    this.set(`${SESSION_STORAGE_KEYS.FORM_DATA}_${formId}`, data);
+  }
+
+  getFormData<T>(formId: string): T | null {
+    return this.get<T>(`${SESSION_STORAGE_KEYS.FORM_DATA}_${formId}`);
+  }
+
+  clearFormData(formId: string): void {
+    this.remove(`${SESSION_STORAGE_KEYS.FORM_DATA}_${formId}`);
   }
 }
 
-export const storageService = new StorageService();
+// Export default instance untuk Local Storage (Penggunaan umum: Auth, User, UI)
+export const storageService = new StorageService(StorageType.LOCAL);
+
+// Export instance khusus untuk Session Storage (Penggunaan: Redirect, Form Data sementara)
+export const sessionStorageService = new StorageService(StorageType.SESSION);
