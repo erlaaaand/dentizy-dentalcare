@@ -4,7 +4,7 @@
 
 import { HeaderMenuOption } from "./header.types";
 
-const sizeClasses = {
+export const sizeClasses = {
     sm: {
         container: 'px-4 py-3',
         title: 'text-xl',
@@ -25,13 +25,13 @@ const sizeClasses = {
     },
 };
 
-const variantClasses = {
+export const variantClasses = {
     default: 'bg-white shadow-sm border-b border-gray-200',
     minimal: 'bg-white border-b border-gray-100',
     dashboard: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200',
 };
 
-const defaultMenuOptions: HeaderMenuOption[] = [
+export const defaultMenuOptions: HeaderMenuOption[] = [
     { value: 'profile', label: 'Profil Saya' },
     { value: 'settings', label: 'Pengaturan' },
     { value: 'logout', label: 'Keluar', type: 'danger' },

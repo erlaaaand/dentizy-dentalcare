@@ -1,4 +1,8 @@
-// Simple Header for basic pages
+// ========================================
+// frontend/src/components/ui/layout/header/SimpleHeader.tsx
+// ========================================
+import { Header } from './Header';
+
 export function SimpleHeader({
     className,
     title,

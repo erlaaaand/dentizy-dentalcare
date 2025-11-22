@@ -1,50 +1,41 @@
-export const ProfileDropdown = React.forwardRef<HTMLDivElement, ProfileDropdownProps>(
-    ({ isOpen, onClose, userName, userRole, username, menuOptions = defaultMenuOptions, onMenuSelect, size = 'md' }, ref) => {
-        const { isMounted, animationClass, toggleDropdown } = useDropdownAnimation();
+// ========================================
+// frontend/src/components/ui/layout/header/useDropdownAnimation.tsx
+// ========================================
+import { useState, useRef } from 'react';
 
-        useEffect(() => {
-            toggleDropdown(isOpen);
-        }, [isOpen, toggleDropdown]);
+export const useDropdownAnimation = (animationDuration = 300) => {
+    const [isMounted, setIsMounted] = useState(false);
+    const [animationClass, setAnimationClass] = useState('animate-slide-down');
+    const isClosingRef = useRef(false);
 
-        const sizeClass = sizeClasses[size];
+    const openDropdown = () => {
+        if (isClosingRef.current || isMounted) return;
+        setAnimationClass('animate-slide-down');
+        setIsMounted(true);
+    };
 
-        if (!isMounted) return null;
+    const closeDropdown = (exitDir: 'up' | 'down' = 'up') => {
+        if (isClosingRef.current) return;
+        isClosingRef.current = true;
+        const exitClass = exitDir === 'down' ? 'animate-slide-down-exit' : 'animate-slide-up-exit';
+        setAnimationClass(exitClass);
 
-        return (
-            <div
-                ref={ref}
-                className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 ${animationClass}`}
-            >
-                <div className="p-4 border-b border-gray-200">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                        {userName || 'User'}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                        {username || '-'}
-                    </p>
-                    <p className="text-xs text-blue-600 mt-1">
-                        {userRole || 'User'}
-                    </p>
-                </div>
-                <div className="py-2">
-                    {menuOptions.map((option) => (
-                        <button
-                            key={option.value}
-                            onClick={() => onMenuSelect(option.value)}
-                            className={cn(
-                                'block w-full text-left px-4 py-2 text-sm transition-colors',
-                                option.type === 'danger'
-                                    ? 'text-red-600 hover:bg-red-50'
-                                    : 'text-gray-700 hover:bg-gray-100'
-                            )}
-                        >
-                            {option.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-    }
-);
+        setTimeout(() => {
+            setIsMounted(false);
+            isClosingRef.current = false;
+            setAnimationClass('animate-slide-down');
+        }, animationDuration);
+    };
 
-ProfileDropdown.displayName = 'ProfileDropdown';
+    const toggleDropdown = (isOpen: boolean) => {
+        if (isOpen) openDropdown();
+        else if (isMounted) closeDropdown();
+    };
+
+    return {
+        isMounted,
+        animationClass,
+        toggleDropdown,
+        closeDropdown,
+    };
+};

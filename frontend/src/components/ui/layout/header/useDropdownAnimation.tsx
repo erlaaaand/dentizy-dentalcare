@@ -1,6 +1,7 @@
-// ============================================
-// ANIMATION HOOKS & UTILITIES
-// ============================================
+// ========================================
+// frontend/src/components/ui/layout/header/useDropdownAnimation.tsx
+// ========================================
+import { useState, useRef } from 'react';
 
 export const useDropdownAnimation = (animationDuration = 300) => {
     const [isMounted, setIsMounted] = useState(false);

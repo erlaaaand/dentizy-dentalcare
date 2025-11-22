@@ -1,24 +1,92 @@
+// frontend/src/components/ui/layout/header/Header.tsx
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/core';
 
-// ✅ Import terpusat dari @/core (Best Practice #1)
+// Import dari core
 import {
     useAuth,
     useConfirm,
     useToast,
     useClickOutside,
-    getInitials,    // Utils Formatting
-    ROUTES,         // Constants Routes
-    ROLE_LABELS     // Constants Roles
+    getInitials,
+    ROUTES,
+    ROLE_LABELS
 } from '@/core';
+
+// Import types & styles
+import { HeaderProps, HeaderMenuOption, ProfileDropdownProps } from './header.types';
+import { sizeClasses, variantClasses, defaultMenuOptions } from './header.styles';
+import { ChevronIcon } from './header.icon';
+import { useDropdownAnimation } from './useDropdownAnimation';
+
+// Import sub-components
+import { MinimalHeader } from './MinimalHeader';
+import { DashboardHeader } from './DashboardHeader';
+import { SimpleHeader } from './SimpleHeader';
+import { HeaderSection } from './HeaderSection';
+import { HeaderTitle } from './HeaderTitle';
+import { HeaderSubtitle } from './HeaderSubtitle';
+
+// ============================================
+// PROFILE DROPDOWN COMPONENT
+// ============================================
+export const ProfileDropdown = React.forwardRef<HTMLDivElement, ProfileDropdownProps>(
+    ({ isOpen, onClose, userName, userRole, username, menuOptions = defaultMenuOptions, onMenuSelect, size = 'md' }, ref) => {
+        const { isMounted, animationClass, toggleDropdown } = useDropdownAnimation();
+
+        useEffect(() => {
+            toggleDropdown(isOpen);
+        }, [isOpen, toggleDropdown]);
+
+        const sizeClass = sizeClasses[size];
+
+        if (!isMounted) return null;
+
+        return (
+            <div
+                ref={ref}
+                className={`absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 z-50 ${animationClass}`}
+            >
+                <div className="p-4 border-b border-gray-200">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                        {userName || 'User'}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                        {username || '-'}
+                    </p>
+                    <p className="text-xs text-blue-600 mt-1">
+                        {userRole || 'User'}
+                    </p>
+                </div>
+                <div className="py-2">
+                    {menuOptions.map((option) => (
+                        <button
+                            key={option.value}
+                            onClick={() => onMenuSelect(option.value)}
+                            className={cn(
+                                'block w-full text-left px-4 py-2 text-sm transition-colors',
+                                option.type === 'danger'
+                                    ? 'text-red-600 hover:bg-red-50'
+                                    : 'text-gray-700 hover:bg-gray-100'
+                            )}
+                        >
+                            {option.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+);
+
+ProfileDropdown.displayName = 'ProfileDropdown';
 
 // ============================================
 // MAIN HEADER COMPONENT
 // ============================================
-
 export function Header({
     className,
     variant = 'default',
@@ -49,7 +117,6 @@ export function Header({
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    // Handle menu selection with custom callbacks
     const handleMenuSelect = async (value: string) => {
         setShowProfileDropdown(false);
 
@@ -98,16 +165,11 @@ export function Header({
     const getUserRole = () => userRole || getUserRoleLabel();
     const getWelcomeText = () => welcomeText || 'Selamat datang kembali di dashboard Dentizy';
 
-    // If children are provided, render custom content
     if (children) {
         return (
             <header
                 id="app-header"
-                className={cn(
-                    variantClass,
-                    sizeClass.container,
-                    className
-                )}
+                className={cn(variantClass, sizeClass.container, className)}
             >
                 {children}
             </header>
@@ -119,14 +181,9 @@ export function Header({
     return (
         <header
             id="app-header"
-            className={cn(
-                variantClass,
-                sizeClass.container,
-                className
-            )}
+            className={cn(variantClass, sizeClass.container, className)}
         >
             <div className="flex items-center justify-between">
-                {/* Welcome Section */}
                 {showWelcome && (
                     <div className="min-w-0 flex-1">
                         <h1 className={cn('font-bold text-gray-900', sizeClass.title)}>
@@ -138,7 +195,6 @@ export function Header({
                     </div>
                 )}
 
-                {/* Profile Dropdown */}
                 {showProfile && (
                     <div className="relative" ref={profileRef}>
                         <button

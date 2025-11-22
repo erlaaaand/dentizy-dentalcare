@@ -1,3 +1,8 @@
+// ========================================
+// frontend/src/components/ui/layout/header/HeaderSection.tsx
+// ========================================
+import { cn } from '@/core';
+
 export function HeaderSection({
     children,
     position = 'left',

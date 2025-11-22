@@ -1,5 +1,5 @@
 
-const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
+export const ChevronIcon = ({ isOpen }: { isOpen: boolean }) => (
     <svg
         className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
         fill="currentColor"

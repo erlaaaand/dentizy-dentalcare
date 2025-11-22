@@ -1,3 +1,10 @@
+// ========================================
+// frontend/src/components/ui/layout/header/HeaderTitle.tsx
+// ========================================
+import { cn } from '@/core';
+import { HeaderProps } from './header.types';
+import { sizeClasses } from './header.styles';
+
 export function HeaderTitle({
     children,
     className,

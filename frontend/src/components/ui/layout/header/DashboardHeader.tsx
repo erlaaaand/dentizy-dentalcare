@@ -1,5 +1,8 @@
+// ========================================
+// frontend/src/components/ui/layout/header/DashboardHeader.tsx
+// ========================================
+import { Header } from './Header';
 
-// Dashboard Header with gradient background
 export function DashboardHeader({
     className,
     userName,
