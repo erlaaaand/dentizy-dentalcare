@@ -1,4 +1,4 @@
-import { VALIDATION } from '@/lib/constants';
+import { VALIDATION } from '@/core/constants';
 import { Gender } from '@/core/types/api';
 import { validatePhoneNumber } from '@/core/formatters/phoneFormatter';
 

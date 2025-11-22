@@ -105,8 +105,8 @@ REKAM MEDIS PASIEN
 
 Nomor RM: ${record.patient.no_rm}
 Nama Pasien: ${record.patient.nama_lengkap}
-Tanggal Janji: ${record.appointment.appointment_date}
-Dokter: ${record.doctor_id}
+Tanggal Janji: ${record.appointment.tanggal_janji}
+Dokter: ${record.user_id_staff}
 
 ${formatSOAPSection('SUBJEKTIF (Keluhan Pasien)', soap.subjektif)}
 ${formatSOAPSection('OBJEKTIF (Hasil Pemeriksaan)', soap.objektif)}

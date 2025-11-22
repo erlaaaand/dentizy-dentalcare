@@ -41,11 +41,11 @@ class PatientAPI extends ApiClient {
   }
 
   async delete(id: number) {
-    return this.delete(`/${id}`);
+    return this.deleteRequest(`/${id}`);
   }
 
   async restore(id: number) {
-    return this.patch(`/${id}/restore`);
+    return this.patch(`/${id}/restore`, {});
   }
 
   async getStatistics() {
