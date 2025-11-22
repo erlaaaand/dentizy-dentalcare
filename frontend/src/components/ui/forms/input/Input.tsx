@@ -13,7 +13,8 @@ const ErrorIcon = () => (
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ label, error, hint, leftIcon, rightIcon, className, containerClassName, id, type = 'text', disabled, required, size = 'md', ...props }, ref) => {
         const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
-        const sizeClass = inputSizeClasses[size] || inputSizeClasses.md;
+
+        const sizeClass = inputSizeClasses[size as keyof typeof inputSizeClasses] || inputSizeClasses.md;
 
         const getVariantClass = () => {
             if (disabled) return inputVariantClasses.disabled;

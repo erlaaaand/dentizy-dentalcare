@@ -23,7 +23,10 @@ export interface BreadcrumbItemComponentProps {
     variant?: 'default' | 'minimal' | 'bold';
 }
 
-export interface PageBreadcrumbProps extends Omit<BreadcrumbProps, 'variant' | 'size'> {
+// breadcrumb.types.ts
+export interface PageBreadcrumbProps extends Omit<BreadcrumbProps, 'variant' | 'size' | 'items'> {
+    // ✅ Tambahkan 'items' ke Omit, lalu re-define dengan tipe yang benar
+    items?: BreadcrumbItem[]; // ← Gunakan BreadcrumbItem[], bukan BreadcrumbItemComponentProps[]
     title?: string;
     description?: string;
 }

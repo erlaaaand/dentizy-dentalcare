@@ -1,4 +1,4 @@
-import type { ToastType } from '@/core/hooks/ui/useToast';
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 export const ToastIcons: Record<ToastType, React.ReactNode> = {
     success: (

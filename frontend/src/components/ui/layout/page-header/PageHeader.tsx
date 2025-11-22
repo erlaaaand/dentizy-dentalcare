@@ -30,7 +30,15 @@ export function PageHeader({
             {/* Breadcrumbs */}
             {breadcrumbs && breadcrumbs.length > 0 && (
                 <div className="mb-3">
-                    <Breadcrumb items={breadcrumbs} size={size === 'lg' ? 'md' : 'sm'} />
+                    <Breadcrumb
+                        items={breadcrumbs.map(item => ({
+                            label: typeof item.children === 'string' ? item.children : '',
+                            href: item.href,
+                            icon: item.icon,
+                            active: item.isCurrent,
+                        }))}
+                        size={size === 'lg' ? 'md' : 'sm'}
+                    />
                 </div>
             )}
 
