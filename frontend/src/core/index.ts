@@ -1,81 +1,99 @@
-// Update: frontend/src/core/index.ts - Complete Export
+// frontend/src/core/index.ts
+// Config
 export * from './config';
+
+// Constants
 export * from './constants';
+
+// Types
 export * from './types';
+
+// Errors
 export * from './errors';
+
+// Services
 export * from './services';
+
+// Formatters
 export * from './formatters';
+
+// Validators
 export * from './validators';
+
+// Hooks
 export * from './hooks';
+
+// Utils
 export * from './utils';
+
+// Middleware
 export * from './middleware';
 
-// Re-export commonly used items for convenience
+// Re-export commonly used items
 export {
-    // Config
-    API_CONFIG,
-    APP_CONFIG,
-    ENV,
-    PAGINATION,
-    AUTH_CONFIG,
-    UI_CONFIG,
-    FEATURE_FLAGS,
+  // Config
+  API_CONFIG,
+  APP_CONFIG,
+  ENV,
+  PAGINATION,
+  AUTH_CONFIG,
+  UI_CONFIG,
+  FEATURE_FLAGS,
+} from './config';
 
-    // Constants
-    ROUTES,
-    ROLES,
-    PERMISSIONS,
-    APPOINTMENT_STATUS,
-    GENDER,
-    VALIDATION,
-    ERROR_MESSAGES,
-    SUCCESS_MESSAGES,
-    STORAGE_KEYS,
+export {
+  // Constants
+  ROUTES,
+  ROLES,
+  PERMISSIONS,
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  VALIDATION_RULES,
+  VALIDATION_MESSAGES,
+  STATUS_LABELS,
+  STATUS_COLORS,
+  GENDER_LABELS,
+} from './constants';
 
-    // Services
-    authAPI,
-    appointmentAPI,
-    patientAPI,
-    medicalRecordAPI,
-    userAPI,
-    roleAPI,
-    storageService,
-    cacheService,
+export {
+  // Services
+  cacheService,
+  storageService,
+  sessionStorageService,
+  apiClient,
+  customInstance,
+  setupInterceptors,
+} from './services';
 
-    // Hooks
-    useAuth,
-    useRole,
-    usePermission,
-    useToast,
-    useModal,
-    useConfirm,
-    useDebounce,
-    useLocalStorage,
-    useTable,
-    useFetch,
-    useMutation,
-    useQuery,
-    useForm,
+export {
+  // Hooks
+  useAuth,
+  useRole,
+  usePermission,
+  useToast,
+  useModal,
+  useConfirm,
+  useDebounce,
+  useLocalStorage,
+  useTable,
+  useForm,
+} from './hooks';
 
-    // Utils
-    cn,
-    formatDate,
-    formatTime,
-    formatDateTime,
-    formatCurrency,
-    formatPhoneNumber,
-    isValidEmail,
-    isValidPhone,
-    isValidNIK,
+export {
+  // Utils
+  cn,
+  formatDate,
+  formatTime,
+  formatDateTime,
+  formatCurrency,
+  formatPhoneNumber,
+  isValidEmail,
+  isValidPhone,
+  isValidNIK,
+} from './utils';
 
-    // Validators
-    validateAppointmentForm,
-    validateLoginForm,
-    validatePatientForm,
-    validateMedicalRecordForm,
-    validateUserForm,
-
-    // Error Handler
-    errorHandler,
-    handleAsync,
-} from './index';
+export {
+  // Error Handler
+  errorHandler,
+  handleAsync,
+} from './errors';

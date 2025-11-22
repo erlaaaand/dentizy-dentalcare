@@ -2,10 +2,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { storageService } from '@/core/services/cache/storage.service';
-import { User } from '@/core/types/api';
+import { User } from '@/core/api/model';
 import { ROUTES } from '@/core/constants/routes.constants';
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/core/constants';
 import { useToast } from '../ui/useToast';
+import { useAuthControllerLogin, useAuthControllerLogout, useAuthControllerGetProfile } from '@/core/api/generated/auth/auth';
 
 export function useAuth() {
     const [user, setUser] = useState<User | null>(null);
@@ -15,6 +16,19 @@ export function useAuth() {
     const router = useRouter();
     const { showSuccess, showError } = useToast();
 
+    // Get profile query
+    const { data: profileData, isLoading: isLoadingProfile } = useAuthControllerGetProfile({
+        query: {
+            enabled: !!storageService.getAccessToken(),
+        }
+    });
+
+    // Login mutation
+    const loginMutation = useAuthControllerLogin();
+
+    // Logout mutation
+    const logoutMutation = useAuthControllerLogout();
+
     const checkAuth = useCallback(async () => {
         try {
             const token = storageService.getAccessToken();
@@ -23,10 +37,10 @@ export function useAuth() {
                 return;
             }
 
-            const savedUser = storageService.getUser<User>();
-            if (savedUser) {
-                setUser(savedUser);
+            if (profileData) {
+                setUser(profileData);
                 setIsAuthenticated(true);
+                storageService.setUser(profileData);
             }
         } catch (error) {
             storageService.clearAuth();
@@ -34,7 +48,7 @@ export function useAuth() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [profileData]);
 
     useEffect(() => {
         checkAuth();
@@ -42,20 +56,35 @@ export function useAuth() {
 
     const login = useCallback(async (credentials: { username: string; password: string }) => {
         try {
-            setLoading(true);
-            // API call will be implemented when API hooks are ready
+            const response = await loginMutation.mutateAsync({ data: credentials });
+            
+            // Assuming response contains { access_token, refresh_token, user }
+            if (response && typeof response === 'object' && 'data' in response) {
+                const data = response.data as any;
+                if (data.access_token) {
+                    storageService.setAccessToken(data.access_token);
+                }
+                if (data.refresh_token) {
+                    storageService.setRefreshToken(data.refresh_token);
+                }
+                if (data.user) {
+                    storageService.setUser(data.user);
+                    setUser(data.user);
+                    setIsAuthenticated(true);
+                }
+            }
+            
             showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
             router.push(ROUTES.DASHBOARD);
         } catch (error) {
             showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
             throw error;
-        } finally {
-            setLoading(false);
         }
-    }, [router, showSuccess, showError]);
+    }, [loginMutation, router, showSuccess, showError]);
 
     const logout = useCallback(async () => {
         try {
+            await logoutMutation.mutateAsync();
             storageService.clearAuth();
             setUser(null);
             setIsAuthenticated(false);
@@ -64,11 +93,11 @@ export function useAuth() {
         } catch (error) {
             showError(ERROR_MESSAGES.UNKNOWN_ERROR);
         }
-    }, [router, showSuccess, showError]);
+    }, [logoutMutation, router, showSuccess, showError]);
 
     return {
         user,
-        loading,
+        loading: loading || isLoadingProfile,
         isAuthenticated,
         login,
         logout,

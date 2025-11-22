@@ -1,44 +1,29 @@
-import { ApiClient } from '../http/apiClient';
+// frontend/src/core/services/api/appointment.api.ts
 import {
+  useAppointmentsControllerCreate,
+  useAppointmentsControllerFindAll,
+  useAppointmentsControllerFindOne,
+  useAppointmentsControllerUpdate,
+  useAppointmentsControllerRemove,
+  useAppointmentsControllerComplete,
+  useAppointmentsControllerCancel,
+} from '@/core/api/generated/appointments/appointments';
+
+export {
+  useAppointmentsControllerCreate as useCreateAppointment,
+  useAppointmentsControllerFindAll as useGetAppointments,
+  useAppointmentsControllerFindOne as useGetAppointment,
+  useAppointmentsControllerUpdate as useUpdateAppointment,
+  useAppointmentsControllerRemove as useDeleteAppointment,
+  useAppointmentsControllerComplete as useCompleteAppointment,
+  useAppointmentsControllerCancel as useCancelAppointment,
+};
+
+// Re-export types
+export type {
   AppointmentResponseDto,
   CreateAppointmentDto,
   UpdateAppointmentDto,
   PaginatedAppointmentResponseDto,
   AppointmentsControllerFindAllParams,
-} from '../../api/model';
-
-class AppointmentAPI extends ApiClient {
-  constructor() {
-    super('/appointments');
-  }
-
-  async getAll(params?: AppointmentsControllerFindAllParams) {
-    return this.get<PaginatedAppointmentResponseDto>('', { params });
-  }
-
-  async getById(id: number) {
-    return this.get<AppointmentResponseDto>(`/${id}`);
-  }
-
-  async create(data: CreateAppointmentDto) {
-    return this.post<AppointmentResponseDto>('', data);
-  }
-
-  async update(id: number, data: UpdateAppointmentDto) {
-    return this.patch<AppointmentResponseDto>(`/${id}`, data);
-  }
-
-  async delete(id: number) {
-    return this.delete(`/${id}`);
-  }
-
-  async complete(id: number) {
-    return this.post<AppointmentResponseDto>(`/${id}/complete`);
-  }
-
-  async cancel(id: number) {
-    return this.post<AppointmentResponseDto>(`/${id}/cancel`);
-  }
-}
-
-export const appointmentAPI = new AppointmentAPI();
+} from '@/core/api/model';
