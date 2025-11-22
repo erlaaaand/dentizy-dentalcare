@@ -1,3 +1,7 @@
+import { FormattedTextareaProps } from "./text-area.types";
+import { formatLabels } from "./text-area.types";
+import { Textarea } from "./Textarea";
+
 export function FormattedTextarea({
     formattingHint,
     allowedFormats = ['bold', 'italic', 'list'],

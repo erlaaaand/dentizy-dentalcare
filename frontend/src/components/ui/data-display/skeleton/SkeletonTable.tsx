@@ -1,6 +1,6 @@
 import { SkeletonTableProps } from "./skeleton.types";
 import Skeleton from "./Skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 
 export function SkeletonTable({

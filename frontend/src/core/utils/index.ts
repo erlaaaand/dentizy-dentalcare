@@ -6,6 +6,7 @@ import * as StorageUtils from './storage/storage.utils';
 import * as StringUtils from './string/string.utils';
 import * as ValidationUtils from './validations/validation.utils';
 import * as CnUtils from './classnames/cn.utils';
+import * as copyToClipboard from './copy-to-clipboard/ctc';
 /**
  * Utils Index
  * Central export for all utility functions
@@ -244,6 +245,9 @@ export {
 export * from './classnames/cn.utils';
 export { cn } from './classnames/cn.utils';
 
+// copy to clipboard utilities
+export * from './copy-to-clipboard/ctc';
+
 // Re-export all utilities for convenience
 export default {
     Array: ArrayUtils,
@@ -254,4 +258,5 @@ export default {
     String: StringUtils,
     Validation: ValidationUtils,
     Cn: CnUtils,
+    Ctc: copyToClipboard,
 };

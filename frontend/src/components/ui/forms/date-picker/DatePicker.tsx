@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import { useClickOutside } from '@/domains/shared/hooks/useClickOutside';
 import { DatePickerProps } from './date-picker.types';
 import { sizeClasses, variantClasses } from './date-picker.styles';
@@ -11,7 +11,7 @@ import { AppointmentDatePicker } from './AppointmentDatePicker';
 import { BirthDatePicker } from './BirthDatePicker';
 import { DateRangePicker } from './DateRangePicker';
 
-export function DatePicker({
+export default function DatePicker({
     value,
     onChange,
     label,

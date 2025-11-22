@@ -1,9 +1,9 @@
-// Export komponen utama sebagai default
-export { default } from './Avatar';
-// Export semua bagian lainnya
+// ✅ Gunakan Named Export untuk komponen utama juga
+export { default as Avatar } from './Avatar'; 
+// ATAU jika di dalam Avatar.tsx masih export default, gunakan:
+// export { default as Avatar } from './Avatar';
+
 export * from './AvatarGroup';
 export * from './AvatarStack';
-
-// interface
 export * from './avatar.types';
 export * from './avatar.styles';

@@ -1,4 +1,4 @@
-import { Badge } from "./Badge";
+import { default as Badge } from "./Badge";
 import { CountBadgeProps } from "./badge.types";
 
 export function CountBadge({

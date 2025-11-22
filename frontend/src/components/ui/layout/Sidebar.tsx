@@ -3,7 +3,7 @@
 import React, { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuth } from '@/core/hooks/auth/useAuth'
 import { Badge } from '../data-display/badge/'
 import Avatar from '../data-display/avatar/Avatar'
 import { Role } from '@/core/types/api'

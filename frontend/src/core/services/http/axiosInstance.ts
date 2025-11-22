@@ -23,7 +23,7 @@ const axiosInstance: AxiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config: any) => {
     // Get token from localStorage
-    const token = localStorage.getItem(AUTH_CONFIG.tokenKey);
+    const token = typeof window !== 'undefined' ? localStorage.getItem(AUTH_CONFIG.tokenKey) : null;
 
     // Add token to headers if exists
     if (token) {
@@ -86,6 +86,7 @@ axiosInstance.interceptors.response.use(
         const refreshToken = localStorage.getItem('refresh_token');
         
         if (refreshToken) {
+          // Note: We use pure axios here to avoid infinite loop with interceptors
           const response = await axios.post(
             `${API_CONFIG.baseURL}/auth/refresh`,
             {},
@@ -109,6 +110,7 @@ axiosInstance.interceptors.response.use(
         // Refresh failed - redirect to login
         localStorage.removeItem(AUTH_CONFIG.tokenKey);
         localStorage.removeItem(AUTH_CONFIG.userKey);
+        localStorage.removeItem('refresh_token'); // Hapus refresh token juga
         
         if (typeof window !== 'undefined') {
           window.location.href = '/login';
@@ -129,6 +131,37 @@ axiosInstance.interceptors.response.use(
   }
 );
 
+// ============================================================================
+// ORVAL CUSTOM MUTATOR (Bagian Baru)
+// ============================================================================
+/**
+ * Custom instance wrapper for Orval generated hooks.
+ * This handles unwrapping the response data and query cancellation.
+ */
+export const customInstance = <T>(
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig,
+): Promise<T> => {
+  const source = axios.CancelToken.source();
+  
+  const promise = axiosInstance({
+    ...config,
+    ...options,
+    cancelToken: source.token,
+  }).then(({ data }) => data);
+
+  // @ts-ignore - Ini diperlukan agar fitur 'cancel' React Query bekerja
+  promise.cancel = () => {
+    source.cancel('Query was cancelled');
+  };
+
+  return promise;
+};
+
+// ============================================================================
+// Legacy Exports (Tetap disimpan jika ada kode lama yang pakai)
+// ============================================================================
+
 /**
  * Generic request wrapper with error handling
  */
@@ -143,7 +176,7 @@ export async function request<T = any>(
 }
 
 /**
- * HTTP Methods
+ * HTTP Methods helper
  */
 export const http = {
   get: <T = any>(url: string, config?: AxiosRequestConfig) =>

@@ -10,7 +10,7 @@ import { TreatmentPhotoUpload } from './TreatmentPhotoUpload';
 import { FileUploadProps } from './file-upload.types';
 import { sizeClasses, variantClasses } from './file-upload.styles';
 
-export function FileUpload({
+export default function FileUpload({
     accept,
     multiple = false,
     maxSize = 5 * 1024 * 1024, // 5MB

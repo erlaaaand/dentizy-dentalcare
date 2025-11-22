@@ -1,5 +1,5 @@
 // Export komponen utama sebagai default
-export { default } from './Card';
+export { default as Card } from './Card';
 // Export semua bagian lainnya
 export * from './ActionCard';
 export * from './CardBody';

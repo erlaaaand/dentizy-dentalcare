@@ -1,4 +1,4 @@
-export { PageHeader } from "./PageHeader";
+export { default as PageHeader } from "./PageHeader";
 export { PageHeaderWithTabs } from "./PageHeaderWithTabs";
 export { CompactPageHeader } from "./CompactPageHeader";
 export { SectionHeader } from "./SectionHeader";

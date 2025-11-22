@@ -1,6 +1,6 @@
 // components/ui/forms/Checkbox.tsx
 import React, { InputHTMLAttributes, forwardRef } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import { CheckboxProps } from './checkbox.types'; // Impor tipe
 import { sizeClasses, variantClasses } from './checkbox.styles'; // Impor gaya
 

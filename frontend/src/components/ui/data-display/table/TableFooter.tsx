@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import { TableFooterProps } from "./table.types";
 
 export function TableFooter({ children, className }: TableFooterProps) {

@@ -1,5 +1,5 @@
 // components/ui/data-display/Badge.tsx
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import React from 'react';
 import { BadgeProps } from './badge.types';
 import { iconSizeClasses, dotColors, shapeClasses, sizeClasses, gradientVariants, badgeVariants } from './badge.styles';

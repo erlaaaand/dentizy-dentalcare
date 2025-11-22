@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import { CardHeaderProps } from "./card.types";
 import { headerPaddingClasses } from "./card.styles";
 

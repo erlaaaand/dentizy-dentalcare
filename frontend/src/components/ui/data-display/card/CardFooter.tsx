@@ -1,6 +1,6 @@
 import { CardFooterProps } from "./card.types";
 import { footerAlignClasses, footerPaddingClasses } from "./card.styles";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 export function CardFooter({
     children,

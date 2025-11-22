@@ -1,6 +1,6 @@
 import { SkeletonGroupProps } from "./skeleton.types";
 import { gapClasses } from "./skeleton.styles";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 export function SkeletonGroup({
     children,

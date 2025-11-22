@@ -1,6 +1,6 @@
 import { StatsCardProps } from "./card.types";
-import { Card } from "./Card";
-import { cn } from "@/lib/utils";
+import { default as Card } from "./Card";
+import { cn } from "@/core/utils";
 
 export function StatsCard({
     title,

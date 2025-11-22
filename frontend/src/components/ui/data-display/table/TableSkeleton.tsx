@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import { TableSkeletonProps } from "./table.types";
 import { sizeClasses } from "./table.styles";
 

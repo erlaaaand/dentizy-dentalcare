@@ -1,5 +1,5 @@
 import { DatePickerContainerProps } from "./date-picker.types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 export function DatePickerContainer({
     children,

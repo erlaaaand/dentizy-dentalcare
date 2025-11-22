@@ -1,6 +1,6 @@
 // components/ui/data-display/Skeleton.tsx
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import { SkeletonProps } from './skeleton.types';
 import { colorClasses, speedClasses, variantClasses } from './skeleton.styles';
 import { SkeletonGroup } from './SkeletonGroup';

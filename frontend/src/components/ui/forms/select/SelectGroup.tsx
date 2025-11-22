@@ -1,3 +1,6 @@
+import { SelectGroupProps } from "./select.types";
+import { cn } from "@/core/utils";
+
 export function SelectGroup({
     children,
     className,

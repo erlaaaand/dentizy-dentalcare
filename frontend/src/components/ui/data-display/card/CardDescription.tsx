@@ -1,6 +1,6 @@
 import { descriptionSizeClasses } from "./card.styles";
 import { CardDescriptionProps } from "./card.types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 export function CardDescription({
     children,

@@ -1,6 +1,6 @@
 // components/ui/data-display/StatusIndicator.tsx
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import { StatusIndicatorProps } from './status-indicator.types';
 import { statusConfig, sizeClasses } from './status-indicator.styles';
 import { StatusIndicatorGroup } from './StatusIndicatorGroup';

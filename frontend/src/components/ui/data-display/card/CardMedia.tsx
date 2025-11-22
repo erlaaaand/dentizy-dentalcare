@@ -1,5 +1,5 @@
 import { CardMediaProps } from "./card.types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 export function CardMedia({
     src,

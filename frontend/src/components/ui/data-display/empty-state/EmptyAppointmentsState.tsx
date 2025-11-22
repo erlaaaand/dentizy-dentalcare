@@ -1,5 +1,5 @@
 import { EmptyAppointmentsStateProps } from "./empty-state.types";
-import { EmptyState } from "./EmptyState";
+import { default as EmptyState } from "./EmptyState";
 import { DefaultIcons } from "./empty-state.icons";
 
 export function EmptyAppointmentsState({

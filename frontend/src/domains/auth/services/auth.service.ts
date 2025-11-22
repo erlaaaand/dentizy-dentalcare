@@ -1,4 +1,4 @@
-import api from '../../../lib/api/axiosInstance';
+import api from '@/core/constants/index';
 import Cookies from 'js-cookie';
 import { LoginDto, LoginResponse } from '@/core/types/api';
 

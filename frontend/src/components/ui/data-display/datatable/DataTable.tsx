@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import Table, { Column } from '../table/index';
 import { Pagination } from '../../navigation/Pagination';
 import { SearchInput } from '../../forms/search-input/SearchInput';

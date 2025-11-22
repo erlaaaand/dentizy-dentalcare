@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-interface UseFetchOptions {
+interface UseFetchOptions<T> {
     immediate?: boolean;
-    onSuccess?: (data: any) => void;
+    onSuccess?: (data: T) => void;
     onError?: (error: Error) => void;
 }
 
@@ -18,7 +18,7 @@ interface UseFetchReturn<T> {
  */
 export function useFetch<T>(
     fetchFn: () => Promise<T>,
-    options: UseFetchOptions = {}
+    options: UseFetchOptions<T> = {}
 ): UseFetchReturn<T> {
     const { immediate = true, onSuccess, onError } = options;
 
@@ -26,7 +26,7 @@ export function useFetch<T>(
     const [loading, setLoading] = useState(immediate);
     const [error, setError] = useState<Error | null>(null);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
 
@@ -41,13 +41,13 @@ export function useFetch<T>(
         } finally {
             setLoading(false);
         }
-    };
+    }, [fetchFn, onSuccess, onError]);
 
     useEffect(() => {
         if (immediate) {
             fetchData();
         }
-    }, []);
+    }, [immediate, fetchData]);
 
     return {
         data,

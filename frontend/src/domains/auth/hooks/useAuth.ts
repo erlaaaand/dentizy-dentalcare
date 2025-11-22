@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getCurrentUser } from '@/lib/api/authService';
+import { getCurrentUser } from '../services/auth.service';
 import { User, Role, UserRole, ID } from '@/core/types/api';
 
 interface UseAuthReturn {

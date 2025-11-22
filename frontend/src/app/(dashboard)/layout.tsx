@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import Sidebar from '@/components/dashboard/sidebar'
+import Sidebar from '@/components/ui/layout/Sidebar'
 import Header from '@/components/dashboard/header'
 import Footer from '@/components/dashboard/footer'
 import AuthGuard from '@/components/AuthGuard';

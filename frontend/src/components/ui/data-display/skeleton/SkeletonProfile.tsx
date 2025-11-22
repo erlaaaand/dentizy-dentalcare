@@ -1,6 +1,6 @@
 import { SkeletonAvatar } from "./SkeletonAvatar";
 import Skeleton from "./Skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import { SkeletonText } from "./SkeletonText";
 
 // Profile Skeleton

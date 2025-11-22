@@ -1,5 +1,5 @@
 import { DateRangePickerProps } from "./date-picker.types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import { DatePicker } from "./DatePicker";
 
 export function DateRangePicker({

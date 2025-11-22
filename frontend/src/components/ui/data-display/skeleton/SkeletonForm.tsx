@@ -1,5 +1,5 @@
 import Skeleton from "./Skeleton";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 
 // Form Skeleton
 export function SkeletonForm({ fields = 4, className }: { fields?: number; className?: string }) {

@@ -1,6 +1,6 @@
 // components/ui/data-display/Table.tsx
 import React from 'react';
-import { cn } from '@/lib/utils';
+import { cn } from '@/core/utils';
 import { TableProps } from './table.types';
 import { sizeClasses, alignClasses } from './table.styles';
 import { Column } from './table.types';

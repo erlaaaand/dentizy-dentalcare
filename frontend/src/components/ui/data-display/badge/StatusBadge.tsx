@@ -1,6 +1,6 @@
 import { StatusBadgeProps } from "./badge.types";
 import { badgeVariants } from "./badge.styles";
-import { Badge } from "./Badge";
+import { default as Badge } from "./Badge";
 
 export function StatusBadge({ status, showDot = true, ...props }: StatusBadgeProps) {
   const statusConfig: Record<string, { variant: keyof typeof badgeVariants; label: string }> = {

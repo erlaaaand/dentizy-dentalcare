@@ -1,5 +1,5 @@
 import { SkeletonTextProps } from "./skeleton.types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/core/utils";
 import Skeleton from "./Skeleton";
 
 export function SkeletonText({
