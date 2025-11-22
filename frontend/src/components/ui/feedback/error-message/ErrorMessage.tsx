@@ -1,6 +1,6 @@
 // components/ui/feedback/ErrorMessage.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { RefreshCw, XCircle } from 'lucide-react';
 import { ErrorMessageProps } from './error-message.types';
 import { variantConfig, sizeClasses } from './error-message.styles';

@@ -3,7 +3,7 @@
 
 import React, { useState, useRef } from 'react';
 import { cn } from '@/core';
-import { useClickOutside } from '@/domains/shared/hooks/useClickOutside';
+import { useClickOutside } from '@/core';
 import { DatePickerProps } from './date-picker.types';
 import { sizeClasses, variantClasses } from './date-picker.styles';
 import { DatePickerContainer } from './DatePickerContainer';

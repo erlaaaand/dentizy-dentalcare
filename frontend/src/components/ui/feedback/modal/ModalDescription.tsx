@@ -1,5 +1,5 @@
 import { ModalDescriptionProps } from "./modal.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function ModalDescription({ children, className }: ModalDescriptionProps) {
     return (

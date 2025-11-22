@@ -1,6 +1,6 @@
 // components/ui/overlays/Modal.tsx
 import React, { useEffect, useRef } from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { X, Maximize2, Minimize2 } from 'lucide-react';
 import { ModalProps } from './modal.types';
 import { ModalBody } from './ModalBody';

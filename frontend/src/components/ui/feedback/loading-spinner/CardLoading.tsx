@@ -1,5 +1,5 @@
 import { CardLoadingProps } from "./loading-spinner.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function CardLoading({
     variant = 'default',

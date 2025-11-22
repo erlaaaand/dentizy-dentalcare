@@ -1,6 +1,6 @@
 import { CircularProgressProps } from "./progress-bar.types";
 import { circularSizeClasses, variantClasses } from "./progress-bar.styles";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 
 export function CircularProgress({

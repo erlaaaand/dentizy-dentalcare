@@ -1,6 +1,6 @@
 import { ToastContainerProps } from "./toast.types";
 import { positionClasses } from './toast.styles'
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function ToastContainer({
     children,

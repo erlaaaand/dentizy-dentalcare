@@ -1,6 +1,6 @@
 import { AppointmentToastProps } from "./toast.types";
-import { ToastType } from "@/stores/toast.store";
 import { Toast } from "./Toast";
+import { ToastMessage } from "@/core";
 
 export function AppointmentToast({
     id,
@@ -12,22 +12,22 @@ export function AppointmentToast({
 }: AppointmentToastProps) {
     const toastConfig = {
         confirmed: {
-            type: 'success' as ToastType,
+            type: 'success' as Toast,
             message: `Appointment confirmed for ${patientName} at ${appointmentTime}`,
             action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
         },
         reminder: {
-            type: 'info' as ToastType,
+            type: 'info' as Toast,
             message: `Reminder: ${patientName} has an appointment at ${appointmentTime}`,
             action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
         },
         cancelled: {
-            type: 'error' as ToastType,
+            type: 'error' as Toast,
             message: `Appointment cancelled for ${patientName} at ${appointmentTime}`,
             action: undefined,
         },
         rescheduled: {
-            type: 'warning' as ToastType,
+            type: 'warning' as ToastMessage,
             message: `Appointment rescheduled for ${patientName} at ${appointmentTime}`,
             action: onViewDetails ? { label: 'View Details', onClick: onViewDetails } : undefined,
         },

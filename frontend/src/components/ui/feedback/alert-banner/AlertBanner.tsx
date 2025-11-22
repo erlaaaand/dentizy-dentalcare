@@ -2,7 +2,7 @@ import { AlertBannerProps } from './alert-banner.types';
 import { alertStyles, sizeClasses, variantClasses, positionClasses, defaultIcons } from './alert-banner.styles';
 import { X } from 'lucide-react';
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { AlertContainer } from './AlertContainer';
 import { SuccessAlert } from './SuccessAlert';
 import { ErrorAlert } from './ErrorAlert';

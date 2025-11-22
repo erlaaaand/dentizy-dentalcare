@@ -1,5 +1,5 @@
 import { LoadingContainerProps } from "./loading-spinner.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function LoadingContainer({
     children,

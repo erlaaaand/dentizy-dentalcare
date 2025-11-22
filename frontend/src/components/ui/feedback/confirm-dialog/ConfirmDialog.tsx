@@ -1,6 +1,6 @@
 // components/ui/feedback/ConfirmDialog.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import Modal from '../modal/Modal';
 import Button from '../../button';
 import { ConfirmDialogProps } from './confirm-dialog.types';

@@ -1,5 +1,5 @@
 import { ModalTitleProps } from "./modal.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function ModalTitle({ children, className, as: Component = 'h3' }: ModalTitleProps) {
     return (

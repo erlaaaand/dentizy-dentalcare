@@ -1,5 +1,5 @@
 import { ProgressContainerProps } from "./progress-bar.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function ProgressContainer({
     children,

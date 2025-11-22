@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { ToastProps } from './toast.types';
 import { sizeClasses, toastTypes, positionClasses, animationClasses } from './toast.styles';
 import { ToastIcons } from './toast.icon';

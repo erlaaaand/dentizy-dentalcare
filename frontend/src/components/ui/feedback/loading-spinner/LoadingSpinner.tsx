@@ -1,6 +1,6 @@
 // components/ui/feedback/LoadingSpinner.tsx
 import React from 'react';
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { LoadingSpinnerProps } from './loading-spinner.types';
 import { sizeClasses, variantClasses, speedClasses, thicknessClasses } from './loading-spinner.styles';
 import { LoadingContainer } from './LoadingContainer';

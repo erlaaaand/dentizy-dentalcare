@@ -1,5 +1,5 @@
 import { ModalHeaderProps } from "./modal.types";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { X } from "lucide-react";
 
 export function ModalHeader({

@@ -1,6 +1,6 @@
 // components/ui/feedback/ProgressBar.tsx
 import React from 'react';
-import { cn } from '@/core/utils';
+import { cn } from '@/core';
 import { ProgressBarProps } from './progress-bar.types';
 import { sizeClasses, variantClasses } from './progress-bar.styles';
 import { CircularProgress } from './CircularProgress';
