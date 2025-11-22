@@ -1,8 +1,6 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useToastStore } from '@/stores/toastStore';
-import { ALERT_COLORS } from '@/lib/constants/statusColors';
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 
 const iconMap = {
