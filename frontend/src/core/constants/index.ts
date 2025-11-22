@@ -1,5 +1,4 @@
 export * from './api.constants';
-export * from './app.constants';
 export { ERROR_MESSAGES } from './error.constants';
 export * from './navigation.constants';
 export * from './permission.constants';

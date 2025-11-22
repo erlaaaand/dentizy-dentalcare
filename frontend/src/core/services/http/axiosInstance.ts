@@ -4,6 +4,7 @@ import { API_CONFIG } from '@/core/config/api.config';
 import { AUTH_CONFIG } from '@/core/config/auth.config';
 import { parseApiError } from '@/core/errors/api.error';
 import { ROUTES } from '@/core/constants/routes.constants';
+import { storageService } from '@/core/services/cache/storage.service';
 
 const axiosInstance: AxiosInstance = axios.create({
     baseURL: API_CONFIG.baseURL,
@@ -16,9 +17,7 @@ const axiosInstance: AxiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
     (config: any) => {
-        const token = typeof window !== 'undefined' 
-            ? localStorage.getItem(AUTH_CONFIG.TOKEN_KEY) 
-            : null;
+        const token = storageService.getAccessToken();
 
         if (token && config.headers) {
             config.headers.Authorization = `Bearer ${token}`;
