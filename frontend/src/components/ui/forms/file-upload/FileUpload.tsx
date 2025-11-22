@@ -2,11 +2,11 @@
 
 import React, { useRef, useState } from 'react';
 import { cn } from '@/core';
-import { formatFileSize, getFileIcon } from '@/core/utils/date/format.utils';
 import { FileUploadContainer } from './FileUploadContainer';
 import { PatientDocumentUpload } from './PatientDocumentUpload';
 import { FileUploadProps } from './file-upload.types';
 import { sizeClasses, variantClasses } from './file-upload.styles';
+import { formatFileSize, getFileIcon } from './file-upload.utils';
 
 export default function FileUpload({
     accept, multiple = false, maxSize = 5 * 1024 * 1024, maxFiles = 5, onFilesSelect,

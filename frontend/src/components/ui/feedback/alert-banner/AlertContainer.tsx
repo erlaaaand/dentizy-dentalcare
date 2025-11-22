@@ -1,6 +1,6 @@
 import { AlertContainerProps } from "./alert-banner.types";
 import React from "react";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export function AlertContainer({
     children,

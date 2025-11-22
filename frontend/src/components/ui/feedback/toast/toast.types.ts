@@ -1,13 +1,34 @@
-import type { ToastType } from '@/core/hooks/ui/useToast';
+// ===========================
+//  Toast Types (Consistent with useToast)
+// ===========================
 
-export interface ToastProps {
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
+
+// UI hanya, tidak dipakai di hook tapi aman dipakai komponen
+export type ToastPosition =
+    | 'top-left'
+    | 'top-center'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-center'
+    | 'bottom-right';
+
+// Ini harus sesuai dengan ToastMessage (backend structure of the toast)
+export interface ToastMessage {
     id: string;
     message: string;
-    type?: ToastType;
+    type: ToastType;
+    duration?: number; // default diambil dari UI_CONFIG jika tidak ada
+}
+
+// ===========================
+//  Props for UI Components
+// ===========================
+
+export interface ToastProps extends ToastMessage {
     variant?: 'default' | 'filled' | 'outlined';
     size?: 'sm' | 'md' | 'lg';
-    position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
-    duration?: number;
+    position?: ToastPosition;
     showIcon?: boolean;
     showClose?: boolean;
     action?: {
@@ -20,7 +41,7 @@ export interface ToastProps {
 
 export interface ToastContainerProps {
     children: React.ReactNode;
-    position?: ToastProps['position'];
+    position?: ToastPosition;
     className?: string;
 }
 

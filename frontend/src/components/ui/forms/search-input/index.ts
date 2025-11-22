@@ -1,9 +1,9 @@
 // frontend/src/components/ui/forms/search-input/index.ts
 
-// Export komponen utama sebagai default
-export { default as SearchInput } from './SearchInput';
+// Export compound component as default
+export { default } from './SearchInput';
 
-// Export specialized components
+// Export sub-components
 export { QuickSearchInput } from './QuickSearchInput';
 export { MinimalSearchInput } from './MinimalSearchInput';
 export { TableSearchInput } from './TableSearchInput';

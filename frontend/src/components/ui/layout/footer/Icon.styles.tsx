@@ -1,6 +1,6 @@
 import { FooterProps } from "./footer.types";
 import { sizeClasses, statusClasses } from "./footer.styles";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 
 export const SyncIcon = ({ className }: { className?: string }) => (
     <svg className={className} fill="currentColor" viewBox="0 0 20 20">

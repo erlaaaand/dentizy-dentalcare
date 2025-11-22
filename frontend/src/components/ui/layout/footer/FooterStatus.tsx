@@ -1,6 +1,6 @@
 import { FooterProps } from "./footer.types";
 import { sizeClasses, statusText } from "./footer.styles";
-import { cn } from "@/core/utils";
+import { cn } from "@/core";
 import { StatusIndicator, SyncIcon } from "./Icon.styles";
 
 export function FooterStatus({

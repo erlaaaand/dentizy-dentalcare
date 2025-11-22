@@ -30,12 +30,10 @@ export function SearchInput({
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    // Sync with external value changes
     React.useEffect(() => {
         setLocalValue(value);
     }, [value]);
 
-    // Call onChange when debounced value changes
     React.useEffect(() => {
         onChange(debouncedValue);
     }, [debouncedValue, onChange]);
@@ -54,7 +52,6 @@ export function SearchInput({
             disabled && 'opacity-50 cursor-not-allowed',
             className
         )}>
-            {/* Search Icon */}
             <div className={cn(
                 'absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400',
                 disabled && 'text-gray-300'
@@ -66,7 +63,6 @@ export function SearchInput({
                 )}
             </div>
 
-            {/* Input Field */}
             <input
                 type="text"
                 value={localValue}
@@ -82,7 +78,6 @@ export function SearchInput({
                 )}
             />
 
-            {/* Clear Button */}
             {localValue && !disabled && (
                 <button
                     onClick={handleClear}
@@ -100,7 +95,6 @@ export function SearchInput({
     );
 }
 
-// Create main component with compound pattern
 const SearchInputComponent = Object.assign(SearchInput, {
     Quick: QuickSearchInput,
     Minimal: MinimalSearchInput,

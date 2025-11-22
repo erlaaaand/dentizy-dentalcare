@@ -1,14 +1,25 @@
 'use client';
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
-import { Breadcrumb, Button, Card } from '@/components/ui';
-import { ArrowLeft, Plus, RefreshCw, Download, Filter } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Breadcrumb, Button, Card, LoadingSpinner } from '@/components/ui';
+import { ArrowLeft } from 'lucide-react';
 import { ROUTES } from '@/core';
+import { cn } from '@/core';
 
 // ============================================
 // TYPES
 // ============================================
+
+export interface PageAction {
+  label: string;
+  icon?: React.ReactNode;
+  onClick: () => void;
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+}
 
 export interface PageContainerProps {
   children: React.ReactNode;
@@ -21,19 +32,10 @@ export interface PageContainerProps {
       active?: boolean;
     }>;
   };
-  actions?: Array<{
-    label: string;
-    icon?: React.ReactNode;
-    onClick: () => void;
-    variant?: 'primary' | 'secondary' | 'outline' | 'danger';
-    size?: 'sm' | 'md' | 'lg';
-    loading?: boolean;
-    disabled?: boolean;
-  }>;
+  actions?: PageAction[];
   headerAction?: React.ReactNode;
   showBackButton?: boolean;
   onBack?: () => void;
-  onRefresh?: () => void;
   loading?: boolean;
   className?: string;
   contentClassName?: string;
@@ -41,6 +43,25 @@ export interface PageContainerProps {
   padding?: 'none' | 'sm' | 'md' | 'lg';
   showHeader?: boolean;
 }
+
+// ============================================
+// STYLE CONFIGURATION
+// ============================================
+
+const maxWidthClasses = {
+  sm: 'max-w-2xl',
+  md: 'max-w-4xl',
+  lg: 'max-w-6xl',
+  xl: 'max-w-7xl',
+  full: 'max-w-full',
+};
+
+const paddingClasses = {
+  none: 'px-0 py-0',
+  sm: 'px-4 py-4 sm:px-6',
+  md: 'px-6 py-6',
+  lg: 'px-8 py-8',
+};
 
 // ============================================
 // AUTO BREADCRUMB GENERATOR
@@ -53,7 +74,6 @@ const generateBreadcrumbFromPath = (pathname: string) => {
     const href = '/' + paths.slice(0, index + 1).join('/');
     const isLast = index === paths.length - 1;
 
-    // Format label from path
     const label = path
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -66,7 +86,6 @@ const generateBreadcrumbFromPath = (pathname: string) => {
     };
   });
 
-  // Add home as first item
   if (paths.length > 0) {
     breadcrumbItems.unshift({
       label: 'Dashboard',
@@ -84,7 +103,6 @@ const getPageTitleFromPath = (pathname: string): string => {
 
   if (!lastPath) return 'Dashboard';
 
-  // Handle dynamic routes like [id]
   if (lastPath.startsWith('[') && lastPath.endsWith(']')) {
     const parentPath = paths[paths.length - 2];
     return parentPath
@@ -92,43 +110,10 @@ const getPageTitleFromPath = (pathname: string): string => {
       : 'Detail';
   }
 
-  // Format title from path
   return lastPath
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
-};
-
-// ============================================
-// DEFAULT ACTIONS
-// ============================================
-
-const defaultActions = {
-  refresh: (onRefresh?: () => void, loading?: boolean) => ({
-    label: 'Refresh',
-    icon: <RefreshCw className="h-4 w-4" />,
-    onClick: () => onRefresh?.(),
-    variant: 'outline' as const,
-    loading,
-  }),
-  create: (onCreate?: () => void) => ({
-    label: 'Tambah Baru',
-    icon: <Plus className="h-4 w-4" />,
-    onClick: () => onCreate?.(),
-    variant: 'primary' as const,
-  }),
-  export: (onExport?: () => void) => ({
-    label: 'Export',
-    icon: <Download className="h-4 w-4" />,
-    onClick: () => onExport?.(),
-    variant: 'outline' as const,
-  }),
-  filter: (onFilter?: () => void) => ({
-    label: 'Filter',
-    icon: <Filter className="h-4 w-4" />,
-    onClick: () => onFilter?.(),
-    variant: 'outline' as const,
-  }),
 };
 
 // ============================================
@@ -144,7 +129,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   headerAction,
   showBackButton = false,
   onBack,
-  onRefresh,
   loading = false,
   className = '',
   contentClassName = '',
@@ -153,64 +137,40 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   showHeader = true,
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Auto-generate title and breadcrumb if not provided
   const pageTitle = title || getPageTitleFromPath(pathname);
   const breadcrumbItems = breadcrumb?.items || generateBreadcrumbFromPath(pathname);
 
-  // Add refresh action if onRefresh provided and not already in actions
-  const allActions = [...actions];
-  if (onRefresh && !actions.find(action => action.label === 'Refresh')) {
-    allActions.unshift(defaultActions.refresh(onRefresh, loading));
-  }
-
-  // ============================================
-  // STYLE CONFIGURATION
-  // ============================================
-
-  const maxWidthClasses = {
-    sm: 'max-w-2xl',
-    md: 'max-w-4xl',
-    lg: 'max-w-6xl',
-    xl: 'max-w-7xl',
-    full: 'max-w-full',
-  };
-
-  const paddingClasses = {
-    none: 'px-0 py-0',
-    sm: 'px-4 py-4 sm:px-6',
-    md: 'px-6 py-6',
-    lg: 'px-8 py-8',
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
   };
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${className}`}>
-      {/* Main Content Container */}
-      <div className={`mx-auto ${maxWidthClasses[maxWidth]} ${paddingClasses[padding]}`}>
+    <div className={cn('min-h-screen bg-gray-50', className)}>
+      <div className={cn('mx-auto', maxWidthClasses[maxWidth], paddingClasses[padding])}>
 
-        {/* Header Section */}
         {showHeader && (
           <div className="mb-6 space-y-4">
 
-            {/* Back Button */}
             {(showBackButton || onBack) && (
-              <div className="flex items-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={onBack}
-                  className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  <span>Kembali</span>
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBack}
+                icon={<ArrowLeft className="h-4 w-4" />}
+              >
+                Kembali
+              </Button>
             )}
 
-            {/* Breadcrumb */}
             {breadcrumbItems.length > 0 && (
               <div className="flex items-center justify-between">
-                <Breadcrumb items={breadcrumbItems ?? undefined} />
+                <Breadcrumb items={breadcrumbItems} />
                 {headerAction && (
                   <div className="flex-shrink-0">
                     {headerAction}
@@ -219,7 +179,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
               </div>
             )}
 
-            {/* Title and Actions */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl">
@@ -232,10 +191,9 @@ export const PageContainer: React.FC<PageContainerProps> = ({
                 )}
               </div>
 
-              {/* Action Buttons */}
-              {allActions.length > 0 && (
+              {actions.length > 0 && (
                 <div className="flex flex-shrink-0 space-x-3">
-                  {allActions.map((action, index) => (
+                  {actions.map((action, index) => (
                     <Button
                       key={index}
                       variant={action.variant || 'primary'}
@@ -243,10 +201,9 @@ export const PageContainer: React.FC<PageContainerProps> = ({
                       onClick={action.onClick}
                       loading={action.loading}
                       disabled={action.disabled}
-                      className="flex items-center space-x-2"
+                      icon={action.icon}
                     >
-                      {action.icon}
-                      <span>{action.label}</span>
+                      {action.label}
                     </Button>
                   ))}
                 </div>
@@ -255,19 +212,14 @@ export const PageContainer: React.FC<PageContainerProps> = ({
           </div>
         )}
 
-        {/* Loading State */}
         {loading && (
           <Card className="mb-6">
             <div className="flex items-center justify-center py-12">
-              <div className="flex flex-col items-center space-y-3">
-                <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
-                <p className="text-sm text-gray-500">Memuat data...</p>
-              </div>
+              <LoadingSpinner size="lg" showText text="Memuat data..." />
             </div>
           </Card>
         )}
 
-        {/* Content Area */}
         <div className={contentClassName}>
           {!loading && children}
         </div>

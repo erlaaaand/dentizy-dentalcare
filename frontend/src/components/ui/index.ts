@@ -1,5 +1,9 @@
 // frontend/src/components/ui/index.ts
 
+// ===== Buttons =====
+export { default as Button } from './button/Button';
+export * from './button';
+
 // ===== Data Display =====
 export { default as Avatar } from './data-display/avatar/Avatar';
 export { default as Badge } from './data-display/badge/Badge';
@@ -10,9 +14,13 @@ export { default as Skeleton } from './data-display/skeleton/Skeleton';
 export { default as StatusIndicator } from './data-display/status-indicator/StatusIndicator';
 export { default as Table } from './data-display/table/Table';
 
-// Button
-
-export { default as Button } from './button/Button';
+export * from './data-display/avatar';
+export * from './data-display/badge';
+export * from './data-display/card';
+export * from './data-display/empty-state';
+export * from './data-display/skeleton';
+export * from './data-display/status-indicator';
+export * from './data-display/table';
 
 // ===== Feedback =====
 export { default as AlertBanner } from './feedback/alert-banner/AlertBanner';
@@ -23,16 +31,35 @@ export { default as Modal } from './feedback/modal/Modal';
 export { default as ProgressBar } from './feedback/progress-bar/ProgressBar';
 export { Toast } from './feedback/toast/Toast';
 
+export * from './feedback/alert-banner';
+export * from './feedback/confirm-dialog';
+export * from './feedback/error-message';
+export * from './feedback/loading-spinner';
+export * from './feedback/modal';
+export * from './feedback/progress-bar';
+export * from './feedback/toast';
+
 // ===== Forms =====
 export { default as Checkbox } from './forms/checkbox/Checkbox';
 export { default as DatePicker } from './forms/date-picker/DatePicker';
 export { default as FileUpload } from './forms/file-upload/FileUpload';
 export { default as Input } from './forms/input/Input';
 export { default as RadioGroup } from './forms/radio-group/RadioGroup';
-export { SearchInput } from './forms/search-input/SearchInput';
+export { default as SearchInput } from './forms/search-input/SearchInput';
 export { default as Select } from './forms/select/Select';
 export { default as Textarea } from './forms/text-area/Textarea';
 export { default as TimePicker } from './forms/time-picker/TimePicker';
+
+export * from './forms/checkbox';
+export * from './forms/date-picker';
+export * from './forms/file-upload';
+export * from './forms/input';
+export * from './forms/search-input';
+export * from './forms/select';
+export * from './forms/text-area';
+
+// Re-export file upload utilities
+export { formatFileSize, getFileIcon } from './forms/file-upload/file-upload.utils';
 
 // ===== Layout =====
 export { default as Breadcrumb } from './layout/breadcrumb/Breadcrumb';
@@ -41,11 +68,17 @@ export { default as Header } from './layout/header/Header';
 export { default as PageHeader } from './layout/page-header/PageHeader';
 export { default as Sidebar } from './layout/sidebar/Sidebar';
 
+export * from './layout/breadcrumb';
+export * from './layout/footer';
+export * from './layout/header';
+export * from './layout/page-header';
+export * from './layout/sidebar';
+
 // ===== Navigation =====
 export { default as Accordion } from './navigation/Accordion';
 export { default as Dropdown } from './navigation/Dropdown';
 export { Pagination } from './navigation/Pagination';
-export { Tabs } from './navigation/Tabs';
+export { Tabs, TabPanel } from './navigation/Tabs';
 
 // ===== Overlays =====
 export { default as CopyButton } from './overlays/CopyButton';
