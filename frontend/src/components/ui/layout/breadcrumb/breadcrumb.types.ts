@@ -23,17 +23,14 @@ export interface BreadcrumbItemComponentProps {
     variant?: 'default' | 'minimal' | 'bold';
 }
 
-// breadcrumb.types.ts
-export interface PageBreadcrumbProps extends Omit<BreadcrumbProps, 'variant' | 'size' | 'items'> {
-    // ✅ Tambahkan 'items' ke Omit, lalu re-define dengan tipe yang benar
-    items?: BreadcrumbItem[]; // ← Gunakan BreadcrumbItem[], bukan BreadcrumbItemComponentProps[]
+export interface PageBreadcrumbProps extends Omit<BreadcrumbProps, 'variant' | 'size'> {
     title?: string;
     description?: string;
 }
 
 export interface HomeBreadcrumbProps extends Omit<BreadcrumbProps, 'items'> {
-    items: Omit<BreadcrumbItem, 'icon'>[];
+    items: BreadcrumbItem[];
     homeHref?: string;
     homeLabel?: string;
-    homeIcon?: React.ReactNode; // ✅ Added this
+    homeIcon?: React.ReactNode;
 }

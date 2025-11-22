@@ -32,7 +32,6 @@ export function Popover({
         setIsMounted(true);
     }, []);
 
-    // Perbaikan: Type casting ke RefObject<HTMLElement>
     useClickOutside(popoverRef as RefObject<HTMLElement>, (event) => {
         if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
             setIsOpen(false);
@@ -42,27 +41,26 @@ export function Popover({
     useEffect(() => {
         if (isOpen && triggerRef.current && isMounted) {
             const rect = triggerRef.current.getBoundingClientRect();
-            const scrollY = window.scrollY;
-            const scrollX = window.scrollX;
+            const popoverWidth = 200;
+            const popoverHeight = 100;
 
-            let top = rect.bottom + scrollY + offset;
-            let left = rect.left + scrollX;
+            let top = rect.bottom + offset;
+            let left = rect.left + (rect.width / 2);
 
             switch (position) {
                 case 'top':
-                    top = rect.top + scrollY - offset;
+                    top = rect.top - offset - popoverHeight;
                     break;
                 case 'left':
-                    top = rect.top + scrollY;
-                    left = rect.left + scrollX - offset;
+                    top = rect.top + (rect.height / 2);
+                    left = rect.left - offset - popoverWidth;
                     break;
                 case 'right':
-                    top = rect.top + scrollY;
-                    left = rect.right + scrollX + offset;
+                    top = rect.top + (rect.height / 2);
+                    left = rect.right + offset;
                     break;
                 case 'bottom':
                 default:
-                    // Already set
                     break;
             }
 
@@ -116,9 +114,14 @@ export function Popover({
                 <div
                     ref={popoverRef}
                     style={{
-                        top: coords.top,
-                        left: coords.left,
-                        position: 'absolute',
+                        top: `${coords.top}px`,
+                        left: `${coords.left}px`,
+                        position: 'fixed',
+                        transform: position === 'bottom' || position === 'top'
+                            ? 'translateX(-50%)'
+                            : position === 'left' || position === 'right'
+                                ? 'translateY(-50%)'
+                                : 'none',
                     }}
                     className={cn(
                         'z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-3',

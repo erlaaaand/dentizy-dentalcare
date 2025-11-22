@@ -1,8 +1,7 @@
-// components/ui/forms/Checkbox.tsx
 import React, { InputHTMLAttributes, forwardRef } from 'react';
 import { cn } from '@/core';
-import { CheckboxProps } from './checkbox.types'; // Impor tipe
-import { sizeClasses, variantClasses } from './checkbox.styles'; // Impor gaya
+import { CheckboxProps } from './checkbox.types';
+import { sizeClasses, variantClasses } from './checkbox.styles';
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   (
@@ -28,7 +27,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    // Render checkmark or indeterminate icon
     const renderIcon = () => {
       if (indeterminate) {
         return (
@@ -51,7 +49,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         align === 'right' && 'flex-row-reverse',
         fullWidth && 'w-full'
       )}>
-        {/* Checkbox Input */}
         <div className="relative flex-shrink-0">
           <input
             ref={ref}
@@ -72,13 +69,13 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
               className
             )}
             aria-invalid={!!error}
+            aria-labelledby={label ? `${checkboxId}-label` : undefined}
             aria-describedby={
               error ? `${checkboxId}-error` : description ? `${checkboxId}-description` : undefined
             }
             {...props}
           />
 
-          {/* Checkmark/Indeterminate Icon */}
           {(checked || indeterminate) && (
             <div className={cn(
               'absolute inset-0 flex items-center justify-center pointer-events-none text-white',
@@ -89,7 +86,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           )}
         </div>
 
-        {/* Label and Description */}
         {(label || description) && (
           <div className={cn(
             align === 'left' ? 'ml-3' : 'mr-3',
@@ -97,6 +93,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           )}>
             {label && (
               <label
+                id={`${checkboxId}-label`}
                 htmlFor={checkboxId}
                 className={cn(
                   'font-medium text-gray-700 cursor-pointer select-none',
@@ -126,13 +123,9 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     );
 
     return (
-      <div className={cn(
-        'w-full',
-        containerClassName
-      )}>
+      <div className={cn('w-full', containerClassName)}>
         {checkboxContent}
 
-        {/* Error Message */}
         {error && (
           <p
             id={`${checkboxId}-error`}
@@ -140,6 +133,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
               'mt-1 text-red-600 flex items-center gap-1',
               sizeClass.container
             )}
+            role="alert"
           >
             <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
               <path

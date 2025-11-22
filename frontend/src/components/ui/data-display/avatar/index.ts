@@ -1,8 +1,5 @@
-// ✅ Gunakan Named Export untuk komponen utama juga
-export { default as Avatar } from './Avatar'; 
-// ATAU jika di dalam Avatar.tsx masih export default, gunakan:
-// export { default as Avatar } from './Avatar';
-
+export { default as Avatar } from './Avatar';
+export { default } from './Avatar';
 export * from './AvatarGroup';
 export * from './AvatarStack';
 export * from './avatar.types';

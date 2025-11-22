@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { cn } from '@/core';
 import { Search } from 'lucide-react';
 import { Table, Pagination, SearchInput, EmptyState, Card, LoadingSpinner } from '@/components/ui';
@@ -60,23 +60,24 @@ export default function DataTable<T extends Record<string, unknown>>({
     compact = false,
 }: DataTableProps<T>) {
 
-    const handleSelectAll = (checked: boolean) => {
+    const handleSelectAll = useCallback((checked: boolean) => {
         if (!onSelectionChange || !getRowId) return;
         onSelectionChange(
             checked ? new Set(data.map((row) => getRowId(row))) : new Set()
         );
-    };
+    }, [data, getRowId, onSelectionChange]);
 
-    const handleSelectRow = (row: T) => {
+    const handleSelectRow = useCallback((row: T) => {
         if (!onSelectionChange || !getRowId) return;
         const id = getRowId(row);
         const newSelection = new Set(selectedRows);
         newSelection.has(id) ? newSelection.delete(id) : newSelection.add(id);
         onSelectionChange(newSelection);
-    };
+    }, [selectedRows, getRowId, onSelectionChange]);
 
-    const isAllSelected = data.length > 0 && data.every((row) =>
-        selectedRows.has(getRowId?.(row) ?? '')
+    const isAllSelected = useMemo(() =>
+        data.length > 0 && data.every((row) => selectedRows.has(getRowId?.(row) ?? '')),
+        [data, selectedRows, getRowId]
     );
 
     const tableColumns: Column<T>[] = useMemo(() => {
@@ -105,11 +106,10 @@ export default function DataTable<T extends Record<string, unknown>>({
             align: 'center',
         };
         return [selectionCol, ...columns];
-    }, [columns, selectable, isAllSelected, selectedRows, data, getRowId]);
+    }, [columns, selectable, isAllSelected, handleSelectAll]);
 
     return (
         <div className={cn('space-y-4', className)}>
-            {/* Search & Actions Bar */}
             {(searchable || actions) && (
                 <Card padding="md" className="bg-white">
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -132,15 +132,13 @@ export default function DataTable<T extends Record<string, unknown>>({
                 </Card>
             )}
 
-            {/* Error State */}
             {error && (
                 <Card padding="md" className="bg-red-50 border-red-200">
                     <p className="text-red-700 text-sm">Error: {error}</p>
                 </Card>
             )}
 
-            {/* Table Card */}
-            <Card padding="none" className="bg-white overflow-hidden">
+            <Card padding="none" className="bg-white overflow-hidden relative">
                 {isLoading && (
                     <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center backdrop-blur-sm">
                         <LoadingSpinner size="lg" variant="primary" />
@@ -158,7 +156,6 @@ export default function DataTable<T extends Record<string, unknown>>({
                 />
             </Card>
 
-            {/* Pagination */}
             {totalPages > 1 && onPageChange && (
                 <Pagination
                     currentPage={currentPage}

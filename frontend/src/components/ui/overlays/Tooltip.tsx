@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/core';
 
 export interface TooltipProps {
@@ -33,7 +33,18 @@ export default function Tooltip({
     const [isVisible, setIsVisible] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
     const showTooltip = () => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
         timeoutRef.current = setTimeout(() => {
             setIsVisible(true);
         }, delay);
@@ -42,6 +53,7 @@ export default function Tooltip({
     const hideTooltip = () => {
         if (timeoutRef.current) {
             clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
         }
         setIsVisible(false);
     };
@@ -67,7 +79,6 @@ export default function Tooltip({
                     role="tooltip"
                 >
                     {content}
-                    {/* Arrow */}
                     <div
                         className={cn(
                             'absolute w-0 h-0 border-4 border-transparent',

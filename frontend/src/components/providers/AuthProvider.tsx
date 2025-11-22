@@ -5,7 +5,12 @@ import { useRouter } from 'next/navigation';
 import { storageService } from '@/core/services/cache/storage.service';
 import { useLogin, useLogout } from '@/core/services/api/auth.api';
 import { ROUTES } from '@/core/constants';
-import { User } from '@/core/api/model'; // ✅ Menggunakan tipe dari Core
+import { User } from '@/core/api/model';
+
+interface LoginResponse {
+    access_token: string;
+    user: User;
+}
 
 interface AuthContextType {
     user: User | null;
@@ -23,7 +28,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    // ✅ Menggunakan React Query Mutations dari Core
     const loginMutation = useLogin();
     const logoutMutation = useLogout();
 
@@ -43,25 +47,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const login = async (credentials: { username: string; password: string }) => {
         try {
-            // ✅ Menggunakan API Service yang sudah digenerate
-            const response = await loginMutation.mutateAsync({ data: credentials });
-            // Respons dari API login di Core sepertinya mengembalikan object yang mungkin perlu disesuaikan field-nya
-            // Asumsi response memiliki access_token dan user (sesuai LoginResponse standar)
-            const data = response as any;
+            const response = await loginMutation.mutateAsync({ data: credentials }) as unknown as LoginResponse;
 
-            if (data?.access_token) {
-                storageService.setAccessToken(data.access_token);
+            if (response?.access_token) {
+                storageService.setAccessToken(response.access_token);
             }
 
-            if (data?.user) {
-                storageService.setUser(data.user);
-                setUser(data.user);
+            if (response?.user) {
+                storageService.setUser(response.user);
+                setUser(response.user);
             }
 
             router.push(ROUTES.DASHBOARD);
         } catch (error) {
             console.error('Login failed:', error);
-            throw error; // Biarkan komponen UI menangani error display
+            throw error;
         }
     };
 
@@ -71,7 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
-            // Selalu clear storage client-side meski API error
             storageService.clearAuth();
             setUser(null);
             router.push(ROUTES.LOGIN);

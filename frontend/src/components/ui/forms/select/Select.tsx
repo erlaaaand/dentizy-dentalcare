@@ -65,6 +65,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         onChange={handleChange}
                         className={cn('w-full rounded-lg transition-colors appearance-none cursor-pointer focus:outline-none', sizeClass.select, variantClass.select, variantClass.background, getStateClass(), className)}
                         aria-invalid={!!error}
+                        aria-describedby={error ? `${selectId}-error` : hint ? `${selectId}-hint` : undefined}
                         {...props}
                     >
                         {placeholder && <option value="" disabled>{placeholder}</option>}
@@ -79,8 +80,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         {loading ? <LoadingSpinner className={sizeClass.icon} /> : <ChevronDownIcon className={sizeClass.icon} />}
                     </div>
                 </div>
-                {error && <div className={cn('flex items-center gap-1 text-red-600', sizeClass.hint)}><ErrorIcon />{error}</div>}
-                {hint && !error && <p className={cn('text-gray-500', sizeClass.hint)}>{hint}</p>}
+                {error && (
+                    <div className={cn('flex items-center gap-1 text-red-600 mt-1', sizeClass.hint)}>
+                        <ErrorIcon />
+                        {error}
+                    </div>
+                )}
+                {hint && !error && <p className={cn('text-gray-500 mt-1', sizeClass.hint)}>{hint}</p>}
             </div>
         );
     }

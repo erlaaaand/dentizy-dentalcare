@@ -1,19 +1,14 @@
-// components/ui/data-display/Badge.tsx
-import { cn } from '@/core';
 import React from 'react';
+import { cn } from '@/core';
 import { BadgeProps } from './badge.types';
 import { iconSizeClasses, dotColors, shapeClasses, sizeClasses, gradientVariants, badgeVariants } from './badge.styles';
-
-// ============================================
-// MAIN BADGE COMPONENT
-// ============================================
 
 export default function Badge({
     children,
     variant = 'default',
     size = 'md',
     shape = 'pill',
-    icon: Icon, // ✅ Fixed: lowercase 'icon' to uppercase 'Icon'
+    icon,
     iconPosition = 'left',
     onClick,
     onRemove,
@@ -29,35 +24,33 @@ export default function Badge({
 }: BadgeProps) {
     const isClickable = onClick || interactive;
     const hasRemove = onRemove || removable;
+    const IconComponent = icon;
 
-    // Determine base classes
     const baseClasses = cn(
         'inline-flex items-center justify-center font-medium border transition-all duration-200',
         'whitespace-nowrap select-none',
         sizeClasses[size],
         shapeClasses[shape],
-        gradient ? gradientVariants[variant] : badgeVariants[variant], // ✅ Fixed: Now properly indexed
+        gradient ? gradientVariants[variant] : badgeVariants[variant],
         isClickable && 'cursor-pointer transform active:scale-95',
-        hasRemove && 'pr-2', // Extra padding for remove button
+        hasRemove && 'pr-2',
         pulse && 'animate-pulse',
         className
     );
 
-    // Dot element
     const dotElement = dot && (
         <span
             className={cn(
                 'rounded-full mr-1.5 flex-shrink-0',
                 iconSizeClasses[size],
-                dotColors[variant], // ✅ Fixed: Now properly indexed
+                dotColors[variant],
                 pulse && 'animate-ping'
             )}
         />
     );
 
-    // Icon element - ✅ Fixed: Now using Icon (uppercase)
-    const iconElement = Icon && (
-        <Icon
+    const iconElement = IconComponent && (
+        <IconComponent
             className={cn(
                 'flex-shrink-0',
                 iconSizeClasses[size],
@@ -66,7 +59,6 @@ export default function Badge({
         />
     );
 
-    // Remove button
     const removeButton = hasRemove && (
         <button
             type="button"
@@ -81,49 +73,30 @@ export default function Badge({
             )}
             aria-label="Remove badge"
         >
-            <svg
-                className="w-full h-full"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-            >
-                <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                />
+            <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
     );
 
-    // Content with proper styling
     const content = (
         <>
-            {/* Left dot/icon */}
             {dotElement}
             {iconPosition === 'left' && iconElement}
-
-            {/* Text content */}
             <span
                 className={cn(
                     'truncate',
-                    (dot || Icon) && (iconPosition === 'left' ? 'ml-0.5' : 'mr-0.5') // ✅ Fixed: Icon instead of icon
+                    (dot || IconComponent) && (iconPosition === 'left' ? 'ml-0.5' : 'mr-0.5')
                 )}
                 style={maxWidth ? { maxWidth: typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth } : undefined}
             >
                 {children}
             </span>
-
-            {/* Right icon */}
             {iconPosition === 'right' && iconElement}
-
-            {/* Remove button */}
             {removeButton}
         </>
     );
 
-    // Render as button if clickable
     if (isClickable) {
         return (
             <button
@@ -139,13 +112,8 @@ export default function Badge({
         );
     }
 
-    // Render as span if not clickable
     return (
-        <span
-            className={baseClasses}
-            style={style}
-            title={title}
-        >
+        <span className={baseClasses} style={style} title={title}>
             {content}
         </span>
     );
