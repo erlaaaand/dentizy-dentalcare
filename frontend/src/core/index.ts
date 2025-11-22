@@ -60,7 +60,6 @@ export {
   cacheService,
   storageService,
   sessionStorageService,
-  apiClient,
   customInstance,
   setupInterceptors,
 } from './services';
@@ -86,7 +85,6 @@ export {
   formatTime,
   formatDateTime,
   formatCurrency,
-  formatPhoneNumber,
   isValidEmail,
   isValidPhone,
   isValidNIK,

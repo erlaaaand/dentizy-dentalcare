@@ -7,7 +7,7 @@ import { Permission } from '@/lib/permissions';
 import { PatientForm } from '@/components/forms/PatientForm';
 import { useToastStore } from '@/stores/toastStore';
 import * as patientService from '@/lib/api';
-import { PatientFormData } from '@/core/validators/patientSchema';
+import { PatientFormData } from '@/core/validators/patient.schema';
 import { ArrowLeft, AlertCircle, Users } from 'lucide-react';
 import { useAuth } from '@/lib/hooks/useAuth';
 

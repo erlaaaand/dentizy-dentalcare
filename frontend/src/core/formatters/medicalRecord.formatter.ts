@@ -1,4 +1,5 @@
-import { MedicalRecord } from '@/core/types/api';
+// frontend/src/core/formatters/medicalRecord.formatter.ts
+import { MedicalRecordResponseDto } from '@/core/api/model';
 
 /**
  * Format medical record number
@@ -31,7 +32,7 @@ export function generateMedicalRecordNumber(sequential: number): string {
 /**
  * Format SOAP notes for display
  */
-export function formatSOAPNotes(record: MedicalRecord | null | undefined): {
+export function formatSOAPNotes(record: MedicalRecordResponseDto | null | undefined): {
   subjektif: string;
   objektif: string;
   assessment: string;
@@ -47,17 +48,17 @@ export function formatSOAPNotes(record: MedicalRecord | null | undefined): {
   }
 
   return {
-    subjektif: record.subjektif || '-',
-    objektif: record.objektif || '-',
-    assessment: record.assessment || '-',
-    plan: record.plan || '-',
+    subjektif: record.subjektif ? JSON.stringify(record.subjektif) : '-',
+    objektif: record.objektif ? JSON.stringify(record.objektif) : '-',
+    assessment: record.assessment ? JSON.stringify(record.assessment) : '-',
+    plan: record.plan ? JSON.stringify(record.plan) : '-',
   };
 }
 
 /**
  * Check if medical record is complete
  */
-export function isMedicalRecordComplete(record: MedicalRecord | null | undefined): boolean {
+export function isMedicalRecordComplete(record: MedicalRecordResponseDto | null | undefined): boolean {
   if (!record) return false;
 
   return !!(
@@ -71,7 +72,7 @@ export function isMedicalRecordComplete(record: MedicalRecord | null | undefined
 /**
  * Get completion percentage
  */
-export function getMedicalRecordCompletion(record: MedicalRecord | null | undefined): number {
+export function getMedicalRecordCompletion(record: MedicalRecordResponseDto | null | undefined): number {
   if (!record) return 0;
 
   let completed = 0;
@@ -88,25 +89,26 @@ export function getMedicalRecordCompletion(record: MedicalRecord | null | undefi
 /**
  * Format SOAP section for printing
  */
-export function formatSOAPSection(title: string, content: string | null | undefined): string {
+export function formatSOAPSection(title: string, content: any): string {
   if (!content) return `${title}:\n-\n\n`;
 
-  return `${title}:\n${content}\n\n`;
+  const contentStr = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+  return `${title}:\n${contentStr}\n\n`;
 }
 
 /**
  * Export medical record to plain text
  */
-export function exportMedicalRecordToText(record: MedicalRecord): string {
+export function exportMedicalRecordToText(record: MedicalRecordResponseDto): string {
   const soap = formatSOAPNotes(record);
 
   return `
 REKAM MEDIS PASIEN
 
-Nomor RM: ${record.patient.no_rm}
-Nama Pasien: ${record.patient.nama_lengkap}
-Tanggal Janji: ${record.appointment.tanggal_janji}
-Dokter: ${record.user_id_staff}
+Nomor RM: ${record.patient?.no_rm || '-'}
+Nama Pasien: ${record.patient?.nama_lengkap || '-'}
+Tanggal Janji: ${record.appointment?.appointment_date || '-'}
+Dokter: ${record.doctor?.name || '-'}
 
 ${formatSOAPSection('SUBJEKTIF (Keluhan Pasien)', soap.subjektif)}
 ${formatSOAPSection('OBJEKTIF (Hasil Pemeriksaan)', soap.objektif)}

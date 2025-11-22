@@ -1,27 +1,18 @@
 // frontend/src/core/validators/appointmentSchema.ts
-import { ID } from '@/core/types/api';
+import { CreateAppointmentDto, UpdateAppointmentDto } from '@/core/api/model';
 import { isPastDate, isPastTime } from '@/core/formatters/scheduleFormatter';
-
-export interface AppointmentFormData {
-  patient_id: ID | string;
-  doctor_id: ID | string;
-  tanggal_janji: string;
-  jam_janji: string;
-  keluhan?: string;
-  status?: 'dijadwalkan' | 'selesai' | 'dibatalkan';
-}
 
 /**
  * Validate appointment form
  */
 export function validateAppointmentForm(
-  data: AppointmentFormData,
+  data: Partial<CreateAppointmentDto | UpdateAppointmentDto>,
   isEdit: boolean = false
 ): {
   isValid: boolean;
-  errors: Partial<Record<keyof AppointmentFormData, string>>;
+  errors: Record<string, string>;
 } {
-  const errors: Partial<Record<keyof AppointmentFormData, string>> = {};
+  const errors: Record<string, string> = {};
 
   // Patient validation
   if (!data.patient_id) {
@@ -61,7 +52,9 @@ export function validateAppointmentForm(
 /**
  * Sanitize appointment form data
  */
-export function sanitizeAppointmentFormData(data: AppointmentFormData): AppointmentFormData {
+export function sanitizeAppointmentFormData(
+  data: Partial<CreateAppointmentDto | UpdateAppointmentDto>
+): Partial<CreateAppointmentDto | UpdateAppointmentDto> {
   return {
     patient_id: data.patient_id,
     doctor_id: data.doctor_id,

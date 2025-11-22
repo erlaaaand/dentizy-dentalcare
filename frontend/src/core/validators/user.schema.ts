@@ -1,26 +1,18 @@
 // frontend/src/core/validators/userSchema.ts
 import { VALIDATION_RULES } from '@/core/constants/validation.constants';
-import { ID } from '@/core/types/api';
-
-export interface UserFormData {
-  nama_lengkap: string;
-  username: string;
-  password?: string;
-  confirmPassword?: string;
-  roles: ID[];
-}
+import { CreateUserDto, UpdateUserDto } from '@/core/api/model';
 
 /**
  * Validate user form
  */
 export function validateUserForm(
-  data: UserFormData,
+  data: Partial<CreateUserDto | UpdateUserDto>,
   isEdit: boolean = false
 ): {
   isValid: boolean;
-  errors: Partial<Record<keyof UserFormData, string>>;
+  errors: Record<string, string>;
 } {
-  const errors: Partial<Record<keyof UserFormData, string>> = {};
+  const errors: Record<string, string> = {};
 
   // Name validation
   if (!data.nama_lengkap?.trim()) {
@@ -40,28 +32,11 @@ export function validateUserForm(
 
   // Password validation (required for new user, optional for edit)
   if (!isEdit) {
-    if (!data.password) {
+    const createData = data as Partial<CreateUserDto>;
+    if (!createData.password) {
       errors.password = 'Password harus diisi';
-    } else if (data.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
+    } else if (createData.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
       errors.password = `Password minimal ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} karakter`;
-    }
-
-    // Confirm password validation
-    if (!data.confirmPassword) {
-      errors.confirmPassword = 'Konfirmasi password harus diisi';
-    } else if (data.confirmPassword !== data.password) {
-      errors.confirmPassword = 'Konfirmasi password tidak cocok';
-    }
-  } else {
-    // If editing and password is provided, validate it
-    if (data.password) {
-      if (data.password.length < VALIDATION_RULES.PASSWORD.MIN_LENGTH) {
-        errors.password = `Password minimal ${VALIDATION_RULES.PASSWORD.MIN_LENGTH} karakter`;
-      }
-
-      if (data.confirmPassword !== data.password) {
-        errors.confirmPassword = 'Konfirmasi password tidak cocok';
-      }
     }
   }
 
@@ -80,18 +55,18 @@ export function validateUserForm(
  * Sanitize user form data
  */
 export function sanitizeUserFormData(
-  data: UserFormData,
+  data: Partial<CreateUserDto | UpdateUserDto>,
   isEdit: boolean = false
-): Partial<UserFormData> {
-  const sanitized: Partial<UserFormData> = {
+): Partial<CreateUserDto | UpdateUserDto> {
+  const sanitized: Partial<CreateUserDto | UpdateUserDto> = {
     nama_lengkap: data.nama_lengkap?.trim() || '',
     username: data.username?.trim().toLowerCase() || '',
     roles: data.roles || [],
   };
 
-  // Only include password if it's provided and not empty
-  if (data.password && data.password.trim()) {
-    sanitized.password = data.password;
+  // Only include password for CreateUserDto
+  if (!isEdit && 'password' in data && data.password) {
+    (sanitized as CreateUserDto).password = data.password;
   }
 
   return sanitized;

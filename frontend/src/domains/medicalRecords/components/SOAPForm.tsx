@@ -7,7 +7,7 @@ import {
     sanitizeMedicalRecordFormData,
     MedicalRecordFormData,
     validateSOAPNotes,
-} from '@/core/validators/medicalRecordSchema';
+} from '@/core/validators/medicalRecord.schema';
 import {
     FileText,
     Activity,

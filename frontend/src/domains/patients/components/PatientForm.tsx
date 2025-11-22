@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Patient, Gender } from '@/core/types/api';
-import { validatePatientForm, sanitizePatientFormData, PatientFormData } from '@/core/validators/patientSchema';
+import { validatePatientForm, sanitizePatientFormData, PatientFormData } from '@/core/validators/patient.schema';
 import { GENDER_OPTIONS } from '@/lib/constants';
 import { toInputDate } from '@/core/formatters';
 import { User, Calendar, Mail, Phone, MapPin, Users } from 'lucide-react';

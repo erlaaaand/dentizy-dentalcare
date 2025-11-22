@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { validateLoginForm, LoginFormData } from '@/core/validators/authSchema';
+import { validateLoginForm, LoginFormData } from '@/core/validators/auth.schema';
 import { useToastStore } from '@/stores/toastStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Eye, EyeOff, LogIn } from 'lucide-react';

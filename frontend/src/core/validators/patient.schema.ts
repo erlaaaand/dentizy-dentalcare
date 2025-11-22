@@ -1,29 +1,18 @@
 // frontend/src/core/validators/patientSchema.ts
 import { VALIDATION_RULES } from '@/core/constants/validation.constants';
-import { Gender } from '@/core/types/api';
+import { CreatePatientDto, UpdatePatientDto, CreatePatientDtoJenisKelamin } from '@/core/api/model';
 import { validatePhoneNumber } from '@/core/formatters/phoneFormatter';
-
-export interface PatientFormData {
-  nama_lengkap: string;
-  nik?: string;
-  email?: string;
-  no_hp?: string;
-  tanggal_lahir?: string;
-  jenis_kelamin?: Gender;
-  alamat?: string;
-  riwayat_alergi?: string;
-  riwayat_penyakit?: string;
-  catatan_khusus?: string;
-}
 
 /**
  * Validate patient form
  */
-export function validatePatientForm(data: PatientFormData): {
+export function validatePatientForm(
+  data: Partial<CreatePatientDto | UpdatePatientDto>
+): {
   isValid: boolean;
-  errors: Partial<Record<keyof PatientFormData, string>>;
+  errors: Record<string, string>;
 } {
-  const errors: Partial<Record<keyof PatientFormData, string>> = {};
+  const errors: Record<string, string> = {};
 
   // Name validation
   if (!data.nama_lengkap?.trim()) {
@@ -69,6 +58,14 @@ export function validatePatientForm(data: PatientFormData): {
     }
   }
 
+  // Gender validation (optional)
+  if (data.jenis_kelamin) {
+    const validGenders: CreatePatientDtoJenisKelamin[] = ['L', 'P'];
+    if (!validGenders.includes(data.jenis_kelamin)) {
+      errors.jenis_kelamin = 'Jenis kelamin tidak valid';
+    }
+  }
+
   return {
     isValid: Object.keys(errors).length === 0,
     errors,
@@ -78,7 +75,9 @@ export function validatePatientForm(data: PatientFormData): {
 /**
  * Sanitize patient form data
  */
-export function sanitizePatientFormData(data: PatientFormData): PatientFormData {
+export function sanitizePatientFormData(
+  data: Partial<CreatePatientDto | UpdatePatientDto>
+): Partial<CreatePatientDto | UpdatePatientDto> {
   return {
     nama_lengkap: data.nama_lengkap?.trim() || '',
     nik: data.nik?.trim() || undefined,
