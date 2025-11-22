@@ -1,89 +1,64 @@
-/**
- * Component-specific type definitions
- */
+import { ReactNode, CSSProperties } from 'react';
 
-import { ReactNode } from 'react';
-import { LucideIcon } from 'lucide-react';
-
-// Base component props
-export interface BaseProps {
-    className?: string;
-    children?: ReactNode;
+// Base Component Props
+export interface BaseComponentProps {
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+  id?: string;
 }
 
-// Button variants
-export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'outline' | 'ghost';
-export type ButtonSize = 'sm' | 'md' | 'lg';
-
-export interface ButtonProps extends BaseProps {
-    variant?: ButtonVariant;
-    size?: ButtonSize;
-    disabled?: boolean;
-    loading?: boolean;
-    onClick?: () => void;
-    type?: 'button' | 'submit' | 'reset';
-    icon?: LucideIcon;
+// Button Props
+export interface ButtonProps extends BaseComponentProps {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  size?: 'sm' | 'md' | 'lg';
+  disabled?: boolean;
+  loading?: boolean;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  icon?: ReactNode;
 }
 
-// Card props
-export interface CardProps extends BaseProps {
-    title?: string;
-    subtitle?: string;
-    footer?: ReactNode;
-    hoverable?: boolean;
-    onClick?: () => void;
+// Input Props
+export interface InputProps extends BaseComponentProps {
+  type?: 'text' | 'email' | 'password' | 'number' | 'tel' | 'date';
+  placeholder?: string;
+  value?: string | number;
+  onChange?: (value: string) => void;
+  disabled?: boolean;
+  error?: string;
+  label?: string;
+  required?: boolean;
 }
 
-// Badge props
-export type BadgeVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info';
-
-export interface BadgeProps extends BaseProps {
-    variant?: BadgeVariant;
-    size?: 'sm' | 'md' | 'lg';
+// Modal Props
+export interface ModalProps extends BaseComponentProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title?: string;
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-// Alert props
-export type AlertType = 'success' | 'error' | 'warning' | 'info';
-
-export interface AlertProps extends BaseProps {
-    type: AlertType;
-    title?: string;
-    message: string;
-    onClose?: () => void;
-    closeable?: boolean;
+// Table Props
+export interface TableColumn<T> {
+  key: keyof T | string;
+  label: string;
+  render?: (value: unknown, row: T) => ReactNode;
+  sortable?: boolean;
+  width?: string;
 }
 
-// Empty state props
-export interface EmptyStateProps extends BaseProps {
-    icon?: LucideIcon;
-    title: string;
-    description?: string;
-    action?: ReactNode;
+export interface TableProps<T> {
+  data: T[];
+  columns: TableColumn<T>[];
+  loading?: boolean;
+  onRowClick?: (row: T) => void;
+  pagination?: PaginationConfig;
 }
 
-// Loading props
-export interface LoadingProps extends BaseProps {
-    size?: 'sm' | 'md' | 'lg';
-    text?: string;
-}
-
-// Pagination props
-export interface PaginationProps {
-    currentPage: number;
-    totalPages: number;
-    onPageChange: (page: number) => void;
-    showFirstLast?: boolean;
-}
-
-// Stat card props
-export interface StatCardProps {
-    title: string;
-    value: string | number;
-    subtitle?: string;
-    icon?: LucideIcon;
-    color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple' | 'indigo';
-    trend?: {
-        value: number;
-        label: string;
-    };
+export interface PaginationConfig {
+  page: number;
+  limit: number;
+  total: number;
+  onPageChange: (page: number) => void;
 }

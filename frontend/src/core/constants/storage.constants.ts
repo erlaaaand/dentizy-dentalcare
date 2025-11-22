@@ -24,6 +24,20 @@ export const LOCAL_STORAGE_KEYS = {
     TABLE_PREFERENCES: `${STORAGE_PREFIX}table_preferences`,
 } as const;
 
+export const CACHE_KEYS = {
+  APPOINTMENTS: 'appointments',
+  PATIENTS: 'patients',
+  MEDICAL_RECORDS: 'medical_records',
+  USERS: 'users',
+  NOTIFICATIONS: 'notifications',
+} as const;
+
+export const CACHE_TTL = {
+  SHORT: 1 * 60 * 1000, // 1 minute
+  MEDIUM: 5 * 60 * 1000, // 5 minutes
+  LONG: 30 * 60 * 1000, // 30 minutes
+} as const;
+
 
 // Session Storage Keys
 export const SESSION_STORAGE_KEYS = {

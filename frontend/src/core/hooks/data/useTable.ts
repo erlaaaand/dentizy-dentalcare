@@ -1,181 +1,64 @@
-import { useState, useCallback, useMemo } from 'react';
-import { usePagination } from './usePagination';
-import { PAGINATION_CONFIG } from '../config/ui.config';
+import { useState, useMemo, useCallback } from 'react';
+import { PaginationParams, SortOrder } from '../../types/api';
+import { APP_CONFIG } from '../../config/app.config';
 
 interface UseTableOptions {
-    initialPage?: number;
-    initialPageSize?: number;
-    initialSortBy?: string;
-    initialSortOrder?: 'asc' | 'desc';
+  defaultPage?: number;
+  defaultLimit?: number;
+  defaultSortBy?: string;
+  defaultSortOrder?: SortOrder;
 }
 
-interface UseTableReturn<T> {
-    // Data
-    data: T[];
-    setData: (data: T[]) => void;
-    
-    // Pagination
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-    totalItems: number;
-    setPage: (page: number) => void;
-    setPageSize: (size: number) => void;
-    nextPage: () => void;
-    prevPage: () => void;
-    canGoNext: boolean;
-    canGoPrev: boolean;
-    
-    // Sorting
-    sortBy: string | null;
-    sortOrder: 'asc' | 'desc';
-    setSorting: (field: string) => void;
-    
-    // Selection
-    selectedRows: Set<number>;
-    selectRow: (id: number) => void;
-    selectAllRows: () => void;
-    clearSelection: () => void;
-    isRowSelected: (id: number) => boolean;
-    isAllSelected: boolean;
-    
-    // Search/Filter
-    searchQuery: string;
-    setSearchQuery: (query: string) => void;
-    filters: Record<string, any>;
-    setFilter: (key: string, value: any) => void;
-    clearFilters: () => void;
-    
-    // Loading state
-    loading: boolean;
-    setLoading: (loading: boolean) => void;
-}
+export function useTable(options: UseTableOptions = {}) {
+  const [page, setPage] = useState(options.defaultPage || APP_CONFIG.PAGINATION.DEFAULT_PAGE);
+  const [limit, setLimit] = useState(options.defaultLimit || APP_CONFIG.PAGINATION.DEFAULT_LIMIT);
+  const [sortBy, setSortBy] = useState(options.defaultSortBy);
+  const [sortOrder, setSortOrder] = useState<SortOrder>(options.defaultSortOrder || 'asc');
 
-/**
- * Hook for table state management
- */
-export function useTable<T extends { id: number }>(
-    options: UseTableOptions = {}
-): UseTableReturn<T> {
-    const {
-        initialPage = PAGINATION_CONFIG.defaultPage,
-        initialPageSize = PAGINATION_CONFIG.defaultLimit,
-        initialSortBy = null,
-        initialSortOrder = 'asc',
-    } = options;
+  const params = useMemo<PaginationParams>(
+    () => ({
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+    }),
+    [page, limit, sortBy, sortOrder]
+  );
 
-    // Data state
-    const [data, setData] = useState<T[]>([]);
-    const [loading, setLoading] = useState(false);
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
 
-    // Pagination
-    const pagination = usePagination(initialPage, initialPageSize);
+  const handleLimitChange = useCallback((newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1); // Reset to first page
+  }, []);
 
-    // Sorting
-    const [sortBy, setSortBy] = useState<string | null>(initialSortBy);
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(initialSortOrder);
+  const handleSort = useCallback((field: string) => {
+    if (sortBy === field) {
+      setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  }, [sortBy]);
 
-    const setSorting = useCallback((field: string) => {
-        setSortBy(prevSortBy => {
-            if (prevSortBy === field) {
-                setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-                return field;
-            }
-            setSortOrder('asc');
-            return field;
-        });
-    }, []);
+  const reset = useCallback(() => {
+    setPage(options.defaultPage || 1);
+    setLimit(options.defaultLimit || APP_CONFIG.PAGINATION.DEFAULT_LIMIT);
+    setSortBy(options.defaultSortBy);
+    setSortOrder(options.defaultSortOrder || 'asc');
+  }, [options]);
 
-    // Selection
-    const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
-
-    const selectRow = useCallback((id: number) => {
-        setSelectedRows(prev => {
-            const newSet = new Set(prev);
-            if (newSet.has(id)) {
-                newSet.delete(id);
-            } else {
-                newSet.add(id);
-            }
-            return newSet;
-        });
-    }, []);
-
-    const selectAllRows = useCallback(() => {
-        if (selectedRows.size === data.length) {
-            setSelectedRows(new Set());
-        } else {
-            setSelectedRows(new Set(data.map(item => item.id)));
-        }
-    }, [data, selectedRows.size]);
-
-    const clearSelection = useCallback(() => {
-        setSelectedRows(new Set());
-    }, []);
-
-    const isRowSelected = useCallback((id: number) => {
-        return selectedRows.has(id);
-    }, [selectedRows]);
-
-    const isAllSelected = useMemo(() => {
-        return data.length > 0 && selectedRows.size === data.length;
-    }, [data.length, selectedRows.size]);
-
-    // Search and filters
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFilters] = useState<Record<string, any>>({});
-
-    const setFilter = useCallback((key: string, value: any) => {
-        setFilters(prev => ({
-            ...prev,
-            [key]: value,
-        }));
-    }, []);
-
-    const clearFilters = useCallback(() => {
-        setFilters({});
-        setSearchQuery('');
-    }, []);
-
-    return {
-        // Data
-        data,
-        setData,
-        
-        // Pagination
-        currentPage: pagination.currentPage,
-        pageSize: pagination.pageSize,
-        totalPages: pagination.totalPages,
-        totalItems: pagination.totalItems,
-        setPage: pagination.setPage,
-        setPageSize: pagination.setPageSize,
-        nextPage: pagination.nextPage,
-        prevPage: pagination.prevPage,
-        canGoNext: pagination.canGoNext,
-        canGoPrev: pagination.canGoPrev,
-        
-        // Sorting
-        sortBy,
-        sortOrder,
-        setSorting,
-        
-        // Selection
-        selectedRows,
-        selectRow,
-        selectAllRows,
-        clearSelection,
-        isRowSelected,
-        isAllSelected,
-        
-        // Search/Filter
-        searchQuery,
-        setSearchQuery,
-        filters,
-        setFilter,
-        clearFilters,
-        
-        // Loading
-        loading,
-        setLoading,
-    };
+  return {
+    params,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+    setPage: handlePageChange,
+    setLimit: handleLimitChange,
+    handleSort,
+    reset,
+  };
 }

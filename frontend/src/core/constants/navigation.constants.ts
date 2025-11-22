@@ -1,37 +1,41 @@
-import { ROLES } from './';
+import { NavItem } from '../types/global/layout.types';
+import { ROUTES } from './routes.constants';
+import { ROLES } from './role.constants';
 
-/**
- * Navigation Configuration
- */
-export const NAVIGATION = {
-    dashboard: {
-        path: '/dashboard',
-        label: 'Dashboard',
-        roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF]
-    },
-    appointments: {
-        path: '/dashboard/appointments',
-        label: 'Jadwal Janji Temu',
-        roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF]
-    },
-    patients: {
-        path: '/dashboard/patients',
-        label: 'Manajemen Pasien',
-        roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF]
-    },
-    medicalRecords: {
-        path: '/dashboard/medical-records',
-        label: 'Rekam Medis',
-        roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF]
-    },
-    reports: {
-        path: '/dashboard/reports',
-        label: 'Laporan',
-        roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER]
-    },
-    settings: {
-        path: '/dashboard/settings',
-        label: 'Pengaturan',
-        roles: [ROLES.KEPALA_KLINIK]
-    }
-} as const;
+export const NAVIGATION_ITEMS: NavItem[] = [
+  {
+    label: 'Dashboard',
+    href: ROUTES.DASHBOARD,
+    roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF],
+  },
+  {
+    label: 'Janji Temu',
+    href: ROUTES.APPOINTMENTS,
+    roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF],
+  },
+  {
+    label: 'Pasien',
+    href: ROUTES.PATIENTS,
+    roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF],
+  },
+  {
+    label: 'Rekam Medis',
+    href: ROUTES.MEDICAL_RECORDS,
+    roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER],
+  },
+  {
+    label: 'Pengguna',
+    href: ROUTES.USERS,
+    roles: [ROLES.KEPALA_KLINIK],
+  },
+  {
+    label: 'Laporan',
+    href: ROUTES.REPORTS,
+    roles: [ROLES.KEPALA_KLINIK],
+  },
+  {
+    label: 'Pengaturan',
+    href: ROUTES.SETTINGS,
+    roles: [ROLES.KEPALA_KLINIK],
+  },
+];

@@ -1,148 +1,134 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
+import { z } from 'zod';
+import { FormState, FormConfig } from '../../types/forms';
 
-interface UseFormOptions<T> {
-    initialValues: T;
-    validate?: (values: T) => Partial<Record<keyof T, string>>;
-    onSubmit: (values: T) => void | Promise<void>;
-}
+export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
+  const [values, setValues] = useState<T>(config.initialValues);
+  const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
+  const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-interface UseFormReturn<T> {
-    values: T;
-    errors: Partial<Record<keyof T, string>>;
-    touched: Partial<Record<keyof T, boolean>>;
-    isSubmitting: boolean;
-    isDirty: boolean;
-    isValid: boolean;
-    handleChange: (field: keyof T, value: any) => void;
-    handleBlur: (field: keyof T) => void;
-    handleSubmit: (e: React.FormEvent) => Promise<void>;
-    setFieldValue: (field: keyof T, value: any) => void;
-    setFieldError: (field: keyof T, error: string) => void;
-    setFieldTouched: (field: keyof T, touched: boolean) => void;
-    resetForm: () => void;
-    setValues: (values: T) => void;
-}
+  const validate = useCallback(
+    (fieldValues: T = values): Partial<Record<keyof T, string>> => {
+      if (!config.validationSchema) return {};
 
-/**
- * Hook for form state management
- */
-export function useForm<T extends Record<string, any>>(
-    options: UseFormOptions<T>
-): UseFormReturn<T> {
-    const { initialValues, validate, onSubmit } = options;
-
-    const [values, setValues] = useState<T>(initialValues);
-    const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
-    const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const isDirty = JSON.stringify(values) !== JSON.stringify(initialValues);
-    const isValid = Object.keys(errors).length === 0;
-
-    const handleChange = useCallback((field: keyof T, value: any) => {
-        setValues(prev => ({
-            ...prev,
-            [field]: value,
-        }));
-
-        // Clear error when user starts typing
-        if (errors[field]) {
-            setErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[field];
-                return newErrors;
-            });
-        }
-    }, [errors]);
-
-    const handleBlur = useCallback((field: keyof T) => {
-        setTouched(prev => ({
-            ...prev,
-            [field]: true,
-        }));
-
-        // Validate field on blur
-        if (validate) {
-            const validationErrors = validate(values);
-            if (validationErrors[field]) {
-                setErrors(prev => ({
-                    ...prev,
-                    [field]: validationErrors[field],
-                }));
+      try {
+        config.validationSchema.parse(fieldValues);
+        return {};
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          const fieldErrors: Partial<Record<keyof T, string>> = {};
+          error.errors.forEach((err) => {
+            const field = err.path[0] as keyof T;
+            if (field) {
+              fieldErrors[field] = err.message;
             }
+          });
+          return fieldErrors;
         }
-    }, [values, validate]);
+        return {};
+      }
+    },
+    [config.validationSchema, values]
+  );
 
-    const handleSubmit = useCallback(async (e: React.FormEvent) => {
-        e.preventDefault();
+  const validateField = useCallback(
+    (name: keyof T, value: any): string | undefined => {
+      const fieldErrors = validate({ ...values, [name]: value });
+      return fieldErrors[name];
+    },
+    [values, validate]
+  );
 
-        // Mark all fields as touched
-        const allTouched = Object.keys(values).reduce((acc, key) => {
-            acc[key as keyof T] = true;
-            return acc;
-        }, {} as Partial<Record<keyof T, boolean>>);
-        setTouched(allTouched);
+  const setFieldValue = useCallback(
+    (name: keyof T, value: any) => {
+      setValues(prev => ({ ...prev, [name]: value }));
 
-        // Validate
-        if (validate) {
-            const validationErrors = validate(values);
-            setErrors(validationErrors);
+      if (config.validateOnChange) {
+        const error = validateField(name, value);
+        setErrors(prev => ({ ...prev, [name]: error }));
+      }
+    },
+    [config.validateOnChange, validateField]
+  );
 
-            if (Object.keys(validationErrors).length > 0) {
-                return;
-            }
-        }
+  const setFieldTouched = useCallback(
+    (name: keyof T, isTouched: boolean = true) => {
+      setTouched(prev => ({ ...prev, [name]: isTouched }));
 
-        // Submit
-        setIsSubmitting(true);
-        try {
-            await onSubmit(values);
-        } catch (error) {
-            console.error('Form submission error:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    }, [values, validate, onSubmit]);
+      if (config.validateOnBlur && isTouched) {
+        const error = validateField(name, values[name]);
+        setErrors(prev => ({ ...prev, [name]: error }));
+      }
+    },
+    [config.validateOnBlur, values, validateField]
+  );
 
-    const setFieldValue = useCallback((field: keyof T, value: any) => {
-        handleChange(field, value);
-    }, [handleChange]);
+  const handleChange = useCallback(
+    (name: keyof T) => (value: any) => {
+      setFieldValue(name, value);
+    },
+    [setFieldValue]
+  );
 
-    const setFieldError = useCallback((field: keyof T, error: string) => {
-        setErrors(prev => ({
-            ...prev,
-            [field]: error,
-        }));
-    }, []);
+  const handleBlur = useCallback(
+    (name: keyof T) => () => {
+      setFieldTouched(name, true);
+    },
+    [setFieldTouched]
+  );
 
-    const setFieldTouched = useCallback((field: keyof T, touchedValue: boolean) => {
-        setTouched(prev => ({
-            ...prev,
-            [field]: touchedValue,
-        }));
-    }, []);
+  const resetForm = useCallback(() => {
+    setValues(config.initialValues);
+    setErrors({});
+    setTouched({});
+    setIsSubmitting(false);
+  }, [config.initialValues]);
 
-    const resetForm = useCallback(() => {
-        setValues(initialValues);
-        setErrors({});
-        setTouched({});
+  const handleSubmit = useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
+
+      const validationErrors = validate(values);
+      setErrors(validationErrors);
+
+      if (Object.keys(validationErrors).length > 0) {
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      try {
+        await config.onSubmit(values);
+      } catch (error) {
+        console.error('Form submission error:', error);
+      } finally {
         setIsSubmitting(false);
-    }, [initialValues]);
+      }
+    },
+    [values, validate, config]
+  );
 
-    return {
-        values,
-        errors,
-        touched,
-        isSubmitting,
-        isDirty,
-        isValid,
-        handleChange,
-        handleBlur,
-        handleSubmit,
-        setFieldValue,
-        setFieldError,
-        setFieldTouched,
-        resetForm,
-        setValues,
-    };
+  const isValid = useMemo(() => {
+    return Object.keys(errors).length === 0;
+  }, [errors]);
+
+  const formState: FormState<T> = {
+    values,
+    errors,
+    touched,
+    isSubmitting,
+    isValid,
+  };
+
+  return {
+    ...formState,
+    setFieldValue,
+    setFieldTouched,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    resetForm,
+    validate,
+  };
 }

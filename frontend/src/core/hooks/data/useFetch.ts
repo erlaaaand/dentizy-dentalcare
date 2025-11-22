@@ -1,58 +1,54 @@
 import { useState, useEffect, useCallback } from 'react';
+import { ApiResponse } from '../../types/api';
+import { ErrorHandler } from '../../errors/error.handler';
 
 interface UseFetchOptions<T> {
-    immediate?: boolean;
-    onSuccess?: (data: T) => void;
-    onError?: (error: Error) => void;
+  onSuccess?: (data: T) => void;
+  onError?: (error: Error) => void;
+  enabled?: boolean;
 }
 
-interface UseFetchReturn<T> {
-    data: T | null;
-    loading: boolean;
-    error: Error | null;
-    refetch: () => Promise<void>;
-}
-
-/**
- * Hook for data fetching with loading and error states
- */
 export function useFetch<T>(
-    fetchFn: () => Promise<T>,
-    options: UseFetchOptions<T> = {}
-): UseFetchReturn<T> {
-    const { immediate = true, onSuccess, onError } = options;
+  fetcher: () => Promise<ApiResponse<T>>,
+  options: UseFetchOptions<T> = {}
+) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-    const [data, setData] = useState<T | null>(null);
-    const [loading, setLoading] = useState(immediate);
-    const [error, setError] = useState<Error | null>(null);
+  const { onSuccess, onError, enabled = true } = options;
 
-    const fetchData = useCallback(async () => {
-        setLoading(true);
-        setError(null);
+  const fetchData = useCallback(async () => {
+    if (!enabled) return;
 
-        try {
-            const result = await fetchFn();
-            setData(result);
-            onSuccess?.(result);
-        } catch (err) {
-            const error = err as Error;
-            setError(error);
-            onError?.(error);
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchFn, onSuccess, onError]);
+    setLoading(true);
+    setError(null);
 
-    useEffect(() => {
-        if (immediate) {
-            fetchData();
-        }
-    }, [immediate, fetchData]);
+    try {
+      const response = await fetcher();
+      setData(response.data);
+      onSuccess?.(response.data);
+    } catch (err) {
+      const appError = ErrorHandler.handle(err);
+      setError(appError);
+      onError?.(appError);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetcher, enabled, onSuccess, onError]);
 
-    return {
-        data,
-        loading,
-        error,
-        refetch: fetchData,
-    };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const refetch = useCallback(() => {
+    return fetchData();
+  }, [fetchData]);
+
+  return {
+    data,
+    loading,
+    error,
+    refetch,
+  };
 }

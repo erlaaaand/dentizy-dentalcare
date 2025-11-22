@@ -1,54 +1,59 @@
 import { useState, useCallback } from 'react';
+import { ToastMessage } from '../../types/global/ui.types';
+import { UI_CONFIG } from '../../config/ui.config';
 
-export type ToastType = 'success' | 'error' | 'warning' | 'info';
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-interface ToastAction {
-    label: string;
-    onClick: () => void;
-}
-
-interface Toast {
-    id: string;
-    message: string;
-    type: ToastType;
-    action?: ToastAction;
-}
-
-interface UseToastReturn {
-    toasts: Toast[];
-    success: (message: string, action?: ToastAction) => void;
-    error: (message: string, action?: ToastAction) => void;
-    warning: (message: string, action?: ToastAction) => void;
-    info: (message: string, action?: ToastAction) => void;
-    remove: (id: string) => void;
-}
-
-/**
- * Simple toast notification hook
- */
-export function useToast(): UseToastReturn {
-    const [toasts, setToasts] = useState<Toast[]>([]);
-
-    const addToast = useCallback((message: string, type: ToastType, action?: ToastAction) => {
-        const id = Date.now().toString();
-        setToasts(prev => [...prev, { id, message, type, action }]);
-
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            setToasts(prev => prev.filter(toast => toast.id !== id));
-        }, 5000);
-    }, []);
-
-    const remove = useCallback((id: string) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-    }, []);
-
-    return {
-        toasts,
-        success: (message, action) => addToast(message, 'success', action),
-        error: (message, action) => addToast(message, 'error', action),
-        warning: (message, action) => addToast(message, 'warning', action),
-        info: (message, action) => addToast(message, 'info', action),
-        remove,
+  const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    const newToast: ToastMessage = {
+      ...toast,
+      id,
+      duration: toast.duration || UI_CONFIG.TOAST.DURATION,
     };
+
+    setToasts(prev => {
+      const updated = [...prev, newToast];
+      return updated.slice(-UI_CONFIG.TOAST.MAX_TOASTS);
+    });
+
+    if (newToast.duration) {
+      setTimeout(() => removeToast(id), newToast.duration);
+    }
+  }, []);
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id));
+  }, []);
+
+  const showSuccess = useCallback((message: string, duration?: number) => {
+    addToast({ type: 'success', message, duration });
+  }, [addToast]);
+
+  const showError = useCallback((message: string, duration?: number) => {
+    addToast({ type: 'error', message, duration });
+  }, [addToast]);
+
+  const showWarning = useCallback((message: string, duration?: number) => {
+    addToast({ type: 'warning', message, duration });
+  }, [addToast]);
+
+  const showInfo = useCallback((message: string, duration?: number) => {
+    addToast({ type: 'info', message, duration });
+  }, [addToast]);
+
+  const clearAll = useCallback(() => {
+    setToasts([]);
+  }, []);
+
+  return {
+    toasts,
+    showSuccess,
+    showError,
+    showWarning,
+    showInfo,
+    removeToast,
+    clearAll,
+  };
 }
