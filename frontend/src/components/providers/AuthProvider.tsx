@@ -1,18 +1,11 @@
-// frontend/src/components/providers/AuthProvider.tsx
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-// Types
-interface User {
-    id: number;
-    username: string;
-    nama_lengkap: string;
-    email?: string;
-    role: string;
-    roles?: Array<string | { name: string }>;
-}
+import { storageService } from '@/core/services/cache/storage.service';
+import { useLogin, useLogout } from '@/core/services/api/auth.api';
+import { ROUTES } from '@/core/constants';
+import { User } from '@/core/api/model'; // ✅ Menggunakan tipe dari Core
 
 interface AuthContextType {
     user: User | null;
@@ -23,81 +16,71 @@ interface AuthContextType {
     updateUser: (user: User) => void;
 }
 
-// Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Provider Component
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
 
-    // Initialize auth state from localStorage
+    // ✅ Menggunakan React Query Mutations dari Core
+    const loginMutation = useLogin();
+    const logoutMutation = useLogout();
+
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('access_token');
+        const initAuth = () => {
+            const storedUser = storageService.getUser<User>();
+            const token = storageService.getAccessToken();
 
-        if (storedUser && token) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error('Failed to parse stored user:', error);
-                localStorage.removeItem('user');
-                localStorage.removeItem('access_token');
+            if (storedUser && token) {
+                setUser(storedUser);
             }
-        }
+            setLoading(false);
+        };
 
-        setLoading(false);
+        initAuth();
     }, []);
 
     const login = async (credentials: { username: string; password: string }) => {
         try {
-            // TODO: Replace with actual API call
-            const response = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(credentials),
-            });
+            // ✅ Menggunakan API Service yang sudah digenerate
+            const response = await loginMutation.mutateAsync({ data: credentials });
+            // Respons dari API login di Core sepertinya mengembalikan object yang mungkin perlu disesuaikan field-nya
+            // Asumsi response memiliki access_token dan user (sesuai LoginResponse standar)
+            const data = response as any;
 
-            if (!response.ok) {
-                throw new Error('Login failed');
+            if (data?.access_token) {
+                storageService.setAccessToken(data.access_token);
             }
 
-            const data = await response.json();
+            if (data?.user) {
+                storageService.setUser(data.user);
+                setUser(data.user);
+            }
 
-            // Store token and user
-            localStorage.setItem('access_token', data.access_token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-
-            setUser(data.user);
-
-            // Redirect to dashboard
-            router.push('/dashboard');
+            router.push(ROUTES.DASHBOARD);
         } catch (error) {
-            console.error('Login error:', error);
-            throw error;
+            console.error('Login failed:', error);
+            throw error; // Biarkan komponen UI menangani error display
         }
     };
 
     const logout = async () => {
         try {
-            // Clear local storage
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('user');
-
-            setUser(null);
-
-            // Redirect to login
-            router.push('/auth/login');
+            await logoutMutation.mutateAsync();
         } catch (error) {
             console.error('Logout error:', error);
-            throw error;
+        } finally {
+            // Selalu clear storage client-side meski API error
+            storageService.clearAuth();
+            setUser(null);
+            router.push(ROUTES.LOGIN);
         }
     };
 
     const updateUser = (updatedUser: User) => {
         setUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        storageService.setUser(updatedUser);
     };
 
     const value: AuthContextType = {
@@ -116,13 +99,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 }
 
-// Hook to use auth context
 export function useAuth() {
     const context = useContext(AuthContext);
-
     if (context === undefined) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
-
     return context;
 }

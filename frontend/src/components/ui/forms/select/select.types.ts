@@ -36,7 +36,7 @@ export interface SearchableSelectProps extends Omit<SelectProps, 'options'> {
 
 // Status Select for status filtering
 export interface StatusSelectProps extends Omit<SelectProps, 'options' | 'placeholder'> {
-    statusOptions?: Array<'active' | 'inactive' | 'pending' | 'completed'>;
+    statusOptions?: Array<'dijadwalkan' | 'selesai' | 'dibatalkan'>;
     includeAll?: boolean;
     placeholder?: string;
 }

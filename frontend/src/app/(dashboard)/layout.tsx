@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Sidebar from '@/components/ui/layout/sidebar/Sidebar'
-import Header from '@/components/dashboard/header'
-import Footer from '@/components/dashboard/footer'
-import AuthGuard from '@/components/AuthGuard';
+import Header from '@/components/ui/layout/header/'
+import Footer from '@/components/ui/layout/footer'
+import AuthGuard from '@/components/providers/AuthProvider';
 import { Providers } from '@/components/providers/Providers';
 
 export const metadata: Metadata = {

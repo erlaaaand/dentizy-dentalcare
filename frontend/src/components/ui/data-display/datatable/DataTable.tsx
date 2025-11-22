@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { cn } from '@/core';
-import Table, { Column } from '../table/index';
+import { Search, Filter } from 'lucide-react';
+import Table, { Column } from '../table/index'; // Base Table Component
 import { Pagination } from '../../navigation/Pagination';
-import { SearchInput } from '../../forms/search-input/SearchInput';
-import EmptyState from '../empty-state';
+import { Button } from '../../button';
+import { Input } from '../../forms/input'; // Reusable Input
 import { LoadingSpinner } from '../../feedback/loading-spinner/LoadingSpinner';
 
 export interface DataTableProps<T> {
@@ -17,7 +18,7 @@ export interface DataTableProps<T> {
     pageSize?: number;
     onPageChange?: (page: number) => void;
 
-    // Search
+    // Search & Filter
     searchable?: boolean;
     searchValue?: string;
     onSearchChange?: (value: string) => void;
@@ -31,12 +32,6 @@ export interface DataTableProps<T> {
 
     // Actions
     actions?: React.ReactNode;
-    bulkActions?: Array<{
-        label: string;
-        icon?: React.ReactNode;
-        onClick: (selectedIds: Set<string | number>) => void;
-        variant?: 'default' | 'danger';
-    }>;
 
     // State
     isLoading?: boolean;
@@ -47,8 +42,6 @@ export interface DataTableProps<T> {
     className?: string;
     striped?: boolean;
     hoverable?: boolean;
-
-    // Events
     onRowClick?: (row: T, index: number) => void;
 }
 
@@ -63,136 +56,91 @@ export default function DataTable<T extends Record<string, any>>({
     searchable = false,
     searchValue = '',
     onSearchChange,
-    searchPlaceholder = 'Cari...',
+    searchPlaceholder = 'Cari data...',
     selectable = false,
     selectedRows = new Set(),
     onSelectionChange,
     getRowId,
     actions,
-    bulkActions,
     isLoading = false,
     error,
-    emptyMessage,
+    emptyMessage = 'Data tidak ditemukan',
     className,
     striped = false,
     hoverable = true,
     onRowClick
 }: DataTableProps<T>) {
-    const [localSearch, setLocalSearch] = useState(searchValue);
 
-    // Calculate pagination info
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = Math.min(startIndex + pageSize, totalItems || data.length);
-
-    // Handle select all
-    const isAllSelected = selectable && data.length > 0 &&
-        data.every(row => {
-            const id = getRowId?.(row) ?? row.id;
-            return selectedRows.has(id);
-        });
-
-    const handleSelectAll = () => {
+    // --- INTERNAL SELECTION LOGIC ---
+    const handleSelectAll = (checked: boolean) => {
         if (!onSelectionChange || !getRowId) return;
-
-        if (isAllSelected) {
-            onSelectionChange(new Set());
-        } else {
+        if (checked) {
             const allIds = new Set(data.map(row => getRowId(row)));
             onSelectionChange(allIds);
+        } else {
+            onSelectionChange(new Set());
         }
     };
 
     const handleSelectRow = (row: T) => {
         if (!onSelectionChange || !getRowId) return;
-
         const id = getRowId(row);
         const newSelection = new Set(selectedRows);
-
-        if (newSelection.has(id)) {
-            newSelection.delete(id);
-        } else {
-            newSelection.add(id);
-        }
-
+        if (newSelection.has(id)) newSelection.delete(id);
+        else newSelection.add(id);
         onSelectionChange(newSelection);
     };
 
-    // Build columns with selection
-    const tableColumns: Column<T>[] = selectable
-        ? [
+    const isAllSelected = data.length > 0 && data.every(row => selectedRows.has(getRowId?.(row) ?? row.id));
+
+    // --- COLUMNS BUILDER ---
+    const tableColumns: Column<T>[] = React.useMemo(() => {
+        if (!selectable) return columns;
+        return [
             {
                 key: '_selection',
                 header: (
                     <input
                         type="checkbox"
                         checked={isAllSelected}
-                        onChange={handleSelectAll}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        onChange={(e) => handleSelectAll(e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
                 ) as any,
-                render: (row) => {
-                    const id = getRowId?.(row) ?? row.id;
-                    return (
-                        <input
-                            type="checkbox"
-                            checked={selectedRows.has(id)}
-                            onChange={() => handleSelectRow(row)}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                    );
-                },
-                className: 'w-12'
+                render: (row) => (
+                    <input
+                        type="checkbox"
+                        checked={selectedRows.has(getRowId?.(row) ?? row.id)}
+                        onChange={() => handleSelectRow(row)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                ),
+                width: '48px',
+                align: 'center'
             },
             ...columns
-        ]
-        : columns;
+        ];
+    }, [columns, selectable, isAllSelected, selectedRows, data]);
 
     return (
         <div className={cn('space-y-4', className)}>
-            {/* Header with Search and Actions */}
-            {(searchable || actions || (bulkActions && selectedRows.size > 0)) && (
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex-1">
-                        {searchable && (
-                            <SearchInput
-                                value={localSearch}
-                                onChange={(value) => {
-                                    setLocalSearch(value);
-                                    onSearchChange?.(value);
-                                }}
+            {/* Toolbar */}
+            {(searchable || actions) && (
+                <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                    {searchable && (
+                        <div className="w-full sm:max-w-xs relative">
+                            <Input
                                 placeholder={searchPlaceholder}
-                                className="max-w-md"
+                                value={searchValue}
+                                onChange={(e) => onSearchChange?.(e.target.value)}
+                                leftIcon={<Search className="w-4 h-4" />}
+                                size="sm"
+                                className="w-full"
                             />
-                        )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Bulk Actions */}
-                        {bulkActions && selectedRows.size > 0 && (
-                            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-lg border border-blue-200">
-                                <span className="text-sm font-medium text-blue-900">
-                                    {selectedRows.size} dipilih
-                                </span>
-                                {bulkActions.map((action, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => action.onClick(selectedRows)}
-                                        className={cn(
-                                            'px-3 py-1 text-sm font-medium rounded transition-colors',
-                                            action.variant === 'danger'
-                                                ? 'bg-red-600 text-white hover:bg-red-700'
-                                                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
-                                        )}
-                                    >
-                                        {action.icon && <span className="mr-1">{action.icon}</span>}
-                                        {action.label}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Actions */}
+                        </div>
+                    )}
+                    <div className="flex gap-2 w-full sm:w-auto justify-end">
                         {actions}
                     </div>
                 </div>
@@ -200,31 +148,28 @@ export default function DataTable<T extends Record<string, any>>({
 
             {/* Error State */}
             {error && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 text-red-800">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                        <span className="font-medium">{error}</span>
-                    </div>
+                <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg text-sm">
+                    Error: {error}
                 </div>
             )}
 
-            {/* Table */}
-            {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                    <LoadingSpinner size="lg" />
-                </div>
-            ) : (
+            {/* Loading / Table */}
+            <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
+                {isLoading && (
+                    <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center backdrop-blur-sm">
+                        <LoadingSpinner size="lg" variant="primary" />
+                    </div>
+                )}
+
                 <Table
                     data={data}
                     columns={tableColumns}
-                    onRowClick={onRowClick}
                     striped={striped}
                     hoverable={hoverable}
+                    onRowClick={onRowClick}
                     emptyMessage={emptyMessage}
                 />
-            )}
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -233,9 +178,9 @@ export default function DataTable<T extends Record<string, any>>({
                     totalPages={totalPages}
                     onPageChange={onPageChange || (() => { })}
                     showInfo={!!totalItems}
-                    startIndex={startIndex}
-                    endIndex={endIndex}
                     totalItems={totalItems}
+                    startIndex={(currentPage - 1) * pageSize}
+                    endIndex={Math.min(currentPage * pageSize, totalItems || 0)}
                 />
             )}
         </div>

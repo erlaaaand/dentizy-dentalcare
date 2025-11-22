@@ -1,10 +1,10 @@
-// components/layout/PageContainer.tsx
 'use client';
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Breadcrumb, Button, Card } from '@/components/ui';
 import { ArrowLeft, Plus, RefreshCw, Download, Filter } from 'lucide-react';
+import { ROUTES } from '@/core';
 
 // ============================================
 // TYPES
@@ -70,7 +70,7 @@ const generateBreadcrumbFromPath = (pathname: string) => {
   if (paths.length > 0) {
     breadcrumbItems.unshift({
       label: 'Dashboard',
-      href: '/dashboard',
+      href: ROUTES.DASHBOARD,
       active: false,
     });
   }
@@ -183,17 +183,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     lg: 'px-8 py-8',
   };
 
-  const contentPaddingClasses = {
-    none: 'p-0',
-    sm: 'p-4',
-    md: 'p-6',
-    lg: 'p-8',
-  };
-
-  // ============================================
-  // RENDER
-  // ============================================
-
   return (
     <div className={`min-h-screen bg-gray-50 ${className}`}>
       {/* Main Content Container */}
@@ -284,156 +273,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
         </div>
       </div>
     </div>
-  );
-};
-
-// ============================================
-// SPECIALIZED PAGE CONTAINERS
-// ============================================
-
-// For List Pages
-interface ListPageContainerProps extends Omit<PageContainerProps, 'actions'> {
-  onAdd?: () => void;
-  onExport?: () => void;
-  onFilter?: () => void;
-  addButtonLabel?: string;
-  showCreateButton?: boolean;
-  showExportButton?: boolean;
-  showFilterButton?: boolean;
-}
-
-export const ListPageContainer: React.FC<ListPageContainerProps> = ({
-  onAdd,
-  onExport,
-  onFilter,
-  addButtonLabel = 'Tambah Baru',
-  showCreateButton = true,
-  showExportButton = false,
-  showFilterButton = false,
-  ...props
-}) => {
-  const actions: PageContainerProps['actions'] = [];
-
-  if (showFilterButton && onFilter) {
-    actions.push(defaultActions.filter(onFilter));
-  }
-
-  if (showExportButton && onExport) {
-    actions.push(defaultActions.export(onExport));
-  }
-
-  if (showCreateButton && onAdd) {
-    actions.push({
-      label: addButtonLabel,
-      icon: <Plus className="h-4 w-4" />,
-      onClick: onAdd,
-      variant: 'primary',
-    });
-  }
-
-  return (
-    <PageContainer
-      {...props}
-      actions={actions}
-    />
-  );
-};
-
-// For Detail Pages
-interface DetailPageContainerProps extends PageContainerProps {
-  onEdit?: () => void;
-  onDelete?: () => void;
-  showEditButton?: boolean;
-  showDeleteButton?: boolean;
-  editButtonLabel?: string;
-  deleteButtonLabel?: string;
-}
-
-export const DetailPageContainer: React.FC<DetailPageContainerProps> = ({
-  onEdit,
-  onDelete,
-  showEditButton = true,
-  showDeleteButton = true,
-  editButtonLabel = 'Edit',
-  deleteButtonLabel = 'Hapus',
-  showBackButton = true,
-  ...props
-}) => {
-  const actions: PageContainerProps['actions'] = [];
-
-  if (showEditButton && onEdit) {
-    actions.push({
-      label: editButtonLabel,
-      icon: <Plus className="h-4 w-4" />,
-      onClick: onEdit,
-      variant: 'outline',
-    });
-  }
-
-  if (showDeleteButton && onDelete) {
-    actions.push({
-      label: deleteButtonLabel,
-      onClick: onDelete,
-      variant: 'danger',
-    });
-  }
-
-  return (
-    <PageContainer
-      {...props}
-      showBackButton={showBackButton}
-      actions={actions}
-    />
-  );
-};
-
-// For Form Pages
-interface FormPageContainerProps extends PageContainerProps {
-  onSubmit?: () => void;
-  onCancel?: () => void;
-  submitLabel?: string;
-  cancelLabel?: string;
-  submitLoading?: boolean;
-  showSubmitButton?: boolean;
-  showCancelButton?: boolean;
-}
-
-export const FormPageContainer: React.FC<FormPageContainerProps> = ({
-  onSubmit,
-  onCancel,
-  submitLabel = 'Simpan',
-  cancelLabel = 'Batal',
-  submitLoading = false,
-  showSubmitButton = true,
-  showCancelButton = true,
-  showBackButton = true,
-  ...props
-}) => {
-  const actions: PageContainerProps['actions'] = [];
-
-  if (showCancelButton && onCancel) {
-    actions.push({
-      label: cancelLabel,
-      onClick: onCancel,
-      variant: 'outline',
-    });
-  }
-
-  if (showSubmitButton && onSubmit) {
-    actions.push({
-      label: submitLabel,
-      onClick: onSubmit,
-      variant: 'primary',
-      loading: submitLoading,
-    });
-  }
-
-  return (
-    <PageContainer
-      {...props}
-      showBackButton={showBackButton}
-      actions={actions}
-    />
   );
 };
 

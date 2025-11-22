@@ -1,11 +1,13 @@
-// components/ui/forms/DatePicker.tsx
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { cn } from '@/core';
-import { useClickOutside } from '@/core';
+import React, { useState, useRef, useEffect } from 'react';
+import { cn, useClickOutside } from '@/core';
+import { formatDate } from '@/core/formatters';
 import { DatePickerProps } from './date-picker.types';
 import { sizeClasses, variantClasses } from './date-picker.styles';
+import { Calendar as CalendarIcon } from 'lucide-react';
+
+// Import sub-components untuk Compound Pattern
 import { DatePickerContainer } from './DatePickerContainer';
 import { AppointmentDatePicker } from './AppointmentDatePicker';
 import { BirthDatePicker } from './BirthDatePicker';
@@ -27,107 +29,32 @@ export default function DatePicker({
     className,
     containerClassName,
 }: DatePickerProps) {
-    const [isOpen, setIsOpen] = useState(false);
-    const [selectedDate, setSelectedDate] = useState<Date | null>(
-        value ? new Date(value) : null
-    );
-    const [viewDate, setViewDate] = useState<Date>(
-        value ? new Date(value) : new Date()
-    );
+    // Format value ke YYYY-MM-DD untuk input native
+    const [displayValue, setDisplayValue] = useState('');
 
-    const pickerRef = useRef<HTMLDivElement>(null);
-    const inputId = `datepicker-${Math.random().toString(36).substr(2, 9)}`;
-
-    useClickOutside(pickerRef, () => setIsOpen(false));
+    useEffect(() => {
+        if (value) {
+            // Pastikan format yang masuk valid
+            const date = new Date(value);
+            if (!isNaN(date.getTime())) {
+                setDisplayValue(value);
+            }
+        }
+    }, [value]);
 
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
-    const handleDateSelect = (date: Date) => {
-        setSelectedDate(date);
-        const dateString = date.toISOString().split('T')[0];
-        onChange?.(dateString);
-        setIsOpen(false);
-    };
-
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const dateValue = e.target.value;
-        if (dateValue) {
-            const date = new Date(dateValue);
-            setSelectedDate(date);
-            setViewDate(date);
-            onChange?.(dateValue);
-        }
+        const newValue = e.target.value;
+        setDisplayValue(newValue);
+        onChange?.(newValue);
     };
 
-    const formatDisplayDate = (date: Date | null) => {
-        if (!date) return '';
-        return date.toLocaleDateString('id-ID', {
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric'
-        });
-    };
-
-    const getDaysInMonth = (date: Date) => {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const lastDay = new Date(year, month + 1, 0);
-        const daysInMonth = lastDay.getDate();
-        const startingDayOfWeek = firstDay.getDay();
-
-        return { daysInMonth, startingDayOfWeek };
-    };
-
-    const changeMonth = (delta: number) => {
-        setViewDate(prev => {
-            const newDate = new Date(prev);
-            newDate.setMonth(newDate.getMonth() + delta);
-            return newDate;
-        });
-    };
-
-    const { daysInMonth, startingDayOfWeek } = getDaysInMonth(viewDate);
-    const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-    const blanks = Array.from({ length: startingDayOfWeek }, (_, i) => i);
-
-    const isToday = (day: number) => {
-        const today = new Date();
-        return (
-            day === today.getDate() &&
-            viewDate.getMonth() === today.getMonth() &&
-            viewDate.getFullYear() === today.getFullYear()
-        );
-    };
-
-    const isSelected = (day: number) => {
-        if (!selectedDate) return false;
-        return (
-            day === selectedDate.getDate() &&
-            viewDate.getMonth() === selectedDate.getMonth() &&
-            viewDate.getFullYear() === selectedDate.getFullYear()
-        );
-    };
-
-    const isDisabled = (day: number) => {
-        const date = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-
-        if (min) {
-            const minDate = new Date(min);
-            if (date < minDate) return true;
-        }
-
-        if (max) {
-            const maxDate = new Date(max);
-            if (date > maxDate) return true;
-        }
-
-        return false;
-    };
+    const inputId = React.useId();
 
     return (
-        <div ref={pickerRef} className={cn('relative w-full', containerClassName)}>
+        <div className={cn('relative w-full', containerClassName)}>
             {/* Label */}
             {label && (
                 <label
@@ -148,14 +75,14 @@ export default function DatePicker({
                 <input
                     type="date"
                     id={inputId}
-                    value={value || ''}
+                    value={displayValue}
                     onChange={handleInputChange}
                     min={min}
                     max={max}
                     disabled={disabled}
-                    placeholder={placeholder}
+                    required={required}
                     className={cn(
-                        'w-full border rounded-lg transition-colors duration-200',
+                        'w-full border rounded-lg transition-colors duration-200 appearance-none', // appearance-none penting untuk styling konsisten
                         'focus:outline-none',
                         sizeClass.input,
                         variantClass.base,
@@ -167,30 +94,15 @@ export default function DatePicker({
                     )}
                 />
 
-                {/* Calendar Icon */}
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                    <svg
-                        className={cn('text-gray-400', sizeClass.icon)}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                    </svg>
+                {/* Custom Calendar Icon (Optional Overlay) */}
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none text-gray-400">
+                    <CalendarIcon className={cn(sizeClass.icon)} />
                 </div>
             </div>
 
             {/* Error Message */}
             {error && (
-                <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                    </svg>
+                <p className="mt-1 text-sm text-red-600 flex items-center gap-1 animate-slide-down">
                     {error}
                 </p>
             )}
@@ -203,6 +115,7 @@ export default function DatePicker({
     );
 }
 
+// Assign Sub-components
 DatePicker.Container = DatePickerContainer;
 DatePicker.Appointment = AppointmentDatePicker;
 DatePicker.BirthDate = BirthDatePicker;

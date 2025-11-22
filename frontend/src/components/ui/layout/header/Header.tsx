@@ -30,6 +30,8 @@ import { HeaderSection } from './HeaderSection';
 import { HeaderTitle } from './HeaderTitle';
 import { HeaderSubtitle } from './HeaderSubtitle';
 
+import { useGetProfile } from '@/core/services/api/auth.api';
+
 // ============================================
 // PROFILE DROPDOWN COMPONENT
 // ============================================
@@ -110,6 +112,8 @@ export function Header({
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
 
+    const { data: profileData } = useGetProfile();
+
     useClickOutside(profileRef, () => {
         if (showProfileDropdown) setShowProfileDropdown(false);
     });
@@ -161,7 +165,7 @@ export function Header({
         return ROLE_LABELS[user.role] || user.role;
     };
 
-    const getUserName = () => userName || user?.nama_lengkap || 'User';
+    const getUserName = () => userName || profileData?.nama_lengkap || user?.nama_lengkap || 'User';
     const getUserRole = () => userRole || getUserRoleLabel();
     const getWelcomeText = () => welcomeText || 'Selamat datang kembali di dashboard Dentizy';
 

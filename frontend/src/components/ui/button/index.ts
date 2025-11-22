@@ -1,5 +1,5 @@
 // Export komponen utama sebagai default
-export { default } from './Button';
+export { default as Button } from './Button';
 // Export semua bagian lainnya
 export * from './Button';
 export * from './ButtonGroup';
