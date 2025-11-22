@@ -1,6 +1,5 @@
-// components/ui/feedback/LoadingSpinner.tsx
 import React from 'react';
-import { cn } from "@/core";
+import { cn } from '@/core';
 import { LoadingSpinnerProps } from './loading-spinner.types';
 import { sizeClasses, variantClasses, speedClasses, thicknessClasses } from './loading-spinner.styles';
 import { LoadingContainer } from './LoadingContainer';
@@ -11,15 +10,8 @@ import { CardLoading } from './CardLoading';
 import { PatientLoading } from './PatientLoading';
 
 export function LoadingSpinner({
-    size = 'md',
-    variant = 'default',
-    className,
-    showText = false,
-    text = 'Loading...',
-    textPosition = 'bottom',
-    speed = 'normal',
-    thickness = 'normal',
-    center = false,
+    size = 'md', variant = 'default', className, showText = false,
+    text = 'Loading...', textPosition = 'bottom', speed = 'normal', thickness = 'normal', center = false,
 }: LoadingSpinnerProps) {
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
@@ -27,64 +19,22 @@ export function LoadingSpinner({
     const thicknessClass = thicknessClasses[thickness][size];
 
     const spinnerContent = (
-        <div className={cn("relative", className)}>
-            {/* Background circle */}
-            <div
-                className={cn(
-                    'rounded-full',
-                    sizeClass.spinner,
-                    thicknessClass,
-                    variantClass.border
-                )}
-            />
-
-            {/* Animated spinner */}
-            <div
-                className={cn(
-                    'absolute top-0 left-0 rounded-full',
-                    speedClass,
-                    sizeClass.spinner,
-                    thicknessClass,
-                    variantClass.active,
-                    variant === 'gradient' && 'bg-gradient-to-r from-blue-600 to-purple-600'
-                )}
-            />
+        <div className={cn('relative', className)}>
+            <div className={cn('rounded-full', sizeClass.spinner, thicknessClass, variantClass.border)} />
+            <div className={cn('absolute top-0 left-0 rounded-full', speedClass, sizeClass.spinner, thicknessClass, variantClass.active, variant === 'gradient' && 'bg-gradient-to-r from-blue-600 to-purple-600')} />
         </div>
     );
 
-    // With text
     if (showText && text) {
-        const containerClasses = cn(
-            'inline-flex items-center gap-3',
-            textPosition === 'bottom' && 'flex-col',
-            textPosition === 'right' && 'flex-row',
-            textPosition === 'left' && 'flex-row-reverse',
-            center && 'justify-center'
-        );
-
         return (
-            <div className={containerClasses}>
+            <div className={cn('inline-flex items-center gap-3', textPosition === 'bottom' && 'flex-col', textPosition === 'right' && 'flex-row', textPosition === 'left' && 'flex-row-reverse', center && 'justify-center')}>
                 {spinnerContent}
-                <span className={cn(
-                    'font-medium',
-                    sizeClass.text,
-                    variantClass.text
-                )}>
-                    {text}
-                </span>
+                <span className={cn('font-medium', sizeClass.text, variantClass.text)}>{text}</span>
             </div>
         );
     }
 
-    // Just spinner
-    if (center) {
-        return (
-            <div className="flex justify-center">
-                {spinnerContent}
-            </div>
-        );
-    }
-
+    if (center) return <div className="flex justify-center">{spinnerContent}</div>;
     return spinnerContent;
 }
 

@@ -2,7 +2,6 @@ import { SkeletonTableProps } from "./skeleton.types";
 import Skeleton from "./Skeleton";
 import { cn } from "@/core";
 
-
 export function SkeletonTable({
     rows = 5,
     cols = 4,

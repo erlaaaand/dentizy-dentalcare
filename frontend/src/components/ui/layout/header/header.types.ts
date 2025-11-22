@@ -20,7 +20,6 @@ export interface HeaderMenuOption {
     type?: 'default' | 'danger';
 }
 
-
 export interface ProfileDropdownProps {
     isOpen: boolean;
     onClose: () => void;
@@ -29,5 +28,23 @@ export interface ProfileDropdownProps {
     username?: string;
     menuOptions?: HeaderMenuOption[];
     onMenuSelect: (value: string) => void;
+    size?: HeaderProps['size'];
+}
+
+export interface HeaderSectionProps {
+    children: React.ReactNode;
+    position?: 'left' | 'center' | 'right';
+    className?: string;
+}
+
+export interface HeaderTitleProps {
+    children: React.ReactNode;
+    className?: string;
+    size?: HeaderProps['size'];
+}
+
+export interface HeaderSubtitleProps {
+    children: React.ReactNode;
+    className?: string;
     size?: HeaderProps['size'];
 }
