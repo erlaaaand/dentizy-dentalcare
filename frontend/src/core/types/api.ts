@@ -1,7 +1,5 @@
 // frontend/src/core/types/api.ts
-// Re-export all types from generated models
 export type {
-    // Appointment types
     AppointmentResponseDto,
     AppointmentResponseDtoStatus,
     AppointmentDoctorDto,
@@ -12,8 +10,6 @@ export type {
     PaginatedAppointmentResponseDto,
     AppointmentsControllerFindAllParams,
     AppointmentsControllerFindAllStatus,
-
-    // Patient types
     PatientResponseDto,
     PatientResponseDtoJenisKelamin,
     CreatePatientDto,
@@ -22,15 +18,11 @@ export type {
     PatientsControllerFindAllParams,
     PatientsControllerSearchParams,
     PatientSubsetDto,
-
-    // Medical Record types
     MedicalRecordResponseDto,
     CreateMedicalRecordDto,
     UpdateMedicalRecordDto,
     MedicalRecordsControllerFindAllParams,
     MedicalRecordsControllerSearchParams,
-
-    // User types
     UserResponseDto,
     UserRoleDto,
     UserSummaryDto,
@@ -41,14 +33,10 @@ export type {
     PasswordChangeResponseDto,
     UsersControllerFindAllParams,
     UsersControllerGetRecentUsersParams,
-
-    // Auth types
     LoginDto,
     User,
     UpdateProfileDto,
     VerifyTokenDto,
-
-    // Notification types
     NotificationResponseDto,
     NotificationResponseDtoStatus,
     NotificationResponseDtoType,
@@ -57,18 +45,16 @@ export type {
     NotificationsControllerFindAllParams,
 } from '@/core/api/model';
 
-// Additional utility types
 export type ID = number;
 export type SortOrder = 'asc' | 'desc' | 'ASC' | 'DESC';
 
-// Generic API types
 export interface ApiResponse<T = unknown> {
     data: T;
     message?: string;
     success: boolean;
 }
 
-export interface ApiError {
+export interface ApiErrorResponse {
     message: string;
     statusCode: number;
     errors?: Record<string, string[]>;

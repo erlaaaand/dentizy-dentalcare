@@ -2,47 +2,55 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { storageService } from '@/core/services/cache/storage.service';
-import { User } from '@/core/api/model';
 import { ROUTES } from '@/core/constants/routes.constants';
-import { SUCCESS_MESSAGES, ERROR_MESSAGES } from '@/core/constants';
+import { SUCCESS_MESSAGES } from '@/core/constants/success.constants';
+import { ERROR_MESSAGES } from '@/core/constants/error.constants';
 import { useToast } from '../ui/useToast';
-import { useAuthControllerLogin, useAuthControllerLogout, useAuthControllerGetProfile } from '@/core/api/generated/auth/auth';
+import {
+    useAuthControllerLogin,
+    useAuthControllerLogout,
+    useAuthControllerGetProfile,
+} from '@/core/api/generated/auth/auth';
+import type { User, LoginDto } from '@/core/api/model';
+
+interface AuthUser extends User {
+    roles?: Array<{ id: number; name: string; description?: string }>;
+}
+
+interface LoginResponse {
+    access_token?: string;
+    refresh_token?: string;
+    user?: AuthUser;
+}
 
 export function useAuth() {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-
     const router = useRouter();
     const { showSuccess, showError } = useToast();
 
-    // Get profile query
     const { data: profileData, isLoading: isLoadingProfile } = useAuthControllerGetProfile({
-        query: {
-            enabled: !!storageService.getAccessToken(),
-        }
+        query: { enabled: !!storageService.getAccessToken() },
     });
 
-    // Login mutation
     const loginMutation = useAuthControllerLogin();
-
-    // Logout mutation
     const logoutMutation = useAuthControllerLogout();
 
-    const checkAuth = useCallback(async () => {
+    const checkAuth = useCallback(() => {
         try {
             const token = storageService.getAccessToken();
             if (!token) {
                 setLoading(false);
                 return;
             }
-
             if (profileData) {
-                setUser(profileData);
+                const userData = profileData as AuthUser;
+                setUser(userData);
                 setIsAuthenticated(true);
-                storageService.setUser(profileData);
+                storageService.setUser(userData);
             }
-        } catch (error) {
+        } catch {
             storageService.clearAuth();
             setIsAuthenticated(false);
         } finally {
@@ -54,33 +62,30 @@ export function useAuth() {
         checkAuth();
     }, [checkAuth]);
 
-    const login = useCallback(async (credentials: { username: string; password: string }) => {
-        try {
-            const response = await loginMutation.mutateAsync({ data: credentials });
-            
-            // Assuming response contains { access_token, refresh_token, user }
-            if (response && typeof response === 'object' && 'data' in response) {
-                const data = response.data as any;
-                if (data.access_token) {
-                    storageService.setAccessToken(data.access_token);
+    const login = useCallback(
+        async (credentials: LoginDto) => {
+            try {
+                const response = (await loginMutation.mutateAsync({ data: credentials })) as LoginResponse;
+                if (response?.access_token) {
+                    storageService.setAccessToken(response.access_token);
                 }
-                if (data.refresh_token) {
-                    storageService.setRefreshToken(data.refresh_token);
+                if (response?.refresh_token) {
+                    storageService.setRefreshToken(response.refresh_token);
                 }
-                if (data.user) {
-                    storageService.setUser(data.user);
-                    setUser(data.user);
+                if (response?.user) {
+                    storageService.setUser(response.user);
+                    setUser(response.user);
                     setIsAuthenticated(true);
                 }
+                showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
+                router.push(ROUTES.DASHBOARD);
+            } catch {
+                showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
+                throw new Error(ERROR_MESSAGES.INVALID_CREDENTIALS);
             }
-            
-            showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-            router.push(ROUTES.DASHBOARD);
-        } catch (error) {
-            showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
-            throw error;
-        }
-    }, [loginMutation, router, showSuccess, showError]);
+        },
+        [loginMutation, router, showSuccess, showError]
+    );
 
     const logout = useCallback(async () => {
         try {
@@ -90,7 +95,7 @@ export function useAuth() {
             setIsAuthenticated(false);
             showSuccess(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
             router.push(ROUTES.LOGIN);
-        } catch (error) {
+        } catch {
             showError(ERROR_MESSAGES.UNKNOWN_ERROR);
         }
     }, [logoutMutation, router, showSuccess, showError]);
