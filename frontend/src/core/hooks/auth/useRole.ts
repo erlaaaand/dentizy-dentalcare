@@ -1,5 +1,5 @@
 // frontend/src/core/hooks/auth/useRole.ts
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { useAuth } from './useAuth';
 import { ROLES } from '@/core/constants/role.constants';
 

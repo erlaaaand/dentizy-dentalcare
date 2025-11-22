@@ -1,14 +1,13 @@
+// frontend/src/core/services/http/interceptors.ts
 import { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { customInstance } from './axiosInstance';
-import { StorageService } from '../cache/storage.service';
-import { AUTH_CONFIG } from '../../config/auth.config';
+import axiosInstance from './axiosInstance';
+import { storageService } from '../cache/storage.service';
+import { AUTH_CONFIG } from '@/core/config/auth.config';
+import { ROUTES } from '@/core/constants/routes.constants';
 
-const storage = new StorageService();
-
-// Request Interceptor
 const requestInterceptor = (config: InternalAxiosRequestConfig) => {
-  const token = storage.getAccessToken();
-  
+  const token = storageService.getAccessToken();
+
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -20,7 +19,6 @@ const requestErrorInterceptor = (error: AxiosError) => {
   return Promise.reject(error);
 };
 
-// Response Interceptor
 const responseInterceptor = (response: AxiosResponse) => {
   return response;
 };
@@ -28,33 +26,36 @@ const responseInterceptor = (response: AxiosResponse) => {
 const responseErrorInterceptor = async (error: AxiosError) => {
   const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-  // Handle 401 Unauthorized
   if (error.response?.status === 401 && !originalRequest._retry) {
     originalRequest._retry = true;
 
     try {
-      const refreshToken = storage.getRefreshToken();
-      
+      const refreshToken = storageService.getRefreshToken();
+
       if (!refreshToken) {
-        storage.clearAuth();
-        window.location.href = AUTH_CONFIG.LOGIN_PATH;
+        storageService.clearAuth();
+        if (typeof window !== 'undefined') {
+          window.location.href = ROUTES.LOGIN;
+        }
         return Promise.reject(error);
       }
 
       // Attempt to refresh token
-      const response = await customInstance.post('/auth/refresh', { refreshToken });
+      const response = await axiosInstance.post('/auth/refresh', { refreshToken });
       const { accessToken } = response.data;
 
-      storage.setAccessToken(accessToken);
-      
+      storageService.setAccessToken(accessToken);
+
       if (originalRequest.headers) {
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
       }
 
-      return customInstance(originalRequest);
+      return axiosInstance(originalRequest);
     } catch (refreshError) {
-      storage.clearAuth();
-      window.location.href = AUTH_CONFIG.LOGIN_PATH;
+      storageService.clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = ROUTES.LOGIN;
+      }
       return Promise.reject(refreshError);
     }
   }
@@ -62,14 +63,13 @@ const responseErrorInterceptor = async (error: AxiosError) => {
   return Promise.reject(error);
 };
 
-// Setup Interceptors
 export const setupInterceptors = () => {
-  customInstance.interceptors.request.use(
+  axiosInstance.interceptors.request.use(
     requestInterceptor,
     requestErrorInterceptor
   );
 
-  customInstance.interceptors.response.use(
+  axiosInstance.interceptors.response.use(
     responseInterceptor,
     responseErrorInterceptor
   );

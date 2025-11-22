@@ -1,36 +1,54 @@
-import { useMutation as useTanstackMutation, UseMutationOptions } from '@tanstack/react-query';
-import { ApiResponse } from '../../types/api';
-import { ErrorHandler } from '../../errors/error.handler';
+// frontend/src/core/hooks/data/useMutation.ts (Optional - for React Query)
+import { useState, useCallback } from 'react';
+import { ApiResponse } from '@/core/types/api';
+import { errorHandler } from '@/core/errors/error.handler';
 import { useToast } from '../ui/useToast';
 
-interface UseMutationConfig<TData, TVariables> extends Omit
-  UseMutationOptions<ApiResponse<TData>, Error, TVariables>,
-  'mutationFn'
-> {
-  successMessage?: string;
-  errorMessage?: string;
+interface UseMutationConfig<TData, TVariables> {
+    onSuccess?: (data: TData, variables: TVariables) => void;
+    onError?: (error: Error, variables: TVariables) => void;
+    successMessage?: string;
+    errorMessage?: string;
 }
 
 export function useMutation<TData = unknown, TVariables = void>(
-  mutationFn: (variables: TVariables) => Promise<ApiResponse<TData>>,
-  config?: UseMutationConfig<TData, TVariables>
+    mutationFn: (variables: TVariables) => Promise<ApiResponse<TData>>,
+    config?: UseMutationConfig<TData, TVariables>
 ) {
-  const { showSuccess, showError } = useToast();
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<Error | null>(null);
+    const { showSuccess, showError } = useToast();
 
-  return useTanstackMutation({
-    mutationFn,
-    onSuccess: (response, variables, context) => {
-      if (config?.successMessage) {
-        showSuccess(config.successMessage);
-      }
-      config?.onSuccess?.(response, variables, context);
-    },
-    onError: (error, variables, context) => {
-      const errorMessage = config?.errorMessage || ErrorHandler.getErrorMessage(error);
-      showError(errorMessage);
-      ErrorHandler.logError(error);
-      config?.onError?.(error, variables, context);
-    },
-    ...config,
-  });
+    const mutate = useCallback(async (variables: TVariables) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await mutationFn(variables);
+
+            if (config?.successMessage) {
+                showSuccess(config.successMessage);
+            }
+
+            config?.onSuccess?.(response.data, variables);
+            return response.data;
+        } catch (err) {
+            const handledError = errorHandler.handle(err);
+            setError(handledError);
+
+            const errorMessage = config?.errorMessage || handledError.getUserMessage();
+            showError(errorMessage);
+
+            config?.onError?.(handledError, variables);
+            throw handledError;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [mutationFn, config, showSuccess, showError]);
+
+    return {
+        mutate,
+        isLoading,
+        error,
+    };
 }
