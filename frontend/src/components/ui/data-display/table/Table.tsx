@@ -74,8 +74,10 @@ export default function Table<T extends Record<string, unknown>>({
                 </thead>
                 <tbody className={cn('bg-white divide-y divide-gray-200', striped && '[&>tr:nth-child(even)]:bg-gray-50')}>
                     {isLoading && <SkeletonTable rows={loadingRows} cols={colSpan} compact={compact} />}
-                    {!isLoading && (!data || data.length === 0) && <EmptyState colSpan={colSpan} message={emptyMessage} customState={emptyState} />}
-                    {!isLoading && data.map((row, idx) => (
+                    {!isLoading && (!data || !Array.isArray(data) || data.length === 0) && (
+                        <EmptyState colSpan={colSpan} message={emptyMessage} customState={emptyState} />
+                    )}
+                    {!isLoading && Array.isArray(data) && data.map((row, idx) => (
                         <tr
                             key={idx}
                             onClick={() => onRowClick?.(row, idx)}

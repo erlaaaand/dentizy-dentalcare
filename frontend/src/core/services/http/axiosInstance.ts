@@ -15,6 +15,7 @@ const axiosInstance: AxiosInstance = axios.create({
     },
 });
 
+// --- REQUEST INTERCEPTOR ---
 axiosInstance.interceptors.request.use(
     (config: any) => {
         const token = storageService.getAccessToken();
@@ -24,11 +25,8 @@ axiosInstance.interceptors.request.use(
         }
 
         if (process.env.NODE_ENV === 'development') {
-            console.log('🚀 API Request:', {
-                method: config.method?.toUpperCase(),
-                url: config.url,
-                params: config.params,
-            });
+            // Menggunakan console.debug agar tidak terlalu bising di console
+            console.debug(`🚀 [API] ${config.method?.toUpperCase()} ${config.url}`);
         }
 
         return config;
@@ -39,27 +37,43 @@ axiosInstance.interceptors.request.use(
     }
 );
 
+// --- RESPONSE INTERCEPTOR ---
 axiosInstance.interceptors.response.use(
     (response) => {
         if (process.env.NODE_ENV === 'development') {
-            console.log('✅ API Response:', {
-                url: response.config.url,
-                status: response.status,
-            });
+            console.debug(`✅ [API] ${response.status}: ${response.config.url}`);
         }
         return response;
     },
     async (error: AxiosError) => {
         const originalRequest: any = error.config;
 
-        if (process.env.NODE_ENV === 'development') {
-            console.error('❌ API Error:', {
-                url: error.config?.url,
-                status: error.response?.status,
-                message: error.message,
-            });
+        // 1. Handle Request Canceled (React Strict Mode)
+        // Ini normal terjadi saat navigasi cepat atau double-mount di dev
+        if (axios.isCancel(error)) {
+            if (process.env.NODE_ENV === 'development') {
+                console.debug(`ℹ️ Request canceled: ${error.message}`);
+            }
+            // Reject dengan error asli agar React Query tahu statusnya, 
+            // tapi UI tidak perlu menampilkan ini sebagai error fatal.
+            return Promise.reject(error);
         }
 
+        // 2. Enhanced Error Logging dengan JSON.stringify
+        // Ini mengatasi masalah log error muncul sebagai "{}"
+        if (process.env.NODE_ENV === 'development') {
+            const errorLog = {
+                url: error.config?.url || 'Unknown URL',
+                method: error.config?.method?.toUpperCase() || 'UNKNOWN',
+                status: error.response?.status || 'No Status (Network Error/Timeout)',
+                message: error.message || 'Unknown Error',
+                serverMessage: (error.response?.data as any)?.message || 'No Server Message',
+            };
+
+            console.error('❌ API Error Details:', JSON.stringify(errorLog, null, 2));
+        }
+
+        // 3. Handle Refresh Token (401)
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
@@ -99,6 +113,7 @@ axiosInstance.interceptors.response.use(
     }
 );
 
+// --- CUSTOM INSTANCE WRAPPER (Untuk Orval/TanStack Query) ---
 export const customInstance = <T>(
     config: AxiosRequestConfig,
     options?: AxiosRequestConfig,
@@ -109,7 +124,7 @@ export const customInstance = <T>(
         ...config,
         ...options,
         cancelToken: source.token,
-    }).then(({ data }) => data);
+    }).then(({ data }) => data); // PENTING: Hanya return data agar UI tidak perlu mengakses .data lagi
 
     // @ts-ignore
     promise.cancel = () => {

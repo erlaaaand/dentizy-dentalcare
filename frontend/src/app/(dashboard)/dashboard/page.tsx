@@ -21,13 +21,7 @@ export default function DashboardPage() {
     // Render Layout Berdasarkan Role
     if (isKepalaKlinik) {
         return (
-            <KepalaKlinikDashboard
-                user={user}
-                patientStats={patientStats}
-                userStats={userStats}
-                notifStats={notifStats}
-                loading={loading}
-            />
+            <KepalaKlinikDashboard />
         );
     }
 
