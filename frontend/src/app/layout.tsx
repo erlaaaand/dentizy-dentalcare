@@ -1,15 +1,39 @@
 // frontend/src/app/layout.tsx
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { Providers } from '@/components/providers/Providers'; //
+import { cn } from '@/core'; //
+
+// Global Styles
 import './globals.css';
+// Pastikan path ini sesuai dengan struktur folder Anda (misal: src/styles/animations.css)
 import '../styles/animations.css';
-import { Providers } from '@/components/providers/Providers';
 
-const inter = Inter({ subsets: ['latin'] });
+// Font Configuration
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter', // Optional: untuk penggunaan CSS variable
+  display: 'swap',
+});
 
+// Viewport Configuration (Terpisah di Next.js 14+)
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: '#ffffff', // Sesuaikan dengan brand color
+};
+
+// Metadata Configuration
 export const metadata: Metadata = {
-  title: 'Dentizy Dentalcare',
+  title: {
+    default: 'Dentizy Dentalcare',
+    template: '%s | Dentizy Dentalcare', // Halaman lain akan menjadi "Nama Halaman | Dentizy..."
+  },
   description: 'Sistem Manajemen Klinik Gigi Modern',
+  icons: {
+    icon: '/favicon.ico', // Pastikan file ini ada di folder public
+  },
 };
 
 export default function RootLayout({
@@ -18,15 +42,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="id">
-      {/* Tidak ada tag <head> atau <script> manual di sini. 
-        Next.js akan menangani metadata dan skrip secara otomatis.
-        File ini harus sesederhana mungkin.
-      */}
-      <body className={inter.className}>
+    <html lang="id" suppressHydrationWarning>
+      <body
+        className={cn(
+          inter.className,
+          'min-h-screen bg-gray-50 antialiased', // Styling dasar untuk body
+          'selection:bg-blue-100 selection:text-blue-900' // Optional: Custom text selection color
+        )}
+      >
         <Providers>
           {children}
-        </Providers> {/* Cukup render children di sini */}
+        </Providers>
       </body>
     </html>
   );
