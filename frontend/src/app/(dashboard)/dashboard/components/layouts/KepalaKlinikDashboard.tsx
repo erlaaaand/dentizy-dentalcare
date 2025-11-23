@@ -261,7 +261,7 @@ export function KepalaKlinikDashboard() {
     const quickActions: QuickAction[] = useMemo(() => [
         { id: '1', label: 'Tambah User', icon: <UserPlus className="w-5 h-5 text-blue-600" />, href: ROUTES.USER_CREATE },
         { id: '2', label: 'Laporan', icon: <BarChart3 className="w-5 h-5 text-emerald-600" />, href: ROUTES.REPORTS },
-        { id: '3', label: 'Manajemen SDM', icon: <Users className="w-5 h-5 text-violet-600" />, href: ROUTES.USERS },
+        { id: '3', label: 'Manajemen Akun', icon: <Users className="w-5 h-5 text-violet-600" />, href: ROUTES.USERS },
         { id: '4', label: 'Pengaturan', icon: <Settings className="w-5 h-5 text-gray-600" />, href: ROUTES.SETTINGS },
     ], []);
 
