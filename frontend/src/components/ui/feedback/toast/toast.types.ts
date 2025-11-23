@@ -40,7 +40,7 @@ export interface ToastProps extends ToastMessage {
 }
 
 export interface ToastContainerProps {
-    children: React.ReactNode;
+    children?: React.ReactNode;
     position?: ToastPosition;
     className?: string;
 }

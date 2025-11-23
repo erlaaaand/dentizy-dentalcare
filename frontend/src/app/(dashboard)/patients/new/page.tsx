@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Save, User, MapPin, Phone, ArrowLeft } from 'lucide-react';
-import { z } from 'zod'; // Import Zod
+import { Save, User, MapPin, Phone, ArrowLeft, UserPlus } from 'lucide-react';
+import { z } from 'zod';
 
 // Core
 import { useCreatePatient } from '@/core/services/api';
@@ -23,10 +23,11 @@ import {
     ButtonGroup,
     Input,
     Textarea,
-    Select, // Pastikan Select diimport
+    Select,
+    InfoAlert,
+    ToastContainer,
 } from '@/components';
 
-// Definisi Schema Validasi (Zod) agar kompatibel dengan useForm Core
 const createPatientSchema = z.object({
     nama_lengkap: z.string().min(3, 'Nama minimal 3 karakter'),
     nik: z.string().regex(/^\d{16}$/, 'NIK harus 16 digit angka').optional().or(z.literal('')),
@@ -52,21 +53,20 @@ export default function NewPatientPage() {
         handleChange,
         handleBlur,
         handleSubmit,
-        setFieldValue // Gunakan setFieldValue untuk Select custom
+        setFieldValue
     } = useForm<CreatePatientDto>({
         initialValues: {
             nama_lengkap: '',
             nik: '',
-            jenis_kelamin: undefined, // undefined agar placeholder select muncul
+            jenis_kelamin: undefined,
             alamat: '',
             no_hp: '',
             email: '',
             tanggal_lahir: '',
         },
-        validationSchema: createPatientSchema, // Pass Zod Schema di sini
+        validationSchema: createPatientSchema,
         onSubmit: async (data) => {
             try {
-                // Sanitasi data kosong menjadi undefined/null jika perlu
                 const payload = {
                     ...data,
                     nik: data.nik || undefined,
@@ -75,8 +75,11 @@ export default function NewPatientPage() {
                 };
 
                 await createMutation.mutateAsync({ data: payload as CreatePatientDto });
-                showSuccess('Pasien baru berhasil ditambahkan');
-                router.push('/patients');
+                showSuccess('Pasien baru berhasil ditambahkan!');
+
+                setTimeout(() => {
+                    router.push('/patients');
+                }, 1500);
             } catch (error: any) {
                 showError(error?.message || 'Gagal menambahkan pasien');
             }
@@ -87,7 +90,7 @@ export default function NewPatientPage() {
         <PageContainer>
             <PageHeader
                 title="Tambah Pasien Baru"
-                description="Lengkapi formulir untuk mendaftarkan pasien baru"
+                description="Lengkapi formulir untuk mendaftarkan pasien baru ke dalam sistem"
                 actions={
                     <Button
                         variant="outline"
@@ -100,14 +103,28 @@ export default function NewPatientPage() {
                 }
             />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <User className="w-5 h-5 text-blue-600" />
-                            <CardTitle>Informasi Pribadi</CardTitle>
-                        </div>
+            <div className="mb-6">
+                <InfoAlert
+                    title="Panduan Pengisian"
+                    message="Pastikan semua data yang dimasukkan sudah benar. Field bertanda (*) wajib diisi."
+                />
+            </div>
 
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Informasi Pribadi */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500 rounded-lg">
+                                <User className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Informasi Pribadi</h3>
+                                <p className="text-sm text-gray-600">Data identitas pasien</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <Input
@@ -130,20 +147,18 @@ export default function NewPatientPage() {
                                 error={touched.nik ? errors.nik : undefined}
                             />
 
-                            <div className="space-y-2">
-                                <Select
-                                    label="Jenis Kelamin"
-                                    required
-                                    placeholder="Pilih Jenis Kelamin"
-                                    value={values.jenis_kelamin || ''}
-                                    onChange={(val) => setFieldValue('jenis_kelamin', val)}
-                                    options={[
-                                        { value: 'L', label: 'Laki-laki' },
-                                        { value: 'P', label: 'Perempuan' }
-                                    ]}
-                                    error={touched.jenis_kelamin ? errors.jenis_kelamin : undefined}
-                                />
-                            </div>
+                            <Select
+                                label="Jenis Kelamin"
+                                required
+                                placeholder="Pilih Jenis Kelamin"
+                                value={values.jenis_kelamin || ''}
+                                onChange={(val) => setFieldValue('jenis_kelamin', val)}
+                                options={[
+                                    { value: 'L', label: 'Laki-laki' },
+                                    { value: 'P', label: 'Perempuan' }
+                                ]}
+                                error={touched.jenis_kelamin ? errors.jenis_kelamin : undefined}
+                            />
 
                             <Input
                                 type="date"
@@ -155,16 +170,23 @@ export default function NewPatientPage() {
                                 required
                             />
                         </div>
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <Phone className="w-5 h-5 text-blue-600" />
-                            <CardTitle>Informasi Kontak</CardTitle>
+                {/* Informasi Kontak */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b border-green-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-green-500 rounded-lg">
+                                <Phone className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Informasi Kontak</h3>
+                                <p className="text-sm text-gray-600">Data untuk menghubungi pasien</p>
+                            </div>
                         </div>
-
+                    </div>
+                    <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
                                 label="Nomor Telepon / WhatsApp"
@@ -185,16 +207,23 @@ export default function NewPatientPage() {
                                 error={touched.email ? errors.email : undefined}
                             />
                         </div>
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <MapPin className="w-5 h-5 text-blue-600" />
-                            <CardTitle>Alamat Lengkap</CardTitle>
+                {/* Alamat Lengkap */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-500 rounded-lg">
+                                <MapPin className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Alamat Lengkap</h3>
+                                <p className="text-sm text-gray-600">Tempat tinggal pasien</p>
+                            </div>
                         </div>
-
+                    </div>
+                    <div className="p-6">
                         <Textarea
                             label="Alamat"
                             placeholder="Jl. Contoh No. 123, RT/RW, Kelurahan, Kecamatan, Kota"
@@ -204,10 +233,11 @@ export default function NewPatientPage() {
                             error={touched.alamat ? errors.alamat : undefined}
                             rows={4}
                         />
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <div className="flex justify-end">
+                {/* Action Buttons */}
+                <div className="flex justify-end bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <ButtonGroup>
                         <Button
                             type="button"
@@ -220,14 +250,16 @@ export default function NewPatientPage() {
                         <Button
                             type="submit"
                             loading={isSubmitting}
-                            icon={<Save className="w-4 h-4" />}
+                            icon={<UserPlus className="w-4 h-4" />}
                             iconPosition="left"
                         >
-                            Simpan Data
+                            Simpan Data Pasien
                         </Button>
                     </ButtonGroup>
                 </div>
             </form>
+
+            <ToastContainer />
         </PageContainer>
     );
 }

@@ -2,14 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, Download, RefreshCw } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Download, RefreshCw, Users } from 'lucide-react';
 
 // Core & Services
 import { useGetPatients, useDeletePatient } from '@/core/services/api';
 import { useConfirm } from '@/core/hooks/ui/useConfirm';
 import { useToast } from '@/core/hooks/ui/useToast';
 import { formatDate } from '@/core';
-import { useDebounce } from '@/core/hooks/ui/useDebounce'; // Menggunakan debounce untuk search
+import { useDebounce } from '@/core/hooks/ui/useDebounce';
 
 // UI Components
 import {
@@ -18,18 +18,19 @@ import {
     DataTable,
     Button,
     IconButton,
-    StatusBadge,
     Input,
     EmptyPatientsState,
     SkeletonTable,
     Select,
     ButtonGroup,
-    Badge
+    Badge,
+    StatsCard,
+    ToastContainer,
 } from '@/components';
 
 export default function PatientsPage() {
     const router = useRouter();
-    const { confirm } = useConfirm(); // Destructure confirm dari hook
+    const { confirm } = useConfirm();
     const { showSuccess, showError } = useToast();
 
     const [page, setPage] = useState(1);
@@ -37,17 +38,15 @@ export default function PatientsPage() {
     const [search, setSearch] = useState('');
     const [genderFilter, setGenderFilter] = useState<string>('');
 
-    // Debounce search agar tidak hit API setiap ketik
     const debouncedSearch = useDebounce(search, 500);
 
     const { data: patientsResponse, isLoading, refetch } = useGetPatients({
         page,
         limit,
-        search: debouncedSearch || undefined, // Kirim undefined jika string kosong
-        jenis_kelamin: (genderFilter as any) || undefined, // Casting untuk memuaskan tipe
+        search: debouncedSearch || undefined,
+        jenis_kelamin: (genderFilter as any) || undefined,
     });
 
-    // Normalisasi response data
     const patientsList = Array.isArray(patientsResponse)
         ? patientsResponse
         : (patientsResponse as any)?.data || [];
@@ -96,7 +95,7 @@ export default function PatientsPage() {
             header: 'No. RM',
             accessorKey: 'nomor_rekam_medis',
             cell: (info: any) => (
-                <span className="font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                <span className="font-mono font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-md">
                     {info.getValue() || '-'}
                 </span>
             ),
@@ -105,7 +104,7 @@ export default function PatientsPage() {
             header: 'Nama Pasien',
             accessorKey: 'nama_lengkap',
             cell: (info: any) => (
-                <div className="font-medium text-gray-900">{info.getValue()}</div>
+                <div className="font-semibold text-gray-900">{info.getValue()}</div>
             ),
         },
         {
@@ -114,9 +113,7 @@ export default function PatientsPage() {
             cell: (info: any) => {
                 const val = info.getValue();
                 return (
-                    <Badge
-                        variant={val === 'L' ? 'info' : 'success'}
-                    >
+                    <Badge variant={val === 'L' ? 'info' : 'success'} dot>
                         {val === 'L' ? 'Laki-laki' : 'Perempuan'}
                     </Badge>
                 );
@@ -125,12 +122,16 @@ export default function PatientsPage() {
         {
             header: 'No. Telepon',
             accessorKey: 'no_hp',
-            cell: (info: any) => info.getValue() || '-',
+            cell: (info: any) => (
+                <span className="text-gray-700">{info.getValue() || '-'}</span>
+            ),
         },
         {
             header: 'Tanggal Lahir',
             accessorKey: 'tanggal_lahir',
-            cell: (info: any) => formatDate(info.getValue()),
+            cell: (info: any) => (
+                <span className="text-gray-700">{formatDate(info.getValue())}</span>
+            ),
         },
         {
             id: 'actions',
@@ -147,11 +148,12 @@ export default function PatientsPage() {
                             onClick={() => router.push(`/patients/${patient.id}`)}
                             title="Lihat Detail"
                             aria-label='Lihat Detail'
+                            className="text-blue-600 hover:bg-blue-50"
                         />
                         <IconButton
                             variant="ghost"
                             size="sm"
-                            className="text-yellow-600 hover:bg-yellow-50"
+                            className="text-amber-600 hover:bg-amber-50"
                             icon={<Edit className="w-4 h-4" />}
                             onClick={() => router.push(`/patients/${patient.id}/edit`)}
                             title="Edit"
@@ -179,6 +181,11 @@ export default function PatientsPage() {
         itemsPerPage: limit,
     };
 
+    // Calculate stats
+    const totalPatients = meta.total || 0;
+    const maleCount = patientsList.filter((p: any) => p.jenis_kelamin === 'L').length;
+    const femaleCount = patientsList.filter((p: any) => p.jenis_kelamin === 'P').length;
+
     return (
         <PageContainer>
             <PageHeader
@@ -205,61 +212,89 @@ export default function PatientsPage() {
                 }
             />
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="p-6 border-b border-gray-200">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="flex-1">
-                            <Input
-                                placeholder="Cari nama, No RM, atau No HP..."
-                                value={search}
-                                onChange={(e) => handleSearch(e.target.value)}
-                            />
-                        </div>
-                        <div className="w-full sm:w-48">
-                            <Select
-                                value={genderFilter}
-                                onChange={(val) => handleGenderFilter(val)}
-                                options={[
-                                    { value: '', label: 'Semua Gender' },
-                                    { value: 'L', label: 'Laki-laki' },
-                                    { value: 'P', label: 'Perempuan' },
-                                ]}
-                            />
-                        </div>
-                        <IconButton
-                            variant="outline"
-                            icon={<RefreshCw className="w-4 h-4" />}
-                            onClick={() => refetch()}
-                            title="Refresh Data"
-                            aria-label="Refresh Data"
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <StatsCard
+                    title="Total Pasien"
+                    value={totalPatients.toString()}
+                    icon={<Users className="w-5 h-5" />}
+                    trend={totalPatients > 0 ? { value: 0, isPositive: true } : undefined}
+                />
+                <StatsCard
+                    title="Laki-laki"
+                    value={maleCount.toString()}
+                    icon={<Users className="w-5 h-5" />}
+                    className="bg-blue-50 border-blue-200"
+                />
+                <StatsCard
+                    title="Perempuan"
+                    value={femaleCount.toString()}
+                    icon={<Users className="w-5 h-5" />}
+                    className="bg-pink-50 border-pink-200"
+                />
+            </div>
+
+            {/* Filter & Search Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-6">
+                <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                        <Input
+                            placeholder="Cari nama, No RM, atau No HP..."
+                            value={search}
+                            onChange={(e) => handleSearch(e.target.value)}
                         />
                     </div>
+                    <div className="w-full sm:w-56">
+                        <Select
+                            value={genderFilter}
+                            onChange={(val) => handleGenderFilter(val)}
+                            options={[
+                                { value: '', label: 'Semua Gender' },
+                                { value: 'L', label: 'Laki-laki' },
+                                { value: 'P', label: 'Perempuan' },
+                            ]}
+                        />
+                    </div>
+                    <IconButton
+                        variant="outline"
+                        icon={<RefreshCw className="w-4 h-4" />}
+                        onClick={() => refetch()}
+                        title="Refresh Data"
+                        aria-label="Refresh Data"
+                    />
                 </div>
+            </div>
 
-                <div className="overflow-x-auto">
-                    {isLoading ? (
+            {/* Data Table */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                {isLoading ? (
+                    <div className="p-6">
                         <SkeletonTable rows={5} cols={6} />
-                    ) : !patientsList || patientsList.length === 0 ? (
+                    </div>
+                ) : !patientsList || patientsList.length === 0 ? (
+                    <div className="p-12">
                         <EmptyPatientsState
                             onAddPatient={() => router.push('/patients/new')}
                         />
-                    ) : (
-                        <DataTable
-                            data={patientsList}
-                            columns={columns as any}
-                            pagination={{
-                                currentPage: paginationProps.currentPage,
-                                totalPages: paginationProps.totalPages,
-                                totalItems: paginationProps.totalItems,
-                                itemsPerPage: limit,
-                            }}
-                            onPageChange={setPage}
-                            onLimitChange={setLimit}
-                            isLoading={isLoading}
-                        />
-                    )}
-                </div>
+                    </div>
+                ) : (
+                    <DataTable
+                        data={patientsList}
+                        columns={columns as any}
+                        pagination={{
+                            currentPage: paginationProps.currentPage,
+                            totalPages: paginationProps.totalPages,
+                            totalItems: paginationProps.totalItems,
+                            itemsPerPage: limit,
+                        }}
+                        onPageChange={setPage}
+                        onLimitChange={setLimit}
+                        isLoading={isLoading}
+                    />
+                )}
             </div>
+
+            <ToastContainer />
         </PageContainer>
     );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Save, User, MapPin, Phone, Calendar, AlertCircle } from 'lucide-react';
+import { Save, User, MapPin, Phone, AlertCircle, ArrowLeft } from 'lucide-react';
 
 // Core
 import { useGetPatient, useUpdatePatient } from '@/core/services/api';
@@ -15,9 +15,6 @@ import { UpdatePatientDto } from '@/core/api/model/updatePatientDto';
 import {
     PageContainer,
     PageHeader,
-    Card,
-    CardBody,
-    CardTitle,
     Button,
     ButtonGroup,
     Input,
@@ -25,6 +22,9 @@ import {
     ErrorAlert,
     LoadingSpinner,
     ErrorMessage,
+    WarningAlert,
+    ToastContainer,
+    Select,
 } from '@/components';
 
 export default function EditPatientPage() {
@@ -66,8 +66,11 @@ export default function EditPatientPage() {
             try {
                 const sanitized = sanitizePatientFormData(data);
                 await updateMutation.mutateAsync({ id: patientId, data: sanitized as UpdatePatientDto });
-                showSuccess('Data pasien berhasil diperbarui');
-                router.push('/patients');
+                showSuccess('Data pasien berhasil diperbarui!');
+
+                setTimeout(() => {
+                    router.push('/patients');
+                }, 1500);
             } catch (error: any) {
                 showError(error?.message || 'Gagal memperbarui data');
             }
@@ -94,7 +97,7 @@ export default function EditPatientPage() {
     if (isLoading) {
         return (
             <PageContainer>
-                <div className="flex items-center justify-center py-12">
+                <div className="flex items-center justify-center py-20">
                     <LoadingSpinner size="lg" />
                 </div>
             </PageContainer>
@@ -104,11 +107,12 @@ export default function EditPatientPage() {
     if (!data) {
         return (
             <PageContainer>
-                <ErrorAlert
-                    title="Data Tidak Ditemukan"
-                    message="Pasien yang Anda cari tidak ditemukan atau telah dihapus."
-                // onRetry={() => router.push('/patients')}
-                />
+                <div className="max-w-2xl mx-auto mt-12">
+                    <ErrorAlert
+                        title="Data Tidak Ditemukan"
+                        message="Pasien yang Anda cari tidak ditemukan atau telah dihapus."
+                    />
+                </div>
             </PageContainer>
         );
     }
@@ -121,6 +125,8 @@ export default function EditPatientPage() {
                 actions={
                     <Button
                         variant="outline"
+                        icon={<ArrowLeft className="w-4 h-4" />}
+                        iconPosition="left"
                         onClick={() => router.back()}
                     >
                         Kembali
@@ -128,24 +134,28 @@ export default function EditPatientPage() {
                 }
             />
 
+            <div className="mb-6">
+                <WarningAlert
+                    title="Perhatian"
+                    message="Pastikan data yang Anda ubah sudah benar. Perubahan akan langsung tersimpan setelah Anda klik tombol Simpan Perubahan."
+                />
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-start gap-3 text-blue-800 bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
-                    <div className="flex-1">
-                        <p className="font-medium mb-1">Perhatian</p>
-                        <p className="text-sm">
-                            Pastikan data yang Anda ubah sudah benar. Perubahan akan langsung tersimpan setelah Anda klik tombol Simpan.
-                        </p>
-                    </div>
-                </div>
-
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <User className="w-5 h-5 text-primary-600" />
-                            <CardTitle>Informasi Pribadi</CardTitle>
+                {/* Informasi Pribadi */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-100 px-6 py-4 border-b border-blue-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-blue-500 rounded-lg">
+                                <User className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Informasi Pribadi</h3>
+                                <p className="text-sm text-gray-600">Data identitas pasien</p>
+                            </div>
                         </div>
-
+                    </div>
+                    <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="md:col-span-2">
                                 <Input
@@ -166,23 +176,17 @@ export default function EditPatientPage() {
                                 error={touched.nik ? errors.nik : undefined}
                             />
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-gray-700">
-                                    Jenis Kelamin <span className="text-red-500">*</span>
-                                </label>
-                                <select
-                                    value={values.jenis_kelamin}
-                                    onChange={(e) => handleChange('jenis_kelamin')(e.target.value)}
-                                    onBlur={() => handleBlur('jenis_kelamin')()}
-                                    className="w-full rounded-md border border-gray-300 p-2 focus:ring-primary-500 focus:border-primary-500"
-                                >
-                                    <option value="L">Laki-laki</option>
-                                    <option value="P">Perempuan</option>
-                                </select>
-                                {touched.jenis_kelamin && errors.jenis_kelamin && (
-                                    <ErrorMessage message={errors.jenis_kelamin} />
-                                )}
-                            </div>
+                            <Select
+                                label="Jenis Kelamin"
+                                required
+                                value={values.jenis_kelamin}
+                                onChange={(val) => setFieldValue('jenis_kelamin', val)}
+                                options={[
+                                    { value: 'L', label: 'Laki-laki' },
+                                    { value: 'P', label: 'Perempuan' }
+                                ]}
+                                error={touched.jenis_kelamin ? errors.jenis_kelamin : undefined}
+                            />
 
                             <Input
                                 type="date"
@@ -193,16 +197,23 @@ export default function EditPatientPage() {
                                 error={touched.tanggal_lahir ? errors.tanggal_lahir : undefined}
                             />
                         </div>
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <Phone className="w-5 h-5 text-primary-600" />
-                            <CardTitle>Informasi Kontak</CardTitle>
+                {/* Informasi Kontak */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-green-50 to-green-100 px-6 py-4 border-b border-green-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-green-500 rounded-lg">
+                                <Phone className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Informasi Kontak</h3>
+                                <p className="text-sm text-gray-600">Data untuk menghubungi pasien</p>
+                            </div>
                         </div>
-
+                    </div>
+                    <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
                                 label="Nomor Telepon / WhatsApp"
@@ -221,16 +232,23 @@ export default function EditPatientPage() {
                                 error={touched.email ? errors.email : undefined}
                             />
                         </div>
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <Card>
-                    <CardBody>
-                        <div className="flex items-center gap-2 mb-6">
-                            <MapPin className="w-5 h-5 text-primary-600" />
-                            <CardTitle>Alamat Lengkap</CardTitle>
+                {/* Alamat Lengkap */}
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-purple-50 to-purple-100 px-6 py-4 border-b border-purple-200">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-purple-500 rounded-lg">
+                                <MapPin className="w-5 h-5 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Alamat Lengkap</h3>
+                                <p className="text-sm text-gray-600">Tempat tinggal pasien</p>
+                            </div>
                         </div>
-
+                    </div>
+                    <div className="p-6">
                         <Textarea
                             label="Alamat"
                             value={values.alamat}
@@ -239,10 +257,11 @@ export default function EditPatientPage() {
                             error={touched.alamat ? errors.alamat : undefined}
                             rows={4}
                         />
-                    </CardBody>
-                </Card>
+                    </div>
+                </div>
 
-                <div className="flex justify-end">
+                {/* Action Buttons */}
+                <div className="flex justify-end bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                     <ButtonGroup>
                         <Button
                             type="button"
@@ -263,6 +282,8 @@ export default function EditPatientPage() {
                     </ButtonGroup>
                 </div>
             </form>
+
+            <ToastContainer />
         </PageContainer>
     );
 }
