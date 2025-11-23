@@ -6,7 +6,7 @@ import { Edit, Calendar, Phone, MapPin, Mail, CreditCard, User, Activity, Clock,
 
 // Core
 import { useGetPatient } from '@/core/services/api';
-import { formatDate } from '@/core/utils/date/format.utils';
+import { formatDate } from '@/core';
 
 // UI
 import {
