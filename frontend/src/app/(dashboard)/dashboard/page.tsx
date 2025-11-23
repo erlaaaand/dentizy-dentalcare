@@ -2,7 +2,6 @@
 'use client';
 
 import { useAuth, useRole } from '@/core/hooks';
-import { useDashboardData } from '@/app/(dashboard)/dashboard/hooks/useDashboardData';
 import { DashboardSkeleton } from './components/skeleton/DashboardSkeleton';
 import { KepalaKlinikDashboard } from './components/layouts/KepalaKlinikDashboard';
 import { DokterDashboard } from './components/layouts/DokterDashboard';
