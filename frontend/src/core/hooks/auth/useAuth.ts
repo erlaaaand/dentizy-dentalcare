@@ -27,71 +27,168 @@ interface LoginResponse {
 }
 
 // -- Helper Functions: Cookie Management --
-// PENTING: Middleware hanya bisa membaca Token dari sini!
 const setAuthCookie = (token: string, expiresInSeconds: number = 86400) => {
-    // Simpan cookie 'access_token'
-    document.cookie = `access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax`;
+    try {
+        document.cookie = `access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax`;
+        document.cookie = `dental_clinic_access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax`;
+    } catch (error) {
+        console.error('Error setting cookies:', error);
+    }
 };
 
-const removeAuthCookie = () => {
-    document.cookie = `access_token=; path=/; max-age=0;`;
+// Force cleanup
+const forceCleanupAll = () => {
+    console.log('🧹 === FORCE CLEANUP STARTED ===');
+
+    try {
+        document.cookie.split(';').forEach(c => {
+            const name = c.split('=')[0].trim();
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
+            document.cookie = `${name}=; max-age=0; path=/;`;
+        });
+        console.log('✅ Cookies cleared');
+    } catch (error) {
+        console.error('Cookie clear error:', error);
+    }
+
+    try {
+        localStorage.clear();
+        sessionStorage.clear();
+        console.log('✅ Storage cleared');
+    } catch (error) {
+        console.error('Storage clear error:', error);
+    }
+
+    try {
+        storageService.clearAuth();
+        console.log('✅ StorageService cleared');
+    } catch (error) {
+        console.error('StorageService clear error:', error);
+    }
+
+    console.log('🧹 === FORCE CLEANUP COMPLETED ===');
 };
 
 // -- Main Hook --
 export function useAuth() {
+    // ✅ FIX: Start with null/false to match SSR
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+
     const router = useRouter();
     const { showSuccess, showError } = useToast();
 
-    const { data: profileData, isLoading: isLoadingProfile } = useAuthControllerGetProfile({
-        query: { enabled: !!storageService.getAccessToken() },
+    // ✅ FIX: Check token only on client-side
+    const [hasToken, setHasToken] = useState(false);
+
+    const { data: profileData, isLoading: isLoadingProfile, isError: profileError } = useAuthControllerGetProfile({
+        query: {
+            enabled: hasToken && isInitialized,
+            retry: false,
+            staleTime: 5 * 60 * 1000,
+        },
     });
 
     const loginMutation = useAuthControllerLogin();
     const logoutMutation = useAuthControllerLogout();
 
-    // Cek status auth saat mount
-    const checkAuth = useCallback(() => {
+    // ✅ FIX: Initialize auth state on client-side ONLY (useEffect runs only on client)
+    useEffect(() => {
+        console.log('🔧 Initializing auth state (client-side only)...');
+
         try {
             const token = storageService.getAccessToken();
-            if (!token) {
-                setLoading(false);
-                return;
+            const storedUser = storageService.getUser();
+
+            console.log('🔍 Initial check:', { hasToken: !!token, hasStoredUser: !!storedUser });
+
+            if (token) {
+                setHasToken(true);
+
+                // If we have stored user, use it immediately
+                if (storedUser) {
+                    console.log('✅ Restoring session from storage');
+                    setUser(storedUser as AuthUser);
+                    setIsAuthenticated(true);
+                }
             }
-            if (profileData) {
-                setUser(profileData as AuthUser);
-                setIsAuthenticated(true);
-                storageService.setUser(profileData);
-            }
-        } catch {
-            storageService.clearAuth();
-            removeAuthCookie(); // Pastikan cookie juga bersih
-            setIsAuthenticated(false);
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
         } finally {
+            setIsInitialized(true);
             setLoading(false);
         }
-    }, [profileData]);
+    }, []); // Run once on mount
 
+    // ✅ Handle profile data updates
     useEffect(() => {
-        checkAuth();
-    }, [checkAuth]);
+        // Don't run until initialized
+        if (!isInitialized) return;
+
+        console.log('🔄 Auth state update:', {
+            hasToken,
+            profileData: !!profileData,
+            isLoadingProfile,
+            profileError,
+        });
+
+        // Case 1: No token - not authenticated
+        if (!hasToken) {
+            console.log('❌ No token');
+            setUser(null);
+            setIsAuthenticated(false);
+            setLoading(false);
+            return;
+        }
+
+        // Case 2: Profile loading - maintain current state
+        if (isLoadingProfile) {
+            console.log('⏳ Profile loading...');
+            setLoading(true);
+            return;
+        }
+
+        // Case 3: Profile error - cleanup
+        if (profileError) {
+            console.log('❌ Profile error - cleaning up');
+            forceCleanupAll();
+            setUser(null);
+            setIsAuthenticated(false);
+            setHasToken(false);
+            setLoading(false);
+            return;
+        }
+
+        // Case 4: Profile data received
+        if (profileData) {
+            console.log('✅ Profile data received');
+            setUser(profileData as AuthUser);
+            setIsAuthenticated(true);
+            setLoading(false);
+            storageService.setUser(profileData);
+            return;
+        }
+
+        setLoading(false);
+
+    }, [hasToken, profileData, isLoadingProfile, profileError, isInitialized]);
 
     // -- FUNGSI LOGIN --
     const login = useCallback(
         async (credentials: LoginDto) => {
             try {
-                // 1. Panggil API Login
+                console.log('🔐 Starting login process...');
+
                 const response = (await loginMutation.mutateAsync({ data: credentials })) as LoginResponse;
 
-                // 2. Simpan Token
                 if (response?.access_token) {
-                    // A. Simpan ke LocalStorage (Untuk Axios Client-Side)
                     storageService.setAccessToken(response.access_token);
-
-                    // B. Simpan ke Cookie (Untuk Middleware Server-Side) -> BAGIAN INI YANG HILANG SEBELUMNYA
                     setAuthCookie(response.access_token);
+                    setHasToken(true);
+                    console.log('✅ Token saved');
                 }
 
                 if (response?.refresh_token) {
@@ -102,20 +199,18 @@ export function useAuth() {
                     storageService.setUser(response.user);
                     setUser(response.user);
                     setIsAuthenticated(true);
+                    console.log('✅ User data saved');
                 }
 
                 showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
 
-                // 3. Redirect ke Dashboard
+                console.log('🔄 Redirecting to dashboard...');
                 router.push(ROUTES.DASHBOARD);
-
-                // 4. Refresh agar Middleware membaca Cookie baru
                 router.refresh();
 
             } catch (error) {
-                console.error('Login failed:', error);
+                console.error('❌ Login failed:', error);
                 showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
-                // Jangan throw error jika ingin handle di sini, tapi throw jika form butuh catch
                 throw error;
             }
         },
@@ -124,23 +219,26 @@ export function useAuth() {
 
     // -- FUNGSI LOGOUT --
     const logout = useCallback(async () => {
-        try {
-            await logoutMutation.mutateAsync();
-        } catch (error) {
-            console.error('Logout API error:', error);
-        } finally {
-            // Bersihkan semua penyimpanan
-            storageService.clearAuth();
-            removeAuthCookie(); // Hapus Cookie agar Middleware memblokir akses
+        console.log('🚪 === LOGOUT FROM useAuth STARTED ===');
 
-            setUser(null);
-            setIsAuthenticated(false);
-            showSuccess(SUCCESS_MESSAGES.LOGOUT_SUCCESS);
+        logoutMutation.mutate(undefined, {
+            onSuccess: () => console.log('✅ Logout API success'),
+            onError: (error) => console.warn('⚠️ Logout API error:', error)
+        });
 
-            router.push(ROUTES.LOGIN);
-            router.refresh();
-        }
-    }, [logoutMutation, router, showSuccess]);
+        forceCleanupAll();
+
+        setUser(null);
+        setIsAuthenticated(false);
+        setHasToken(false);
+
+        console.log('🚪 === LOGOUT FROM useAuth COMPLETED ===');
+
+    }, [logoutMutation]);
+
+    const checkAuth = useCallback(() => {
+        console.log('🔍 checkAuth called (deprecated - using useEffect)');
+    }, []);
 
     return {
         user,

@@ -1,3 +1,4 @@
+// frontend/src/components/guars/AuthGuard.tsx
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';

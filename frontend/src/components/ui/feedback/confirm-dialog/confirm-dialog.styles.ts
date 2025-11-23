@@ -52,7 +52,7 @@ export const typeConfig = {
         bgColor: 'bg-orange-50',
         iconColor: 'text-orange-600',
         borderColor: 'border-orange-200',
-        buttonVariant: 'warning' as const,
+        buttonVariant: 'danger' as const,
         defaultTitle: 'Logout Confirmation',
         defaultConfirmText: 'Logout',
     },

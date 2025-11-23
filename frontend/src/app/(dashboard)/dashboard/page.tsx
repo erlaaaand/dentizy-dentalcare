@@ -11,7 +11,6 @@ import { StafDashboard } from './components/layouts/StafDashboard';
 export default function DashboardPage() {
     const { user, loading: authLoading } = useAuth();
     const { isKepalaKlinik, isDokter, isStaf } = useRole();
-    const { patientStats, userStats, notifStats, todayAppointments, loading } = useDashboardData();
 
     // Loading state awal (Auth check)
     if (authLoading) {
@@ -27,23 +26,13 @@ export default function DashboardPage() {
 
     if (isDokter) {
         return (
-            <DokterDashboard
-                user={user}
-                patientStats={patientStats}
-                todayAppointments={todayAppointments}
-                loading={loading}
-            />
+            <DokterDashboard />
         );
     }
 
     if (isStaf) {
         return (
-            <StafDashboard
-                user={user}
-                patientStats={patientStats}
-                todayAppointments={todayAppointments}
-                loading={loading}
-            />
+            <StafDashboard />
         );
     }
 

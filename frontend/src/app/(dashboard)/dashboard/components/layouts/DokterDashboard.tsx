@@ -1,80 +1,99 @@
 // frontend/src/app/(dashboard)/dashboard/components/layouts/DokterDashboard.tsx
 'use client';
 
+import { useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Calendar, ClipboardList, Activity, Clock, CheckCircle2 } from 'lucide-react';
-import { ROUTES } from '@/core/constants';
-import { Card, DataTable, Badge, EmptyState, Skeleton } from '@/components/ui';
-import type { StatCardData, AppointmentListItem } from '@/app/(dashboard)/dashboard/types/dashboard.types';
-import { StatsGrid } from '@/app/(dashboard)/dashboard/components/stats/StatsGrid';
-import { AppointmentList } from '@/app/(dashboard)/dashboard/components/widgets/AppointmentList';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 
-interface DokterDashboardProps {
-    user: any;
-    patientStats: any;
-    todayAppointments: any;
-    loading: any;
-}
+import { ROUTES } from '@/core/constants';
+import { Card, DataTable, Badge, EmptyState, Skeleton, Button, StatsCard, Tabs, TabPanel } from '@/components/ui';
+import type { StatCardData, AppointmentListItem, DashboardLayoutProps } from '../../types/dashboard.types';
+import { StatsGrid } from '../stats/StatsGrid';
+import { AppointmentList } from '../widgets/AppointmentList';
 
 export function DokterDashboard({
     user,
     patientStats,
     todayAppointments,
     loading
-}: DokterDashboardProps) {
+}: DashboardLayoutProps) {
     const router = useRouter();
 
-    const stats: StatCardData[] = [
+    const stats: StatCardData[] = useMemo(() => [
         { title: 'Pasien Saya', value: patientStats?.total ?? 0, icon: <Users className="w-6 h-6" />, color: 'teal' },
         { title: 'Jadwal Hari Ini', value: todayAppointments?.count ?? 0, icon: <Calendar className="w-6 h-6" />, color: 'blue' },
         { title: 'Selesai Hari Ini', value: 3, icon: <CheckCircle2 className="w-6 h-6" />, color: 'green' },
         { title: 'Sedang Berjalan', value: 1, icon: <Clock className="w-6 h-6" />, color: 'orange' },
-    ];
+    ], [patientStats, todayAppointments]);
 
-    const appointments: AppointmentListItem[] = todayAppointments?.data?.map((apt: any) => ({
-        id: apt.id,
-        time: apt.jam_janji,
-        patientName: apt.patient?.nama_lengkap || 'Pasien',
-        complaint: apt.keluhan,
-        status: apt.status
-    })) || [];
+    const appointments: AppointmentListItem[] = useMemo(() =>
+        todayAppointments?.data?.map((apt: any) => ({
+            id: apt.id,
+            time: apt.jam_janji,
+            patientName: apt.patient?.nama_lengkap || 'Pasien',
+            complaint: apt.keluhan,
+            status: apt.status
+        })) || []
+        , [todayAppointments]);
 
-    const recentPatients = [
-        { id: 1, nama: 'Ahmad Fauzi', lastVisit: '2024-01-15', diagnosis: 'Pembersihan Karang Gigi', status: 'completed' },
-        { id: 2, nama: 'Siti Nurhaliza', lastVisit: '2024-01-14', diagnosis: 'Perawatan Saluran Akar', status: 'ongoing' },
-    ];
-
-    const patientColumns = [
-        { key: 'nama', header: 'Nama Pasien' },
-        { key: 'diagnosis', header: 'Diagnosis Terakhir' },
+    const appointmentColumns = useMemo(() => [
+        {
+            key: 'jam_janji',
+            header: 'Waktu',
+            width: '100px',
+            render: (row: any) => (
+                <div className="font-mono text-sm bg-gray-50 px-2 py-1 rounded text-gray-700 border border-gray-100 text-center">
+                    {row.jam_janji ? row.jam_janji.slice(0, 5) : '-'}
+                </div>
+            )
+        },
+        {
+            key: 'patient',
+            header: 'Pasien',
+            render: (row: any) => (
+                <span className="font-medium text-gray-900">
+                    {row.patient?.nama_lengkap || 'Pasien Tidak Diketahui'}
+                </span>
+            )
+        },
+        {
+            key: 'keluhan',
+            header: 'Keluhan',
+            render: (row: any) => (
+                <span className="text-sm text-gray-600">{row.keluhan || '-'}</span>
+            )
+        },
         {
             key: 'status',
             header: 'Status',
             render: (row: any) => (
                 <Badge
-                    variant={row.status === 'completed' ? 'success' : 'info'}
+                    variant={row.status === 'completed' ? 'success' : row.status === 'confirmed' ? 'info' : 'warning'}
                     size="sm"
                 >
-                    {row.status === 'completed' ? 'Selesai' : 'Perawatan'}
+                    {row.status === 'completed' ? 'Selesai' : row.status === 'confirmed' ? 'Terkonfirmasi' : 'Menunggu'}
                 </Badge>
             )
         },
-    ];
+    ], []);
 
-    if (loading.patients || loading.appointments) {
+    if (loading?.patients || loading?.appointments) {
         return (
-            <div className="flex flex-col gap-6 w-full pb-24">
-                <Skeleton className="h-32 w-full rounded-xl" />
+            <div className="flex flex-col gap-6 w-full pb-24 animate-pulse">
+                <Skeleton className="h-32 w-full rounded-xl bg-gray-100" />
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-xl" />)}
+                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 w-full rounded-xl bg-gray-100" />)}
                 </div>
+                <Skeleton className="h-96 w-full rounded-2xl bg-gray-100" />
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col gap-6 w-full min-h-screen pb-24 animate-in fade-in duration-500">
-            {/* Welcome Banner */}
+        <div className="flex flex-col gap-8 w-full min-h-screen pb-24 animate-in fade-in duration-500">
+            {/* Header */}
             <Card className="bg-gradient-to-r from-teal-600 to-cyan-600 text-white border-0">
                 <Card.Body padding="lg">
                     <div className="flex items-center justify-between">
@@ -91,62 +110,78 @@ export function DokterDashboard({
                 </Card.Body>
             </Card>
 
-            {/* Stats Grid */}
-            <StatsGrid stats={stats} loading={false} />
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Appointment List - Larger */}
-                <div className="lg:col-span-2">
-                    <AppointmentList
-                        appointments={appointments}
-                        loading={loading.appointments}
-                        title="Antrian Pasien Hari Ini"
-                        emptyMessage="Tidak ada jadwal praktik hari ini"
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat, index) => (
+                    <StatsCard
+                        key={index}
+                        title={stat.title}
+                        value={stat.value}
+                        icon={stat.icon}
+                        description=""
+                        className="hover:shadow-md transition-shadow duration-300 bg-white"
                     />
-                </div>
-
-                {/* Patient History - Sidebar */}
-                <div className="lg:col-span-1">
-                    <Card className="h-full flex flex-col">
-                        <Card.Header divider className="py-4 px-5">
-                            <div className="flex items-center justify-between w-full">
-                                <div>
-                                    <Card.Title className="text-base">Pasien Terakhir</Card.Title>
-                                    <Card.Description>Riwayat perawatan</Card.Description>
-                                </div>
-                                <button
-                                    onClick={() => router.push(ROUTES.PATIENTS)}
-                                    className="text-xs font-medium text-teal-600 hover:underline"
-                                >
-                                    Lihat Semua
-                                </button>
-                            </div>
-                        </Card.Header>
-                        <Card.Body padding="none" className="flex-1">
-                            {recentPatients.length === 0 ? (
-                                <div className="p-6">
-                                    <EmptyState
-                                        icon={<ClipboardList className="w-10 h-10" />}
-                                        title="Belum Ada Riwayat"
-                                        description="Riwayat pasien akan muncul di sini"
-                                        size="sm"
-                                    />
-                                </div>
-                            ) : (
-                                <DataTable
-                                    data={recentPatients}
-                                    columns={patientColumns}
-                                    striped
-                                    hoverable
-                                    compact
-                                    onRowClick={(row) => router.push(`${ROUTES.PATIENTS}/${row.id}`)}
-                                />
-                            )}
-                        </Card.Body>
-                    </Card>
-                </div>
+                ))}
             </div>
+
+            {/* Main Content */}
+            <Card className="overflow-hidden border-gray-100 shadow-lg shadow-gray-100/50 bg-white">
+                <Tabs
+                    variant="line"
+                    className="w-full"
+                    defaultTab="appointments"
+                    tabs={[
+                        {
+                            id: 'appointments',
+                            label: 'Jadwal Hari Ini',
+                            icon: <Clock className="w-4 h-4" />,
+                            badge: appointments.length > 0 ? appointments.length : undefined
+                        }
+                    ]}
+                >
+                    <TabPanel tabId="appointments">
+                        <div className="p-6 flex items-center justify-between border-b border-gray-50 bg-gray-50/30">
+                            <div>
+                                <h3 className="text-lg font-bold text-gray-900">Antrian Pasien Hari Ini</h3>
+                                <p className="text-sm text-gray-500">
+                                    Daftar janji temu untuk tanggal {format(new Date(), 'dd MMMM yyyy', { locale: id })}.
+                                    {appointments.length > 0 && ` (${appointments.length} pasien)`}
+                                </p>
+                            </div>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => router.push(ROUTES.APPOINTMENTS)}
+                            >
+                                Kelola Jadwal
+                            </Button>
+                        </div>
+
+                        {loading?.appointments ? (
+                            <div className="p-12 flex justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600"></div>
+                            </div>
+                        ) : appointments.length === 0 ? (
+                            <div className="p-12">
+                                <EmptyState
+                                    icon={<Clock className="w-12 h-12 text-gray-300" />}
+                                    title="Tidak Ada Jadwal"
+                                    description="Tidak ada jadwal praktik hari ini"
+                                    variant="minimal"
+                                />
+                            </div>
+                        ) : (
+                            <DataTable
+                                data={todayAppointments?.data || []}
+                                columns={appointmentColumns}
+                                hoverable
+                                striped
+                                className="border-none"
+                            />
+                        )}
+                    </TabPanel>
+                </Tabs>
+            </Card>
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
