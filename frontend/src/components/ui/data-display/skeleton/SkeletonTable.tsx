@@ -9,11 +9,11 @@ export function SkeletonTable({
     hasHeader = true,
     hasCheckboxes = false,
 }: SkeletonTableProps) {
-    const paddingClass = compact ? 'px-3 py-2' : 'px-6 py-4';
+    const paddingClass = compact ? 'px-3 py-2' : 'px-4 py-3';
     const textClass = compact ? 'text-xs' : 'text-sm';
 
     return (
-        <div className="w-full border border-gray-200 rounded-lg overflow-hidden">
+        <div className="w-full">
             <table className="min-w-full divide-y divide-gray-200">
                 {hasHeader && (
                     <thead className="bg-gray-50">

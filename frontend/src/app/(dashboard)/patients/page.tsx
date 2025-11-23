@@ -2,13 +2,14 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, Search, Filter, Download, RefreshCw } from 'lucide-react';
+import { Plus, Eye, Edit, Trash2, Download, RefreshCw } from 'lucide-react';
 
 // Core & Services
 import { useGetPatients, useDeletePatient } from '@/core/services/api';
 import { useConfirm } from '@/core/hooks/ui/useConfirm';
 import { useToast } from '@/core/hooks/ui/useToast';
 import { formatDate } from '@/core';
+import { useDebounce } from '@/core/hooks/ui/useDebounce'; // Menggunakan debounce untuk search
 
 // UI Components
 import {
@@ -19,36 +20,47 @@ import {
     IconButton,
     StatusBadge,
     Input,
-    Card,
-    CardBody,
     EmptyPatientsState,
     SkeletonTable,
     Select,
-    ButtonGroup
+    ButtonGroup,
+    Badge
 } from '@/components';
 
 export default function PatientsPage() {
     const router = useRouter();
-    const confirm = useConfirm();
+    const { confirm } = useConfirm(); // Destructure confirm dari hook
     const { showSuccess, showError } = useToast();
 
-    // State Management
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [search, setSearch] = useState('');
     const [genderFilter, setGenderFilter] = useState<string>('');
 
-    // API Hooks
-    const { data: patientsData, isLoading, refetch } = useGetPatients({
+    // Debounce search agar tidak hit API setiap ketik
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data: patientsResponse, isLoading, refetch } = useGetPatients({
         page,
         limit,
-        search: search || undefined,
-        gender: genderFilter || undefined,
+        search: debouncedSearch || undefined, // Kirim undefined jika string kosong
+        jenis_kelamin: (genderFilter as any) || undefined, // Casting untuk memuaskan tipe
     });
+
+    // Normalisasi response data
+    const patientsList = Array.isArray(patientsResponse)
+        ? patientsResponse
+        : (patientsResponse as any)?.data || [];
+
+    const meta = (patientsResponse as any)?.meta || (patientsResponse as any)?.pagination || {
+        total: patientsList.length,
+        totalPages: 1,
+        page: 1,
+        limit: 10
+    };
 
     const deleteMutation = useDeletePatient();
 
-    // Handlers
     const handleSearch = (value: string) => {
         setSearch(value);
         setPage(1);
@@ -59,8 +71,8 @@ export default function PatientsPage() {
         setPage(1);
     };
 
-    const handleDelete = async (id: string, name: string) => {
-        const confirmed = await confirm({
+    const handleDelete = async (id: number, name: string) => {
+        const isConfirmed = await confirm({
             title: 'Hapus Data Pasien',
             message: `Apakah Anda yakin ingin menghapus data pasien "${name}"? Data yang dihapus tidak dapat dikembalikan.`,
             confirmText: 'Ya, Hapus',
@@ -68,7 +80,7 @@ export default function PatientsPage() {
             type: 'danger',
         });
 
-        if (confirmed) {
+        if (isConfirmed) {
             try {
                 await deleteMutation.mutateAsync({ id });
                 showSuccess('Data pasien berhasil dihapus');
@@ -79,117 +91,112 @@ export default function PatientsPage() {
         }
     };
 
-    const handleExport = () => {
-        showSuccess('Fitur export akan segera tersedia');
-    };
-
-    // Table Columns
     const columns = [
         {
             header: 'No. RM',
-            accessorKey: 'medicalRecordNumber',
-            sortable: true,
+            accessorKey: 'nomor_rekam_medis',
             cell: (info: any) => (
-                <span className="font-mono font-medium text-primary-600">
+                <span className="font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
                     {info.getValue() || '-'}
                 </span>
             ),
         },
         {
             header: 'Nama Pasien',
-            accessorKey: 'name',
-            sortable: true,
+            accessorKey: 'nama_lengkap',
             cell: (info: any) => (
                 <div className="font-medium text-gray-900">{info.getValue()}</div>
             ),
         },
         {
             header: 'Jenis Kelamin',
-            accessorKey: 'gender',
+            accessorKey: 'jenis_kelamin',
             cell: (info: any) => {
                 const val = info.getValue();
                 return (
-                    <StatusBadge
-                        variant={val === 'LAKI_LAKI' ? 'info' : 'default'}
-                        label={val === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan'}
-                    />
+                    <Badge
+                        variant={val === 'L' ? 'info' : 'success'}
+                    >
+                        {val === 'L' ? 'Laki-laki' : 'Perempuan'}
+                    </Badge>
                 );
             },
         },
         {
             header: 'No. Telepon',
-            accessorKey: 'phoneNumber',
+            accessorKey: 'no_hp',
             cell: (info: any) => info.getValue() || '-',
         },
         {
             header: 'Tanggal Lahir',
-            accessorKey: 'birthDate',
-            sortable: true,
+            accessorKey: 'tanggal_lahir',
             cell: (info: any) => formatDate(info.getValue()),
         },
         {
             id: 'actions',
             header: 'Aksi',
+            align: 'right',
             cell: (info: any) => {
                 const patient = info.row.original;
                 return (
-                    <ButtonGroup>
+                    <div className="flex justify-end gap-2">
                         <IconButton
                             variant="ghost"
                             size="sm"
                             icon={<Eye className="w-4 h-4" />}
                             onClick={() => router.push(`/patients/${patient.id}`)}
                             title="Lihat Detail"
+                            aria-label='Lihat Detail'
                         />
                         <IconButton
                             variant="ghost"
                             size="sm"
-                            color="warning"
+                            className="text-yellow-600 hover:bg-yellow-50"
                             icon={<Edit className="w-4 h-4" />}
                             onClick={() => router.push(`/patients/${patient.id}/edit`)}
                             title="Edit"
+                            aria-label="Edit"
                         />
                         <IconButton
                             variant="ghost"
                             size="sm"
-                            color="danger"
+                            className="text-red-600 hover:bg-red-50"
                             icon={<Trash2 className="w-4 h-4" />}
-                            onClick={() => handleDelete(patient.id, patient.name)}
+                            onClick={() => handleDelete(patient.id, patient.nama_lengkap)}
                             title="Hapus"
+                            aria-label="Hapus"
                         />
-                    </ButtonGroup>
+                    </div>
                 );
             },
         },
     ];
 
-    const pagination = patientsData?.meta ? {
-        currentPage: patientsData.meta.page,
-        totalPages: patientsData.meta.totalPages,
-        totalItems: patientsData.meta.total,
-        itemsPerPage: patientsData.meta.limit,
-    } : undefined;
+    const paginationProps = {
+        currentPage: page,
+        totalPages: meta.totalPages || 1,
+        totalItems: meta.total || 0,
+        itemsPerPage: limit,
+    };
 
     return (
         <PageContainer>
             <PageHeader
                 title="Kelola Pasien"
-                description="Manajemen data pasien, rekam medis, dan riwayat kunjungan"
-                breadcrumbs={[
-                    { children: 'Dashboard', href: '/dashboard' },
-                    { children: 'Pasien', isCurrent: true },
-                ]}
+                description="Manajemen data pasien dan rekam medis"
                 actions={
                     <ButtonGroup>
                         <Button
                             variant="outline"
-                            startIcon={<Download className="w-4 h-4" />}
-                            onClick={handleExport}
+                            icon={<Download className="w-4 h-4" />}
+                            iconPosition="left"
+                            onClick={() => showSuccess('Fitur export akan segera tersedia')}
                         >
                             Export
                         </Button>
                         <Button
-                            startIcon={<Plus className="w-4 h-4" />}
+                            icon={<Plus className="w-4 h-4" />}
+                            iconPosition="left"
                             onClick={() => router.push('/patients/new')}
                         >
                             Tambah Pasien
@@ -198,14 +205,12 @@ export default function PatientsPage() {
                 }
             />
 
-            <Card>
-                <CardBody className="space-y-4">
-                    {/* Filters */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
                             <Input
                                 placeholder="Cari nama, No RM, atau No HP..."
-                                startIcon={<Search className="w-4 h-4 text-gray-400" />}
                                 value={search}
                                 onChange={(e) => handleSearch(e.target.value)}
                             />
@@ -213,11 +218,11 @@ export default function PatientsPage() {
                         <div className="w-full sm:w-48">
                             <Select
                                 value={genderFilter}
-                                onChange={(e) => handleGenderFilter(e.target.value)}
+                                onChange={(val) => handleGenderFilter(val)}
                                 options={[
                                     { value: '', label: 'Semua Gender' },
-                                    { value: 'LAKI_LAKI', label: 'Laki-laki' },
-                                    { value: 'PEREMPUAN', label: 'Perempuan' },
+                                    { value: 'L', label: 'Laki-laki' },
+                                    { value: 'P', label: 'Perempuan' },
                                 ]}
                             />
                         </div>
@@ -226,28 +231,35 @@ export default function PatientsPage() {
                             icon={<RefreshCw className="w-4 h-4" />}
                             onClick={() => refetch()}
                             title="Refresh Data"
+                            aria-label="Refresh Data"
                         />
                     </div>
+                </div>
 
-                    {/* Table Content */}
+                <div className="overflow-x-auto">
                     {isLoading ? (
-                        <SkeletonTable rows={5} columns={6} />
-                    ) : !patientsData?.data || patientsData.data.length === 0 ? (
+                        <SkeletonTable rows={5} cols={6} />
+                    ) : !patientsList || patientsList.length === 0 ? (
                         <EmptyPatientsState
                             onAddPatient={() => router.push('/patients/new')}
                         />
                     ) : (
                         <DataTable
-                            data={patientsData.data}
-                            columns={columns}
-                            pagination={pagination}
+                            data={patientsList}
+                            columns={columns as any}
+                            pagination={{
+                                currentPage: paginationProps.currentPage,
+                                totalPages: paginationProps.totalPages,
+                                totalItems: paginationProps.totalItems,
+                                itemsPerPage: limit,
+                            }}
                             onPageChange={setPage}
                             onLimitChange={setLimit}
                             isLoading={isLoading}
                         />
                     )}
-                </CardBody>
-            </Card>
+                </div>
+            </div>
         </PageContainer>
     );
 }

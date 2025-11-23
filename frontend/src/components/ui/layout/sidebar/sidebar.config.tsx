@@ -1,10 +1,11 @@
 import { NavigationItem, BadgeVariant, NavBadgeColor } from './sidebar.types';
+import { ROUTES } from '@/core/constants/routes.constants';
 
 export const navigationItems: NavigationItem[] = [
     {
         id: 'dashboard',
         label: 'Dashboard',
-        href: '/dashboard',
+        href: ROUTES.DASHBOARD,
         allowedRoles: ['kepala_klinik', 'dokter', 'staf'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -15,7 +16,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'appointments',
         label: 'Jadwal Janji Temu',
-        href: '/dashboard/appointments',
+        href: ROUTES.APPOINTMENTS,
         allowedRoles: ['kepala_klinik', 'dokter', 'staf'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -26,7 +27,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'patients',
         label: 'Manajemen Pasien',
-        href: '/dashboard/patients',
+        href: ROUTES.PATIENTS,
         allowedRoles: ['kepala_klinik', 'dokter', 'staf'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -37,7 +38,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'medical-records',
         label: 'Rekam Medis',
-        href: '/dashboard/medical-records',
+        href: ROUTES.MEDICAL_RECORDS,
         allowedRoles: ['kepala_klinik', 'dokter', 'staf'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -48,7 +49,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'reports',
         label: 'Laporan',
-        href: '/dashboard/reports',
+        href: ROUTES.REPORTS,
         allowedRoles: ['kepala_klinik', 'dokter'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -59,7 +60,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'users',
         label: 'Manajemen User',
-        href: '/dashboard/users',
+        href: ROUTES.USERS,
         allowedRoles: ['kepala_klinik'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -71,7 +72,7 @@ export const navigationItems: NavigationItem[] = [
     {
         id: 'settings',
         label: 'Pengaturan',
-        href: '/dashboard/settings',
+        href: ROUTES.SETTINGS,
         allowedRoles: ['kepala_klinik'],
         icon: (
             <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">

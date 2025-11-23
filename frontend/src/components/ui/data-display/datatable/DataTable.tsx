@@ -1,171 +1,162 @@
 import React, { useMemo, useCallback } from 'react';
 import { cn } from '@/core';
-import { Search } from 'lucide-react';
-import { Table, Pagination, SearchInput, EmptyState, Card, LoadingSpinner } from '@/components/ui';
-import type { Column } from '@/components/ui/data-display/table/table.types';
+
+export interface Column<T> {
+    header: string | React.ReactNode;
+    accessorKey?: keyof T | string;
+    cell?: (info: { getValue: () => any; row: { original: T }; }) => React.ReactNode;
+    sortable?: boolean;
+    width?: string;
+    align?: 'left' | 'center' | 'right';
+    id?: string;
+}
 
 export interface DataTableProps<T> {
     data: T[];
     columns: Column<T>[];
-    currentPage?: number;
-    totalPages?: number;
-    totalItems?: number;
-    pageSize?: number;
+    pagination?: {
+        currentPage: number;
+        totalPages: number;
+        totalItems: number;
+        itemsPerPage: number;
+    };
     onPageChange?: (page: number) => void;
-    searchable?: boolean;
-    searchValue?: string;
-    onSearchChange?: (value: string) => void;
-    searchPlaceholder?: string;
-    selectable?: boolean;
-    selectedRows?: Set<string | number>;
-    onSelectionChange?: (selected: Set<string | number>) => void;
-    getRowId?: (row: T) => string | number;
-    actions?: React.ReactNode;
+    onLimitChange?: (limit: number) => void;
     isLoading?: boolean;
-    error?: string;
-    emptyMessage?: string;
-    emptyState?: React.ReactNode;
     className?: string;
-    striped?: boolean;
-    hoverable?: boolean;
-    onRowClick?: (row: T, index: number) => void;
-    compact?: boolean;
 }
 
-export default function DataTable<T extends Record<string, unknown>>({
+export default function DataTable<T extends Record<string, any>>({
     data,
     columns,
-    currentPage = 1,
-    totalPages = 1,
-    totalItems,
-    pageSize = 10,
+    pagination,
     onPageChange,
-    searchable = false,
-    searchValue = '',
-    onSearchChange,
-    searchPlaceholder = 'Cari data...',
-    selectable = false,
-    selectedRows = new Set(),
-    onSelectionChange,
-    getRowId,
-    actions,
+    onLimitChange,
     isLoading = false,
-    error,
-    emptyMessage = 'Data tidak ditemukan',
-    emptyState,
     className,
-    striped = false,
-    hoverable = true,
-    onRowClick,
-    compact = false,
 }: DataTableProps<T>) {
 
-    const handleSelectAll = useCallback((checked: boolean) => {
-        if (!onSelectionChange || !getRowId) return;
-        onSelectionChange(
-            checked ? new Set(data.map((row) => getRowId(row))) : new Set()
-        );
-    }, [data, getRowId, onSelectionChange]);
-
-    const handleSelectRow = useCallback((row: T) => {
-        if (!onSelectionChange || !getRowId) return;
-        const id = getRowId(row);
-        const newSelection = new Set(selectedRows);
-        newSelection.has(id) ? newSelection.delete(id) : newSelection.add(id);
-        onSelectionChange(newSelection);
-    }, [selectedRows, getRowId, onSelectionChange]);
-
-    const isAllSelected = useMemo(() =>
-        data.length > 0 && data.every((row) => selectedRows.has(getRowId?.(row) ?? '')),
-        [data, selectedRows, getRowId]
-    );
-
-    const tableColumns: Column<T>[] = useMemo(() => {
-        if (!selectable) return columns;
-
-        const selectionCol: Column<T> = {
-            key: '_selection',
-            header: (
-                <input
-                    type="checkbox"
-                    checked={isAllSelected}
-                    onChange={(e) => handleSelectAll(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-            ) as unknown as string,
-            render: (row) => (
-                <input
-                    type="checkbox"
-                    checked={selectedRows.has(getRowId?.(row) ?? '')}
-                    onChange={() => handleSelectRow(row)}
-                    onClick={(e) => e.stopPropagation()}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-            ),
-            width: '48px',
-            align: 'center',
-        };
-        return [selectionCol, ...columns];
-    }, [columns, selectable, isAllSelected, handleSelectAll]);
-
     return (
-        <div className={cn('space-y-4', className)}>
-            {(searchable || actions) && (
-                <Card padding="md" className="bg-white">
-                    <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                        {searchable && (
-                            <div className="w-full sm:max-w-xs">
-                                <SearchInput
-                                    value={searchValue}
-                                    onChange={onSearchChange || (() => { })}
-                                    placeholder={searchPlaceholder}
-                                    size="sm"
-                                />
-                            </div>
-                        )}
-                        {actions && (
-                            <div className="flex gap-2 w-full sm:w-auto justify-end">
-                                {actions}
-                            </div>
-                        )}
+        <div className={cn('w-full', className)}>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                        <tr>
+                            {columns.map((column, index) => (
+                                <th
+                                    key={column.id || column.accessorKey as string || index}
+                                    className={cn(
+                                        'px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider',
+                                        column.align === 'center' && 'text-center',
+                                        column.align === 'right' && 'text-right'
+                                    )}
+                                    style={{ width: column.width }}
+                                >
+                                    {column.header}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                        {data.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
+                                {columns.map((column, colIndex) => {
+                                    const value = column.accessorKey
+                                        ? row[column.accessorKey as string]
+                                        : null;
+
+                                    return (
+                                        <td
+                                            key={column.id || column.accessorKey as string || colIndex}
+                                            className={cn(
+                                                'px-4 py-3 whitespace-nowrap text-sm text-gray-900',
+                                                column.align === 'center' && 'text-center',
+                                                column.align === 'right' && 'text-right'
+                                            )}
+                                        >
+                                            {column.cell
+                                                ? column.cell({
+                                                    getValue: () => value,
+                                                    row: { original: row }
+                                                })
+                                                : value
+                                            }
+                                        </td>
+                                    );
+                                })}
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {pagination && pagination.totalPages > 1 && (
+                <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
+                    <div className="text-sm text-gray-700">
+                        Menampilkan {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1}
+                        {' '}-{' '}
+                        {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+                        {' '}dari {pagination.totalItems} data
                     </div>
-                </Card>
-            )}
-
-            {error && (
-                <Card padding="md" className="bg-red-50 border-red-200">
-                    <p className="text-red-700 text-sm">Error: {error}</p>
-                </Card>
-            )}
-
-            <Card padding="none" className="bg-white overflow-hidden relative">
-                {isLoading && (
-                    <div className="absolute inset-0 bg-white/80 z-10 flex items-center justify-center backdrop-blur-sm">
-                        <LoadingSpinner size="lg" variant="primary" />
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => onPageChange?.(pagination.currentPage - 1)}
+                            disabled={pagination.currentPage === 1}
+                            className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                            Sebelumnya
+                        </button>
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                                .filter(page => {
+                                    return page === 1 ||
+                                        page === pagination.totalPages ||
+                                        Math.abs(page - pagination.currentPage) <= 1;
+                                })
+                                .map((page, index, array) => {
+                                    if (index > 0 && page - array[index - 1] > 1) {
+                                        return (
+                                            <React.Fragment key={`ellipsis-${page}`}>
+                                                <span className="px-2">...</span>
+                                                <button
+                                                    onClick={() => onPageChange?.(page)}
+                                                    className={cn(
+                                                        'px-3 py-1 text-sm border rounded',
+                                                        page === pagination.currentPage
+                                                            ? 'bg-primary-600 text-white border-primary-600'
+                                                            : 'hover:bg-gray-50'
+                                                    )}
+                                                >
+                                                    {page}
+                                                </button>
+                                            </React.Fragment>
+                                        );
+                                    }
+                                    return (
+                                        <button
+                                            key={page}
+                                            onClick={() => onPageChange?.(page)}
+                                            className={cn(
+                                                'px-3 py-1 text-sm border rounded',
+                                                page === pagination.currentPage
+                                                    ? 'bg-primary-600 text-white border-primary-600'
+                                                    : 'hover:bg-gray-50'
+                                            )}
+                                        >
+                                            {page}
+                                        </button>
+                                    );
+                                })}
+                        </div>
+                        <button
+                            onClick={() => onPageChange?.(pagination.currentPage + 1)}
+                            disabled={pagination.currentPage === pagination.totalPages}
+                            className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                            Selanjutnya
+                        </button>
                     </div>
-                )}
-
-                <Table
-                    data={data}
-                    columns={tableColumns}
-                    striped={striped}
-                    hoverable={hoverable}
-                    onRowClick={onRowClick}
-                    emptyMessage={emptyMessage}
-                    compact={compact}
-                />
-            </Card>
-
-            {totalPages > 1 && onPageChange && (
-                <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={onPageChange}
-                    showInfo={!!totalItems}
-                    totalItems={totalItems}
-                    startIndex={(currentPage - 1) * pageSize}
-                    endIndex={Math.min(currentPage * pageSize, totalItems || 0)}
-                />
+                </div>
             )}
         </div>
     );

@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import { cn } from '@/core';
 import { InputProps } from './input.types';
 import { PasswordInput } from './PasswordInput';
@@ -12,7 +12,9 @@ const ErrorIcon = () => (
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     ({ label, error, hint, leftIcon, rightIcon, className, containerClassName, id, type = 'text', disabled, required, size = 'md', ...props }, ref) => {
-        const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+        const reactId = useId();
+        const inputId = id || reactId;
+
 
         const sizeClass = inputSizeClasses[size as keyof typeof inputSizeClasses] || inputSizeClasses.md;
 

@@ -12,9 +12,6 @@ interface PatientFormData {
   tanggal_lahir?: string;
   jenis_kelamin?: JenisKelamin;
   alamat?: string;
-  riwayat_alergi?: string;
-  riwayat_penyakit?: string;
-  catatan_khusus?: string;
 }
 
 export function validatePatientForm(data: Partial<PatientFormData>): {
@@ -71,16 +68,35 @@ export function validatePatientForm(data: Partial<PatientFormData>): {
 }
 
 export function sanitizePatientFormData(data: Partial<PatientFormData>): Partial<PatientFormData> {
-  return {
-    nama_lengkap: data.nama_lengkap?.trim() || '',
-    nik: data.nik?.trim() || undefined,
-    email: data.email?.trim().toLowerCase() || undefined,
-    no_hp: data.no_hp?.trim() || undefined,
-    tanggal_lahir: data.tanggal_lahir || undefined,
-    jenis_kelamin: data.jenis_kelamin || undefined,
-    alamat: data.alamat?.trim() || undefined,
-    riwayat_alergi: data.riwayat_alergi?.trim() || undefined,
-    riwayat_penyakit: data.riwayat_penyakit?.trim() || undefined,
-    catatan_khusus: data.catatan_khusus?.trim() || undefined,
-  };
+  const sanitized: Partial<PatientFormData> = {};
+
+  if (data.nama_lengkap?.trim()) {
+    sanitized.nama_lengkap = data.nama_lengkap.trim();
+  }
+
+  if (data.nik?.trim()) {
+    sanitized.nik = data.nik.trim();
+  }
+
+  if (data.email?.trim()) {
+    sanitized.email = data.email.trim().toLowerCase();
+  }
+
+  if (data.no_hp?.trim()) {
+    sanitized.no_hp = data.no_hp.trim();
+  }
+
+  if (data.tanggal_lahir) {
+    sanitized.tanggal_lahir = data.tanggal_lahir;
+  }
+
+  if (data.jenis_kelamin) {
+    sanitized.jenis_kelamin = data.jenis_kelamin;
+  }
+
+  if (data.alamat?.trim()) {
+    sanitized.alamat = data.alamat.trim();
+  }
+
+  return sanitized;
 }

@@ -1,4 +1,4 @@
-import React, { forwardRef, useMemo } from 'react';
+import React, { forwardRef, useMemo, useId } from 'react';
 import { cn } from '@/core';
 import { SelectProps, SelectOption } from './select.types';
 import { sizeClasses, variantClasses, stateClasses } from './select.styles';
@@ -29,7 +29,8 @@ const ErrorIcon = () => (
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     ({ label, error, hint, options, placeholder, className, containerClassName, id, disabled, required, onChange, value, size = 'md', variant = 'default', loading = false, ...props }, ref) => {
-        const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+        const reactId = useId();
+        const selectId = id || reactId;
         const sizeClass = sizeClasses[size];
         const variantClass = variantClasses[variant];
 

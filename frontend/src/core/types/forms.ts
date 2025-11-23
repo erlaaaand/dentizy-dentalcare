@@ -13,6 +13,7 @@ export interface FormState<T> {
 export interface FormConfig<T> {
   initialValues: T;
   validationSchema?: z.ZodSchema<T>;
+  customValidate?: (data: Partial<T>) => Record<string, string>; // ← Tambahkan ini
   onSubmit: (values: T) => Promise<void> | void;
   validateOnChange?: boolean;
   validateOnBlur?: boolean;
@@ -29,10 +30,10 @@ export interface FieldConfig {
 }
 
 export interface FormField {
-    name: string;
-    value: FormFieldValue;
-    error?: string;
-    touched: boolean;
+  name: string;
+  value: FormFieldValue;
+  error?: string;
+  touched: boolean;
 }
 
 // Validation
