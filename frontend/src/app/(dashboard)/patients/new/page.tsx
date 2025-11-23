@@ -42,13 +42,13 @@ export default function NewPatientPage() {
         handleSubmit,
     } = useForm<CreatePatientDto>({
         initialValues: {
-            name: '',
+            nama_lengkap: '',
             nik: '',
-            gender: '',
-            birthDate: '',
-            phoneNumber: '',
+            jenis_kelamin: undefined,
+            alamat: '',
+            no_hp: '',
             email: '',
-            address: '',
+            tanggal_lahir: '',
         },
         validationSchema: createPatientSchema,
         onSubmit: async (data) => {
@@ -75,7 +75,7 @@ export default function NewPatientPage() {
                 actions={
                     <Button
                         variant="outline"
-                        startIcon={<ArrowLeft className="w-4 h-4" />}
+                        // startIcon={<ArrowLeft className="w-4 h-4" />}
                         onClick={() => router.back()}
                     >
                         Kembali

@@ -17,7 +17,4 @@ export interface CreatePatientDto {
   tanggal_lahir?: string;
   jenis_kelamin?: CreatePatientDtoJenisKelamin;
   alamat?: string;
-  riwayat_alergi?: string;
-  riwayat_penyakit?: string;
-  catatan_khusus?: string;
 }

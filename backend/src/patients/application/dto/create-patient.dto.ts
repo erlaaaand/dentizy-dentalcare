@@ -63,25 +63,4 @@ export class CreatePatientDto {
     @MaxLength(500, { message: 'Alamat maksimal 500 karakter' })
     @Transform(({ value }) => value?.trim())
     alamat?: string;
-
-    @ApiPropertyOptional({ example: 'Alergi penisilin' })
-    @IsOptional()
-    @IsString({ message: 'Riwayat alergi harus berupa text' })
-    @MaxLength(1000, { message: 'Riwayat alergi maksimal 1000 karakter' })
-    @Transform(({ value }) => value?.trim())
-    riwayat_alergi?: string;
-
-    @ApiPropertyOptional({ example: 'Diabetes, Hipertensi' })
-    @IsOptional()
-    @IsString({ message: 'Riwayat penyakit harus berupa text' })
-    @MaxLength(1000, { message: 'Riwayat penyakit maksimal 1000 karakter' })
-    @Transform(({ value }) => value?.trim())
-    riwayat_penyakit?: string;
-
-    @ApiPropertyOptional({ example: 'Pasien takut jarum' })
-    @IsOptional()
-    @IsString({ message: 'Catatan khusus harus berupa text' })
-    @MaxLength(1000, { message: 'Catatan khusus maksimal 1000 karakter' })
-    @Transform(({ value }) => value?.trim())
-    catatan_khusus?: string;
 }
