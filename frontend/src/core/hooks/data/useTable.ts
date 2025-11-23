@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/data/useTable.ts
+'use client'
 import { useState, useMemo, useCallback } from 'react';
 import { PaginationParams, SortOrder } from '@/core/types/api';
 import { PAGINATION } from '@/core/config/app.config';

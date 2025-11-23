@@ -1,6 +1,7 @@
 // ========================================
 // frontend/src/components/ui/layout/header/HeaderTitle.tsx
 // ========================================
+'use client';
 import { cn } from '@/core';
 import { HeaderProps } from './header.types';
 import { sizeClasses } from './header.styles';

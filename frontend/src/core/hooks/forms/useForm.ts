@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/forms/useForm.ts
+'use client'
 import { useState, useCallback, useMemo } from 'react';
 import { ZodError, ZodIssue } from 'zod';
 import { FormState, FormConfig } from '@/core/types/forms';

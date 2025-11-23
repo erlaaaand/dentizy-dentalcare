@@ -1,6 +1,7 @@
 import React, { InputHTMLAttributes } from 'react';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size'> {
+    size?: 'sm' | 'md' | 'lg'; // ganti type menjadi string literal
     label?: string;
     error?: string;
     hint?: string;

@@ -23,6 +23,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// --- Helper Functions: Cookie Management ---
+const setAuthCookie = (token: string, expiresInSeconds: number = 86400) => {
+    // Cek protokol untuk secure cookie (HTTPS)
+    const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+    // Simpan token di cookie 'access_token'
+    document.cookie = `access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax${secure}`;
+};
+
+const removeAuthCookie = () => {
+    // Hapus cookie
+    document.cookie = `access_token=; path=/; max-age=0;`;
+};
+// --------------------------------------------
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
@@ -50,7 +64,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const response = await loginMutation.mutateAsync({ data: credentials }) as unknown as LoginResponse;
 
             if (response?.access_token) {
+                // 1. Simpan ke LocalStorage (Client Side)
                 storageService.setAccessToken(response.access_token);
+
+                // 2. Simpan ke Cookie (Server Side / Middleware) -> WAJIB ADA
+                setAuthCookie(response.access_token);
             }
 
             if (response?.user) {
@@ -58,7 +76,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setUser(response.user);
             }
 
+            // 3. Redirect ke Dashboard
             router.push(ROUTES.DASHBOARD);
+
+            // 4. Refresh agar middleware membaca cookie baru
+            router.refresh();
+
         } catch (error) {
             console.error('Login failed:', error);
             throw error;
@@ -71,9 +94,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
             console.error('Logout error:', error);
         } finally {
+            // Bersihkan semua storage
             storageService.clearAuth();
+            removeAuthCookie(); // Hapus cookie juga
+
             setUser(null);
             router.push(ROUTES.LOGIN);
+            router.refresh();
         }
     };
 

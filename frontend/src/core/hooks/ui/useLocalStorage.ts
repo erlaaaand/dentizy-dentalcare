@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/ui/useLocalStorage.ts
+'use client'
 import { useState, useCallback } from 'react';
 
 export function useLocalStorage<T>(

@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/ui/useDebounce.ts
+'use client'
 import { useState, useEffect } from 'react';
 import { DEBOUNCE_DELAY } from '@/core/config/app.config';
 

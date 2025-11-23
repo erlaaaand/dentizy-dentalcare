@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/ui/useToast.ts
+'use client'
 import { useState, useCallback } from 'react';
 import { ToastMessage } from '@/core/types/global/ui.types';
 import { UI_CONFIG } from '@/core/config/ui.config';

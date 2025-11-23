@@ -1,30 +1,37 @@
 // frontend/src/core/services/cache/storage.service.ts
 
-import { 
-  LOCAL_STORAGE_KEYS, 
-  SESSION_STORAGE_KEYS, 
-  StorageType 
+import {
+  LOCAL_STORAGE_KEYS,
+  SESSION_STORAGE_KEYS,
+  StorageType
 } from '@/core/constants/storage.constants';
 
 export class StorageService {
-  private storage: Storage;
+  // Ubah tipe menjadi nullable agar aman saat di Server Side
+  private storage: Storage | null;
   private type: StorageType;
 
   constructor(type: StorageType = StorageType.LOCAL) {
     this.type = type;
-    this.storage = typeof window !== 'undefined'
-      ? (type === StorageType.LOCAL ? window.localStorage : window.sessionStorage)
-      : {} as Storage;
+    // Cek apakah kode berjalan di Browser (ada window)
+    if (typeof window !== 'undefined') {
+      this.storage = type === StorageType.LOCAL ? window.localStorage : window.sessionStorage;
+    } else {
+      // Jika di Server, set null (jangan {} karena akan crash saat dipanggil function-nya)
+      this.storage = null;
+    }
   }
 
   // ============================================================================
-  // Core Generic Methods
+  // Core Generic Methods (Dengan Pengecekan Null)
   // ============================================================================
 
   /**
    * Menyimpan data ke storage (otomatis stringify)
    */
   set(key: string, value: unknown): void {
+    if (!this.storage) return; // Guard clause: Hentikan jika di server
+
     try {
       const serialized = JSON.stringify(value);
       this.storage.setItem(key, serialized);
@@ -37,6 +44,8 @@ export class StorageService {
    * Mengambil data dari storage (otomatis parse JSON)
    */
   get<T>(key: string): T | null {
+    if (!this.storage) return null; // Guard clause
+
     try {
       const item = this.storage.getItem(key);
       if (!item) return null;
@@ -51,6 +60,8 @@ export class StorageService {
    * Menghapus item berdasarkan key
    */
   remove(key: string): void {
+    if (!this.storage) return; // Guard clause
+
     try {
       this.storage.removeItem(key);
     } catch (error) {
@@ -62,6 +73,7 @@ export class StorageService {
    * Mengecek apakah key ada di storage
    */
   has(key: string): boolean {
+    if (!this.storage) return false; // Guard clause
     return this.storage.getItem(key) !== null;
   }
 
@@ -69,6 +81,8 @@ export class StorageService {
    * Membersihkan seluruh storage
    */
   clear(): void {
+    if (!this.storage) return; // Guard clause
+
     try {
       this.storage.clear();
     } catch (error) {

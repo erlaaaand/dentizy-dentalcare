@@ -1,4 +1,5 @@
 // frontend/src/core/hooks/ui/useModal.ts
+'use client'
 import { useState, useCallback } from 'react';
 
 interface UseModalOptions {

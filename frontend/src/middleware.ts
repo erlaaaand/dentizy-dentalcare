@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { ROUTES } from '@/core/constants/routes.constants';
 
 // ============================================
 // CONFIGURATION
@@ -20,6 +21,7 @@ const PROTECTED_ROUTES = [
 const AUTH_ROUTES = ['/login', '/register'];
 
 // Public routes that don't require authentication
+// Catatan: Jangan masukkan /login di sini agar logic redirect auth berjalan
 const PUBLIC_ROUTES = ['/'];
 
 // Role-based access control
@@ -54,74 +56,71 @@ const ROLE_ROUTES: Record<string, string[]> = {
 // UTILITY FUNCTIONS
 // ============================================
 
-/**
- * Check if route is protected
- */
 function isProtectedRoute(pathname: string): boolean {
     return PROTECTED_ROUTES.some(route => pathname.startsWith(route));
 }
 
-/**
- * Check if route is auth route (login/register)
- */
 function isAuthRoute(pathname: string): boolean {
     return AUTH_ROUTES.some(route => pathname.startsWith(route));
 }
 
-/**
- * Check if route is public
- */
 function isPublicRoute(pathname: string): boolean {
     return PUBLIC_ROUTES.includes(pathname);
 }
 
 /**
- * Verify JWT token (simplified - in production use proper JWT verification)
+ * Verify JWT token (ROBUST VERSION)
+ * Menangani format Base64Url dan Padding dengan benar agar tidak error di atob()
  */
 function verifyToken(token: string): { valid: boolean; payload?: any } {
     try {
-        // In production, use proper JWT verification library
-        // This is a simplified version for demonstration
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        
-        // Check if token is expired
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            return { valid: false };
+        }
+
+        // 1. Handle Base64Url characters
+        const base64Url = parts[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+        // 2. Add Padding if needed
+        const paddedBase64 = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+
+        // 3. Decode & Parse
+        const jsonPayload = atob(paddedBase64);
+        const payload = JSON.parse(jsonPayload);
+
+        // 4. Check Expiration
         if (payload.exp && Date.now() >= payload.exp * 1000) {
             return { valid: false };
         }
-        
+
         return { valid: true, payload };
-    } catch {
+    } catch (error) {
         return { valid: false };
     }
 }
 
-/**
- * Extract user roles from token payload
- */
 function extractRoles(payload: any): string[] {
     if (!payload) return [];
-    
-    // Handle different payload structures
+
     if (Array.isArray(payload.roles)) {
         return payload.roles.map((r: any) => typeof r === 'string' ? r : r.name);
     }
-    
+
     if (typeof payload.role === 'string') {
         return [payload.role];
     }
-    
+
     return [];
 }
 
-/**
- * Check if user has access to route based on roles
- */
 function hasRouteAccess(pathname: string, roles: string[]): boolean {
     // Kepala klinik has access to everything
     if (roles.includes('kepala_klinik')) {
         return true;
     }
-    
+
     // Check each role
     for (const role of roles) {
         const allowedRoutes = ROLE_ROUTES[role] || [];
@@ -129,23 +128,14 @@ function hasRouteAccess(pathname: string, roles: string[]): boolean {
             return true;
         }
     }
-    
+
     return false;
 }
 
-/**
- * Get redirect URL based on user role
- */
 function getDefaultRoute(roles: string[]): string {
-    if (roles.includes('kepala_klinik')) {
-        return '/dashboard';
-    }
-    if (roles.includes('dokter')) {
-        return '/dashboard';
-    }
-    if (roles.includes('staf')) {
-        return '/dashboard/appointments';
-    }
+    if (roles.includes('kepala_klinik')) return '/dashboard';
+    if (roles.includes('dokter')) return '/dashboard';
+    if (roles.includes('staf')) return '/dashboard/appointments';
     return '/dashboard';
 }
 
@@ -155,8 +145,8 @@ function getDefaultRoute(roles: string[]): string {
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    
-    // Skip middleware for static files and API routes
+
+    // 1. Skip static files and API routes
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api') ||
@@ -166,95 +156,73 @@ export function middleware(request: NextRequest) {
     ) {
         return NextResponse.next();
     }
-    
-    // Get token from cookies
+
+    // 2. Get token from cookies (Name must match useAuth.ts)
     const token = request.cookies.get('access_token')?.value;
-    
-    // ============================================
-    // HANDLE PUBLIC ROUTES
-    // ============================================
+
+    // 3. Handle Public Routes (e.g. Landing Page)
     if (isPublicRoute(pathname)) {
         return NextResponse.next();
     }
-    
-    // ============================================
-    // HANDLE AUTH ROUTES (LOGIN/REGISTER)
-    // ============================================
+
+    // 4. HANDLE AUTH ROUTES (Login/Register)
     if (isAuthRoute(pathname)) {
-        // If already authenticated, redirect to dashboard
         if (token) {
+            // If user is already logged in, redirect to their default dashboard
             const { valid, payload } = verifyToken(token);
-            
+
             if (valid && payload) {
                 const roles = extractRoles(payload);
                 const redirectUrl = getDefaultRoute(roles);
                 return NextResponse.redirect(new URL(redirectUrl, request.url));
             }
         }
-        
-        // Allow access to auth routes if not authenticated
+        // If not logged in, allow access to Login page
         return NextResponse.next();
     }
-    
-    // ============================================
-    // HANDLE PROTECTED ROUTES
-    // ============================================
+
+    // 5. HANDLE PROTECTED ROUTES (Dashboard, etc.)
     if (isProtectedRoute(pathname)) {
-        // No token - redirect to login
+        // A. No Token -> Redirect to Login
         if (!token) {
-            const loginUrl = new URL('/login', request.url);
+            const loginUrl = new URL(ROUTES.LOGIN, request.url);
             loginUrl.searchParams.set('redirect', pathname);
             return NextResponse.redirect(loginUrl);
         }
-        
-        // Verify token
+
+        // B. Invalid/Expired Token -> Redirect to Login & Clear Cookie
         const { valid, payload } = verifyToken(token);
-        
-        // Invalid token - redirect to login
         if (!valid) {
-            const response = NextResponse.redirect(new URL('/login', request.url));
+            const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
             response.cookies.delete('access_token');
             return response;
         }
-        
-        // Check role-based access
+
+        // C. Check Role Access
         const roles = extractRoles(payload);
-        
         if (!hasRouteAccess(pathname, roles)) {
-            // User doesn't have access - redirect to their default route
             const defaultRoute = getDefaultRoute(roles);
             return NextResponse.redirect(new URL(defaultRoute, request.url));
         }
-        
-        // Add user info to headers (optional - for server components)
+
+        // D. Allow Access (Inject user info to headers)
         const requestHeaders = new Headers(request.headers);
         requestHeaders.set('x-user-id', payload.sub || payload.id || '');
         requestHeaders.set('x-user-roles', roles.join(','));
-        
+
         return NextResponse.next({
             request: {
                 headers: requestHeaders,
             },
         });
     }
-    
-    // Default: allow request
+
+    // Default: Allow other requests
     return NextResponse.next();
 }
 
-// ============================================
-// MIDDLEWARE CONFIG
-// ============================================
-
 export const config = {
     matcher: [
-        /*
-         * Match all request paths except:
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - public files (images, etc)
-         */
         '/((?!_next/static|_next/image|favicon.ico|public).*)',
     ],
 };

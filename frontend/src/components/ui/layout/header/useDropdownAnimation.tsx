@@ -1,6 +1,7 @@
 // ========================================
 // frontend/src/components/ui/layout/header/useDropdownAnimation.tsx
 // ========================================
+'use client';
 import { useState, useRef } from 'react';
 
 export const useDropdownAnimation = (animationDuration = 300) => {

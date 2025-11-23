@@ -1,6 +1,7 @@
 // ========================================
 // frontend/src/components/ui/layout/header/DashboardHeader.tsx
 // ========================================
+'use client';
 import { Header } from './Header';
 
 export function DashboardHeader({

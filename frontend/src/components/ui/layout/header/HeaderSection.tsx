@@ -1,6 +1,7 @@
 // ========================================
 // frontend/src/components/ui/layout/header/HeaderSection.tsx
 // ========================================
+'use client';
 import { cn } from '@/core';
 
 export function HeaderSection({

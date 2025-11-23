@@ -25,17 +25,17 @@ export const LOCAL_STORAGE_KEYS = {
 } as const;
 
 export const CACHE_KEYS = {
-  APPOINTMENTS: 'appointments',
-  PATIENTS: 'patients',
-  MEDICAL_RECORDS: 'medical_records',
-  USERS: 'users',
-  NOTIFICATIONS: 'notifications',
+    APPOINTMENTS: 'appointments',
+    PATIENTS: 'patients',
+    MEDICAL_RECORDS: 'medical_records',
+    USERS: 'users',
+    NOTIFICATIONS: 'notifications',
 } as const;
 
 export const CACHE_TTL = {
-  SHORT: 1 * 60 * 1000, // 1 minute
-  MEDIUM: 5 * 60 * 1000, // 5 minutes
-  LONG: 30 * 60 * 1000, // 30 minutes
+    SHORT: 1 * 60 * 1000, // 1 minute
+    MEDIUM: 5 * 60 * 1000, // 5 minutes
+    LONG: 30 * 60 * 1000, // 30 minutes
 } as const;
 
 
@@ -53,16 +53,26 @@ export const SESSION_STORAGE_KEYS = {
  * Base storage class for type-safe storage operations
  */
 class Storage {
-    private storage: globalThis.Storage;
+    // Ubah: izinkan undefined (untuk environment server)
+    private storage: globalThis.Storage | undefined;
 
     constructor(type: StorageType) {
-        this.storage = type === StorageType.LOCAL ? localStorage : sessionStorage;
+        // PERBAIKAN: Cek apakah window tersedia (Browser Environment)
+        if (typeof window !== 'undefined') {
+            this.storage = type === StorageType.LOCAL ? localStorage : sessionStorage;
+        } else {
+            // Jika di Server, biarkan undefined
+            this.storage = undefined;
+        }
     }
 
     /**
      * Get item from storage with type safety
      */
     get<T = any>(key: string): T | null {
+        // Guard clause: Jika storage tidak ada (server), return null
+        if (!this.storage) return null;
+
         try {
             const item = this.storage.getItem(key);
             if (!item) return null;
@@ -78,6 +88,8 @@ class Storage {
      * Set item in storage with type safety
      */
     set<T = any>(key: string, value: T): boolean {
+        if (!this.storage) return false; // Guard clause
+
         try {
             this.storage.setItem(key, JSON.stringify(value));
             return true;
@@ -91,6 +103,8 @@ class Storage {
      * Remove item from storage
      */
     remove(key: string): boolean {
+        if (!this.storage) return false; // Guard clause
+
         try {
             this.storage.removeItem(key);
             return true;
@@ -104,6 +118,8 @@ class Storage {
      * Clear all items from storage
      */
     clear(): boolean {
+        if (!this.storage) return false; // Guard clause
+
         try {
             this.storage.clear();
             return true;
@@ -117,6 +133,7 @@ class Storage {
      * Check if key exists in storage
      */
     has(key: string): boolean {
+        if (!this.storage) return false; // Guard clause
         return this.storage.getItem(key) !== null;
     }
 
@@ -124,6 +141,8 @@ class Storage {
      * Get all keys in storage
      */
     getAllKeys(): string[] {
+        if (!this.storage) return []; // Guard clause
+
         try {
             return Object.keys(this.storage);
         } catch (error) {
@@ -136,6 +155,8 @@ class Storage {
      * Get all items with a specific prefix
      */
     getByPrefix(prefix: string): Record<string, any> {
+        if (!this.storage) return {}; // Guard clause
+
         try {
             const items: Record<string, any> = {};
             const keys = this.getAllKeys().filter(key => key.startsWith(prefix));
@@ -158,6 +179,8 @@ class Storage {
      * Remove all items with a specific prefix
      */
     removeByPrefix(prefix: string): boolean {
+        if (!this.storage) return false; // Guard clause
+
         try {
             const keys = this.getAllKeys().filter(key => key.startsWith(prefix));
             keys.forEach(key => this.remove(key));
@@ -331,6 +354,8 @@ export function clearSessionData(): boolean {
  * Check if storage is available
  */
 export function isStorageAvailable(type: StorageType): boolean {
+    if (typeof window === 'undefined') return false; // Tambahkan ini
+
     try {
         const storage = type === StorageType.LOCAL ? localStorage : sessionStorage;
         const test = '__storage_test__';
@@ -350,12 +375,27 @@ export function getStorageInfo(): {
     localStorage: { used: number; available: boolean };
     sessionStorage: { used: number; available: boolean };
 } {
+    // Definisi nilai default (kosong) untuk Server Side
+    const defaultInfo = { used: 0, available: false };
+
+    // Jika di server, return info kosong agar tidak crash
+    if (typeof window === 'undefined') {
+        return {
+            localStorage: defaultInfo,
+            sessionStorage: defaultInfo
+        };
+    }
+
     const getSize = (storage: globalThis.Storage): number => {
         let size = 0;
-        for (const key in storage) {
-            if (storage.hasOwnProperty(key)) {
-                size += storage[key].length + key.length;
+        try {
+            for (const key in storage) {
+                if (storage.hasOwnProperty(key)) {
+                    size += storage[key].length + key.length;
+                }
             }
+        } catch (e) {
+            return 0;
         }
         return size;
     };

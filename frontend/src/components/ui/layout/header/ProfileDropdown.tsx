@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, forwardRef } from 'react';
 import { cn } from '@/core';
 import { ProfileDropdownProps } from './header.types';
