@@ -1,47 +1,41 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Edit, Calendar, Phone, MapPin, Mail, CreditCard, User } from 'lucide-react';
+import { Edit, Calendar, Phone, MapPin, Mail, CreditCard, User, Activity, Clock, ArrowLeft } from 'lucide-react';
 
 // Core
-import { PatientService } from '@/core/services/api/patient.api';
-import { PatientResponseDto } from '@/core/api/model/patientResponseDto';
+import { useGetPatient } from '@/core/services/api';
 import { formatDate } from '@/core/utils/date/format.utils';
 
 // UI
-import { PageContainer } from '@/components/layout/PageContainer';
-import { PageHeader } from '@/components/ui/layout/page-header/PageHeader';
-import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/data-display/card';
-import { Button } from '@/components/ui/button/Button';
-import { Avatar } from '@/components/ui/data-display/avatar/Avatar';
-import { StatusBadge } from '@/components/ui/data-display/badge/StatusBadge';
-import { SkeletonProfile } from '@/components/ui/data-display/skeleton/SkeletonProfile';
-import { SkeletonCard } from '@/components/ui/data-display/skeleton/SkeletonCard';
+import {
+    PageContainer,
+    PageHeader,
+    Card,
+    CardBody,
+    CardHeader,
+    CardTitle,
+    Button,
+    ButtonGroup,
+    Avatar,
+    StatusBadge,
+    SkeletonProfile,
+    SkeletonCard,
+    ErrorAlert,
+    LoadingSpinner,
+    StatsCard,
+} from '@/components';
 
 export default function PatientDetailPage() {
     const router = useRouter();
     const params = useParams();
-    const [patient, setPatient] = useState<PatientResponseDto | null>(null);
-    const [loading, setLoading] = useState(true);
+    const patientId = params.id as string;
 
-    useEffect(() => {
-        const fetchPatient = async () => {
-            try {
-                if (typeof params.id === 'string') {
-                    const data = await PatientService.findOne(params.id);
-                    setPatient(data);
-                }
-            } catch (error) {
-                console.error(error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPatient();
-    }, [params.id]);
+    const { data: patient, isLoading, isError } = useGetPatient({ id: patientId });
 
-    if (loading) {
+    // Loading State
+    if (isLoading) {
         return (
             <PageContainer>
                 <SkeletonProfile />
@@ -54,24 +48,44 @@ export default function PatientDetailPage() {
         );
     }
 
-    if (!patient) return <div>Data tidak ditemukan</div>;
+    // Error State
+    if (isError || !patient) {
+        return (
+            <PageContainer>
+                <ErrorAlert
+                    title="Data Tidak Ditemukan"
+                    message="Pasien yang Anda cari tidak ditemukan atau telah dihapus."
+                    onRetry={() => router.push('/patients')}
+                />
+            </PageContainer>
+        );
+    }
 
     return (
         <PageContainer>
             <PageHeader
                 title="Detail Pasien"
-                breadcrumb={[
-                    { label: 'Pasien', href: '/patients' },
-                    { label: patient.name, active: true },
+                breadcrumbs={[
+                    { children: 'Dashboard', href: '/dashboard' },
+                    { children: 'Pasien', href: '/patients' },
+                    { children: patient.name, isCurrent: true },
                 ]}
-                action={
-                    <Button
-                        variant="outline"
-                        startIcon={<Edit className="w-4 h-4" />}
-                        onClick={() => router.push(`/patients/${patient.id}/edit`)}
-                    >
-                        Edit Data
-                    </Button>
+                actions={
+                    <ButtonGroup>
+                        <Button
+                            variant="outline"
+                            startIcon={<ArrowLeft className="w-4 h-4" />}
+                            onClick={() => router.back()}
+                        >
+                            Kembali
+                        </Button>
+                        <Button
+                            startIcon={<Edit className="w-4 h-4" />}
+                            onClick={() => router.push(`/patients/${patient.id}/edit`)}
+                        >
+                            Edit Data
+                        </Button>
+                    </ButtonGroup>
                 }
             />
 
@@ -81,98 +95,183 @@ export default function PatientDetailPage() {
                     <Card>
                         <CardBody className="flex flex-col items-center text-center p-6">
                             <Avatar
-                                initials={patient.name.substring(0, 2).toUpperCase()}
+                                name={patient.name}
                                 size="xl"
-                                className="mb-4 text-2xl"
+                                className="mb-4"
                             />
                             <h2 className="text-xl font-bold text-gray-900">{patient.name}</h2>
-                            <p className="text-sm text-gray-500 mb-4">{patient.medicalRecordNumber}</p>
+                            <p className="text-sm text-gray-500 mb-2 font-mono">{patient.medicalRecordNumber}</p>
 
                             <StatusBadge
-                                variant={patient.gender === 'LAKI_LAKI' ? 'blue' : 'pink'}
+                                variant={patient.gender === 'LAKI_LAKI' ? 'info' : 'default'}
                                 label={patient.gender === 'LAKI_LAKI' ? 'Laki-laki' : 'Perempuan'}
                                 className="mb-6"
                             />
 
                             <div className="w-full space-y-4 text-left border-t pt-4">
-                                <div className="flex items-center gap-3 text-sm">
-                                    <Calendar className="w-4 h-4 text-gray-400" />
-                                    <div>
-                                        <p className="text-gray-500 text-xs">Tanggal Lahir</p>
-                                        <p className="font-medium">{formatDate(patient.birthDate)}</p>
-                                    </div>
-                                </div>
+                                <DetailItem
+                                    icon={<Calendar className="w-4 h-4 text-gray-400" />}
+                                    label="Tanggal Lahir"
+                                    value={formatDate(patient.birthDate)}
+                                />
 
-                                <div className="flex items-center gap-3 text-sm">
-                                    <Phone className="w-4 h-4 text-gray-400" />
-                                    <div>
-                                        <p className="text-gray-500 text-xs">Nomor Telepon</p>
-                                        <p className="font-medium">{patient.phoneNumber || '-'}</p>
-                                    </div>
-                                </div>
+                                <DetailItem
+                                    icon={<Phone className="w-4 h-4 text-gray-400" />}
+                                    label="Nomor Telepon"
+                                    value={patient.phoneNumber || '-'}
+                                />
 
-                                <div className="flex items-center gap-3 text-sm">
-                                    <Mail className="w-4 h-4 text-gray-400" />
-                                    <div>
-                                        <p className="text-gray-500 text-xs">Email</p>
-                                        <p className="font-medium">{patient.email || '-'}</p>
-                                    </div>
-                                </div>
+                                <DetailItem
+                                    icon={<Mail className="w-4 h-4 text-gray-400" />}
+                                    label="Email"
+                                    value={patient.email || '-'}
+                                />
 
-                                <div className="flex items-center gap-3 text-sm">
-                                    <CreditCard className="w-4 h-4 text-gray-400" />
-                                    <div>
-                                        <p className="text-gray-500 text-xs">NIK</p>
-                                        <p className="font-medium">{patient.nik || '-'}</p>
-                                    </div>
-                                </div>
+                                <DetailItem
+                                    icon={<CreditCard className="w-4 h-4 text-gray-400" />}
+                                    label="NIK"
+                                    value={patient.nik || '-'}
+                                />
 
-                                <div className="flex items-start gap-3 text-sm">
-                                    <MapPin className="w-4 h-4 text-gray-400 mt-1" />
-                                    <div>
-                                        <p className="text-gray-500 text-xs">Alamat</p>
-                                        <p className="font-medium">{patient.address || '-'}</p>
-                                    </div>
-                                </div>
+                                <DetailItem
+                                    icon={<MapPin className="w-4 h-4 text-gray-400" />}
+                                    label="Alamat"
+                                    value={patient.address || '-'}
+                                    multiline
+                                />
                             </div>
+                        </CardBody>
+                    </Card>
+
+                    {/* Quick Actions */}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Aksi Cepat</CardTitle>
+                        </CardHeader>
+                        <CardBody className="space-y-2">
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                startIcon={<Calendar className="w-4 h-4" />}
+                                onClick={() => router.push('/appointments/new')}
+                            >
+                                Buat Janji Temu
+                            </Button>
+                            <Button
+                                variant="outline"
+                                className="w-full justify-start"
+                                startIcon={<Activity className="w-4 h-4" />}
+                                onClick={() => router.push('/medical-records/new')}
+                            >
+                                Tambah Rekam Medis
+                            </Button>
                         </CardBody>
                     </Card>
                 </div>
 
-                {/* Kolom Kanan: Detail Lainnya (Bisa dikembangkan untuk Rekam Medis/Appointment) */}
+                {/* Kolom Kanan: Statistik & Riwayat */}
                 <div className="lg:col-span-2 space-y-6">
+                    {/* Statistik */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <StatsCard
+                            title="Total Kunjungan"
+                            value="0"
+                            icon={<Activity className="w-5 h-5" />}
+                            trend={{ value: 0, isPositive: true }}
+                        />
+                        <StatsCard
+                            title="Rekam Medis"
+                            value="0"
+                            icon={<Activity className="w-5 h-5" />}
+                        />
+                        <StatsCard
+                            title="Janji Temu"
+                            value="0"
+                            icon={<Calendar className="w-5 h-5" />}
+                        />
+                    </div>
+
+                    {/* Riwayat Janji Temu */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Statistik Kunjungan</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Riwayat Janji Temu</CardTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.push('/appointments')}
+                                >
+                                    Lihat Semua
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardBody>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                <div className="p-4 bg-primary-50 rounded-lg border border-primary-100">
-                                    <p className="text-sm text-primary-600 mb-1">Total Kunjungan</p>
-                                    <p className="text-2xl font-bold text-primary-700">0</p>
-                                    {/* Note: Logic fetch count bisa ditambahkan dari service medical record */}
-                                </div>
-                                <div className="p-4 bg-green-50 rounded-lg border border-green-100">
-                                    <p className="text-sm text-green-600 mb-1">Terakhir Berkunjung</p>
-                                    <p className="text-lg font-bold text-green-700">-</p>
-                                </div>
+                            <div className="text-center py-8 text-gray-500">
+                                <Clock className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                                <p className="text-sm">Belum ada riwayat janji temu</p>
+                                <Button
+                                    size="sm"
+                                    className="mt-4"
+                                    onClick={() => router.push('/appointments/new')}
+                                >
+                                    Buat Janji Temu Baru
+                                </Button>
                             </div>
                         </CardBody>
                     </Card>
 
+                    {/* Riwayat Rekam Medis */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat Janji Temu</CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle>Riwayat Rekam Medis</CardTitle>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => router.push('/medical-records')}
+                                >
+                                    Lihat Semua
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardBody>
-                            <div className="text-center py-8 text-gray-500 text-sm">
-                                Fitur riwayat janji temu akan segera hadir di sini.
+                            <div className="text-center py-8 text-gray-500">
+                                <Activity className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                                <p className="text-sm">Belum ada rekam medis</p>
+                                <Button
+                                    size="sm"
+                                    className="mt-4"
+                                    onClick={() => router.push('/medical-records/new')}
+                                >
+                                    Tambah Rekam Medis
+                                </Button>
                             </div>
-                            {/* Disini Anda bisa memanggil komponen Table Appointment dengan filter patientId */}
                         </CardBody>
                     </Card>
                 </div>
             </div>
         </PageContainer>
+    );
+}
+
+// Helper Component
+interface DetailItemProps {
+    icon: React.ReactNode;
+    label: string;
+    value: string;
+    multiline?: boolean;
+}
+
+function DetailItem({ icon, label, value, multiline = false }: DetailItemProps) {
+    return (
+        <div className={`flex ${multiline ? 'items-start' : 'items-center'} gap-3 text-sm`}>
+            <span className="flex-shrink-0 mt-0.5">{icon}</span>
+            <div className="flex-1 min-w-0">
+                <p className="text-gray-500 text-xs mb-0.5">{label}</p>
+                <p className={`font-medium text-gray-900 ${multiline ? '' : 'truncate'}`}>
+                    {value}
+                </p>
+            </div>
+        </div>
     );
 }
