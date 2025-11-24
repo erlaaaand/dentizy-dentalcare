@@ -21,6 +21,10 @@ import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { HealthController } from './health/health.controller';
 import { DataSource } from 'typeorm';
+import { TreatmentCategoriesModule } from './treatment-categories/treatment-categories.module';
+import { TreatmentsModule } from './treatments/treatments.module';
+import { MedicalRecordTreatmentsModule } from './medical-record-treatments/medical-record-treatments.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -111,6 +115,10 @@ import { DataSource } from 'typeorm';
     ScheduleModule.forRoot(),
     SeederModule,
     AuthModule,
+    TreatmentCategoriesModule,
+    TreatmentsModule,
+    MedicalRecordTreatmentsModule,
+    PaymentsModule,
   ],
   // ✅ FIX: Add HealthController here
   controllers: [HealthController],
