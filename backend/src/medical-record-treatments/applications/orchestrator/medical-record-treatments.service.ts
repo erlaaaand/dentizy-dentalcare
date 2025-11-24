@@ -1,7 +1,12 @@
 // backend/src/medical-record-treatments/applications/orchestrator/medical-record-treatments.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { MedicalRecordTreatmentRepository } from '../../../medical-record-treatments/infrastructures/persistence/repositories/medical-record-treatment.repository';
-import { TreatmentRepository } from '../../../treatments/infrastructures/persistence/repositories/treatment.repository';
+import { Injectable } from '@nestjs/common';
+import { CreateMedicalRecordTreatmentUseCase } from '../use-cases/create-medical-record-treatment.use-case';
+import { UpdateMedicalRecordTreatmentUseCase } from '../use-cases/update-medical-record-treatment.use-case';
+import { DeleteMedicalRecordTreatmentUseCase } from '../use-cases/delete-medical-record-treatment.use-case';
+import { FindAllMedicalRecordTreatmentsUseCase } from '../use-cases/find-all-medical-record-treatments.use-case';
+import { FindOneMedicalRecordTreatmentUseCase } from '../use-cases/find-one-medical-record-treatment.use-case';
+import { FindByMedicalRecordIdUseCase } from '../use-cases/find-by-medical-record-id.use-case';
+import { GetTotalByMedicalRecordIdUseCase } from '../use-cases/get-total-by-medical-record-id.use-case';
 import { CreateMedicalRecordTreatmentDto } from '../dto/create-medical-record-treatment.dto';
 import { UpdateMedicalRecordTreatmentDto } from '../dto/update-medical-record-treatment.dto';
 import { QueryMedicalRecordTreatmentDto } from '../dto/query-medical-record-treatment.dto';
@@ -10,101 +15,40 @@ import { MedicalRecordTreatmentResponseDto } from '../dto/medical-record-treatme
 @Injectable()
 export class MedicalRecordTreatmentsService {
     constructor(
-        private readonly medicalRecordTreatmentRepository: MedicalRecordTreatmentRepository,
-        private readonly treatmentRepository: TreatmentRepository,
+        private readonly createUseCase: CreateMedicalRecordTreatmentUseCase,
+        private readonly updateUseCase: UpdateMedicalRecordTreatmentUseCase,
+        private readonly deleteUseCase: DeleteMedicalRecordTreatmentUseCase,
+        private readonly findAllUseCase: FindAllMedicalRecordTreatmentsUseCase,
+        private readonly findOneUseCase: FindOneMedicalRecordTreatmentUseCase,
+        private readonly findByMedicalRecordIdUseCase: FindByMedicalRecordIdUseCase,
+        private readonly getTotalUseCase: GetTotalByMedicalRecordIdUseCase,
     ) { }
 
     async create(dto: CreateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatmentResponseDto> {
-        // Validate treatment exists
-        const treatmentExists = await this.treatmentRepository.exists(dto.treatmentId);
-        if (!treatmentExists) {
-            throw new NotFoundException(`Perawatan dengan ID ${dto.treatmentId} tidak ditemukan`);
-        }
-
-        try {
-            const medicalRecordTreatment = await this.medicalRecordTreatmentRepository.create(dto);
-            return this.mapToResponseDto(medicalRecordTreatment);
-        } catch (error) {
-            throw new BadRequestException('Gagal menambahkan perawatan ke rekam medis');
-        }
+        return await this.createUseCase.execute(dto);
     }
 
     async findAll(query: QueryMedicalRecordTreatmentDto) {
-        const { data, total } = await this.medicalRecordTreatmentRepository.findAll(query);
-        const { page = 1, limit = 10 } = query;
-
-        return {
-            data: data.map((item) => this.mapToResponseDto(item)),
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+        return await this.findAllUseCase.execute(query);
     }
 
     async findOne(id: number): Promise<MedicalRecordTreatmentResponseDto> {
-        const medicalRecordTreatment = await this.medicalRecordTreatmentRepository.findOne(id);
-
-        if (!medicalRecordTreatment) {
-            throw new NotFoundException(`Data perawatan rekam medis dengan ID ${id} tidak ditemukan`);
-        }
-
-        return this.mapToResponseDto(medicalRecordTreatment);
+        return await this.findOneUseCase.execute(id);
     }
 
     async findByMedicalRecordId(medicalRecordId: number): Promise<MedicalRecordTreatmentResponseDto[]> {
-        const treatments = await this.medicalRecordTreatmentRepository.findByMedicalRecordId(medicalRecordId);
-        return treatments.map((item) => this.mapToResponseDto(item));
+        return await this.findByMedicalRecordIdUseCase.execute(medicalRecordId);
     }
 
     async update(id: number, dto: UpdateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatmentResponseDto> {
-        const exists = await this.medicalRecordTreatmentRepository.findOne(id);
-
-        if (!exists) {
-            throw new NotFoundException(`Data perawatan rekam medis dengan ID ${id} tidak ditemukan`);
-        }
-
-        // Validate treatment if provided
-        if (dto.treatmentId) {
-            const treatmentExists = await this.treatmentRepository.exists(dto.treatmentId);
-            if (!treatmentExists) {
-                throw new NotFoundException(`Perawatan dengan ID ${dto.treatmentId} tidak ditemukan`);
-            }
-        }
-
-        try {
-            const medicalRecordTreatment = await this.medicalRecordTreatmentRepository.update(id, dto);
-            return this.mapToResponseDto(medicalRecordTreatment);
-        } catch (error) {
-            throw new BadRequestException('Gagal mengupdate perawatan rekam medis');
-        }
+        return await this.updateUseCase.execute(id, dto);
     }
 
     async remove(id: number): Promise<void> {
-        const exists = await this.medicalRecordTreatmentRepository.findOne(id);
-
-        if (!exists) {
-            throw new NotFoundException(`Data perawatan rekam medis dengan ID ${id} tidak ditemukan`);
-        }
-
-        await this.medicalRecordTreatmentRepository.softDelete(id);
+        return await this.deleteUseCase.execute(id);
     }
 
     async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
-        return await this.medicalRecordTreatmentRepository.getTotalByMedicalRecordId(medicalRecordId);
-    }
-
-    private mapToResponseDto(mrt: any): MedicalRecordTreatmentResponseDto {
-        return new MedicalRecordTreatmentResponseDto({
-            ...mrt,
-            treatment: mrt.treatment ? {
-                id: mrt.treatment.id,
-                kodePerawatan: mrt.treatment.kodePerawatan,
-                namaPerawatan: mrt.treatment.namaPerawatan,
-                harga: mrt.treatment.harga,
-            } : undefined,
-        });
+        return await this.getTotalUseCase.execute(medicalRecordId);
     }
 }

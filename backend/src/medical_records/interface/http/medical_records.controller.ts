@@ -40,7 +40,6 @@ import { GetUser } from '../../../auth/interface/decorators/get-user.decorator';
 import { User } from '../../../users/domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { FindAllMedicalRecordQueryDto } from 'src/medical_records/applications/dto/find-all-medical-record.dto';
 
 @ApiTags('Medical Records')
 @ApiBearerAuth('access-token')

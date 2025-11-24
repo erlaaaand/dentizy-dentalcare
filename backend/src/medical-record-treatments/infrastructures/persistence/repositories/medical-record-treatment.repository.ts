@@ -1,12 +1,11 @@
-// backend/src/medical-record-treatments/infrastructure/database/medical-record-treatment.repository.ts
-import { Injectable } from '@nestjs/common';
+// backend/src/medical-record-treatments/infrastructures/persistence/repositories/medical-record-treatment.repository.ts
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, FindOptionsWhere } from 'typeorm';
 import { MedicalRecordTreatment } from '../../../domains/entities/medical-record-treatments.entity';
 import { CreateMedicalRecordTreatmentDto } from '../../../applications/dto/create-medical-record-treatment.dto';
 import { UpdateMedicalRecordTreatmentDto } from '../../../applications/dto/update-medical-record-treatment.dto';
 import { QueryMedicalRecordTreatmentDto } from '../../../applications/dto/query-medical-record-treatment.dto';
-import { NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class MedicalRecordTreatmentRepository {
@@ -55,17 +54,11 @@ export class MedicalRecordTreatmentRepository {
         return { data, total };
     }
 
-    async findOne(id: number): Promise<MedicalRecordTreatment> {
-        const record = await this.repository.findOne({
+    async findOne(id: number): Promise<MedicalRecordTreatment | null> {
+        return await this.repository.findOne({
             where: { id },
             relations: ['treatment', 'treatment.category'],
         });
-
-        if (!record) {
-            throw new NotFoundException(`Medical Record Treatment with ID ${id} not found`);
-        }
-
-        return record;
     }
 
     async findByMedicalRecordId(medicalRecordId: number): Promise<MedicalRecordTreatment[]> {
@@ -77,11 +70,14 @@ export class MedicalRecordTreatmentRepository {
     }
 
     async update(id: number, dto: UpdateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatment> {
-        const existing = await this.findOne(id); // dijamin tidak null
+        const existing = await this.findOne(id);
+        if (!existing) {
+            throw new NotFoundException(`Medical Record Treatment with ID ${id} not found`);
+        }
 
         const jumlah = dto.jumlah ?? existing.jumlah;
-        const hargaSatuan = dto.hargaSatuan ?? existing.hargaSatuan;
-        const diskon = dto.diskon ?? existing.diskon;
+        const hargaSatuan = dto.hargaSatuan ?? Number(existing.hargaSatuan);
+        const diskon = dto.diskon ?? Number(existing.diskon);
 
         const subtotal = jumlah * hargaSatuan;
         const total = subtotal - diskon;
@@ -92,8 +88,12 @@ export class MedicalRecordTreatmentRepository {
             total,
         });
 
-        // return ulang data yang sudah update
-        return await this.findOne(id);
+        const updated = await this.findOne(id);
+        if (!updated) {
+            throw new NotFoundException(`Medical Record Treatment with ID ${id} not found after update`);
+        }
+
+        return updated;
     }
 
     async softDelete(id: number): Promise<void> {
@@ -113,5 +113,10 @@ export class MedicalRecordTreatmentRepository {
             .getRawOne();
 
         return parseFloat(result?.total || 0);
+    }
+
+    async exists(id: number): Promise<boolean> {
+        const count = await this.repository.count({ where: { id } });
+        return count > 0;
     }
 }
