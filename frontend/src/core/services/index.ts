@@ -12,6 +12,10 @@ export * from './api/medicalRecord.api';
 export * from './api/user.api';
 export * from './api/role.api';
 export * from './api/notification.api';
+export * from './api/treatments.api';
+export * from './api/treatment-categories.api';
+export * from './api/medical-record-treatments.api'
+export * from './api/payments.api'
 
 // Export service instances
 export { cacheService } from './cache/cache.service';
