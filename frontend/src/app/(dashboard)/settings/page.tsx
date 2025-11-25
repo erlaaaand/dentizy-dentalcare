@@ -1,258 +1,302 @@
+
+// ============================================================================
+// FILE 1: frontend/src/app/(dashboard)/settings/page.tsx
+// Settings Main Page with Navigation
+// ============================================================================
+
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Shield, Trash2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+    Users,
+    Stethoscope,
+    Database,
+    Bell,
+    Shield,
+    Settings as SettingsIcon,
+    ChevronRight,
+    UserCog,
+    Activity,
+    Palette,
+    Globe,
+    FileText,
+    CreditCard
+} from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
-import { Card, CardHeader, CardTitle, CardDescription, CardBody } from '@/components/ui/data-display/card';
-import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-display/datatable';
+import { Card, CardBody } from '@/components/ui/data-display/card';
 import { Badge } from '@/components/ui/data-display/badge';
-import { Modal } from '@/components/ui/feedback/modal';
-import { Input } from '@/components/ui/forms/input';
-import { FormSelect } from '@/components/ui/forms/select';
-import { PasswordInput } from '@/components/ui/forms/input/PasswordInput';
-import { default as Avatar } from '@/components/ui/data-display/avatar/Avatar';
-
 import { useAuth } from '@/core/hooks/auth/useAuth';
-import { useRole } from '@/core/hooks/auth/useRole';
-import { useToast } from '@/core/hooks/ui/useToast';
-import { useModal } from '@/core/hooks/ui/useModal';
-import { useForm } from '@/core/hooks/forms/useForm';
-import { useGetUsers, useCreateUser, useDeleteUser } from '@/core/services/api/user.api';
-import { useGetRoles } from '@/core/services/api/role.api';
 import { ROLES } from '@/core/constants/role.constants';
 
-export default function UserSettingsPage() {
-    const { user: currentUser } = useAuth();
-    const { isKepalaKlinik } = useRole();
+interface SettingCardProps {
+    title: string;
+    description: string;
+    icon: React.ElementType;
+    href: string;
+    badge?: string;
+    badgeVariant?: 'default' | 'primary' | 'success' | 'warning' | 'danger';
+    disabled?: boolean;
+    requiresRole?: string[];
+}
 
-    const toast = useToast();
-    const queryClient = useQueryClient();
+export default function SettingsPage() {
+    const router = useRouter();
+    const { user } = useAuth();
 
-    // Services
-    const { data: users, isLoading: isLoadingUsers } = useGetUsers();
-    const { data: rolesData } = useGetRoles();
+    // Get user roles as array
+    const userRoles = user?.roles?.map((role: any) => role.name) || [];
 
-    const createUser = useCreateUser();
-    const deleteUser = useDeleteUser();
-
-    // Modal
-    const createModal = useModal();
-
-    // Form Configuration
-    const form = useForm({
-        initialValues: {
-            name: '',
-            username: '',
-            email: '', // Optional di DTO tapi ada di form sebelumnya
-            password: '',
-            roleId: '',
-            specialization: '',
-        },
-        onSubmit: async (values) => {
-            try {
-                await createUser.mutateAsync({
-                    nama_lengkap: values.name,
-                    username: values.username,
-                    password: values.password,
-                    roles: values.roleId ? [Number(values.roleId)] : [],
-                });
-
-                toast.success('Pengguna berhasil ditambahkan');
-                createModal.close();
-                form.reset();
-                queryClient.invalidateQueries({ queryKey: ['users'] });
-            } catch (error) {
-                toast.error('Gagal menambahkan pengguna');
-            }
-        }
-    });
-
-    const handleDelete = async (id: number) => {
-        if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
-            try {
-                await deleteUser.mutateAsync(id);
-                toast.success('Pengguna dihapus');
-                queryClient.invalidateQueries({ queryKey: ['users'] });
-            } catch (e) {
-                toast.error('Gagal menghapus pengguna');
-            }
-        }
-    };
-
-    const isDoctorSelected = () => {
-        if (!rolesData || !form.values.roleId) return false;
-        const selectedRole = (rolesData as any)?.find((r: any) => r.id === Number(form.values.roleId));
-        return selectedRole?.name === ROLES.DOKTER;
-    };
-
-    const columns = [
+    const settingsMenu: SettingCardProps[] = [
+        // User & Access Management
         {
-            header: 'Nama & Username',
-            accessorKey: 'nama_lengkap',
-            cell: (info: any) => (
-                <div className="flex items-center gap-3">
-                    <Avatar
-                        name={info.getValue()}
-                        src={info.row.original.profile_photo}
-                        size="sm"
-                    />
-                    <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{info.getValue()}</span>
-                        <span className="text-xs text-gray-500">@{info.row.original.username}</span>
-                    </div>
-                </div>
-            )
+            title: 'Manajemen Pengguna',
+            description: 'Kelola akun dokter, staf, dan admin klinik',
+            icon: Users,
+            href: '/settings/users',
+            requiresRole: [ROLES.KEPALA_KLINIK],
         },
         {
-            header: 'Role',
-            accessorKey: 'roles',
-            cell: (info: any) => {
-                const userRoles = info.getValue() as any[];
-                if (!userRoles || userRoles.length === 0) return <span className="text-gray-400">-</span>;
+            title: 'Profil Saya',
+            description: 'Update informasi pribadi dan password',
+            icon: UserCog,
+            href: '/settings/profile',
+        },
 
-                return (
-                    <div className="flex flex-wrap gap-1">
-                        {userRoles.map((role) => {
-                            const colors: Record<string, "primary" | "success" | "warning" | "default"> = {
-                                [ROLES.KEPALA_KLINIK]: 'primary',
-                                [ROLES.DOKTER]: 'success',
-                                [ROLES.STAF]: 'warning'
-                            };
-                            return (
-                                <Badge key={role.id} variant={colors[role.name] || 'default'} size="sm">
-                                    {role.name.replace('_', ' ')}
-                                </Badge>
-                            );
-                        })}
-                    </div>
-                );
-            }
+        // Clinic Management
+        {
+            title: 'Layanan & Tindakan',
+            description: 'Atur daftar tindakan medis dan harga',
+            icon: Stethoscope,
+            href: '/settings/clinic',
+            requiresRole: [ROLES.KEPALA_KLINIK],
         },
         {
-            header: 'Aksi',
-            id: 'actions',
-            cell: (info: any) => (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={(info.row.original as any).id === currentUser?.id}
-                    onClick={() => handleDelete((info.row.original as any).id)}
-                >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-            )
-        }
+            title: 'Kategori Layanan',
+            description: 'Kelola kategori dan klasifikasi tindakan',
+            icon: FileText,
+            href: '/settings/categories',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        {
+            title: 'Metode Pembayaran',
+            description: 'Konfigurasi metode pembayaran yang tersedia',
+            icon: CreditCard,
+            href: '/settings/payment-methods',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+
+        // System & Monitoring
+        {
+            title: 'Status Sistem',
+            description: 'Monitor kesehatan server dan database',
+            icon: Activity,
+            href: '/settings/system-status',
+        },
+        {
+            title: 'Notifikasi',
+            description: 'Kelola pengaturan notifikasi dan reminder',
+            icon: Bell,
+            href: '/settings/notifications',
+            badge: 'Beta',
+            badgeVariant: 'warning',
+        },
+
+        // Customization
+        {
+            title: 'Tampilan & Tema',
+            description: 'Sesuaikan tampilan dan preferensi UI',
+            icon: Palette,
+            href: '/settings/appearance',
+            badge: 'Segera',
+            badgeVariant: 'default',
+            disabled: true,
+        },
+        {
+            title: 'Keamanan',
+            description: 'Pengaturan keamanan dan privasi akun',
+            icon: Shield,
+            href: '/settings/security',
+        },
+        {
+            title: 'Backup & Restore',
+            description: 'Kelola backup data dan restore sistem',
+            icon: Database,
+            href: '/settings/backup',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
     ];
 
-    if (!isKepalaKlinik) {
-        return (
-            <PageContainer title="Akses Ditolak">
-                <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-gray-200 text-center">
-                    <Shield className="w-16 h-16 text-red-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900">Anda tidak memiliki akses</h3>
-                    <p className="text-gray-500 mt-2">Halaman ini hanya dapat diakses oleh Kepala Klinik.</p>
-                </div>
-            </PageContainer>
-        );
-    }
+    const handleNavigate = (item: SettingCardProps) => {
+        if (item.disabled) return;
+
+        if (item.requiresRole && !hasAccess(item.requiresRole)) {
+            return;
+        }
+
+        router.push(item.href);
+    };
+
+    const hasAccess = (requiredRoles: string[]) => {
+        if (!requiredRoles || requiredRoles.length === 0) return true;
+        return requiredRoles.some(role => userRoles.includes(role));
+    };
+
+    const isAccessible = (item: SettingCardProps) => {
+        if (!item.requiresRole) return true;
+        return hasAccess(item.requiresRole);
+    };
+
+    const getBadgeVariant = (variant?: string) => {
+        switch (variant) {
+            case 'primary': return 'primary';
+            case 'success': return 'success';
+            case 'warning': return 'warning';
+            case 'danger': return 'danger';
+            default: return 'default';
+        }
+    };
 
     return (
         <PageContainer
-            title="Manajemen Pengguna"
-            subtitle="Kelola akun dokter, staf, dan admin klinik."
-            actions={
-                <Button onClick={createModal.open}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Tambah Pengguna
-                </Button>
-            }
+            title="Pengaturan"
+            subtitle="Kelola konfigurasi sistem dan preferensi Anda"
         >
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daftar Pengguna Aktif</CardTitle>
-                    <CardDescription>
-                        Total {(users as any)?.meta?.total || 0} pengguna terdaftar dalam sistem.
-                    </CardDescription>
-                </CardHeader>
-                <CardBody>
-                    <DataTable
-                        data={(users as any)?.data || []}
-                        columns={columns}
-                        isLoading={isLoadingUsers}
-                    />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {settingsMenu.map((item) => {
+                    const Icon = item.icon;
+                    const accessible = isAccessible(item);
+                    const isDisabled = item.disabled || !accessible;
+
+                    return (
+                        <Card
+                            key={item.href}
+                            className={`
+                                transition-all duration-200 
+                                ${isDisabled
+                                    ? 'opacity-50 cursor-not-allowed'
+                                    : 'hover:shadow-lg hover:-translate-y-1 cursor-pointer'
+                                }
+                            `}
+                            onClick={() => handleNavigate(item)}
+                        >
+                            <CardBody className="p-6">
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className={`
+                                        p-3 rounded-lg 
+                                        ${isDisabled
+                                            ? 'bg-gray-100 text-gray-400'
+                                            : 'bg-blue-50 text-blue-600'
+                                        }
+                                    `}>
+                                        <Icon className="w-6 h-6" />
+                                    </div>
+                                    {item.badge && (
+                                        <Badge
+                                            // variant={getBadgeVariant(item.badgeVariant)}
+                                            size="sm"
+                                        >
+                                            {item.badge}
+                                        </Badge>
+                                    )}
+                                </div>
+
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center justify-between">
+                                    {item.title}
+                                    {!isDisabled && (
+                                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                                    )}
+                                </h3>
+
+                                <p className="text-sm text-gray-500 mb-3">
+                                    {item.description}
+                                </p>
+
+                                {!accessible && item.requiresRole && (
+                                    <div className="mt-3 pt-3 border-t border-gray-100">
+                                        <Badge variant="warning" size="sm">
+                                            Khusus {item.requiresRole.join(', ').replace(/_/g, ' ')}
+                                        </Badge>
+                                    </div>
+                                )}
+                            </CardBody>
+                        </Card>
+                    );
+                })}
+            </div>
+
+            {/* Quick Stats Section */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                    <CardBody className="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-green-50 rounded-lg">
+                                <Database className="w-6 h-6 text-green-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Status Sistem</p>
+                                <p className="text-lg font-semibold text-gray-900">Aktif</p>
+                            </div>
+                        </div>
+                    </CardBody>
+                </Card>
+
+                <Card>
+                    <CardBody className="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <Users className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Role Anda</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                    {userRoles.map((role, idx) => (
+                                        <Badge key={idx} variant="primary" size="sm">
+                                            {role.replace(/_/g, ' ')}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </CardBody>
+                </Card>
+
+                <Card>
+                    <CardBody className="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-purple-50 rounded-lg">
+                                <SettingsIcon className="w-6 h-6 text-purple-600" />
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500">Versi Aplikasi</p>
+                                <p className="text-lg font-semibold text-gray-900">v2.1.0</p>
+                            </div>
+                        </div>
+                    </CardBody>
+                </Card>
+            </div>
+
+            {/* Help Section */}
+            <Card className="mt-8 border-blue-100 bg-blue-50">
+                <CardBody className="p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="p-2 bg-blue-100 rounded-lg">
+                            <SettingsIcon className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                            <h4 className="font-semibold text-gray-900 mb-1">
+                                Butuh Bantuan?
+                            </h4>
+                            <p className="text-sm text-gray-600 mb-3">
+                                Hubungi administrator sistem jika Anda memerlukan bantuan atau mengalami masalah dengan pengaturan.
+                            </p>
+                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                                Hubungi Support →
+                            </button>
+                        </div>
+                    </div>
                 </CardBody>
             </Card>
-
-            <Modal
-                isOpen={createModal.isOpen}
-                onClose={createModal.close}
-                title="Tambah Pengguna Baru"
-                description="Buat akun baru untuk staf atau dokter."
-            >
-                <div className="space-y-4 py-4">
-                    <Input
-                        label="Nama Lengkap"
-                        placeholder="Drg. Budi Santoso"
-                        name="name"
-                        value={form.values.name}
-                        onChange={form.handleChange('name')}
-                        error={form.errors.name}
-                    />
-                    <Input
-                        label="Username"
-                        placeholder="drg_budi"
-                        name="username"
-                        value={form.values.username}
-                        onChange={form.handleChange('username')}
-                        error={form.errors.username}
-                    />
-                    {/* Email opsional, tidak ada di CreateUserDto tapi bagus untuk UI */}
-                    <Input
-                        label="Email"
-                        type="email"
-                        placeholder="dokter@dentizy.com"
-                        name="email"
-                        value={form.values.email}
-                        onChange={form.handleChange('email')}
-                    />
-                    <PasswordInput
-                        label="Password"
-                        placeholder="********"
-                        name="password"
-                        value={form.values.password}
-                        onChange={form.handleChange('password')}
-                        error={form.errors.password}
-                    />
-
-                    <FormSelect
-                        label="Role / Jabatan"
-                        placeholder="Pilih Role"
-                        options={(rolesData as any)?.map((role: any) => ({
-                            label: role.name.charAt(0).toUpperCase() + role.name.slice(1).replace('_', ' '),
-                            value: role.id
-                        })) || []}
-                        value={form.values.roleId}
-                        onChange={form.handleChange('roleId')}
-                        error={form.errors.roleId}
-                    />
-
-                    {isDoctorSelected() && (
-                        <Input
-                            label="Spesialisasi"
-                            placeholder="Contoh: Ortodonti"
-                            name="specialization"
-                            value={form.values.specialization}
-                            onChange={form.handleChange('specialization')}
-                        />
-                    )}
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={createModal.close}>Batal</Button>
-                    <Button onClick={form.handleSubmit} isLoading={createUser.isPending}>Buat Akun</Button>
-                </div>
-            </Modal>
         </PageContainer>
     );
 }
