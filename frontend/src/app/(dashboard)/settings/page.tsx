@@ -1,7 +1,6 @@
-
 // ============================================================================
-// FILE 1: frontend/src/app/(dashboard)/settings/page.tsx
-// Settings Main Page with Navigation
+// FILE: frontend/src/app/(dashboard)/settings/page.tsx
+// Settings Main Page - Complete with All Features
 // ============================================================================
 
 'use client';
@@ -17,17 +16,22 @@ import {
     ChevronRight,
     UserCog,
     Activity,
-    Palette,
     Globe,
     FileText,
-    CreditCard
+    CreditCard,
+    CheckCircle,
+    Clock,
+    TrendingUp
 } from 'lucide-react';
 
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Card, CardBody } from '@/components/ui/data-display/card';
 import { Badge } from '@/components/ui/data-display/badge';
 import { useAuth } from '@/core/hooks/auth/useAuth';
+import { useQuery } from '@tanstack/react-query';
+import { customInstance } from '@/core/services/http/axiosInstance';
 import { ROLES } from '@/core/constants/role.constants';
+import { formatDateTime } from '@/core/utils/date/date.utils';
 
 interface SettingCardProps {
     title: string;
@@ -40,12 +44,43 @@ interface SettingCardProps {
     requiresRole?: string[];
 }
 
+// Fetch system health
+const fetchHealthCheck = async () => {
+    // Panggil sebagai fungsi dengan config object
+    const result = await customInstance({
+        url: '/health',
+        method: 'GET'
+    });
+    return result;
+};
+
+const fetchUserStats = async () => {
+    const result = await customInstance({
+        url: '/users/statistics',
+        method: 'GET'
+    });
+    return result;
+}
+
 export default function SettingsPage() {
     const router = useRouter();
     const { user } = useAuth();
 
     // Get user roles as array
     const userRoles = user?.roles?.map((role: any) => role.name) || [];
+
+    // Queries
+    const { data: healthData } = useQuery({
+        queryKey: ['system-health-overview'],
+        queryFn: fetchHealthCheck,
+        refetchInterval: 60000, // Refresh every minute
+    });
+
+    const { data: userStats } = useQuery({
+        queryKey: ['user-statistics'],
+        queryFn: fetchUserStats,
+        enabled: userRoles.includes(ROLES.KEPALA_KLINIK),
+    });
 
     const settingsMenu: SettingCardProps[] = [
         // User & Access Management
@@ -98,20 +133,9 @@ export default function SettingsPage() {
             description: 'Kelola pengaturan notifikasi dan reminder',
             icon: Bell,
             href: '/settings/notifications',
-            badge: 'Beta',
-            badgeVariant: 'warning',
         },
 
-        // Customization
-        {
-            title: 'Tampilan & Tema',
-            description: 'Sesuaikan tampilan dan preferensi UI',
-            icon: Palette,
-            href: '/settings/appearance',
-            badge: 'Segera',
-            badgeVariant: 'default',
-            disabled: true,
-        },
+        // Security & Backup
         {
             title: 'Keamanan',
             description: 'Pengaturan keamanan dan privasi akun',
@@ -147,21 +171,19 @@ export default function SettingsPage() {
         return hasAccess(item.requiresRole);
     };
 
-    const getBadgeVariant = (variant?: string) => {
-        switch (variant) {
-            case 'primary': return 'primary';
-            case 'success': return 'success';
-            case 'warning': return 'warning';
-            case 'danger': return 'danger';
-            default: return 'default';
-        }
+    const getSystemStatus = () => {
+        if (!healthData) return { text: 'Memeriksa...', color: 'text-gray-500', bg: 'bg-gray-50' };
+        return { text: 'Online', color: 'text-green-600', bg: 'bg-green-50' };
     };
+
+    const systemStatus = getSystemStatus();
 
     return (
         <PageContainer
             title="Pengaturan"
             subtitle="Kelola konfigurasi sistem dan preferensi Anda"
         >
+            {/* Settings Menu Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {settingsMenu.map((item) => {
                     const Icon = item.icon;
@@ -193,7 +215,7 @@ export default function SettingsPage() {
                                     </div>
                                     {item.badge && (
                                         <Badge
-                                            // variant={getBadgeVariant(item.badgeVariant)}
+                                            variant={item.badgeVariant as any}
                                             size="sm"
                                         >
                                             {item.badge}
@@ -225,42 +247,56 @@ export default function SettingsPage() {
                 })}
             </div>
 
-            {/* Quick Stats Section */}
+            {/* System Overview Stats */}
             <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* System Status */}
                 <Card>
                     <CardBody className="p-6">
                         <div className="flex items-center gap-4">
-                            <div className="p-3 bg-green-50 rounded-lg">
-                                <Database className="w-6 h-6 text-green-600" />
+                            <div className={`p-3 rounded-lg ${systemStatus.bg}`}>
+                                <Activity className={`w-6 h-6 ${systemStatus.color}`} />
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Status Sistem</p>
-                                <p className="text-lg font-semibold text-gray-900">Aktif</p>
-                            </div>
-                        </div>
-                    </CardBody>
-                </Card>
-
-                <Card>
-                    <CardBody className="p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-blue-50 rounded-lg">
-                                <Users className="w-6 h-6 text-blue-600" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500">Role Anda</p>
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                    {userRoles.map((role, idx) => (
-                                        <Badge key={idx} variant="primary" size="sm">
-                                            {role.replace(/_/g, ' ')}
-                                        </Badge>
-                                    ))}
+                                <div className="flex items-center gap-2 mt-1">
+                                    <p className={`text-lg font-semibold ${systemStatus.color}`}>
+                                        {systemStatus.text}
+                                    </p>
+                                    {!!healthData && (
+                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                    )}
                                 </div>
                             </div>
                         </div>
                     </CardBody>
                 </Card>
 
+                {/* User Role */}
+                <Card>
+                    <CardBody className="p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="p-3 bg-blue-50 rounded-lg">
+                                <Users className="w-6 h-6 text-blue-600" />
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-sm text-gray-500">Role Anda</p>
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                    {userRoles.length > 0 ? (
+                                        userRoles.map((role, idx) => (
+                                            <Badge key={idx} variant="primary" size="sm">
+                                                {role.replace(/_/g, ' ')}
+                                            </Badge>
+                                        ))
+                                    ) : (
+                                        <span className="text-sm text-gray-400">Tidak ada role</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </CardBody>
+                </Card>
+
+                {/* App Version */}
                 <Card>
                     <CardBody className="p-6">
                         <div className="flex items-center gap-4">
@@ -270,14 +306,37 @@ export default function SettingsPage() {
                             <div>
                                 <p className="text-sm text-gray-500">Versi Aplikasi</p>
                                 <p className="text-lg font-semibold text-gray-900">v2.1.0</p>
+                                <p className="text-xs text-gray-400 mt-1">Dentizy Core</p>
                             </div>
                         </div>
                     </CardBody>
                 </Card>
             </div>
 
+            {/* Last Updated Info */}
+            <Card className="mt-6 border-gray-200 bg-gray-50">
+                <CardBody className="p-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <Clock className="w-5 h-5 text-gray-400" />
+                            <div>
+                                <p className="text-sm font-medium text-gray-700">
+                                    Terakhir Diperbarui
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {formatDateTime(new Date())}
+                                </p>
+                            </div>
+                        </div>
+                        <Badge variant="outline" size="sm">
+                            Auto-refresh 60s
+                        </Badge>
+                    </div>
+                </CardBody>
+            </Card>
+
             {/* Help Section */}
-            <Card className="mt-8 border-blue-100 bg-blue-50">
+            <Card className="mt-6 border-blue-100 bg-blue-50">
                 <CardBody className="p-6">
                     <div className="flex items-start gap-4">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -290,7 +349,7 @@ export default function SettingsPage() {
                             <p className="text-sm text-gray-600 mb-3">
                                 Hubungi administrator sistem jika Anda memerlukan bantuan atau mengalami masalah dengan pengaturan.
                             </p>
-                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700">
+                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
                                 Hubungi Support →
                             </button>
                         </div>
