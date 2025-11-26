@@ -20,12 +20,17 @@ import {
     useRestoreTreatmentCategory
 } from '@/core/services/api/treatment-categories.api';
 
+interface ModalState {
+    isEdit: boolean;
+    initialData?: any;
+}
+
 export default function CategoryManager() {
     const toast = useToast();
     const queryClient = useQueryClient();
 
     const [searchQuery, setSearchQuery] = useState('');
-    const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [selectedItemId, setSelectedItemId] = useState<string | number | null>(null);
     const [actionType, setActionType] = useState<'delete' | 'restore'>('delete');
 
     const { data: response, isLoading } = useTreatmentCategories();
@@ -35,36 +40,66 @@ export default function CategoryManager() {
     const formModal = useModal();
     const confirmModal = useModal();
 
-    // GUNAKAN useRef UNTUK STABLE ACTION HANDLERS - MENCEGAH RE-RENDER COLUMNS
+    // ✅ FIX: Gunakan ref untuk modal state (TIDAK PERNAH BERUBAH)
+    const modalStateRef = useRef<ModalState>({
+        isEdit: false,
+        initialData: undefined
+    });
+
+    // Extract data
+    const categoryList = useMemo(() => {
+        const data = Array.isArray(response)
+            ? response
+            : (response as any)?.data || [];
+        return data;
+    }, [response]);
+
+    // ✅ FIX: Cari item berdasarkan ID
+    const selectedItem = useMemo(() => {
+        if (!selectedItemId || !categoryList.length) return null;
+        return categoryList.find((cat: any) => cat.id == selectedItemId) || null;
+    }, [selectedItemId, categoryList]);
+
+    // ✅ FIX: Update modal state ref (TANPA RE-RENDER)
+    const updateModalState = useCallback((item: any | null) => {
+        if (item) {
+            modalStateRef.current = {
+                isEdit: true,
+                initialData: {
+                    id: item.id,
+                    namaKategori: item.namaKategori || '',
+                    deskripsi: item.deskripsi || ''
+                }
+            };
+        } else {
+            modalStateRef.current = {
+                isEdit: false,
+                initialData: undefined
+            };
+        }
+    }, []);
+
+    // ✅ FIX: Stable action handlers dengan ref
     const actionHandlersRef = useRef({
         onEdit: (item: any) => {
-            console.log('Editing item:', item);
-            setSelectedItem(item);
+            console.log('Editing item ID:', item?.id);
+            setSelectedItemId(item?.id || null);
+            updateModalState(item); // ✅ Update ref, TIDAK setState
             formModal.open();
         },
         onDelete: (item: any) => {
-            setSelectedItem(item);
+            setSelectedItemId(item?.id || null);
             setActionType('delete');
             confirmModal.open();
         },
         onRestore: (item: any) => {
-            setSelectedItem(item);
+            setSelectedItemId(item?.id || null);
             setActionType('restore');
             confirmModal.open();
         }
     });
 
-    // Extract data dengan dependencies yang lebih spesifik
-    const categoryList = useMemo(() => {
-        const data = Array.isArray(response)
-            ? response
-            : (response as any)?.data || [];
-
-        console.log('Category list data:', data);
-        return data;
-    }, [response]); // Tetap depend on response, tapi lebih aware structure
-
-    // Filter data dengan optimization
+    // Filter data
     const filteredData = useMemo(() => {
         if (!categoryList.length) return [];
 
@@ -75,40 +110,43 @@ export default function CategoryManager() {
         );
     }, [categoryList, searchQuery]);
 
-    // Handler yang stabil
+    // ✅ FIX: Handler create - update ref saja
     const handleCreate = useCallback(() => {
         console.log('Creating new category');
-        setSelectedItem(null);
+        setSelectedItemId(null);
+        updateModalState(null); // ✅ Update ref, TIDAK setState
         formModal.open();
-    }, [formModal]);
+    }, [formModal, updateModalState]);
 
+    // ✅ FIX: Type-safe confirm action
     const handleConfirmAction = useCallback(async () => {
-        if (!selectedItem) return;
+        if (!selectedItemId) return;
 
         try {
+            const id = Number(selectedItemId);
+
             if (actionType === 'delete') {
-                await deleteCategory.mutateAsync({ id: selectedItem.id });
+                await deleteCategory.mutateAsync({ id });
                 toast.showSuccess('Kategori berhasil dihapus');
             } else {
-                await restoreCategory.mutateAsync({ id: selectedItem.id });
+                await restoreCategory.mutateAsync({ id });
                 toast.showSuccess('Kategori berhasil dipulihkan');
             }
 
             confirmModal.close();
-            // Reset selected item setelah action selesai
-            setSelectedItem(null);
+            setSelectedItemId(null);
             queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || 'Terjadi kesalahan';
             toast.showError(errorMessage);
         }
-    }, [selectedItem, actionType, deleteCategory, restoreCategory, toast, confirmModal, queryClient]);
+    }, [selectedItemId, actionType, deleteCategory, restoreCategory, toast, confirmModal, queryClient]);
 
+    // ✅ FIX: Handler success
     const handleFormSuccess = useCallback(() => {
         console.log('Form success, closing modal');
         formModal.close();
-        // Reset selected item setelah form success
-        setSelectedItem(null);
+        setSelectedItemId(null);
         queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
     }, [formModal, queryClient]);
 
@@ -116,14 +154,18 @@ export default function CategoryManager() {
         setSearchQuery(value);
     }, []);
 
-    // COLUMNS - GUNAKAN REF UNTUK MENGHINDARI RE-RENDER
+    // ✅ STABLE: Columns dengan ref
     const columns = useMemo(() =>
         getCategoryColumns(actionHandlersRef.current),
-        []); // EMPTY DEPENDENCY - TIDAK PERNAH RE-RENDER
+        []);
 
     const isActionLoading = deleteCategory.isPending || restoreCategory.isPending;
 
-    // Optimize confirm message
+    // ✅ FIX: Modal initial data - GUNAKAN REF (TIDAK PERNAH BERUBAH)
+    const getModalInitialData = useCallback(() => {
+        return modalStateRef.current.initialData;
+    }, []);
+
     const confirmMessage = useMemo(() => {
         const name = selectedItem?.namaKategori || '';
         if (actionType === 'delete') {
@@ -145,17 +187,6 @@ export default function CategoryManager() {
             </div>
         );
     }, [selectedItem, actionType]);
-
-    // Prepare initial data untuk modal - lebih konsisten
-    const modalInitialData = useMemo(() => {
-        if (!selectedItem) return undefined;
-
-        return {
-            id: selectedItem.id,
-            namaKategori: selectedItem.namaKategori || '',
-            deskripsi: selectedItem.deskripsi || ''
-        };
-    }, [selectedItem]);
 
     return (
         <>
@@ -199,11 +230,11 @@ export default function CategoryManager() {
                 </CardBody>
             </Card>
 
-            {/* MODAL DENGAN PROP YANG OPTIMAL */}
+            {/* ✅ MODAL dengan PROP YANG STABIL - TIDAK PERNAH BERUBAH */}
             <CategoryModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
-                initialData={modalInitialData}
+                initialData={getModalInitialData()} // ✅ Function yang selalu return sama
                 onSuccess={handleFormSuccess}
             />
 
