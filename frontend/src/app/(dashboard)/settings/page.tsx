@@ -83,41 +83,12 @@ export default function SettingsPage() {
     });
 
     const settingsMenu: SettingCardProps[] = [
-        // User & Access Management
-        {
-            title: 'Manajemen Pengguna',
-            description: 'Kelola akun dokter, staf, dan admin klinik',
-            icon: Users,
-            href: '/settings/users',
-            requiresRole: [ROLES.KEPALA_KLINIK],
-        },
-        {
-            title: 'Profil Saya',
-            description: 'Update informasi pribadi dan password',
-            icon: UserCog,
-            href: '/settings/profile',
-        },
-
         // Clinic Management
         {
-            title: 'Layanan & Tindakan',
-            description: 'Atur daftar tindakan medis dan harga',
-            icon: Stethoscope,
-            href: '/settings/clinic',
-            requiresRole: [ROLES.KEPALA_KLINIK],
-        },
-        {
             title: 'Kategori Layanan',
-            description: 'Kelola kategori dan klasifikasi tindakan',
+            description: 'Kelola kategori dan harga layanan',
             icon: FileText,
             href: '/settings/categories',
-            requiresRole: [ROLES.KEPALA_KLINIK],
-        },
-        {
-            title: 'Metode Pembayaran',
-            description: 'Konfigurasi metode pembayaran yang tersedia',
-            icon: CreditCard,
-            href: '/settings/payment-methods',
             requiresRole: [ROLES.KEPALA_KLINIK],
         },
 
@@ -133,21 +104,6 @@ export default function SettingsPage() {
             description: 'Kelola pengaturan notifikasi dan reminder',
             icon: Bell,
             href: '/settings/notifications',
-        },
-
-        // Security & Backup
-        {
-            title: 'Keamanan',
-            description: 'Pengaturan keamanan dan privasi akun',
-            icon: Shield,
-            href: '/settings/security',
-        },
-        {
-            title: 'Backup & Restore',
-            description: 'Kelola backup data dan restore sistem',
-            icon: Database,
-            href: '/settings/backup',
-            requiresRole: [ROLES.KEPALA_KLINIK],
         },
     ];
 
@@ -305,8 +261,8 @@ export default function SettingsPage() {
                             </div>
                             <div>
                                 <p className="text-sm text-gray-500">Versi Aplikasi</p>
-                                <p className="text-lg font-semibold text-gray-900">v2.1.0</p>
-                                <p className="text-xs text-gray-400 mt-1">Dentizy Core</p>
+                                <p className="text-lg font-semibold text-gray-900">v1.0.0</p>
+                                <p className="text-xs text-gray-400 mt-1">Dentizy Dentalcare</p>
                             </div>
                         </div>
                     </CardBody>
