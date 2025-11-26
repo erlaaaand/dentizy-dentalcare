@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useCallback, useMemo, useRef } from 'react';
 import { Modal } from '@/components/ui/feedback/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/forms/input';
@@ -23,18 +23,6 @@ const categorySchema = z.object({
     deskripsi: z.string().optional(),
 });
 
-// STATIC form config - tidak pernah berubah
-const FORM_CONFIG = {
-    initialValues: {
-        namaKategori: '',
-        deskripsi: '',
-    },
-    validationSchema: categorySchema,
-    validateOnChange: false,
-    validateOnBlur: true,
-    onSubmit: async () => { }, // akan di-override di component
-};
-
 export default function CategoryModal({ isOpen, onClose, initialData, onSuccess }: CategoryModalProps) {
     const toast = useToast();
     const createMutation = useCreateTreatmentCategory();
@@ -43,10 +31,10 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
-    // Gunakan ref untuk track initialization
-    const isInitializedRef = useRef(false);
+    // Track populated ID untuk mencegah re-populate
+    const populatedIdRef = useRef<string | number | null>(null);
 
-    // Submit handler yang stabil
+    // ✅ Submit handler dengan async/await
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const payload = {
@@ -54,7 +42,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                 deskripsi: values.deskripsi?.trim() || ''
             };
 
-            if (isEdit) {
+            if (isEdit && initialData?.id) {
                 await updateMutation.mutateAsync({ id: initialData.id, data: payload });
                 toast.showSuccess('✅ Kategori berhasil diperbarui');
             } else {
@@ -69,41 +57,69 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
         }
     }, [isEdit, initialData?.id, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // Override onSubmit di config
-    const formConfigWithSubmit = { ...FORM_CONFIG, onSubmit: handleFormSubmit };
-    const form = useForm(formConfigWithSubmit);
+    // ✅ Form config yang STABIL - MATIKAN VALIDASI OTOMATIS
+    const formConfig = useMemo(() => ({
+        initialValues: {
+            namaKategori: '',
+            deskripsi: '',
+        },
+        validationSchema: categorySchema,
+        validateOnChange: false, // PENTING: Matikan
+        validateOnBlur: false,    // PENTING: Matikan
+        onSubmit: handleFormSubmit,
+    }), [handleFormSubmit]);
 
-    // Populate form HANYA saat modal pertama kali dibuka atau initialData.id berubah
+    const form = useForm(formConfig);
+
+    // ✅ Populate form saat modal dibuka atau data berubah
     useEffect(() => {
-        if (isOpen && !isInitializedRef.current) {
-            isInitializedRef.current = true;
-
-            if (initialData) {
-                // Set values secara batch menggunakan setValues manual
-                const newValues = {
-                    namaKategori: initialData.namaKategori || '',
-                    deskripsi: initialData.deskripsi || '',
-                };
-                // Gunakan object spread untuk update values sekaligus
-                Object.entries(newValues).forEach(([key, value]) => {
-                    form.setFieldValue(key as any, value);
-                });
-            }
-        }
-
-        // Reset flag saat modal ditutup
         if (!isOpen) {
-            isInitializedRef.current = false;
+            // Reset saat modal ditutup
+            populatedIdRef.current = null;
+            return;
         }
-    }, [isOpen, initialData?.id]);
 
-    const handleClose = () => {
+        // Cek apakah data ini sudah pernah di-populate
+        const currentId = initialData?.id || 'new';
+        if (populatedIdRef.current === currentId) {
+            return; // Skip jika sudah populated
+        }
+
+        // Tunggu next tick untuk memastikan modal sudah render
+        const timeoutId = setTimeout(() => {
+            if (initialData) {
+                // Edit mode - populate dengan data
+                form.setFieldValue('namaKategori', initialData.namaKategori || '');
+                form.setFieldValue('deskripsi', initialData.deskripsi || '');
+
+                // Clear semua touched dan errors untuk edit mode
+                form.setFieldTouched('namaKategori', false);
+                form.setFieldTouched('deskripsi', false);
+                form.clearErrors();
+            } else {
+                // Create mode - reset form
+                form.resetForm();
+            }
+
+            // Tandai bahwa data ini sudah di-populate
+            populatedIdRef.current = currentId;
+        }, 10); // 10ms delay untuk stabilitas
+
+        return () => clearTimeout(timeoutId);
+    }, [isOpen, initialData?.id, initialData?.namaKategori, initialData?.deskripsi]);
+
+    const handleClose = useCallback(() => {
         if (!isLoading) {
             form.resetForm();
-            isInitializedRef.current = false;
+            populatedIdRef.current = null;
             onClose();
         }
-    };
+    }, [isLoading, form, onClose]);
+
+    // ✅ Manual validation saat user selesai mengetik
+    const validateNamaKategori = useCallback((value: string) => {
+        return value && value.trim().length > 0;
+    }, []);
 
     return (
         <Modal
@@ -123,12 +139,26 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         placeholder="Contoh: Konservasi Gigi"
                         name="namaKategori"
                         value={form.values.namaKategori || ''}
-                        onChange={(e) => form.setFieldValue('namaKategori', e.target.value)}
-                        onBlur={() => form.setFieldTouched('namaKategori', true)}
-                        error={form.touched.namaKategori ? form.errors.namaKategori : undefined}
+                        onChange={(e) => {
+                            const newValue = e.target.value;
+                            form.setFieldValue('namaKategori', newValue);
+
+                            // Clear error saat user mengetik dan sudah valid
+                            if (form.touched.namaKategori && validateNamaKategori(newValue)) {
+                                form.setFieldTouched('namaKategori', false);
+                            }
+                        }}
+                        onBlur={() => {
+                            // Set touched hanya jika field kosong
+                            const isEmpty = !form.values.namaKategori || form.values.namaKategori.trim().length === 0;
+                            if (isEmpty) {
+                                form.setFieldTouched('namaKategori', true);
+                            }
+                        }}
+                        error={form.touched.namaKategori && !validateNamaKategori(form.values.namaKategori) ? 'Nama kategori wajib diisi' : undefined}
                         disabled={isLoading}
                         required
-                        autoFocus={isOpen}
+                        autoFocus={isOpen && !isEdit}
                     />
 
                     <Textarea
@@ -137,9 +167,9 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         placeholder="Keterangan singkat..."
                         name="deskripsi"
                         value={form.values.deskripsi || ''}
-                        onChange={(e) => form.setFieldValue('deskripsi', e.target.value)}
-                        onBlur={() => form.setFieldTouched('deskripsi', true)}
-                        error={form.touched.deskripsi ? form.errors.deskripsi : undefined}
+                        onChange={(e) => {
+                            form.setFieldValue('deskripsi', e.target.value);
+                        }}
                         disabled={isLoading}
                         rows={3}
                         maxLength={500}
@@ -159,7 +189,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isLoading || !form.isValid}
+                        disabled={isLoading || !validateNamaKategori(form.values.namaKategori)}
                         className="min-w-[100px]"
                     >
                         {isLoading ? (
