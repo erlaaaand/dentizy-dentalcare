@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, FolderOpen, Trash2, Edit, RotateCcw } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardBody } from '@/components/ui/data-display/card';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-display/datatable';
-import { Badge } from '@/components/ui/data-display/badge';
-import { SearchInput } from '@/components'; // Fix import path (default export)
+import { SearchInput } from '@/components';
 import { ConfirmDialog } from '@/components/ui/feedback/confirm-dialog';
 import CategoryModal from '../components/CategoryModal';
+import { getCategoryColumns } from '../config/category-columns';
 
 import { useToast } from '@/core/hooks/ui/useToast';
 import { useModal } from '@/core/hooks/ui/useModal';
@@ -24,170 +24,114 @@ export default function CategoryManager() {
     const toast = useToast();
     const queryClient = useQueryClient();
 
-    // State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedItem, setSelectedItem] = useState<any>(null);
+    const [actionType, setActionType] = useState<'delete' | 'restore'>('delete');
 
-    // Hooks
-    // Menggunakan nama 'response' agar lebih jelas bahwa ini raw response
     const { data: response, isLoading } = useTreatmentCategories();
     const deleteCategory = useDeleteTreatmentCategory();
     const restoreCategory = useRestoreTreatmentCategory();
 
-    // Modals
     const formModal = useModal();
-    const deleteModal = useModal();
-    const restoreModal = useModal();
+    const confirmModal = useModal();
 
-    // --- DATA EXTRACTION FIX ---
-    // Masalah utama ada di sini sebelumnya. 
-    // Kita cek apakah data ada di properti .data (pagination pattern) atau langsung array.
-    const categoryList = Array.isArray(response)
-        ? response
-        : (response as any)?.data || [];
+    // Extract data
+    const categoryList = useMemo(() => {
+        return Array.isArray(response)
+            ? response
+            : (response as any)?.data || [];
+    }, [response]);
 
-    // Filter Data
-    const filteredData = categoryList.filter((cat: any) =>
-        (cat.namaKategori || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (cat.deskripsi || '').toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    // Filter data
+    const filteredData = useMemo(() => {
+        return categoryList.filter((cat: any) =>
+            (cat.namaKategori || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (cat.deskripsi || '').toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [categoryList, searchQuery]);
 
-    // Handlers
-    const handleCreate = () => {
+    // Memoized handlers
+    const handleCreate = useCallback(() => {
         setSelectedItem(null);
         formModal.open();
-    };
+    }, [formModal]);
 
-    const handleEdit = (item: any) => {
+    const handleEdit = useCallback((item: any) => {
         setSelectedItem(item);
         formModal.open();
-    };
+    }, [formModal]);
 
-    const handleDeleteClick = (item: any) => {
+    const handleDeleteClick = useCallback((item: any) => {
         setSelectedItem(item);
-        deleteModal.open();
-    };
+        setActionType('delete');
+        confirmModal.open();
+    }, [confirmModal]);
 
-    const handleRestoreClick = (item: any) => {
+    const handleRestoreClick = useCallback((item: any) => {
         setSelectedItem(item);
-        restoreModal.open();
-    };
+        setActionType('restore');
+        confirmModal.open();
+    }, [confirmModal]);
 
-    const handleConfirmDelete = async () => {
+    const handleConfirmAction = useCallback(async () => {
         if (!selectedItem) return;
+
         try {
-            await deleteCategory.mutateAsync({ id: selectedItem.id });
-            toast.showSuccess('Kategori berhasil dihapus');
-            deleteModal.close();
-            // Gunakan key yang sesuai dengan generated query key ('/treatment-categories')
+            if (actionType === 'delete') {
+                await deleteCategory.mutateAsync({ id: selectedItem.id });
+                toast.showSuccess('Kategori berhasil dihapus');
+            } else {
+                await restoreCategory.mutateAsync({ id: selectedItem.id });
+                toast.showSuccess('Kategori berhasil dipulihkan');
+            }
+
+            confirmModal.close();
             queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || 'Gagal menghapus kategori';
+            const errorMessage = error?.response?.data?.message || 'Terjadi kesalahan';
             toast.showError(errorMessage);
         }
-    };
+    }, [selectedItem, actionType, deleteCategory, restoreCategory, toast, confirmModal, queryClient]);
 
-    const handleConfirmRestore = async () => {
-        if (!selectedItem) return;
-        try {
-            await restoreCategory.mutateAsync({ id: selectedItem.id });
-            toast.showSuccess('Kategori berhasil dipulihkan');
-            restoreModal.close();
-            queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
-        } catch (error: any) {
-            const errorMessage = error?.response?.data?.message || 'Gagal memulihkan kategori';
-            toast.showError(errorMessage);
-        }
-    };
-
-    const handleFormSuccess = () => {
+    const handleFormSuccess = useCallback(() => {
         formModal.close();
         queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
-    };
+    }, [formModal, queryClient]);
 
-    const columns = [
-        {
-            header: 'Nama Kategori',
-            accessorKey: 'namaKategori',
-            cell: (info: any) => (
-                <div className="flex items-center gap-2">
-                    <div className="p-2 bg-yellow-50 rounded text-yellow-600">
-                        <FolderOpen className="w-4 h-4" />
-                    </div>
-                    <span className="font-medium text-gray-900">{info.getValue()}</span>
+    const handleSearchChange = useCallback((value: string) => {
+        setSearchQuery(value);
+    }, []);
+
+    // Memoized columns
+    const columns = useMemo(() => getCategoryColumns({
+        onEdit: handleEdit,
+        onDelete: handleDeleteClick,
+        onRestore: handleRestoreClick
+    }), [handleEdit, handleDeleteClick, handleRestoreClick]);
+
+    const isActionLoading = deleteCategory.isPending || restoreCategory.isPending;
+
+    const confirmMessage = useMemo(() => {
+        const name = selectedItem?.namaKategori || '';
+        if (actionType === 'delete') {
+            return (
+                <div>
+                    <p>Yakin ingin menghapus kategori <strong>"{name}"</strong>?</p>
+                    <p className="mt-2 text-sm text-gray-600">
+                        Kategori yang dihapus dapat dipulihkan kembali (Soft Delete).
+                    </p>
                 </div>
-            )
-        },
-        {
-            header: 'Deskripsi',
-            accessorKey: 'deskripsi',
-            cell: (info: any) => (
-                <span className="text-gray-500 text-sm truncate max-w-xs block" title={info.getValue()}>
-                    {info.getValue() || '-'}
-                </span>
-            )
-        },
-        {
-            header: 'Status',
-            id: 'status',
-            accessorKey: 'deletedAt', // Pastikan accessor ini sesuai DTO backend (deletedAt atau isActive)
-            cell: (info: any) => {
-                // Cek apakah row.original memiliki deletedAt yang tidak null
-                const isDeleted = !!info.row.original.deletedAt;
-
-                return (
-                    <Badge variant={isDeleted ? 'error' : 'success'}>
-                        {isDeleted ? 'Dihapus' : 'Aktif'}
-                    </Badge>
-                );
-            }
-        },
-        {
-            header: 'Aksi',
-            id: 'actions',
-            cell: (info: any) => {
-                const row = info.row.original;
-                const isDeleted = !!row.deletedAt;
-
-                if (isDeleted) {
-                    return (
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRestoreClick(row)}
-                                title="Pulihkan"
-                                className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            >
-                                <RotateCcw className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div className="flex items-center gap-1">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(row)}
-                            title="Edit"
-                        >
-                            <Edit className="w-4 h-4 text-blue-500" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(row)}
-                            title="Hapus"
-                        >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                    </div>
-                );
-            }
+            );
         }
-    ];
+        return (
+            <div>
+                <p>Yakin ingin memulihkan kategori <strong>"{name}"</strong>?</p>
+                <p className="mt-2 text-sm text-gray-600">
+                    Kategori akan aktif kembali dan dapat digunakan untuk layanan.
+                </p>
+            </div>
+        );
+    }, [selectedItem, actionType]);
 
     return (
         <>
@@ -205,7 +149,7 @@ export default function CategoryManager() {
                                 <SearchInput
                                     placeholder="Cari kategori..."
                                     value={searchQuery}
-                                    onChange={setSearchQuery}
+                                    onChange={handleSearchChange}
                                 />
                             </div>
                             <Button onClick={handleCreate}>
@@ -223,15 +167,14 @@ export default function CategoryManager() {
                         emptyMessage="Tidak ada kategori ditemukan"
                         pagination={{
                             currentPage: 1,
-                            totalPages: Math.ceil(filteredData.length / 10), // Hitung berdasarkan itemsPerPage
+                            totalPages: Math.ceil(filteredData.length / 10),
                             totalItems: filteredData.length,
-                            itemsPerPage: 10 // Konstan
+                            itemsPerPage: 10
                         }}
                     />
                 </CardBody>
             </Card>
 
-            {/* Form Modal (Create/Edit) */}
             <CategoryModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
@@ -239,42 +182,15 @@ export default function CategoryManager() {
                 onSuccess={handleFormSuccess}
             />
 
-            {/* Delete Confirmation */}
             <ConfirmDialog
-                isOpen={deleteModal.isOpen}
-                onClose={deleteModal.close}
-                onConfirm={handleConfirmDelete}
-                title="Hapus Kategori"
-                message={
-                    <div>
-                        <p>Yakin ingin menghapus kategori <strong>"{selectedItem?.namaKategori}"</strong>?</p>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Kategori yang dihapus dapat dipulihkan kembali (Soft Delete).
-                        </p>
-                    </div>
-                }
-                variant="danger"
-                confirmText="Hapus"
-                isLoading={deleteCategory.isPending}
-            />
-
-            {/* Restore Confirmation */}
-            <ConfirmDialog
-                isOpen={restoreModal.isOpen}
-                onClose={restoreModal.close}
-                onConfirm={handleConfirmRestore}
-                title="Pulihkan Kategori"
-                message={
-                    <div>
-                        <p>Yakin ingin memulihkan kategori <strong>"{selectedItem?.namaKategori}"</strong>?</p>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Kategori akan aktif kembali dan dapat digunakan untuk layanan.
-                        </p>
-                    </div>
-                }
-                variant="default"
-                confirmText="Pulihkan"
-                isLoading={restoreCategory.isPending}
+                isOpen={confirmModal.isOpen}
+                onClose={confirmModal.close}
+                onConfirm={handleConfirmAction}
+                title={actionType === 'delete' ? 'Hapus Kategori' : 'Pulihkan Kategori'}
+                message={confirmMessage}
+                variant={actionType === 'delete' ? 'danger' : 'default'}
+                confirmText={actionType === 'delete' ? 'Hapus' : 'Pulihkan'}
+                isLoading={isActionLoading}
             />
         </>
     );

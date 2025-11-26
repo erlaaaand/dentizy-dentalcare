@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Edit, Stethoscope, RotateCcw, Power, PowerOff } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 import { Card, CardHeader, CardTitle, CardDescription, CardBody } from '@/components/ui/data-display/card';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/data-display/datatable';
-import { Badge } from '@/components/ui/data-display/badge';
 import SearchInput from '@/components/ui/forms/search-input';
 import { ConfirmDialog } from '@/components/ui/feedback/confirm-dialog';
 import TreatmentModal from '../components/TreatmentModal';
+import { getTreatmentColumns } from '../table/treatment-columns';
 
 import { useToast } from '@/core/hooks/ui/useToast';
 import { useModal } from '@/core/hooks/ui/useModal';
@@ -21,66 +21,66 @@ import {
     useActivateTreatment,
     useDeactivateTreatment
 } from '@/core/services/api/treatments.api';
-import { formatCurrency } from '@/core/utils/date/format.utils'; // Pastikan path util formatCurrency benar
+
+type ActionType = 'delete' | 'restore' | 'activate' | 'deactivate';
 
 export default function TreatmentManager() {
     const toast = useToast();
     const queryClient = useQueryClient();
 
-    // State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedItem, setSelectedItem] = useState<any>(null);
-    const [actionType, setActionType] = useState<'delete' | 'restore' | 'activate' | 'deactivate'>('delete');
+    const [actionType, setActionType] = useState<ActionType>('delete');
 
-    // API Hooks
     const { data: response, isLoading } = useTreatments();
     const deleteTreatment = useDeleteTreatment();
     const restoreTreatment = useRestoreTreatment();
     const activateTreatment = useActivateTreatment();
     const deactivateTreatment = useDeactivateTreatment();
 
-    // Modals
     const formModal = useModal();
     const confirmModal = useModal();
 
-    // --- DATA EXTRACTION & FILTERING ---
-    // Mengambil array data dengan aman dari struktur response paginasi atau array langsung
-    const treatmentList = Array.isArray(response)
-        ? response
-        : (response as any)?.data || [];
+    // Extract and filter data
+    const treatmentList = useMemo(() => {
+        return Array.isArray(response)
+            ? response
+            : (response as any)?.data || [];
+    }, [response]);
 
-    // Mengambil metadata pagination jika ada
-    const paginationMeta = (response as any)?.meta;
+    const paginationMeta = useMemo(() => (response as any)?.meta, [response]);
 
-    const filteredData = treatmentList.filter((item: any) =>
-        (item.namaPerawatan || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.kodePerawatan || '').toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredData = useMemo(() => {
+        return treatmentList.filter((item: any) =>
+            (item.namaPerawatan || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (item.kodePerawatan || '').toLowerCase().includes(searchQuery.toLowerCase())
+        );
+    }, [treatmentList, searchQuery]);
 
-    // --- HANDLERS ---
-    const handleCreate = () => {
+    // Memoized handlers
+    const handleCreate = useCallback(() => {
         setSelectedItem(null);
         formModal.open();
-    };
+    }, [formModal]);
 
-    const handleEdit = (item: any) => {
+    const handleEdit = useCallback((item: any) => {
         setSelectedItem(item);
         formModal.open();
-    };
+    }, [formModal]);
 
-    const handleAction = (item: any, action: typeof actionType) => {
+    const handleAction = useCallback((item: any, action: ActionType) => {
         setSelectedItem(item);
         setActionType(action);
         confirmModal.open();
-    };
+    }, [confirmModal]);
 
-    const handleConfirmAction = async () => {
+    const handleConfirmAction = useCallback(async () => {
         if (!selectedItem) return;
 
         try {
             switch (actionType) {
                 case 'delete':
-                    await deleteTreatment.mutateAsync(selectedItem.id); // Gunakan id, bukan object
+                    await deleteTreatment.mutateAsync(selectedItem.id);
                     toast.showSuccess('Layanan berhasil dihapus');
                     break;
                 case 'restore':
@@ -102,25 +102,46 @@ export default function TreatmentManager() {
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
             toast.showError(`Gagal ${getActionLabel(actionType).toLowerCase()} layanan: ${errorMessage}`);
         }
-    };
+    }, [selectedItem, actionType, deleteTreatment, restoreTreatment, activateTreatment, deactivateTreatment, toast, confirmModal, queryClient]);
 
-    const handleFormSuccess = () => {
+    const handleFormSuccess = useCallback(() => {
         formModal.close();
         queryClient.invalidateQueries({ queryKey: ['/treatments'] });
-    };
+    }, [formModal, queryClient]);
 
-    // --- HELPERS ---
-    const getActionLabel = (action: typeof actionType) => {
-        switch (action) {
-            case 'delete': return 'Hapus';
-            case 'restore': return 'Pulihkan';
-            case 'activate': return 'Aktifkan';
-            case 'deactivate': return 'Nonaktifkan';
-        }
-    };
+    const handleSearchChange = useCallback((value: string) => {
+        setSearchQuery(value);
+    }, []);
 
-    const getConfirmMessage = () => {
+    // Memoized columns
+    const columns = useMemo(() => getTreatmentColumns({
+        onEdit: handleEdit,
+        onDelete: (item) => handleAction(item, 'delete'),
+        onRestore: (item) => handleAction(item, 'restore'),
+        onActivate: (item) => handleAction(item, 'activate'),
+        onDeactivate: (item) => handleAction(item, 'deactivate')
+    }), [handleEdit, handleAction]);
+
+    const isActionLoading =
+        deleteTreatment.isPending ||
+        restoreTreatment.isPending ||
+        activateTreatment.isPending ||
+        deactivateTreatment.isPending;
+
+    // Helper functions
+    const getActionLabel = useCallback((action: ActionType) => {
+        const labels: Record<ActionType, string> = {
+            delete: 'Hapus',
+            restore: 'Pulihkan',
+            activate: 'Aktifkan',
+            deactivate: 'Nonaktifkan'
+        };
+        return labels[action];
+    }, []);
+
+    const confirmMessage = useMemo(() => {
         const name = selectedItem?.namaPerawatan || '';
+
         switch (actionType) {
             case 'delete':
                 return (
@@ -141,158 +162,7 @@ export default function TreatmentManager() {
                     </div>
                 );
         }
-    };
-
-    const isActionLoading =
-        deleteTreatment.isPending ||
-        restoreTreatment.isPending ||
-        activateTreatment.isPending ||
-        deactivateTreatment.isPending;
-
-    // --- TABLE COLUMNS ---
-    const columns = [
-        {
-            header: 'Kode',
-            accessorKey: 'kodePerawatan',
-            cell: (info: any) => (
-                <span className="font-mono text-xs text-gray-500 font-semibold bg-gray-100 px-2 py-1 rounded">
-                    {info.getValue()}
-                </span>
-            )
-        },
-        {
-            header: 'Nama Layanan',
-            accessorKey: 'namaPerawatan',
-            cell: (info: any) => (
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                        <Stethoscope className="w-4 h-4" />
-                    </div>
-                    <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{info.getValue()}</span>
-                        {info.row.original.category && (
-                            <span className="text-xs text-gray-500 md:hidden">
-                                {info.row.original.category.namaKategori}
-                            </span>
-                        )}
-                    </div>
-                </div>
-            )
-        },
-        {
-            header: 'Kategori',
-            accessorKey: 'category',
-            cell: (info: any) => {
-                const category = info.getValue();
-                return (
-                    <Badge variant="outline" className="text-xs">
-                        {category?.namaKategori || 'Umum'}
-                    </Badge>
-                );
-            }
-        },
-        {
-            header: 'Harga',
-            accessorKey: 'harga',
-            cell: (info: any) => (
-                <span className="font-semibold text-green-700 whitespace-nowrap">
-                    {formatCurrency(Number(info.getValue()))}
-                </span>
-            )
-        },
-        {
-            header: 'Durasi',
-            accessorKey: 'durasiEstimasi',
-            cell: (info: any) => (
-                <span className="text-sm text-gray-500 whitespace-nowrap">
-                    {info.getValue() || '-'} menit
-                </span>
-            )
-        },
-        {
-            header: 'Status',
-            id: 'status',
-            accessorKey: 'isActive',
-            cell: (info: any) => {
-                const row = info.row.original;
-                const isDeleted = !!row.deletedAt; // Cek deletedAt dari response
-                const isActive = row.isActive;
-
-                if (isDeleted) {
-                    return <Badge variant="error">Dihapus</Badge>;
-                }
-
-                return (
-                    <Badge variant={isActive ? 'success' : 'secondary'}>
-                        {isActive ? 'Aktif' : 'Non-Aktif'}
-                    </Badge>
-                );
-            }
-        },
-        {
-            header: 'Aksi',
-            id: 'actions',
-            cell: (info: any) => {
-                const row = info.row.original;
-                const isDeleted = !!row.deletedAt;
-                const isActive = row.isActive;
-
-                if (isDeleted) {
-                    return (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAction(row, 'restore')}
-                            title="Pulihkan"
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                        >
-                            <RotateCcw className="w-4 h-4" />
-                        </Button>
-                    );
-                }
-
-                return (
-                    <div className="flex items-center gap-1">
-                        {isActive ? (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAction(row, 'deactivate')}
-                                title="Nonaktifkan"
-                            >
-                                <PowerOff className="w-4 h-4 text-orange-500" />
-                            </Button>
-                        ) : (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleAction(row, 'activate')}
-                                title="Aktifkan"
-                            >
-                                <Power className="w-4 h-4 text-green-500" />
-                            </Button>
-                        )}
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(row)}
-                            title="Edit"
-                        >
-                            <Edit className="w-4 h-4 text-blue-500" />
-                        </Button>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAction(row, 'delete')}
-                            title="Hapus"
-                        >
-                            <Trash2 className="w-4 h-4 text-red-500" />
-                        </Button>
-                    </div>
-                );
-            }
-        }
-    ];
+    }, [selectedItem, actionType]);
 
     return (
         <>
@@ -310,7 +180,7 @@ export default function TreatmentManager() {
                                 <SearchInput
                                     placeholder="Cari layanan atau kode..."
                                     value={searchQuery}
-                                    onChange={setSearchQuery}
+                                    onChange={handleSearchChange}
                                 />
                             </div>
                             <Button onClick={handleCreate} className="whitespace-nowrap">
@@ -328,15 +198,14 @@ export default function TreatmentManager() {
                         emptyMessage="Tidak ada layanan ditemukan"
                         pagination={{
                             currentPage: 1,
-                            totalPages: Math.ceil(filteredData.length / 10), // Hitung berdasarkan itemsPerPage
+                            totalPages: Math.ceil(filteredData.length / 10),
                             totalItems: filteredData.length,
-                            itemsPerPage: 10 // Konstan
+                            itemsPerPage: 10
                         }}
                     />
                 </CardBody>
             </Card>
 
-            {/* Modal Form (Create/Edit) */}
             <TreatmentModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
@@ -344,13 +213,12 @@ export default function TreatmentManager() {
                 onSuccess={handleFormSuccess}
             />
 
-            {/* Confirmation Dialog */}
             <ConfirmDialog
                 isOpen={confirmModal.isOpen}
                 onClose={confirmModal.close}
                 onConfirm={handleConfirmAction}
                 title={`${getActionLabel(actionType)} Layanan`}
-                message={getConfirmMessage()}
+                message={confirmMessage}
                 variant={actionType === 'delete' ? 'danger' : 'default'}
                 confirmText={getActionLabel(actionType)}
                 isLoading={isActionLoading}
