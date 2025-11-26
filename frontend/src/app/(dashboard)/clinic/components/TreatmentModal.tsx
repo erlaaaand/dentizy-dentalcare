@@ -10,6 +10,8 @@ import { useForm } from '@/core/hooks/forms/useForm';
 import { useCreateTreatment, useUpdateTreatment } from '@/core/services/api/treatments.api';
 import { useTreatmentCategories } from '@/core/services/api/treatment-categories.api';
 import { useToast } from '@/core/hooks/ui/useToast';
+import { Loader2, CheckCircle2  } from 'lucide-react';
+import { SkeletonForm } from '@/components/ui/data-display/skeleton';
 
 interface TreatmentModalProps {
     isOpen: boolean;
@@ -28,7 +30,7 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
-    // Memoize kategori options
+    // ✅ Memoize kategori options
     const categoryOptions = useMemo(() => {
         const list = Array.isArray(categoriesResponse)
             ? categoriesResponse
@@ -42,7 +44,7 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
             }));
     }, [categoriesResponse]);
 
-    // Memoize validation function
+    // ✅ Memoize validation function
     const validateForm = useCallback((values: any) => {
         const errors: Record<string, string> = {};
 
@@ -75,7 +77,7 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
         return errors;
     }, []);
 
-    // Memoize submit handler
+    // ✅ Memoize submit handler
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const cleanHarga = values.harga.toString().replace(/[^\d]/g, '');
@@ -93,22 +95,22 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                     id: initialData.id,
                     data: payload
                 });
-                toast.showSuccess('Layanan berhasil diperbarui');
+                toast.showSuccess('✅ Layanan berhasil diperbarui');
             } else {
                 await createMutation.mutateAsync({ data: payload });
-                toast.showSuccess('Layanan berhasil ditambahkan');
+                toast.showSuccess('✅ Layanan berhasil ditambahkan');
             }
 
             onSuccess();
             onClose();
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
-            toast.showError(isEdit ? `Gagal update: ${errorMessage}` : `Gagal simpan: ${errorMessage}`);
+            toast.showError(isEdit ? `❌ Gagal update: ${errorMessage}` : `❌ Gagal simpan: ${errorMessage}`);
         }
     }, [isEdit, initialData, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // Initialize form
-    const form = useForm({
+    // ✅ PERBAIKAN KRITIS: Form config dengan dependencies minimal
+    const formConfig = useMemo(() => ({
         initialValues: {
             namaPerawatan: '',
             categoryId: '',
@@ -116,11 +118,14 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
             durasiEstimasi: '30',
             deskripsi: '',
         },
-        customValidate: validateForm,
+        validateOnChange: false, // ✅ Disable validation saat typing
+        validateOnBlur: true,     // ✅ Validate saat blur saja
         onSubmit: handleFormSubmit
-    });
+    }), [handleFormSubmit]);
 
-    // Populate form only when needed
+    const form = useForm(formConfig);
+
+    // ✅ Populate form hanya ketika modal dibuka
     useEffect(() => {
         if (isOpen) {
             if (initialData) {
@@ -132,11 +137,10 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
             } else {
                 form.resetForm();
             }
-            form.clearErrors();
         }
     }, [isOpen, initialData?.id]);
 
-    // Memoize format display harga
+    // ✅ Memoize format display harga
     const getDisplayHarga = useCallback((value: string | number) => {
         if (!value) return '';
         const stringVal = String(value).replace(/[^\d]/g, '');
@@ -144,7 +148,7 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
         return new Intl.NumberFormat('id-ID').format(Number(stringVal));
     }, []);
 
-    // Memoize all change handlers
+    // ✅ Memoize all change handlers
     const handleNamaPerawatanChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         form.setFieldValue('namaPerawatan', e.target.value);
     }, [form]);
@@ -168,25 +172,40 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
 
     const handleFormSubmitWrapper = useCallback((e: React.FormEvent) => {
         e.preventDefault();
+
+        // ✅ Manual validation sebelum submit
+        const validationErrors = validateForm(form.values);
+        if (Object.keys(validationErrors).length > 0) {
+            Object.entries(validationErrors).forEach(([key, value]) => {
+                form.setFieldTouched(key as any, true);
+            });
+            toast.showWarning('⚠️ Mohon periksa kembali form Anda');
+            return;
+        }
+
         form.handleSubmit();
-    }, [form]);
+    }, [form, validateForm, toast]);
 
     const handleCloseModal = useCallback(() => {
-        form.resetForm();
-        onClose();
-    }, [form, onClose]);
+        if (!isLoading) {
+            form.resetForm();
+            onClose();
+        }
+    }, [form, onClose, isLoading]);
 
-    const handleNamaPerawatanBlur = useCallback(() => {
-        form.handleBlur('namaPerawatan')();
-    }, [form]);
-
-    const handleHargaBlur = useCallback(() => {
-        form.handleBlur('harga')();
-    }, [form]);
-
-    const handleDurasiBlur = useCallback(() => {
-        form.handleBlur('durasiEstimasi')();
-    }, [form]);
+    // ✅ Show loading skeleton saat kategori loading
+    if (loadingCategories && isOpen) {
+        return (
+            <Modal
+                isOpen={isOpen}
+                onClose={handleCloseModal}
+                title={isEdit ? "Edit Layanan" : "Tambah Layanan Baru"}
+                size="lg"
+            >
+                <SkeletonForm fields={5} />
+            </Modal>
+        );
+    }
 
     return (
         <Modal
@@ -202,64 +221,77 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                 <div className="space-y-5 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
+                            id="field-nama-perawatan"
                             label="Nama Layanan"
                             placeholder="Contoh: Scaling Gigi"
                             name="namaPerawatan"
                             value={form.values.namaPerawatan}
                             onChange={handleNamaPerawatanChange}
-                            onBlur={handleNamaPerawatanBlur}
-                            error={form.errors.namaPerawatan}
+                            onBlur={() => {
+                                form.setFieldTouched('namaPerawatan', true);
+                                const error = validateForm(form.values).namaPerawatan;
+                                if (error) form.setFieldValue('namaPerawatan', form.values.namaPerawatan);
+                            }}
+                            error={form.touched.namaPerawatan ? form.errors.namaPerawatan : undefined}
                             disabled={isLoading}
                             required
                             autoFocus={!isEdit}
                         />
 
                         <FormSelect
+                            id="field-category"
                             label="Kategori"
                             placeholder={loadingCategories ? "Memuat..." : "Pilih Kategori"}
                             options={categoryOptions}
                             value={form.values.categoryId}
                             onChange={handleCategoryChange}
-                            error={form.errors.categoryId}
+                            error={form.touched.categoryId ? form.errors.categoryId : undefined}
                             disabled={isLoading || loadingCategories}
                             required
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <Input
-                                label="Harga"
-                                placeholder="0"
-                                name="harga"
-                                value={getDisplayHarga(form.values.harga)}
-                                onChange={handleHargaChange}
-                                onBlur={handleHargaBlur}
-                                error={form.errors.harga}
-                                disabled={isLoading}
-                                required
-                                leftIcon={<span className="text-gray-500 text-sm font-medium">Rp</span>}
-                            />
-                        </div>
+                        <Input
+                            id="field-harga"
+                            label="Harga"
+                            placeholder="0"
+                            name="harga"
+                            value={getDisplayHarga(form.values.harga)}
+                            onChange={handleHargaChange}
+                            onBlur={() => {
+                                form.setFieldTouched('harga', true);
+                                const error = validateForm(form.values).harga;
+                                if (error) form.setFieldValue('harga', form.values.harga);
+                            }}
+                            error={form.touched.harga ? form.errors.harga : undefined}
+                            disabled={isLoading}
+                            required
+                            leftIcon={<span className="text-gray-500 text-sm font-medium">Rp</span>}
+                        />
 
-                        <div>
-                            <Input
-                                label="Estimasi Durasi"
-                                type="number"
-                                placeholder="30"
-                                name="durasiEstimasi"
-                                value={form.values.durasiEstimasi}
-                                onChange={handleDurasiChange}
-                                onBlur={handleDurasiBlur}
-                                error={form.errors.durasiEstimasi}
-                                disabled={isLoading}
-                                min="1"
-                                rightIcon={<span className="text-gray-500 text-sm">Menit</span>}
-                            />
-                        </div>
+                        <Input
+                            id="field-durasi"
+                            label="Estimasi Durasi"
+                            type="number"
+                            placeholder="30"
+                            name="durasiEstimasi"
+                            value={form.values.durasiEstimasi}
+                            onChange={handleDurasiChange}
+                            onBlur={() => {
+                                form.setFieldTouched('durasiEstimasi', true);
+                                const error = validateForm(form.values).durasiEstimasi;
+                                if (error) form.setFieldValue('durasiEstimasi', form.values.durasiEstimasi);
+                            }}
+                            error={form.touched.durasiEstimasi ? form.errors.durasiEstimasi : undefined}
+                            disabled={isLoading}
+                            min="1"
+                            rightIcon={<span className="text-gray-500 text-sm">Menit</span>}
+                        />
                     </div>
 
                     <Textarea
+                        id="field-deskripsi"
                         label="Deskripsi / Catatan (Opsional)"
                         placeholder="Detail prosedur atau catatan tambahan..."
                         name="deskripsi"
@@ -267,6 +299,8 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                         onChange={handleDeskripsiChange}
                         disabled={isLoading}
                         rows={3}
+                        maxLength={1000}
+                        showCharCount
                     />
                 </div>
 
@@ -281,9 +315,20 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isLoading || !form.isValid}
+                        disabled={isLoading}
+                        className="min-w-[140px]"
                     >
-                        {isEdit ? 'Simpan Perubahan' : 'Buat Layanan'}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                {isEdit ? 'Menyimpan...' : 'Membuat...'}
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                {isEdit ? 'Simpan Perubahan' : 'Buat Layanan'}
+                            </>
+                        )}
                     </Button>
                 </div>
             </form>

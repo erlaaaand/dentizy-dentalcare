@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 
@@ -35,43 +35,52 @@ export default function CategoryManager() {
     const formModal = useModal();
     const confirmModal = useModal();
 
-    // Extract data
+    // GUNAKAN useRef UNTUK STABLE ACTION HANDLERS - MENCEGAH RE-RENDER COLUMNS
+    const actionHandlersRef = useRef({
+        onEdit: (item: any) => {
+            console.log('Editing item:', item);
+            setSelectedItem(item);
+            formModal.open();
+        },
+        onDelete: (item: any) => {
+            setSelectedItem(item);
+            setActionType('delete');
+            confirmModal.open();
+        },
+        onRestore: (item: any) => {
+            setSelectedItem(item);
+            setActionType('restore');
+            confirmModal.open();
+        }
+    });
+
+    // Extract data dengan dependencies yang lebih spesifik
     const categoryList = useMemo(() => {
-        return Array.isArray(response)
+        const data = Array.isArray(response)
             ? response
             : (response as any)?.data || [];
-    }, [response]);
 
-    // Filter data
+        console.log('Category list data:', data);
+        return data;
+    }, [response]); // Tetap depend on response, tapi lebih aware structure
+
+    // Filter data dengan optimization
     const filteredData = useMemo(() => {
+        if (!categoryList.length) return [];
+
+        const query = searchQuery.toLowerCase();
         return categoryList.filter((cat: any) =>
-            (cat.namaKategori || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-            (cat.deskripsi || '').toLowerCase().includes(searchQuery.toLowerCase())
+            (cat.namaKategori || '').toLowerCase().includes(query) ||
+            (cat.deskripsi || '').toLowerCase().includes(query)
         );
     }, [categoryList, searchQuery]);
 
-    // Memoized handlers
+    // Handler yang stabil
     const handleCreate = useCallback(() => {
+        console.log('Creating new category');
         setSelectedItem(null);
         formModal.open();
     }, [formModal]);
-
-    const handleEdit = useCallback((item: any) => {
-        setSelectedItem(item);
-        formModal.open();
-    }, [formModal]);
-
-    const handleDeleteClick = useCallback((item: any) => {
-        setSelectedItem(item);
-        setActionType('delete');
-        confirmModal.open();
-    }, [confirmModal]);
-
-    const handleRestoreClick = useCallback((item: any) => {
-        setSelectedItem(item);
-        setActionType('restore');
-        confirmModal.open();
-    }, [confirmModal]);
 
     const handleConfirmAction = useCallback(async () => {
         if (!selectedItem) return;
@@ -86,6 +95,8 @@ export default function CategoryManager() {
             }
 
             confirmModal.close();
+            // Reset selected item setelah action selesai
+            setSelectedItem(null);
             queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || 'Terjadi kesalahan';
@@ -94,7 +105,10 @@ export default function CategoryManager() {
     }, [selectedItem, actionType, deleteCategory, restoreCategory, toast, confirmModal, queryClient]);
 
     const handleFormSuccess = useCallback(() => {
+        console.log('Form success, closing modal');
         formModal.close();
+        // Reset selected item setelah form success
+        setSelectedItem(null);
         queryClient.invalidateQueries({ queryKey: ['/treatment-categories'] });
     }, [formModal, queryClient]);
 
@@ -102,15 +116,14 @@ export default function CategoryManager() {
         setSearchQuery(value);
     }, []);
 
-    // Memoized columns
-    const columns = useMemo(() => getCategoryColumns({
-        onEdit: handleEdit,
-        onDelete: handleDeleteClick,
-        onRestore: handleRestoreClick
-    }), [handleEdit, handleDeleteClick, handleRestoreClick]);
+    // COLUMNS - GUNAKAN REF UNTUK MENGHINDARI RE-RENDER
+    const columns = useMemo(() =>
+        getCategoryColumns(actionHandlersRef.current),
+        []); // EMPTY DEPENDENCY - TIDAK PERNAH RE-RENDER
 
     const isActionLoading = deleteCategory.isPending || restoreCategory.isPending;
 
+    // Optimize confirm message
     const confirmMessage = useMemo(() => {
         const name = selectedItem?.namaKategori || '';
         if (actionType === 'delete') {
@@ -132,6 +145,17 @@ export default function CategoryManager() {
             </div>
         );
     }, [selectedItem, actionType]);
+
+    // Prepare initial data untuk modal - lebih konsisten
+    const modalInitialData = useMemo(() => {
+        if (!selectedItem) return undefined;
+
+        return {
+            id: selectedItem.id,
+            namaKategori: selectedItem.namaKategori || '',
+            deskripsi: selectedItem.deskripsi || ''
+        };
+    }, [selectedItem]);
 
     return (
         <>
@@ -175,10 +199,11 @@ export default function CategoryManager() {
                 </CardBody>
             </Card>
 
+            {/* MODAL DENGAN PROP YANG OPTIMAL */}
             <CategoryModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
-                initialData={selectedItem}
+                initialData={modalInitialData}
                 onSuccess={handleFormSuccess}
             />
 

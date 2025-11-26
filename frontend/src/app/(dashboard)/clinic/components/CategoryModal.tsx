@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { Modal } from '@/components/ui/feedback/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/forms/input';
@@ -8,6 +8,8 @@ import { Textarea } from '@/components/ui/forms/text-area';
 import { useForm } from '@/core/hooks/forms/useForm';
 import { useCreateTreatmentCategory, useUpdateTreatmentCategory } from '@/core/services/api/treatment-categories.api';
 import { useToast } from '@/core/hooks/ui/useToast';
+import { Loader2, CheckCircle2 } from 'lucide-react';
+import { z } from 'zod';
 
 interface CategoryModalProps {
     isOpen: boolean;
@@ -15,6 +17,12 @@ interface CategoryModalProps {
     initialData?: any;
     onSuccess: () => void;
 }
+
+// Validation schema
+const categorySchema = z.object({
+    namaKategori: z.string().min(1, 'Nama kategori wajib diisi'),
+    deskripsi: z.string().optional(),
+});
 
 export default function CategoryModal({ isOpen, onClose, initialData, onSuccess }: CategoryModalProps) {
     const toast = useToast();
@@ -24,140 +32,141 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
-    // 1. Memoize validation function
-    const validateForm = useCallback((values: any) => {
-        const errors: Record<string, string> = {};
+    // STATE UNTUK TRACK INITIALIZATION
+    const [isInitialized, setIsInitialized] = useState(false);
 
-        if (!values.namaKategori || values.namaKategori.trim() === '') {
-            errors.namaKategori = 'Nama kategori wajib diisi';
-        } else if (values.namaKategori.length < 3) {
-            errors.namaKategori = 'Nama kategori minimal 3 karakter';
-        } else if (values.namaKategori.length > 100) {
-            errors.namaKategori = 'Nama kategori maksimal 100 karakter';
-        }
-
-        if (values.deskripsi && values.deskripsi.length > 500) {
-            errors.deskripsi = 'Deskripsi maksimal 500 karakter';
-        }
-
-        return errors;
-    }, []);
-
-    // 2. Memoize submit handler
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const payload = {
                 namaKategori: values.namaKategori.trim(),
-                deskripsi: values.deskripsi?.trim() || undefined
+                deskripsi: values.deskripsi?.trim() || ''
             };
 
             if (isEdit) {
-                await updateMutation.mutateAsync({
-                    id: initialData.id,
-                    data: payload
-                });
-                toast.showSuccess('Kategori berhasil diperbarui');
+                await updateMutation.mutateAsync({ id: initialData.id, data: payload });
+                toast.showSuccess('✅ Kategori berhasil diperbarui');
             } else {
-                await createMutation.mutateAsync({
-                    data: payload
-                });
-                toast.showSuccess('Kategori berhasil dibuat');
+                await createMutation.mutateAsync({ data: payload });
+                toast.showSuccess('✅ Kategori berhasil dibuat');
             }
             onSuccess();
             onClose();
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
-            toast.showError(
-                isEdit
-                    ? `Gagal memperbarui kategori: ${errorMessage}`
-                    : `Gagal membuat kategori: ${errorMessage}`
-            );
+            toast.showError(`❌ Gagal ${isEdit ? 'memperbarui' : 'membuat'} kategori: ${errorMessage}`);
         }
     }, [isEdit, initialData, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // 3. PERBAIKAN UTAMA: Memoize konfigurasi form
-    // Ini mencegah 'initialValues' dibuat ulang sebagai object baru setiap kali render
-    // yang menyebabkan form mereset diri sendiri dan hilang fokus.
+    // FORM CONFIG - INITIAL VALUES KOSONG SAJA
     const formConfig = useMemo(() => ({
         initialValues: {
             namaKategori: '',
             deskripsi: '',
         },
-        customValidate: validateForm,
-        onSubmit: handleFormSubmit
-    }), [validateForm, handleFormSubmit]);
+        validationSchema: categorySchema,
+        validateOnChange: true,
+        validateOnBlur: true,
+        onSubmit: handleFormSubmit,
+    }), [handleFormSubmit]); // HANYA depend pada handleFormSubmit
 
     const form = useForm(formConfig);
 
-    // Populate form data
+    // EFFECT UNTUK RESET & INITIALIZE FORM - FIXED LOGIC
     useEffect(() => {
         if (isOpen) {
-            if (initialData) {
-                form.setFieldValue('namaKategori', initialData.namaKategori || '');
-                form.setFieldValue('deskripsi', initialData.deskripsi || '');
-            } else {
-                form.resetForm();
-            }
-            form.clearErrors();
+            console.log('Modal opened, initialData:', initialData);
+
+            // RESET FORM KE STATE AWAL
+            form.resetForm();
+
+            // SET VALUES SETELAH RESET (gunakan setTimeout untuk pastikan reset selesai)
+            const timer = setTimeout(() => {
+                if (initialData) {
+                    // EDIT MODE - set values dari initialData
+                    form.setFieldValue('namaKategori', initialData.namaKategori || '');
+                    form.setFieldValue('deskripsi', initialData.deskripsi || '');
+                }
+                // CREATE MODE - biarkan values tetap kosong
+
+                setIsInitialized(true);
+            }, 0);
+
+            return () => clearTimeout(timer);
+        } else {
+            // MODAL DITUTUP - reset state
+            setIsInitialized(false);
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isOpen, initialData?.id]);
-
-    // Memoize field handlers
-    const handleNamaKategoriChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        form.setFieldValue('namaKategori', e.target.value);
-    }, [form]);
-
-    const handleDeskripsiChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        form.setFieldValue('deskripsi', e.target.value);
-    }, [form]);
-
-    const handleFormSubmitWrapper = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-        form.handleSubmit();
-    }, [form]);
+    }, [isOpen, initialData?.id]); // HANYA depend pada isOpen dan initialData.id
 
     const handleCloseModal = useCallback(() => {
-        form.resetForm();
-        onClose();
-    }, [form, onClose]);
+        if (!isLoading) {
+            form.resetForm();
+            setIsInitialized(false);
+            onClose();
+        }
+    }, [form, onClose, isLoading]);
+
+    // SIMPLE HANDLERS - TANPA USE_CALLBACK UNNECESSARY
+    const handleNamaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        form.setFieldValue('namaKategori', e.target.value);
+    };
+
+    const handleDeskripsiChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        form.setFieldValue('deskripsi', e.target.value);
+    };
+
+    const handleNamaBlur = () => {
+        form.setFieldTouched('namaKategori', true);
+    };
+
+    const handleDeskripsiBlur = () => {
+        form.setFieldTouched('deskripsi', true);
+    };
 
     return (
         <Modal
             isOpen={isOpen}
             onClose={handleCloseModal}
             title={isEdit ? "Edit Kategori" : "Tambah Kategori Baru"}
-            description={isEdit ? "Perbarui informasi kategori layanan" : "Buat kategori baru untuk mengelompokkan layanan"}
+            description={isEdit ? "Perbarui informasi kategori layanan" : "Buat kategori baru"}
+            size="md"
+            closeOnOverlayClick={!isLoading}
+            closeOnEscape={!isLoading}
         >
-            <form onSubmit={handleFormSubmitWrapper}>
+            <form onSubmit={form.handleSubmit} className="flex flex-col h-full">
                 <div className="space-y-4 py-4">
                     <Input
-                        // PERBAIKAN: Tambahkan ID statis
                         id="field-nama-kategori"
                         label="Nama Kategori"
                         placeholder="Contoh: Konservasi Gigi"
                         name="namaKategori"
-                        value={form.values.namaKategori}
-                        onChange={handleNamaKategoriChange}
-                        error={form.errors.namaKategori}
+                        value={form.values.namaKategori || ''}
+                        onChange={handleNamaChange}
+                        onBlur={handleNamaBlur}
+                        error={form.touched.namaKategori ? form.errors.namaKategori : undefined}
                         disabled={isLoading}
                         required
-                    // PERBAIKAN: Hapus autoFocus agar tidak merebut fokus dari field lain
+                        autoFocus={isOpen}
                     />
+
                     <Textarea
-                        // PERBAIKAN: Tambahkan ID statis
                         id="field-deskripsi"
                         label="Deskripsi"
-                        placeholder="Keterangan singkat tentang kategori ini..."
+                        placeholder="Keterangan singkat..."
                         name="deskripsi"
-                        value={form.values.deskripsi}
+                        value={form.values.deskripsi || ''}
                         onChange={handleDeskripsiChange}
-                        error={form.errors.deskripsi}
+                        onBlur={handleDeskripsiBlur}
+                        error={form.touched.deskripsi ? form.errors.deskripsi : undefined}
                         disabled={isLoading}
                         rows={3}
+                        maxLength={500}
+                        showCharCount
+                        resize="vertical"
                     />
                 </div>
-                <div className="flex justify-end gap-2 mt-4">
+
+                <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-100">
                     <Button
                         type="button"
                         variant="outline"
@@ -168,9 +177,20 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                     </Button>
                     <Button
                         type="submit"
-                        disabled={isLoading || Object.keys(form.errors).length > 0}
+                        disabled={isLoading || !form.isValid}
+                        className="min-w-[100px]"
                     >
-                        {isEdit ? 'Update' : 'Simpan'}
+                        {isLoading ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                {isEdit ? 'Menyimpan...' : 'Membuat...'}
+                            </>
+                        ) : (
+                            <>
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                {isEdit ? 'Update' : 'Simpan'}
+                            </>
+                        )}
                     </Button>
                 </div>
             </form>
