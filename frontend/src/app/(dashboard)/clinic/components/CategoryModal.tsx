@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useMemo, useState } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/feedback/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/forms/input';
@@ -18,11 +18,22 @@ interface CategoryModalProps {
     onSuccess: () => void;
 }
 
-// Validation schema
 const categorySchema = z.object({
     namaKategori: z.string().min(1, 'Nama kategori wajib diisi'),
     deskripsi: z.string().optional(),
 });
+
+// STATIC form config - tidak pernah berubah
+const FORM_CONFIG = {
+    initialValues: {
+        namaKategori: '',
+        deskripsi: '',
+    },
+    validationSchema: categorySchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+    onSubmit: async () => { }, // akan di-override di component
+};
 
 export default function CategoryModal({ isOpen, onClose, initialData, onSuccess }: CategoryModalProps) {
     const toast = useToast();
@@ -32,9 +43,10 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
-    // STATE UNTUK TRACK INITIALIZATION
-    const [isInitialized, setIsInitialized] = useState(false);
+    // Gunakan ref untuk track initialization
+    const isInitializedRef = useRef(false);
 
+    // Submit handler yang stabil
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const payload = {
@@ -55,78 +67,48 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
             toast.showError(`❌ Gagal ${isEdit ? 'memperbarui' : 'membuat'} kategori: ${errorMessage}`);
         }
-    }, [isEdit, initialData, createMutation, updateMutation, toast, onSuccess, onClose]);
+    }, [isEdit, initialData?.id, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // FORM CONFIG - INITIAL VALUES KOSONG SAJA
-    const formConfig = useMemo(() => ({
-        initialValues: {
-            namaKategori: '',
-            deskripsi: '',
-        },
-        validationSchema: categorySchema,
-        validateOnChange: true,
-        validateOnBlur: true,
-        onSubmit: handleFormSubmit,
-    }), [handleFormSubmit]); // HANYA depend pada handleFormSubmit
+    // Override onSubmit di config
+    const formConfigWithSubmit = { ...FORM_CONFIG, onSubmit: handleFormSubmit };
+    const form = useForm(formConfigWithSubmit);
 
-    const form = useForm(formConfig);
-
-    // EFFECT UNTUK RESET & INITIALIZE FORM - FIXED LOGIC
+    // Populate form HANYA saat modal pertama kali dibuka atau initialData.id berubah
     useEffect(() => {
-        if (isOpen) {
-            console.log('Modal opened, initialData:', initialData);
+        if (isOpen && !isInitializedRef.current) {
+            isInitializedRef.current = true;
 
-            // RESET FORM KE STATE AWAL
-            form.resetForm();
-
-            // SET VALUES SETELAH RESET (gunakan setTimeout untuk pastikan reset selesai)
-            const timer = setTimeout(() => {
-                if (initialData) {
-                    // EDIT MODE - set values dari initialData
-                    form.setFieldValue('namaKategori', initialData.namaKategori || '');
-                    form.setFieldValue('deskripsi', initialData.deskripsi || '');
-                }
-                // CREATE MODE - biarkan values tetap kosong
-
-                setIsInitialized(true);
-            }, 0);
-
-            return () => clearTimeout(timer);
-        } else {
-            // MODAL DITUTUP - reset state
-            setIsInitialized(false);
+            if (initialData) {
+                // Set values secara batch menggunakan setValues manual
+                const newValues = {
+                    namaKategori: initialData.namaKategori || '',
+                    deskripsi: initialData.deskripsi || '',
+                };
+                // Gunakan object spread untuk update values sekaligus
+                Object.entries(newValues).forEach(([key, value]) => {
+                    form.setFieldValue(key as any, value);
+                });
+            }
         }
-    }, [isOpen, initialData?.id]); // HANYA depend pada isOpen dan initialData.id
 
-    const handleCloseModal = useCallback(() => {
+        // Reset flag saat modal ditutup
+        if (!isOpen) {
+            isInitializedRef.current = false;
+        }
+    }, [isOpen, initialData?.id]);
+
+    const handleClose = () => {
         if (!isLoading) {
             form.resetForm();
-            setIsInitialized(false);
+            isInitializedRef.current = false;
             onClose();
         }
-    }, [form, onClose, isLoading]);
-
-    // SIMPLE HANDLERS - TANPA USE_CALLBACK UNNECESSARY
-    const handleNamaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        form.setFieldValue('namaKategori', e.target.value);
-    };
-
-    const handleDeskripsiChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        form.setFieldValue('deskripsi', e.target.value);
-    };
-
-    const handleNamaBlur = () => {
-        form.setFieldTouched('namaKategori', true);
-    };
-
-    const handleDeskripsiBlur = () => {
-        form.setFieldTouched('deskripsi', true);
     };
 
     return (
         <Modal
             isOpen={isOpen}
-            onClose={handleCloseModal}
+            onClose={handleClose}
             title={isEdit ? "Edit Kategori" : "Tambah Kategori Baru"}
             description={isEdit ? "Perbarui informasi kategori layanan" : "Buat kategori baru"}
             size="md"
@@ -141,8 +123,8 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         placeholder="Contoh: Konservasi Gigi"
                         name="namaKategori"
                         value={form.values.namaKategori || ''}
-                        onChange={handleNamaChange}
-                        onBlur={handleNamaBlur}
+                        onChange={(e) => form.setFieldValue('namaKategori', e.target.value)}
+                        onBlur={() => form.setFieldTouched('namaKategori', true)}
                         error={form.touched.namaKategori ? form.errors.namaKategori : undefined}
                         disabled={isLoading}
                         required
@@ -155,8 +137,8 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         placeholder="Keterangan singkat..."
                         name="deskripsi"
                         value={form.values.deskripsi || ''}
-                        onChange={handleDeskripsiChange}
-                        onBlur={handleDeskripsiBlur}
+                        onChange={(e) => form.setFieldValue('deskripsi', e.target.value)}
+                        onBlur={() => form.setFieldTouched('deskripsi', true)}
                         error={form.touched.deskripsi ? form.errors.deskripsi : undefined}
                         disabled={isLoading}
                         rows={3}
@@ -170,7 +152,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={handleCloseModal}
+                        onClick={handleClose}
                         disabled={isLoading}
                     >
                         Batal

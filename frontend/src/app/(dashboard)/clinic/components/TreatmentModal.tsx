@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { Modal } from '@/components/ui/feedback/modal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/forms/input';
@@ -10,8 +10,9 @@ import { useForm } from '@/core/hooks/forms/useForm';
 import { useCreateTreatment, useUpdateTreatment } from '@/core/services/api/treatments.api';
 import { useTreatmentCategories } from '@/core/services/api/treatment-categories.api';
 import { useToast } from '@/core/hooks/ui/useToast';
-import { Loader2, CheckCircle2  } from 'lucide-react';
+import { Loader2, CheckCircle2 } from 'lucide-react';
 import { SkeletonForm } from '@/components/ui/data-display/skeleton';
+import { z } from 'zod';
 
 interface TreatmentModalProps {
     isOpen: boolean;
@@ -19,6 +20,29 @@ interface TreatmentModalProps {
     initialData?: any;
     onSuccess: () => void;
 }
+
+const treatmentSchema = z.object({
+    namaPerawatan: z.string().min(3, 'Nama layanan minimal 3 karakter'),
+    categoryId: z.string().min(1, 'Kategori wajib dipilih'),
+    harga: z.string().min(1, 'Harga wajib diisi'),
+    durasiEstimasi: z.string().min(1, 'Durasi wajib diisi'),
+    deskripsi: z.string().optional(),
+});
+
+// STATIC form config
+const FORM_CONFIG = {
+    initialValues: {
+        namaPerawatan: '',
+        categoryId: '',
+        harga: '',
+        durasiEstimasi: '30',
+        deskripsi: '',
+    },
+    validationSchema: treatmentSchema,
+    validateOnChange: false,
+    validateOnBlur: true,
+    onSubmit: async () => { },
+};
 
 export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess }: TreatmentModalProps) {
     const toast = useToast();
@@ -29,14 +53,17 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
 
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
+    const isInitializedRef = useRef(false);
 
-    // ✅ Memoize kategori options
-    const categoryOptions = useMemo(() => {
+    // Category options - computed once per data change
+    const categoryOptions = useRef<Array<{ label: string, value: string }>>([]);
+
+    useEffect(() => {
         const list = Array.isArray(categoriesResponse)
             ? categoriesResponse
             : (categoriesResponse as any)?.data || [];
 
-        return list
+        categoryOptions.current = list
             .filter((c: any) => !c.deletedAt && c.isActive !== false)
             .map((c: any) => ({
                 label: c.namaKategori,
@@ -44,40 +71,14 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
             }));
     }, [categoriesResponse]);
 
-    // ✅ Memoize validation function
-    const validateForm = useCallback((values: any) => {
-        const errors: Record<string, string> = {};
+    // Format harga - simple function
+    const formatHarga = (value: string) => {
+        if (!value) return '';
+        const numValue = value.replace(/[^\d]/g, '');
+        return numValue ? new Intl.NumberFormat('id-ID').format(Number(numValue)) : '';
+    };
 
-        if (!values.namaPerawatan?.trim()) {
-            errors.namaPerawatan = 'Nama layanan wajib diisi';
-        } else if (values.namaPerawatan.length < 3) {
-            errors.namaPerawatan = 'Nama layanan minimal 3 karakter';
-        }
-
-        if (!values.categoryId) {
-            errors.categoryId = 'Kategori wajib dipilih';
-        }
-
-        const cleanHarga = values.harga ? String(values.harga).replace(/[^\d]/g, '') : '';
-        const hargaNum = Number(cleanHarga);
-
-        if (!cleanHarga) {
-            errors.harga = 'Harga wajib diisi';
-        } else if (isNaN(hargaNum) || hargaNum < 0) {
-            errors.harga = 'Harga tidak valid';
-        }
-
-        const durasi = Number(values.durasiEstimasi);
-        if (!values.durasiEstimasi) {
-            errors.durasiEstimasi = 'Durasi wajib diisi';
-        } else if (isNaN(durasi) || durasi <= 0) {
-            errors.durasiEstimasi = 'Durasi harus lebih dari 0 menit';
-        }
-
-        return errors;
-    }, []);
-
-    // ✅ Memoize submit handler
+    // Submit handler
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const cleanHarga = values.harga.toString().replace(/[^\d]/g, '');
@@ -107,98 +108,44 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
             toast.showError(isEdit ? `❌ Gagal update: ${errorMessage}` : `❌ Gagal simpan: ${errorMessage}`);
         }
-    }, [isEdit, initialData, createMutation, updateMutation, toast, onSuccess, onClose]);
+    }, [isEdit, initialData?.id, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // ✅ PERBAIKAN KRITIS: Form config dengan dependencies minimal
-    const formConfig = useMemo(() => ({
-        initialValues: {
-            namaPerawatan: '',
-            categoryId: '',
-            harga: '',
-            durasiEstimasi: '30',
-            deskripsi: '',
-        },
-        validateOnChange: false, // ✅ Disable validation saat typing
-        validateOnBlur: true,     // ✅ Validate saat blur saja
-        onSubmit: handleFormSubmit
-    }), [handleFormSubmit]);
+    const formConfigWithSubmit = { ...FORM_CONFIG, onSubmit: handleFormSubmit };
+    const form = useForm(formConfigWithSubmit);
 
-    const form = useForm(formConfig);
-
-    // ✅ Populate form hanya ketika modal dibuka
+    // Populate form saat modal dibuka
     useEffect(() => {
-        if (isOpen) {
+        if (isOpen && !isInitializedRef.current) {
+            isInitializedRef.current = true;
+
             if (initialData) {
                 form.setFieldValue('namaPerawatan', initialData.namaPerawatan || '');
                 form.setFieldValue('categoryId', initialData.categoryId?.toString() || '');
                 form.setFieldValue('harga', initialData.harga?.toString() || '');
                 form.setFieldValue('durasiEstimasi', initialData.durasiEstimasi?.toString() || '30');
                 form.setFieldValue('deskripsi', initialData.deskripsi || '');
-            } else {
-                form.resetForm();
             }
+        }
+
+        if (!isOpen) {
+            isInitializedRef.current = false;
         }
     }, [isOpen, initialData?.id]);
 
-    // ✅ Memoize format display harga
-    const getDisplayHarga = useCallback((value: string | number) => {
-        if (!value) return '';
-        const stringVal = String(value).replace(/[^\d]/g, '');
-        if (!stringVal) return '';
-        return new Intl.NumberFormat('id-ID').format(Number(stringVal));
-    }, []);
-
-    // ✅ Memoize all change handlers
-    const handleNamaPerawatanChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        form.setFieldValue('namaPerawatan', e.target.value);
-    }, [form]);
-
-    const handleCategoryChange = useCallback((val: string) => {
-        form.setFieldValue('categoryId', val);
-    }, [form]);
-
-    const handleHargaChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        const rawValue = e.target.value.replace(/[^\d]/g, '');
-        form.setFieldValue('harga', rawValue);
-    }, [form]);
-
-    const handleDurasiChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        form.setFieldValue('durasiEstimasi', e.target.value);
-    }, [form]);
-
-    const handleDeskripsiChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        form.setFieldValue('deskripsi', e.target.value);
-    }, [form]);
-
-    const handleFormSubmitWrapper = useCallback((e: React.FormEvent) => {
-        e.preventDefault();
-
-        // ✅ Manual validation sebelum submit
-        const validationErrors = validateForm(form.values);
-        if (Object.keys(validationErrors).length > 0) {
-            Object.entries(validationErrors).forEach(([key, value]) => {
-                form.setFieldTouched(key as any, true);
-            });
-            toast.showWarning('⚠️ Mohon periksa kembali form Anda');
-            return;
-        }
-
-        form.handleSubmit();
-    }, [form, validateForm, toast]);
-
-    const handleCloseModal = useCallback(() => {
+    const handleClose = () => {
         if (!isLoading) {
             form.resetForm();
+            isInitializedRef.current = false;
             onClose();
         }
-    }, [form, onClose, isLoading]);
+    };
 
-    // ✅ Show loading skeleton saat kategori loading
+    // Loading skeleton
     if (loadingCategories && isOpen) {
         return (
             <Modal
                 isOpen={isOpen}
-                onClose={handleCloseModal}
+                onClose={handleClose}
                 title={isEdit ? "Edit Layanan" : "Tambah Layanan Baru"}
                 size="lg"
             >
@@ -210,14 +157,14 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
     return (
         <Modal
             isOpen={isOpen}
-            onClose={handleCloseModal}
+            onClose={handleClose}
             title={isEdit ? "Edit Layanan" : "Tambah Layanan Baru"}
             description={isEdit ? "Perbarui detail layanan dan harga." : "Masukkan informasi tindakan medis baru."}
             size="lg"
             closeOnOverlayClick={!isLoading}
             closeOnEscape={!isLoading}
         >
-            <form onSubmit={handleFormSubmitWrapper} noValidate>
+            <form onSubmit={form.handleSubmit} noValidate>
                 <div className="space-y-5 py-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
@@ -225,13 +172,9 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                             label="Nama Layanan"
                             placeholder="Contoh: Scaling Gigi"
                             name="namaPerawatan"
-                            value={form.values.namaPerawatan}
-                            onChange={handleNamaPerawatanChange}
-                            onBlur={() => {
-                                form.setFieldTouched('namaPerawatan', true);
-                                const error = validateForm(form.values).namaPerawatan;
-                                if (error) form.setFieldValue('namaPerawatan', form.values.namaPerawatan);
-                            }}
+                            value={form.values.namaPerawatan || ''}
+                            onChange={(e) => form.setFieldValue('namaPerawatan', e.target.value)}
+                            onBlur={() => form.setFieldTouched('namaPerawatan', true)}
                             error={form.touched.namaPerawatan ? form.errors.namaPerawatan : undefined}
                             disabled={isLoading}
                             required
@@ -242,9 +185,9 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                             id="field-category"
                             label="Kategori"
                             placeholder={loadingCategories ? "Memuat..." : "Pilih Kategori"}
-                            options={categoryOptions}
-                            value={form.values.categoryId}
-                            onChange={handleCategoryChange}
+                            options={categoryOptions.current}
+                            value={form.values.categoryId || ''}
+                            onChange={(val) => form.setFieldValue('categoryId', val)}
                             error={form.touched.categoryId ? form.errors.categoryId : undefined}
                             disabled={isLoading || loadingCategories}
                             required
@@ -257,13 +200,12 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                             label="Harga"
                             placeholder="0"
                             name="harga"
-                            value={getDisplayHarga(form.values.harga)}
-                            onChange={handleHargaChange}
-                            onBlur={() => {
-                                form.setFieldTouched('harga', true);
-                                const error = validateForm(form.values).harga;
-                                if (error) form.setFieldValue('harga', form.values.harga);
+                            value={formatHarga(form.values.harga)}
+                            onChange={(e) => {
+                                const rawValue = e.target.value.replace(/[^\d]/g, '');
+                                form.setFieldValue('harga', rawValue);
                             }}
+                            onBlur={() => form.setFieldTouched('harga', true)}
                             error={form.touched.harga ? form.errors.harga : undefined}
                             disabled={isLoading}
                             required
@@ -276,13 +218,9 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                             type="number"
                             placeholder="30"
                             name="durasiEstimasi"
-                            value={form.values.durasiEstimasi}
-                            onChange={handleDurasiChange}
-                            onBlur={() => {
-                                form.setFieldTouched('durasiEstimasi', true);
-                                const error = validateForm(form.values).durasiEstimasi;
-                                if (error) form.setFieldValue('durasiEstimasi', form.values.durasiEstimasi);
-                            }}
+                            value={form.values.durasiEstimasi || ''}
+                            onChange={(e) => form.setFieldValue('durasiEstimasi', e.target.value)}
+                            onBlur={() => form.setFieldTouched('durasiEstimasi', true)}
                             error={form.touched.durasiEstimasi ? form.errors.durasiEstimasi : undefined}
                             disabled={isLoading}
                             min="1"
@@ -295,8 +233,9 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                         label="Deskripsi / Catatan (Opsional)"
                         placeholder="Detail prosedur atau catatan tambahan..."
                         name="deskripsi"
-                        value={form.values.deskripsi}
-                        onChange={handleDeskripsiChange}
+                        value={form.values.deskripsi || ''}
+                        onChange={(e) => form.setFieldValue('deskripsi', e.target.value)}
+                        onBlur={() => form.setFieldTouched('deskripsi', true)}
                         disabled={isLoading}
                         rows={3}
                         maxLength={1000}
@@ -308,7 +247,7 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                     <Button
                         type="button"
                         variant="outline"
-                        onClick={handleCloseModal}
+                        onClick={handleClose}
                         disabled={isLoading}
                     >
                         Batal
