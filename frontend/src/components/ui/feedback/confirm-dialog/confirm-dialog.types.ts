@@ -9,7 +9,7 @@ export interface ConfirmDialogProps {
     confirmText?: string;
     cancelText?: string;
     type?: 'info' | 'warning' | 'danger' | 'success' | 'delete' | 'logout' | 'archive';
-    variant?: 'default' | 'compact' | 'detailed';
+    variant?: 'default' | 'compact' | 'detailed' | 'danger';
     size?: 'sm' | 'md' | 'lg' | 'xl';
     isLoading?: boolean;
     disabled?: boolean;

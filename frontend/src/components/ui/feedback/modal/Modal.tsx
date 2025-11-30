@@ -9,6 +9,32 @@ import { ModalTitle } from './ModalTitle';
 import { ModalFooter } from './ModalFooter';
 import { animationClasses, backdropClasses, fullscreenClasses, sizeClasses } from './modal.styles';
 
+
+const CloseButton = ({
+    position,
+    onClose,
+    showCloseButton
+}: {
+    position: 'inside' | 'outside';
+    onClose: () => void;
+    showCloseButton: boolean;
+}) => {
+    if (!showCloseButton) return null;
+    const isInside = position === 'inside';
+    return (
+        <button
+            onClick={onClose}
+            className={cn(
+                'flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-gray-100 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
+                isInside ? 'p-2 text-gray-400 hover:text-gray-600' : 'p-3 bg-white shadow-lg border border-gray-200 text-gray-600 hover:text-gray-800'
+            )}
+            aria-label="Close modal"
+        >
+            <X className={isInside ? 'w-5 h-5' : 'w-6 h-6'} />
+        </button>
+    );
+};
+
 export default function Modal({
     isOpen, onClose, title, description, children, footer, size = 'md',
     closeOnOverlayClick = true, closeOnEscape = true, showCloseButton = true,
@@ -55,28 +81,11 @@ export default function Modal({
 
     if (!isOpen) return null;
 
-    const CloseButton = ({ position }: { position: 'inside' | 'outside' }) => {
-        if (!showCloseButton) return null;
-        const isInside = position === 'inside';
-        return (
-            <button
-                onClick={onClose}
-                className={cn(
-                    'flex items-center justify-center rounded-lg transition-all duration-200 hover:bg-gray-100 active:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2',
-                    isInside ? 'p-2 text-gray-400 hover:text-gray-600' : 'p-3 bg-white shadow-lg border border-gray-200 text-gray-600 hover:text-gray-800'
-                )}
-                aria-label="Close modal"
-            >
-                <X className={isInside ? 'w-5 h-5' : 'w-6 h-6'} />
-            </button>
-        );
-    };
-
     return (
         <div className={cn('fixed inset-0 z-50 overflow-y-auto', animationClasses[animation], overlayBlur && 'backdrop-blur-sm')} role="dialog" aria-modal="true">
             <div className={cn('fixed inset-0 transition-opacity', backdropClasses[backdrop], overlayClassName)} onClick={handleOverlayClick} />
             <div className={cn('flex min-h-full p-4', centered ? 'items-center justify-center' : 'items-start justify-center')}>
-                {closeButtonPosition === 'outside' && <div className="absolute -top-12 right-0 z-10"><CloseButton position="outside" /></div>}
+                {closeButtonPosition === 'outside' && <div className="absolute -top-12 right-0 z-10"></div>}
                 <div
                     ref={modalRef}
                     tabIndex={-1}
@@ -94,7 +103,6 @@ export default function Modal({
                                         {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                                     </button>
                                 )}
-                                <CloseButton position="inside" />
                             </div>
                         </div>
                     )}

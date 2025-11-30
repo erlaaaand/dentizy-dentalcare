@@ -1,11 +1,11 @@
 export const sizeClasses = {
-    xs: 'max-w-xs',
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-lg',
-    xl: 'max-w-4xl',
+    xs: 'max-w-xs w-full',
+    sm: 'max-w-sm w-full',
+    md: 'max-w-md w-full',
+    lg: 'max-w-lg w-full',
+    xl: 'max-w-4xl w-full', // <--- PENTING: Tambahkan w-full di sini
     full: 'max-w-7xl w-full mx-4',
-    auto: 'max-w-max',
+    auto: 'max-w-max w-full',
 };
 
 export const backdropClasses = {
