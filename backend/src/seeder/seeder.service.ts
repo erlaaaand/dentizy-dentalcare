@@ -34,7 +34,7 @@ export class SeederService {
             await this.seedPatients();
 
             // 4. Seed Appointments (jika kosong)
-            await this.seedAppointments();
+            // await this.seedAppointments();
 
             this.logger.log('✅ Seeding completed successfully');
         } catch (error) {
@@ -210,92 +210,92 @@ export class SeederService {
     /**
      * ✅ FIX: Dynamic appointment dates (relative to today)
      */
-    private async seedAppointments() {
-        try {
-            const existingAppointments = await this.appointmentRepo.find();
+    // private async seedAppointments() {
+    //     try {
+    //         const existingAppointments = await this.appointmentRepo.find();
 
-            if (existingAppointments.length > 0) {
-                this.logger.log('⏭️  Appointments already exist, skipping...');
-                return;
-            }
+    //         if (existingAppointments.length > 0) {
+    //             this.logger.log('⏭️  Appointments already exist, skipping...');
+    //             return;
+    //         }
 
-            this.logger.log('📅 Seeding appointments...');
+    //         this.logger.log('📅 Seeding appointments...');
 
-            const dokter = await this.userRepo.findOne({
-                where: { username: 'anisa.putri' },
-                relations: ['roles']
-            });
+    //         const dokter = await this.userRepo.findOne({
+    //             where: { username: 'anisa.putri' },
+    //             relations: ['roles']
+    //         });
 
-            const patient1 = await this.patientRepo.findOneBy({ nik: '3201012345678901' });
-            const patient2 = await this.patientRepo.findOneBy({ nik: '3201012345678902' });
-            const patient3 = await this.patientRepo.findOneBy({ nik: '3201012345678903' });
+    //         const patient1 = await this.patientRepo.findOneBy({ nik: '3201012345678901' });
+    //         const patient2 = await this.patientRepo.findOneBy({ nik: '3201012345678902' });
+    //         const patient3 = await this.patientRepo.findOneBy({ nik: '3201012345678903' });
 
-            if (!dokter || !patient1 || !patient2 || !patient3) {
-                throw new Error('Doctor or patients not found. Please run user and patient seeding first.');
-            }
+    //         if (!dokter || !patient1 || !patient2 || !patient3) {
+    //             throw new Error('Doctor or patients not found. Please run user and patient seeding first.');
+    //         }
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+    //         const today = new Date();
+    //         today.setHours(0, 0, 0, 0);
 
-            // ✅ FIX: Create appointments with dynamic dates
-            const appointments = [
-                // Appointment kemarin (sudah selesai)
-                {
-                    patient_id: patient1.id,
-                    doctor_id: dokter.id,
-                    tanggal_janji: new Date(today.getTime() - 24 * 60 * 60 * 1000), // Yesterday
-                    jam_janji: '09:00:00',
-                    status: AppointmentStatus.SELESAI,
-                    keluhan: 'Gigi berlubang di geraham kiri',
-                },
-                // Appointment besok (dijadwalkan)
-                {
-                    patient_id: patient2.id,
-                    doctor_id: dokter.id,
-                    tanggal_janji: new Date(today.getTime() + 24 * 60 * 60 * 1000), // Tomorrow
-                    jam_janji: '10:00:00',
-                    status: AppointmentStatus.DIJADWALKAN,
-                    keluhan: 'Scaling rutin',
-                },
-                // Appointment lusa (dijadwalkan)
-                {
-                    patient_id: patient3.id,
-                    doctor_id: dokter.id,
-                    tanggal_janji: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
-                    jam_janji: '14:00:00',
-                    status: AppointmentStatus.DIJADWALKAN,
-                    keluhan: 'Pemeriksaan rutin',
-                },
-            ];
+    //         // ✅ FIX: Create appointments with dynamic dates
+    //         const appointments = [
+    //             // Appointment kemarin (sudah selesai)
+    //             {
+    //                 patient_id: patient1.id,
+    //                 doctor_id: dokter.id,
+    //                 tanggal_janji: new Date(today.getTime() - 24 * 60 * 60 * 1000), // Yesterday
+    //                 jam_janji: '09:00:00',
+    //                 status: AppointmentStatus.SELESAI,
+    //                 keluhan: 'Gigi berlubang di geraham kiri',
+    //             },
+    //             // Appointment besok (dijadwalkan)
+    //             {
+    //                 patient_id: patient2.id,
+    //                 doctor_id: dokter.id,
+    //                 tanggal_janji: new Date(today.getTime() + 24 * 60 * 60 * 1000), // Tomorrow
+    //                 jam_janji: '10:00:00',
+    //                 status: AppointmentStatus.DIJADWALKAN,
+    //                 keluhan: 'Scaling rutin',
+    //             },
+    //             // Appointment lusa (dijadwalkan)
+    //             {
+    //                 patient_id: patient3.id,
+    //                 doctor_id: dokter.id,
+    //                 tanggal_janji: new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000), // Day after tomorrow
+    //                 jam_janji: '14:00:00',
+    //                 status: AppointmentStatus.DIJADWALKAN,
+    //                 keluhan: 'Pemeriksaan rutin',
+    //             },
+    //         ];
 
-            const savedAppointments = await this.appointmentRepo.save(appointments);
-            this.logger.log('✅ Appointments seeded successfully');
+    //         const savedAppointments = await this.appointmentRepo.save(appointments);
+    //         this.logger.log('✅ Appointments seeded successfully');
 
-            // Seed medical record untuk appointment yang sudah selesai
-            const completedAppointment = savedAppointments[0];
+    //         // Seed medical record untuk appointment yang sudah selesai
+    //         const completedAppointment = savedAppointments[0];
 
-            // --- PERBAIKAN DI SINI ---
-            await this.medicalRecordRepo.save({
-                appointment: completedAppointment, // Gunakan object relasi
+    //         // --- PERBAIKAN DI SINI ---
+    //         await this.medicalRecordRepo.save({
+    //             appointment: completedAppointment, // Gunakan object relasi
 
-                // 1. TAMBAHKAN INI: Masukkan object Dokter (User)
-                doctor: dokter,
+    //             // 1. TAMBAHKAN INI: Masukkan object Dokter (User)
+    //             doctor: dokter,
 
-                // 2. TAMBAHKAN INI: Masukkan object Pasien (WAJIB agar error patient_id hilang)
-                patient: patient1,
+    //             // 2. TAMBAHKAN INI: Masukkan object Pasien (WAJIB agar error patient_id hilang)
+    //             patient: patient1,
 
-                // Data medis
-                subjektif: 'Pasien mengeluh sakit gigi sejak 3 hari yang lalu, terutama saat makan dan minum dingin',
-                objektif: 'Terdapat karies profunda pada gigi 36 (geraham pertama bawah kiri), tidak ada pembengkakan gusi',
-                assessment: 'Karies profunda gigi 36, perlu perawatan saluran akar (root canal treatment)',
-                plan: 'Rencana: 1) Foto rontgen panoramik, 2) Perawatan saluran akar 3 kali kunjungan, 3) Crown restoration setelah perawatan selesai',
-            });
+    //             // Data medis
+    //             subjektif: 'Pasien mengeluh sakit gigi sejak 3 hari yang lalu, terutama saat makan dan minum dingin',
+    //             objektif: 'Terdapat karies profunda pada gigi 36 (geraham pertama bawah kiri), tidak ada pembengkakan gusi',
+    //             assessment: 'Karies profunda gigi 36, perlu perawatan saluran akar (root canal treatment)',
+    //             plan: 'Rencana: 1) Foto rontgen panoramik, 2) Perawatan saluran akar 3 kali kunjungan, 3) Crown restoration setelah perawatan selesai',
+    //         });
 
-            this.logger.log('✅ Medical records seeded successfully');
+    //         this.logger.log('✅ Medical records seeded successfully');
 
-        } catch (error) {
-            this.logger.error('❌ Error seeding appointments:', error);
-            throw error;
-        }
-    }
+    //     } catch (error) {
+    //         this.logger.error('❌ Error seeding appointments:', error);
+    //         throw error;
+    //     }
+    // }
 }
