@@ -1,251 +1,258 @@
-// frontend/src/core/hooks/auth/useAuth.ts
-'use client'
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+
+// IMPORTANT: import langsung dari file implementasi storage
 import { storageService } from '@/core/services/cache/storage.service';
+
 import { ROUTES } from '@/core/constants/routes.constants';
 import { SUCCESS_MESSAGES } from '@/core/constants/success.constants';
 import { ERROR_MESSAGES } from '@/core/constants/error.constants';
 import { useToast } from '../ui/useToast';
+
 import {
     useAuthControllerLogin,
     useAuthControllerLogout,
     useAuthControllerGetProfile,
 } from '@/core/api/generated/auth/auth';
-import type { User, LoginDto } from '@/core/api/model';
 
-// -- Interfaces --
-interface AuthUser extends User {
-    roles?: Array<{ id: number; name: string; description?: string }>;
-}
+import type { LoginDto } from '@/core/api/model';
+import { useQueryClient } from '@tanstack/react-query';
+import type { AuthUser } from '@/core/types/auth-user.types';
+import { AxiosError } from 'axios';
 
-interface LoginResponse {
+// ======================
+// AUTH RESPONSE TYPES
+// ======================
+export interface LoginResponse {
     access_token?: string;
     refresh_token?: string;
     user?: AuthUser;
 }
 
-// -- Helper Functions: Cookie Management --
-const setAuthCookie = (token: string, expiresInSeconds: number = 86400) => {
+// ======================
+// COOKIE SETTER
+// ======================
+const setAuthCookie = (token: string, expiresInSeconds = 86400) => {
     try {
-        document.cookie = `access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax`;
-        document.cookie = `dental_clinic_access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax`;
-    } catch (error) {
-        console.error('Error setting cookies:', error);
+        document.cookie = `access_token=${token}; Path=/; Max-Age=${expiresInSeconds}; SameSite=Lax`;
+        document.cookie = `dental_clinic_access_token=${token}; Path=/; Max-Age=${expiresInSeconds}; SameSite=Lax`;
+    } catch (e) {
+        console.warn('Could not set cookie:', e);
     }
 };
 
-// Force cleanup
+// ======================
+// FULL CLEANUP
+// ======================
 const forceCleanupAll = () => {
-    console.log('🧹 === FORCE CLEANUP STARTED ===');
+    try {
+        document.cookie = `access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+        document.cookie = `dental_clinic_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    } catch { }
 
     try {
-        document.cookie.split(';').forEach(c => {
-            const name = c.split('=')[0].trim();
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname};`;
-            document.cookie = `${name}=; max-age=0; path=/;`;
+        storageService.clearAll();
+    } catch (e) {
+        console.warn("storage cleanup error:", e);
+    }
+
+    try {
+        Object.keys(sessionStorage).forEach((k) => {
+            if (k.startsWith("dental_clinic_")) sessionStorage.removeItem(k);
         });
-        console.log('✅ Cookies cleared');
-    } catch (error) {
-        console.error('Cookie clear error:', error);
-    }
-
-    try {
-        localStorage.clear();
-        sessionStorage.clear();
-        console.log('✅ Storage cleared');
-    } catch (error) {
-        console.error('Storage clear error:', error);
-    }
-
-    try {
-        storageService.clearAuth();
-        console.log('✅ StorageService cleared');
-    } catch (error) {
-        console.error('StorageService clear error:', error);
-    }
-
-    console.log('🧹 === FORCE CLEANUP COMPLETED ===');
+    } catch { }
 };
 
-// -- Main Hook --
+// ======================
+// MAIN HOOK
+// ======================
 export function useAuth() {
-    // ✅ FIX: Start with null/false to match SSR
     const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isInitialized, setIsInitialized] = useState(false);
+    const [hasToken, setHasToken] = useState(false);
 
     const router = useRouter();
     const { showSuccess, showError } = useToast();
+    const queryClient = useQueryClient();
 
-    // ✅ FIX: Check token only on client-side
-    const [hasToken, setHasToken] = useState(false);
-
-    const { data: profileData, isLoading: isLoadingProfile, isError: profileError } = useAuthControllerGetProfile({
+    // ======================
+    // FETCH PROFILE
+    // ======================
+    const {
+        data: profileData,
+        isLoading: isLoadingProfile,
+        isError: isProfileError,
+        error: profileError
+    } = useAuthControllerGetProfile({
         query: {
             enabled: hasToken && isInitialized,
-            retry: false,
+            retry: 1,
             staleTime: 5 * 60 * 1000,
+            refetchOnWindowFocus: false,
+            refetchOnReconnect: false,
         },
     });
 
     const loginMutation = useAuthControllerLogin();
     const logoutMutation = useAuthControllerLogout();
 
-    // ✅ FIX: Initialize auth state on client-side ONLY (useEffect runs only on client)
+    // ======================
+    // INITIALIZATION (client only)
+    // ======================
     useEffect(() => {
-        console.log('🔧 Initializing auth state (client-side only)...');
+        const token = storageService.getAccessToken();
+        const stored = storageService.getUser();
 
-        try {
-            const token = storageService.getAccessToken();
-            const storedUser = storageService.getUser();
+        // Safely validate/cast stored to AuthUser
+        const storedUser: AuthUser | null =
+            stored && typeof stored === 'object' && Object.keys(stored).length > 0
+                ? (stored as AuthUser)
+                : null;
 
-            console.log('🔍 Initial check:', { hasToken: !!token, hasStoredUser: !!storedUser });
-
-            if (token) {
-                setHasToken(true);
-
-                // If we have stored user, use it immediately
-                if (storedUser) {
-                    console.log('✅ Restoring session from storage');
-                    setUser(storedUser as AuthUser);
-                    setIsAuthenticated(true);
-                }
+        if (token) {
+            setHasToken(true);
+            if (storedUser) {
+                setUser(storedUser);
+                setIsAuthenticated(true);
             }
-        } catch (error) {
-            console.error('❌ Initialization error:', error);
-        } finally {
-            setIsInitialized(true);
-            setLoading(false);
         }
-    }, []); // Run once on mount
 
-    // ✅ Handle profile data updates
+        setIsInitialized(true);
+        setLoading(false);
+    }, []);
+
+    // ======================
+    // PROFILE UPDATE & ERROR HANDLING
+    // ======================
     useEffect(() => {
-        // Don't run until initialized
         if (!isInitialized) return;
 
-        console.log('🔄 Auth state update:', {
-            hasToken,
-            profileData: !!profileData,
-            isLoadingProfile,
-            profileError,
-        });
-
-        // Case 1: No token - not authenticated
         if (!hasToken) {
-            console.log('❌ No token');
             setUser(null);
             setIsAuthenticated(false);
             setLoading(false);
             return;
         }
 
-        // Case 2: Profile loading - maintain current state
         if (isLoadingProfile) {
-            console.log('⏳ Profile loading...');
             setLoading(true);
             return;
         }
 
-        // Case 3: Profile error - cleanup
-        if (profileError) {
-            console.log('❌ Profile error - cleaning up');
-            forceCleanupAll();
-            setUser(null);
-            setIsAuthenticated(false);
-            setHasToken(false);
+        if (isProfileError) {
+            // FIX: Cast ke unknown dulu sebelum ke AxiosError untuk mengatasi 'void' mismatch
+            const axiosErr = profileError as unknown as AxiosError;
+            const status = axiosErr?.response?.status;
+
+            // Hanya logout paksa jika 401 (Unauthorized) yang persisten
+            if (status === 401) {
+                console.warn('❌ Session expired or invalid token');
+                forceCleanupAll();
+                setHasToken(false);
+                setUser(null);
+                setIsAuthenticated(false);
+            } else {
+                console.warn('⚠️ Profile fetch error (non-auth):', profileError);
+            }
+
             setLoading(false);
             return;
         }
 
-        // Case 4: Profile data received
         if (profileData) {
-            console.log('✅ Profile data received');
-            setUser(profileData as AuthUser);
+            const u = profileData as AuthUser;
+            setUser(u);
             setIsAuthenticated(true);
-            setLoading(false);
-            storageService.setUser(profileData);
-            return;
+            try {
+                storageService.setUser(u);
+            } catch (e) {
+                console.warn('setUser failed:', e);
+            }
         }
 
         setLoading(false);
+    }, [hasToken, profileData, isLoadingProfile, isProfileError, profileError, isInitialized]);
 
-    }, [hasToken, profileData, isLoadingProfile, profileError, isInitialized]);
-
-    // -- FUNGSI LOGIN --
+    // ======================
+    // LOGIN
+    // ======================
     const login = useCallback(
         async (credentials: LoginDto) => {
             try {
-                console.log('🔐 Starting login process...');
+                const response = (await loginMutation.mutateAsync({
+                    data: credentials,
+                })) as LoginResponse;
 
-                const response = (await loginMutation.mutateAsync({ data: credentials })) as LoginResponse;
-
-                if (response?.access_token) {
+                if (response.access_token) {
                     storageService.setAccessToken(response.access_token);
                     setAuthCookie(response.access_token);
                     setHasToken(true);
-                    console.log('✅ Token saved');
                 }
 
-                if (response?.refresh_token) {
+                if (response.refresh_token) {
                     storageService.setRefreshToken(response.refresh_token);
                 }
 
-                if (response?.user) {
-                    storageService.setUser(response.user);
-                    setUser(response.user);
+                if (response.user) {
+                    storageService.setUser(response.user as AuthUser);
+                    setUser(response.user as AuthUser);
                     setIsAuthenticated(true);
-                    console.log('✅ User data saved');
                 }
 
                 showSuccess(SUCCESS_MESSAGES.LOGIN_SUCCESS);
-
-                console.log('🔄 Redirecting to dashboard...');
-                router.push(ROUTES.DASHBOARD);
-                router.refresh();
-
-            } catch (error) {
-                console.error('❌ Login failed:', error);
+                router.replace(ROUTES.DASHBOARD);
+            } catch (err) {
+                console.error('Login failed:', err);
                 showError(ERROR_MESSAGES.INVALID_CREDENTIALS);
-                throw error;
+                throw err;
             }
         },
         [loginMutation, router, showSuccess, showError]
     );
 
-    // -- FUNGSI LOGOUT --
+    // ======================
+    // LOGOUT
+    // ======================
     const logout = useCallback(async () => {
-        console.log('🚪 === LOGOUT FROM useAuth STARTED ===');
+        setHasToken(false);
+        setUser(null);
+        setIsAuthenticated(false);
 
-        logoutMutation.mutate(undefined, {
-            onSuccess: () => console.log('✅ Logout API success'),
-            onError: (error) => console.warn('⚠️ Logout API error:', error)
-        });
+        try {
+            queryClient.cancelQueries();
+            queryClient.clear();
+        } catch (e) {
+            console.warn('queryClient cleanup error', e);
+        }
+
+        try {
+            logoutMutation.mutate(undefined, {
+                onSettled: () => console.log('Logout API settled'),
+            });
+        } catch (e) {
+            console.warn('logout mutate error', e);
+        }
 
         forceCleanupAll();
 
-        setUser(null);
-        setIsAuthenticated(false);
-        setHasToken(false);
-
-        console.log('🚪 === LOGOUT FROM useAuth COMPLETED ===');
-
-    }, [logoutMutation]);
-
-    const checkAuth = useCallback(() => {
-        console.log('🔍 checkAuth called (deprecated - using useEffect)');
-    }, []);
+        try {
+            router.replace(ROUTES.LOGIN);
+        } catch {
+            window.location.replace(ROUTES.LOGIN);
+        }
+    }, [logoutMutation, queryClient, router]);
 
     return {
         user,
-        loading: loading || isLoadingProfile,
+        loading,
         isAuthenticated,
         login,
         logout,
-        checkAuth,
+        hasToken,
+        setHasToken,
     };
 }
