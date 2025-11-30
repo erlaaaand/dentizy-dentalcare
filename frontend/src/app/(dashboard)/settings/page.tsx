@@ -46,7 +46,6 @@ interface SettingCardProps {
 
 // Fetch system health
 const fetchHealthCheck = async () => {
-    // Panggil sebagai fungsi dengan config object
     const result = await customInstance({
         url: '/health',
         method: 'GET'
@@ -64,46 +63,173 @@ const fetchUserStats = async () => {
 
 export default function SettingsPage() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
 
     // Get user roles as array
     const userRoles = user?.roles?.map((role: any) => role.name) || [];
 
-    // Queries
+    // ✅ FIX: Check if user is kepala klinik
+    const isKepalaKlinik = userRoles.includes(ROLES.KEPALA_KLINIK) ||
+        userRoles.includes('kepala_klinik') ||
+        userRoles.includes('head_clinic');
+
+    // ✅ FIX: Pindahkan SEMUA hooks ke atas SEBELUM conditional returns
     const { data: healthData } = useQuery({
         queryKey: ['system-health-overview'],
         queryFn: fetchHealthCheck,
-        refetchInterval: 60000, // Refresh every minute
+        refetchInterval: 60000,
+        enabled: isKepalaKlinik && !authLoading, // ✅ Hanya fetch jika kepala klinik dan auth sudah loaded
     });
 
     const { data: userStats } = useQuery({
         queryKey: ['user-statistics'],
         queryFn: fetchUserStats,
-        enabled: userRoles.includes(ROLES.KEPALA_KLINIK),
+        enabled: isKepalaKlinik && !authLoading, // ✅ Hanya fetch jika kepala klinik dan auth sudah loaded
     });
 
+    // ✅ FIX: Show loading while checking authentication
+    if (authLoading) {
+        return (
+            <PageContainer title="Pengaturan">
+                <Card>
+                    <CardBody className="p-12 text-center">
+                        <div className="max-w-md mx-auto">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <SettingsIcon className="w-8 h-8 text-blue-600 animate-spin" />
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Memeriksa Akses...</h3>
+                            <p className="text-gray-600">
+                                Sedang memverifikasi hak akses Anda.
+                            </p>
+                        </div>
+                    </CardBody>
+                </Card>
+            </PageContainer>
+        );
+    }
+
+    // ✅ FIX: Show access denied if not kepala klinik - SETELAH semua hooks
+    if (!isKepalaKlinik) {
+        return (
+            <PageContainer title="Akses Ditolak">
+                <Card>
+                    <CardBody className="p-12 text-center">
+                        <div className="max-w-md mx-auto">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Akses Ditolak</h3>
+                            <p className="text-gray-600">
+                                Anda tidak memiliki akses ke halaman ini. Halaman ini hanya dapat diakses oleh Kepala Klinik.
+                            </p>
+                            <div className="mt-4">
+                                <Badge variant="danger" size="sm">
+                                    Role Anda: {userRoles.join(', ').replace(/_/g, ' ') || 'Tidak ada role'}
+                                </Badge>
+                            </div>
+                            <button
+                                onClick={() => router.push('/dashboard')}
+                                className="mt-6 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                Kembali ke Dashboard
+                            </button>
+                        </div>
+                    </CardBody>
+                </Card>
+            </PageContainer>
+        );
+    }
+
+    // ✅ LANJUTKAN dengan kode utama JIKA kepala klinik
     const settingsMenu: SettingCardProps[] = [
-        // Clinic Management
+        // User Management - hanya untuk kepala klinik
         {
-            title: 'Kategori Layanan',
-            description: 'Kelola kategori dan harga layanan',
-            icon: FileText,
-            href: '/settings/categories',
+            title: 'Manajemen Pengguna',
+            description: 'Kelola akun pengguna dan peran akses',
+            icon: Users,
+            href: '/settings/users',
             requiresRole: [ROLES.KEPALA_KLINIK],
         },
-
-        // System & Monitoring
+        {
+            title: 'Manajemen Staf',
+            description: 'Kelola data dokter dan staf klinik',
+            icon: UserCog,
+            href: '/settings/staff',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Clinic Settings - hanya untuk kepala klinik
+        {
+            title: 'Pengaturan Klinik',
+            description: 'Konfigurasi informasi dan operasional klinik',
+            icon: Stethoscope,
+            href: '/settings/clinic',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Treatment & Services - hanya untuk kepala klinik
+        {
+            title: 'Layanan & Perawatan',
+            description: 'Kelola kategori dan jenis perawatan',
+            icon: Activity,
+            href: '/settings/treatments',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Database Management - hanya untuk kepala klinik
+        {
+            title: 'Manajemen Database',
+            description: 'Backup, restore, dan maintenance data',
+            icon: Database,
+            href: '/settings/database',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // System & Monitoring - hanya untuk kepala klinik
         {
             title: 'Status Sistem',
             description: 'Monitor kesehatan server dan database',
             icon: Activity,
             href: '/settings/system-status',
+            requiresRole: [ROLES.KEPALA_KLINIK],
         },
+        // Notifications - hanya untuk kepala klinik
         {
-            title: 'Notifikasi',
-            description: 'Kelola pengaturan notifikasi dan reminder',
+            title: 'Notifikasi Sistem',
+            description: 'Kelola pengaturan notifikasi dan alert',
             icon: Bell,
             href: '/settings/notifications',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Security - hanya untuk kepala klinik
+        {
+            title: 'Keamanan',
+            description: 'Pengaturan keamanan dan audit log',
+            icon: Shield,
+            href: '/settings/security',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Billing & Payments - hanya untuk kepala klinik
+        {
+            title: 'Tagihan & Pembayaran',
+            description: 'Konfigurasi sistem pembayaran dan invoice',
+            icon: CreditCard,
+            href: '/settings/billing',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // Reports - hanya untuk kepala klinik
+        {
+            title: 'Laporan & Analytics',
+            description: 'Generate laporan dan analisis data',
+            icon: TrendingUp,
+            href: '/settings/reports',
+            requiresRole: [ROLES.KEPALA_KLINIK],
+        },
+        // General Settings - hanya untuk kepala klinik
+        {
+            title: 'Pengaturan Umum',
+            description: 'Konfigurasi aplikasi dan preferensi',
+            icon: SettingsIcon,
+            href: '/settings/general',
+            requiresRole: [ROLES.KEPALA_KLINIK],
         },
     ];
 
@@ -136,9 +262,16 @@ export default function SettingsPage() {
 
     return (
         <PageContainer
-            title="Pengaturan"
-            subtitle="Kelola konfigurasi sistem dan preferensi Anda"
+            title="Pengaturan Sistem"
+            subtitle="Kelola konfigurasi sistem dan operasional klinik - Hanya untuk Kepala Klinik"
         >
+            {/* Access Badge */}
+            <div className="mb-6">
+                <Badge variant="success" size="lg">
+                    ✅ Akses Kepala Klinik - Full System Access
+                </Badge>
+            </div>
+
             {/* Settings Menu Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {settingsMenu.map((item) => {
@@ -153,7 +286,7 @@ export default function SettingsPage() {
                                 transition-all duration-200 
                                 ${isDisabled
                                     ? 'opacity-50 cursor-not-allowed'
-                                    : 'hover:shadow-lg hover:-translate-y-1 cursor-pointer'
+                                    : 'hover:shadow-lg hover:-translate-y-1 cursor-pointer border-blue-200'
                                 }
                             `}
                             onClick={() => handleNavigate(item)}
@@ -177,12 +310,17 @@ export default function SettingsPage() {
                                             {item.badge}
                                         </Badge>
                                     )}
+                                    {item.requiresRole && (
+                                        <Badge variant="primary" size="sm">
+                                            Kepala Klinik
+                                        </Badge>
+                                    )}
                                 </div>
 
                                 <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center justify-between">
                                     {item.title}
                                     {!isDisabled && (
-                                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                                        <ChevronRight className="w-5 h-5 text-blue-500" />
                                     )}
                                 </h3>
 
@@ -239,7 +377,11 @@ export default function SettingsPage() {
                                 <div className="flex flex-wrap gap-1 mt-1">
                                     {userRoles.length > 0 ? (
                                         userRoles.map((role, idx) => (
-                                            <Badge key={idx} variant="primary" size="sm">
+                                            <Badge
+                                                key={idx}
+                                                variant={role === ROLES.KEPALA_KLINIK ? "success" : "primary"}
+                                                size="sm"
+                                            >
                                                 {role.replace(/_/g, ' ')}
                                             </Badge>
                                         ))
@@ -291,23 +433,24 @@ export default function SettingsPage() {
                 </CardBody>
             </Card>
 
-            {/* Help Section */}
-            <Card className="mt-6 border-blue-100 bg-blue-50">
+            {/* Admin Notice */}
+            <Card className="mt-6 border-green-100 bg-green-50">
                 <CardBody className="p-6">
                     <div className="flex items-start gap-4">
-                        <div className="p-2 bg-blue-100 rounded-lg">
-                            <SettingsIcon className="w-5 h-5 text-blue-600" />
+                        <div className="p-2 bg-green-100 rounded-lg">
+                            <Shield className="w-5 h-5 text-green-600" />
                         </div>
                         <div className="flex-1">
                             <h4 className="font-semibold text-gray-900 mb-1">
-                                Butuh Bantuan?
+                                Akses Administrator Sistem
                             </h4>
                             <p className="text-sm text-gray-600 mb-3">
-                                Hubungi administrator sistem jika Anda memerlukan bantuan atau mengalami masalah dengan pengaturan.
+                                Sebagai Kepala Klinik, Anda memiliki akses penuh untuk mengelola semua aspek sistem.
+                                Pastikan untuk melakukan perubahan dengan hati-hati.
                             </p>
-                            <button className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors">
-                                Hubungi Support →
-                            </button>
+                            <Badge variant="success" size="sm">
+                                Hak Akses: Full System Administrator
+                            </Badge>
                         </div>
                     </div>
                 </CardBody>
