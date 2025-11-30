@@ -1,84 +1,47 @@
 // backend/src/treatment-categories/applications/orchestrator/treatment-categories.service.ts
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { TreatmentCategoryRepository } from '../../infrastructures/persistence/repositories/treatment-category.repository';
+import { Injectable } from '@nestjs/common';
 import { CreateTreatmentCategoryDto } from '../dto/create-treatment-category.dto';
 import { UpdateTreatmentCategoryDto } from '../dto/update-treatment-category.dto';
 import { QueryTreatmentCategoryDto } from '../dto/query-treatment-category.dto';
 import { TreatmentCategoryResponseDto } from '../dto/treatment-category-response.dto';
+import { PaginatedResponseDto } from '../dto/paginated-response.dto';
+import { CreateTreatmentCategoryUseCase } from '../use-cases/create-treatment-category.usecase';
+import { UpdateTreatmentCategoryUseCase } from '../use-cases/update-treatment-category.usecase';
+import { DeleteTreatmentCategoryUseCase } from '../use-cases/delete-treatment-category.usecase';
+import { FindTreatmentCategoriesUseCase } from '../use-cases/find-treatment-categories.usecase';
+import { RestoreTreatmentCategoryUseCase } from '../use-cases/restore-treatment-category.usecase';
 
 @Injectable()
 export class TreatmentCategoriesService {
     constructor(
-        private readonly treatmentCategoryRepository: TreatmentCategoryRepository,
+        private readonly createUseCase: CreateTreatmentCategoryUseCase,
+        private readonly updateUseCase: UpdateTreatmentCategoryUseCase,
+        private readonly deleteUseCase: DeleteTreatmentCategoryUseCase,
+        private readonly findUseCase: FindTreatmentCategoriesUseCase,
+        private readonly restoreUseCase: RestoreTreatmentCategoryUseCase,
     ) { }
 
     async create(dto: CreateTreatmentCategoryDto): Promise<TreatmentCategoryResponseDto> {
-        try {
-            const category = await this.treatmentCategoryRepository.create(dto);
-            return new TreatmentCategoryResponseDto(category);
-        } catch (error) {
-            throw new BadRequestException('Gagal membuat kategori perawatan');
-        }
+        return await this.createUseCase.execute(dto);
     }
 
-    async findAll(query: QueryTreatmentCategoryDto) {
-        const { data, total } = await this.treatmentCategoryRepository.findAll(query);
-        const { page = 1, limit = 10 } = query;
-
-        return {
-            data: data.map((item) => new TreatmentCategoryResponseDto(item)),
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+    async findAll(query: QueryTreatmentCategoryDto): Promise<PaginatedResponseDto<TreatmentCategoryResponseDto>> {
+        return await this.findUseCase.findAll(query);
     }
 
     async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
-        const category = await this.treatmentCategoryRepository.findOne(id);
-
-        if (!category) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        return new TreatmentCategoryResponseDto(category);
+        return await this.findUseCase.findOne(id);
     }
 
     async update(id: number, dto: UpdateTreatmentCategoryDto): Promise<TreatmentCategoryResponseDto> {
-        const exists = await this.treatmentCategoryRepository.exists(id);
-
-        if (!exists) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        try {
-            const category = await this.treatmentCategoryRepository.update(id, dto);
-            return new TreatmentCategoryResponseDto(category);
-        } catch (error) {
-            throw new BadRequestException('Gagal mengupdate kategori perawatan');
-        }
+        return await this.updateUseCase.execute(id, dto);
     }
 
     async remove(id: number): Promise<void> {
-        const exists = await this.treatmentCategoryRepository.exists(id);
-
-        if (!exists) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        await this.treatmentCategoryRepository.softDelete(id);
+        return await this.deleteUseCase.execute(id);
     }
 
     async restore(id: number): Promise<TreatmentCategoryResponseDto> {
-        await this.treatmentCategoryRepository.restore(id);
-        const category = await this.treatmentCategoryRepository.findOne(id);
-
-        if (!category) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        return new TreatmentCategoryResponseDto(category);
+        return await this.restoreUseCase.execute(id);
     }
 }

@@ -1,17 +1,19 @@
-// backend/src/treatment-categories/infrastructure/database/treatment-category.repository.ts
+// backend/src/treatment-categories/infrastructures/persistence/repositories/treatment-category.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TreatmentCategory } from '../../../domains/entities/treatment-categories.entity';
 import { CreateTreatmentCategoryDto } from '../../../applications/dto/create-treatment-category.dto';
 import { UpdateTreatmentCategoryDto } from '../../../applications/dto/update-treatment-category.dto';
 import { QueryTreatmentCategoryDto } from '../../../applications/dto/query-treatment-category.dto';
+import { TreatmentCategoryQueries } from '../query/treatment-category.queries';
 
 @Injectable()
 export class TreatmentCategoryRepository {
     constructor(
         @InjectRepository(TreatmentCategory)
         private readonly repository: Repository<TreatmentCategory>,
+        private readonly queries: TreatmentCategoryQueries,
     ) { }
 
     async create(dto: CreateTreatmentCategoryDto): Promise<TreatmentCategory> {
@@ -20,34 +22,19 @@ export class TreatmentCategoryRepository {
     }
 
     async findAll(query: QueryTreatmentCategoryDto): Promise<{ data: TreatmentCategory[]; total: number }> {
-        const { search, isActive, page = 1, limit = 10 } = query;
-        const skip = (page - 1) * limit;
-
-        const where: FindOptionsWhere<TreatmentCategory> = {};
-
-        if (search) {
-            where.namaKategori = Like(`%${search}%`);
-        }
-
-        if (isActive !== undefined) {
-            where.isActive = isActive;
-        }
-
-        const [data, total] = await this.repository.findAndCount({
-            where,
-            skip,
-            take: limit,
-            order: { createdAt: 'DESC' },
-        });
-
-        return { data, total };
+        return await this.queries.findAllWithFilters(query);
     }
 
     async findOne(id: number): Promise<TreatmentCategory | null> {
-        return await this.repository.findOne({
-            where: { id },
-            relations: ['treatments'],
-        });
+        return await this.queries.findById(id);
+    }
+
+    async findByName(name: string): Promise<TreatmentCategory | null> {
+        return await this.queries.findByName(name);
+    }
+
+    async findActiveCategories(): Promise<TreatmentCategory[]> {
+        return await this.queries.findActiveCategories();
     }
 
     async update(id: number, dto: UpdateTreatmentCategoryDto): Promise<TreatmentCategory | null> {
@@ -66,5 +53,22 @@ export class TreatmentCategoryRepository {
     async exists(id: number): Promise<boolean> {
         const count = await this.repository.count({ where: { id } });
         return count > 0;
+    }
+
+    async hasActiveTreatments(categoryId: number): Promise<boolean> {
+        const count = await this.queries.countTreatmentsByCategory(categoryId);
+        return count > 0;
+    }
+
+    async countTreatments(categoryId: number): Promise<number> {
+        return await this.queries.countTreatmentsByCategory(categoryId);
+    }
+
+    async getCategoriesWithCount(): Promise<any[]> {
+        return await this.queries.getCategoriesWithTreatmentCount();
+    }
+
+    async searchByKeyword(keyword: string, limit?: number): Promise<TreatmentCategory[]> {
+        return await this.queries.searchByKeyword(keyword, limit);
     }
 }

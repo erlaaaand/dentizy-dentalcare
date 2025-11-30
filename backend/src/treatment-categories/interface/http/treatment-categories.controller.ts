@@ -12,12 +12,35 @@ import {
     HttpStatus,
     ParseIntPipe,
     UseGuards,
+    UseInterceptors,
+    ClassSerializerInterceptor,
 } from '@nestjs/common';
+import {
+    ApiTags,
+    ApiOperation,
+    ApiResponse,
+    ApiBearerAuth,
+    ApiParam,
+    ApiQuery,
+    ApiUnauthorizedResponse,
+    ApiForbiddenResponse,
+} from '@nestjs/swagger';
 import { TreatmentCategoriesService } from '../../applications/orchestrator/treatment-categories.service';
 import { CreateTreatmentCategoryDto } from '../../applications/dto/create-treatment-category.dto';
 import { UpdateTreatmentCategoryDto } from '../../applications/dto/update-treatment-category.dto';
 import { QueryTreatmentCategoryDto } from '../../applications/dto/query-treatment-category.dto';
+import { TreatmentCategoryResponseDto } from '../../applications/dto/treatment-category-response.dto';
+import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
+import { Roles } from '../../../auth/interface/decorators/roles.decorator';
+import { UserRole } from '../../../roles/entities/role.entity';
+import { AuthGuard } from '@nestjs/passport';
 
+@ApiTags('Treatment Categories')
+@ApiBearerAuth('access-token')
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@UseInterceptors(ClassSerializerInterceptor)
+@ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
+@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
 @Controller('treatment-categories')
 export class TreatmentCategoriesController {
     constructor(
@@ -26,6 +49,21 @@ export class TreatmentCategoriesController {
 
     @Post()
     @HttpCode(HttpStatus.CREATED)
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya admin yang boleh membuat master data
+    @ApiOperation({ summary: 'Create new treatment category' })
+    @ApiResponse({
+        status: HttpStatus.CREATED,
+        description: 'Category created successfully',
+        type: TreatmentCategoryResponseDto,
+    })
+    @ApiResponse({
+        status: HttpStatus.BAD_REQUEST,
+        description: 'Invalid input data',
+    })
+    @ApiResponse({
+        status: HttpStatus.CONFLICT,
+        description: 'Category name already exists',
+    })
     async create(@Body() createDto: CreateTreatmentCategoryDto) {
         const data = await this.treatmentCategoriesService.create(createDto);
         return {
@@ -37,6 +75,12 @@ export class TreatmentCategoriesController {
 
     @Get()
     @HttpCode(HttpStatus.OK)
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF) // Semua role perlu melihat daftar kategori
+    @ApiOperation({ summary: 'Get all treatment categories with pagination' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Categories retrieved successfully',
+    })
     async findAll(@Query() query: QueryTreatmentCategoryDto) {
         const result = await this.treatmentCategoriesService.findAll(query);
         return {
@@ -48,6 +92,18 @@ export class TreatmentCategoriesController {
 
     @Get(':id')
     @HttpCode(HttpStatus.OK)
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF)
+    @ApiOperation({ summary: 'Get treatment category by ID' })
+    @ApiParam({ name: 'id', type: Number, description: 'Category ID' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Category found',
+        type: TreatmentCategoryResponseDto,
+    })
+    @ApiResponse({
+        status: HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    })
     async findOne(@Param('id', ParseIntPipe) id: number) {
         const data = await this.treatmentCategoriesService.findOne(id);
         return {
@@ -59,6 +115,22 @@ export class TreatmentCategoriesController {
 
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya admin yang boleh edit master data
+    @ApiOperation({ summary: 'Update treatment category' })
+    @ApiParam({ name: 'id', type: Number, description: 'Category ID' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Category updated successfully',
+        type: TreatmentCategoryResponseDto,
+    })
+    @ApiResponse({
+        status: HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    })
+    @ApiResponse({
+        status: HttpStatus.CONFLICT,
+        description: 'Category name already exists',
+    })
     async update(
         @Param('id', ParseIntPipe) id: number,
         @Body() updateDto: UpdateTreatmentCategoryDto,
@@ -73,6 +145,21 @@ export class TreatmentCategoriesController {
 
     @Delete(':id')
     @HttpCode(HttpStatus.OK)
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya admin yang boleh hapus
+    @ApiOperation({ summary: 'Soft delete treatment category' })
+    @ApiParam({ name: 'id', type: Number, description: 'Category ID' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Category deleted successfully',
+    })
+    @ApiResponse({
+        status: HttpStatus.NOT_FOUND,
+        description: 'Category not found',
+    })
+    @ApiResponse({
+        status: HttpStatus.BAD_REQUEST,
+        description: 'Cannot delete category with active treatments',
+    })
     async remove(@Param('id', ParseIntPipe) id: number) {
         await this.treatmentCategoriesService.remove(id);
         return {
@@ -83,6 +170,14 @@ export class TreatmentCategoriesController {
 
     @Patch(':id/restore')
     @HttpCode(HttpStatus.OK)
+    @Roles(UserRole.KEPALA_KLINIK) // Hanya admin yang boleh restore
+    @ApiOperation({ summary: 'Restore soft deleted category' })
+    @ApiParam({ name: 'id', type: Number, description: 'Category ID' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Category restored successfully',
+        type: TreatmentCategoryResponseDto,
+    })
     async restore(@Param('id', ParseIntPipe) id: number) {
         const data = await this.treatmentCategoriesService.restore(id);
         return {
