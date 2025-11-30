@@ -109,9 +109,7 @@ async function bootstrap() {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
-            name: 'JWT',
             description: 'Masukkan JWT Token di sini',
-            in: 'header'
           },
           'access-token',
         )
@@ -121,6 +119,10 @@ async function bootstrap() {
         .addTag('Appointments', 'Manajemen janji temu')
         .addTag('Medical Records', 'Manajemen rekam medis')
         .addTag('Notifications', 'Sistem notifikasi dan reminder')
+        .addTag('Treatments', 'Manajemen master data tindakan/perawatan gigi')
+        .addTag('Treatment Categories', 'Manajemen kategori tindakan (Scaling, Cabut Gigi, dll)')
+        .addTag('Medical Record Treatments', 'Manajemen rincian tindakan yang dilakukan pada pasien')
+        .addTag('Payments', 'Manajemen transaksi pembayaran dan invoice')
         .build();
 
       const document = SwaggerModule.createDocument(app, config);
@@ -135,7 +137,7 @@ async function bootstrap() {
       try {
         logger.log('📝 Generating swagger.json file...');
         writeFileSync(
-          'D:/bengkel_kode/swagger.json',   // <- path absolut
+          'D:/kuliah/3D_ErlandSemester5/Proyek/dentizy-app/frontend/swagger.json',   // <- path absolut
           JSON.stringify(document, null, 2)
         );
         logger.log('✅ swagger.json generated successfully in root directory');
