@@ -20,7 +20,7 @@ export function Footer({
     showStatus = true,
     showVersion = true,
     copyrightText = '© 2025 Dentizy Dentalcare. All rights reserved.',
-    versionText = 'Version 2.1.0',
+    versionText = 'Version 1.1.0',
     status = 'online',
     lastSync = 'Terakhir disinkron: baru saja',
     children,
