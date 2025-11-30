@@ -1,67 +1,36 @@
-// frontend/src/components/guars/AuthGuard.tsx
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-// Import services/storage Anda di sini
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { useAuth } from '@/components/providers/AuthProvider'; // Pastikan path import benar
+import { ROUTES } from '@/core/constants/routes.constants';
 
-// 1. Definisikan Tipe Context
-interface AuthContextType {
-    user: any | null; // Ganti 'any' dengan tipe User Anda
-    login: (data: any) => Promise<void>;
-    logout: () => void;
-    isLoading: boolean; // <--- WAJIB ADA
-}
+// Daftar rute yang boleh diakses tanpa login
+const PUBLIC_ROUTES = [ROUTES.LOGIN, '/forgot-password', '/register'];
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export default function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<any | null>(null);
-
-    // 2. State Loading (Default True)
-    const [isLoading, setIsLoading] = useState(true);
-
+export default function AuthGuard({ children }: { children: React.ReactNode }) {
+    const { isAuthenticated, loading } = useAuth();
     const router = useRouter();
+    const pathname = usePathname();
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-        const initAuth = () => {
-            try {
-                // Cek LocalStorage (gunakan helper storage Anda yang sudah diperbaiki)
-                // Contoh: const storedUser = userStorage.getUser();
-                // if (storedUser) setUser(storedUser);
-            } catch (error) {
-                console.error(error);
-            } finally {
-                // 3. Matikan Loading setelah pengecekan selesai
-                setIsLoading(false);
-            }
-        };
+        // Jika masih loading state auth awal, tunggu
+        if (loading) return;
 
-        initAuth();
-    }, []);
+        const isPublicRoute = PUBLIC_ROUTES.some(route => pathname?.startsWith(route));
 
-    const login = async (data: any) => {
-        // Logic login...
-    };
+        if (!isAuthenticated && !isPublicRoute) {
+            // Jika tidak login dan akses halaman private -> lempar ke login
+            router.replace(ROUTES.LOGIN);
+        } else if (isAuthenticated && isPublicRoute) {
+            // Jika sudah login tapi akses halaman login -> lempar ke dashboard
+            router.replace(ROUTES.DASHBOARD);
+        } else {
+            // Selesai pengecekan
+            setIsChecking(false);
+        }
+    }, [isAuthenticated, loading, pathname, router]);
 
-    const logout = () => {
-        // Logic logout...
-        setUser(null);
-        router.push('/login');
-    };
-
-    // 4. Pass isLoading ke value
-    return (
-        <AuthContext.Provider value={{ user, login, logout, isLoading }}>
-            {children}
-        </AuthContext.Provider>
-    );
+    return <>{children}</>;
 }
-
-export const useAuth = () => {
-    const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
