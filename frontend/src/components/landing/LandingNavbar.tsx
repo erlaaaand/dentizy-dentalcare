@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Menu, X } from 'lucide-react';
-import { cn } from '@/core';
+import { Menu, X, Calendar } from 'lucide-react';
 
 export function LandingNavbar() {
     const [isScrolled, setIsScrolled] = useState(false);
@@ -25,81 +24,102 @@ export function LandingNavbar() {
     ];
 
     return (
-        <header
-            className={cn(
-                "fixed top-0 w-full z-50 transition-all duration-500",
-                isScrolled
-                    ? "bg-white/80 backdrop-blur-md border-b border-white/20 shadow-md py-3"
-                    : "bg-transparent py-5"
-            )}
-        >
-            <nav className="container mx-auto px-6">
+        <header className="glass fixed top-0 w-full z-50 transition-all duration-700 backdrop-blur-2xl bg-gradient-to-r from-slate-900/95 via-gray-800/90 to-slate-900/95 border-b border-white/30 shadow-2xl">
+            <nav className="container mx-auto px-6 py-5">
                 <div className="flex justify-between items-center">
-                    {/* Logo */}
-                    <Link href="/" className="flex items-center gap-3 group">
+                    {/* Enhanced Logo */}
+                    <Link href="/" className="group relative flex items-center space-x-3 hover:scale-105 transition-all duration-500">
                         <div className="relative">
-                            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg group-hover:scale-110 transition-transform">
-                                D
+                            <div className="text-3xl animate-pulse group-hover:scale-110 transition-transform duration-500 drop-shadow-2xl filter brightness-110">
+                                <div className="w-14 h-14 aspect-square bg-gradient-to-br from-cyan-400 to-blue-500 rounded-2xl flex items-center justify-center text-white font-black text-2xl shadow-xl">
+                                    D
+                                </div>
                             </div>
-                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping" />
+                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-ping shadow-lg"></div>
                         </div>
-                        <span className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-                            Dentizy
-                        </span>
+                        <div className="relative">
+                            <span className="text-2xl lg:text-3xl font-black bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 bg-clip-text text-transparent group-hover:from-cyan-200 group-hover:via-blue-300 group-hover:to-purple-300 transition-all duration-500 tracking-tight drop-shadow-sm">
+                                Dentizy Dentalcare
+                            </span>
+                            <div className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-cyan-300 via-blue-400 to-purple-400 rounded-full opacity-0 group-hover:opacity-70 transition-all duration-500 blur-sm shadow-lg"></div>
+                        </div>
                     </Link>
 
-                    {/* Desktop Menu */}
-                    <div className="hidden lg:flex items-center space-x-8">
+                    {/* Enhanced Desktop Menu */}
+                    <div className="hidden lg:flex items-center space-x-12">
                         {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className="text-gray-600 hover:text-blue-600 font-medium transition-colors relative group"
-                            >
-                                {link.name}
-                                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full" />
+                            <Link key={link.name} href={link.href} className="group relative py-2 px-4">
+                                <span className="text-white/95 hover:text-white font-semibold text-lg tracking-wide transition-colors duration-300 group-hover:text-cyan-200 drop-shadow-sm">
+                                    {link.name}
+                                </span>
+                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-300 to-blue-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left rounded-full shadow-md"></div>
+                                <div className="absolute inset-0 bg-white/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10 shadow-inner"></div>
                             </Link>
                         ))}
                     </div>
 
-                    {/* CTA Button */}
-                    <div className="hidden lg:block">
-                        <Link
-                            href="/login"
-                            className="px-6 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 text-white rounded-full font-semibold shadow-lg hover:shadow-cyan-500/30 hover:scale-105 transition-all duration-300"
-                        >
-                            Masuk / Daftar
-                        </Link>
-                    </div>
+                    {/* Enhanced CTA Button */}
+                    <Link href="#kontak" className="hidden lg:block group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-300/40 to-blue-400/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl scale-110 shadow-2xl"></div>
+                        <div className="relative bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:from-cyan-400 hover:to-blue-500 hover:shadow-2xl hover:scale-105 transition-all duration-500 flex items-center gap-3 border-2 border-white/30 backdrop-blur-sm shadow-xl">
+                            <Calendar className="w-5 h-5 group-hover:scale-110 transition-transform duration-300 group-hover:rotate-12 drop-shadow-sm" />
+                            <span className="tracking-wide drop-shadow-sm">Buat Janji</span>
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shadow-lg"></div>
+                        </div>
+                    </Link>
 
-                    {/* Mobile Menu Button */}
+                    {/* Enhanced Mobile Menu Button */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="lg:hidden p-2 text-gray-600"
+                        className="lg:hidden relative group p-3 rounded-xl bg-slate-800/80 backdrop-blur-md border-2 border-white/30 hover:bg-slate-700/90 transition-all duration-300 focus:outline-none shadow-xl"
                     >
-                        {isMobileMenuOpen ? <X /> : <Menu />}
+                        <div className="relative">
+                            {isMobileMenuOpen ? (
+                                <X className="w-7 h-7 text-white group-hover:text-cyan-200 transition-colors duration-300 drop-shadow-sm" />
+                            ) : (
+                                <Menu className="w-7 h-7 text-white group-hover:text-cyan-200 transition-colors duration-300 drop-shadow-sm" />
+                            )}
+                            <div className="absolute inset-0 bg-cyan-300/30 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+                        </div>
                     </button>
                 </div>
 
-                {/* Mobile Menu */}
+                {/* Enhanced Mobile Menu */}
                 {isMobileMenuOpen && (
-                    <div className="lg:hidden absolute top-full left-0 w-full bg-white border-t border-gray-100 shadow-lg py-4 px-6 flex flex-col gap-4 animate-in slide-in-from-top-5">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.name}
-                                href={link.href}
-                                className="text-gray-600 font-medium py-2"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                            >
-                                {link.name}
-                            </Link>
-                        ))}
-                        <Link
-                            href="/login"
-                            className="text-center px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold"
-                        >
-                            Masuk
-                        </Link>
+                    <div className="lg:hidden mt-6 pb-6 bg-slate-900/95 backdrop-blur-xl rounded-3xl border-2 border-white/20 shadow-2xl animate-in slide-in-from-top-5 duration-500">
+                        <div className="px-8 py-6 space-y-6">
+                            {navLinks.map((link) => (
+                                <Link
+                                    key={link.name}
+                                    href={link.href}
+                                    className="group flex items-center justify-between py-4 px-4 rounded-2xl hover:bg-white/15 transition-all duration-300 shadow-sm hover:shadow-lg"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <span className="text-white/95 group-hover:text-cyan-200 font-semibold text-lg tracking-wide transition-colors duration-300 drop-shadow-sm">
+                                        {link.name}
+                                    </span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 text-white/70 group-hover:text-cyan-200 group-hover:translate-x-1 transition-all duration-300 drop-shadow-sm">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                    </svg>
+                                </Link>
+                            ))}
+
+                            {/* Mobile CTA Button */}
+                            <div className="pt-4 mt-6 border-t border-white/20">
+                                <Link
+                                    href="#kontak"
+                                    className="group relative overflow-hidden flex items-center justify-center gap-3 w-full"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-r from-cyan-300/40 to-blue-400/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-md scale-105 shadow-2xl"></div>
+                                    <div className="relative bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-8 py-4 rounded-2xl font-bold text-lg hover:from-cyan-400 hover:to-blue-500 w-full text-center transition-all duration-500 flex items-center justify-center gap-3 border-2 border-white/30 shadow-xl">
+                                        <Calendar className="w-5 h-5 group-hover:scale-110 transition-transform duration-300 drop-shadow-sm" />
+                                        <span className="drop-shadow-sm">Buat Janji</span>
+                                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-ping shadow-lg"></div>
+                                    </div>
+                                </Link>
+                            </div>
+                        </div>
                     </div>
                 )}
             </nav>
