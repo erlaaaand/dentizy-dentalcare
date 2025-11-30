@@ -11,6 +11,7 @@ import {
     Index,
 } from 'typeorm';
 import { Treatment } from '../../../treatments/domains/entities/treatments.entity';
+import { MedicalRecord } from '../../../medical_records/domains/entities/medical-record.entity'; // Sesuaikan path
 
 @Entity('medical_record_treatments')
 export class MedicalRecordTreatment {
@@ -53,7 +54,12 @@ export class MedicalRecordTreatment {
     @DeleteDateColumn({ type: 'datetime', precision: 6, name: 'deleted_at', nullable: true })
     deletedAt: Date;
 
+    @ManyToOne(() => MedicalRecord, (mr) => mr.medicalRecordTreatments)
+    @JoinColumn({ name: 'medical_record_id' })
+    medicalRecord: MedicalRecord; // <--- Properti ini yang dicari Query Builder ("mrt.medicalRecord")
+
     @ManyToOne(() => Treatment, (treatment) => treatment.medicalRecordTreatments)
     @JoinColumn({ name: 'treatment_id' })
     treatment: Treatment;
+
 }

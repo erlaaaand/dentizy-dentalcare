@@ -31,6 +31,8 @@ import { QueryMedicalRecordTreatmentDto } from '../../applications/dto/query-med
 import { MedicalRecordTreatmentResponseDto } from '../../applications/dto/medical-record-treatment-response.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
+import { Roles } from '../../../auth/interface/decorators/roles.decorator';
+import { UserRole } from '../../../roles/entities/role.entity';
 
 @ApiTags('Medical Record Treatments')
 @ApiBearerAuth('access-token')
@@ -45,6 +47,7 @@ export class MedicalRecordTreatmentsController {
     ) { }
 
     @Post()
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER) // Hanya Dokter/Admin yang boleh input tindakan medis
     @HttpCode(HttpStatus.CREATED)
     @ApiOperation({ summary: 'Tambah perawatan ke rekam medis' })
     @ApiResponse({
@@ -65,6 +68,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Get()
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF) // Staf perlu lihat data untuk billing
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Ambil semua data perawatan rekam medis' })
     @ApiResponse({
@@ -83,6 +87,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Get('medical-record/:medicalRecordId')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF) // Staf perlu lihat detail per kunjungan
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Ambil semua perawatan berdasarkan Medical Record ID' })
     @ApiParam({
@@ -108,6 +113,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Get('medical-record/:medicalRecordId/total')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF) // Penting untuk Staf menghitung tagihan
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Hitung total biaya perawatan berdasarkan Medical Record ID' })
     @ApiParam({
@@ -144,6 +150,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Get(':id')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER, UserRole.STAF)
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Ambil detail perawatan rekam medis berdasarkan ID' })
     @ApiParam({
@@ -168,6 +175,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Patch(':id')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER) // Staf tidak boleh edit data medis
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Update perawatan rekam medis' })
     @ApiParam({
@@ -196,6 +204,7 @@ export class MedicalRecordTreatmentsController {
     }
 
     @Delete(':id')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.DOKTER) // Staf tidak boleh hapus data medis
     @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Hapus perawatan rekam medis (soft delete)' })
     @ApiParam({
