@@ -27,7 +27,7 @@ export class MedicalRecordMapper {
             (new Date().getTime() - entity.created_at.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        // Map relations if loaded
+        // 1. Map Appointment
         if (entity.appointment) {
             response.appointment = {
                 id: entity.appointment.id,
@@ -36,25 +36,45 @@ export class MedicalRecordMapper {
                 patient: entity.appointment.patient ? {
                     id: entity.appointment.patient.id,
                     nama_lengkap: entity.appointment.patient.nama_lengkap,
-                    no_rm: entity.appointment.patient.nomor_rekam_medis,
+                    // [FIX] Gunakan nomor_rekam_medis
+                    nomor_rekam_medis: entity.appointment.patient.nomor_rekam_medis,
                 } : undefined,
             };
         }
 
+        // 2. Map Doctor (User)
+        // Entity User biasanya punya 'nama_lengkap', tapi DTO DoctorSubsetDto pakai 'name'
         if (entity.doctor) {
             response.doctor = {
                 id: entity.doctor.id,
-                name: entity.doctor.nama_lengkap,
+                nama_lengkap: entity.doctor.nama_lengkap,
             };
         }
 
+        // 3. Map Patient (Direct Relation)
         if (entity.patient) {
             response.patient = {
                 id: entity.patient.id,
                 nama_lengkap: entity.patient.nama_lengkap,
-                no_rm: entity.patient.nomor_rekam_medis,
+                // [FIX] Mapping ke properti baru DTO
+                nomor_rekam_medis: entity.patient.nomor_rekam_medis,
                 tanggal_lahir: entity.patient.tanggal_lahir,
             };
+        }
+
+        // 4. [FIX UTAMA] Map Treatments (Ini yang sebelumnya hilang)
+        if (entity.medicalRecordTreatments && entity.medicalRecordTreatments.length > 0) {
+            response.medical_record_treatments = entity.medicalRecordTreatments.map(mrt => ({
+                id: mrt.id,
+                jumlah: mrt.jumlah,
+                price_snapshot: Number(mrt.hargaSatuan), // Mapping hargaSatuan entity ke price_snapshot DTO
+                treatment: mrt.treatment ? {
+                    namaPerawatan: mrt.treatment.namaPerawatan,
+                    harga: Number(mrt.treatment.harga)
+                } : undefined
+            }));
+        } else {
+            response.medical_record_treatments = [];
         }
 
         return response;
@@ -67,9 +87,7 @@ export class MedicalRecordMapper {
         return entities.map(entity => this.toResponseDto(entity));
     }
 
-    /**
-     * Map CreateDto to Entity (for new creation)
-     */
+    // ... (sisa method toEntity, toUpdateEntity biarkan saja seperti semula)
     toEntity(dto: CreateMedicalRecordDto, userId: number): Partial<MedicalRecord> {
         return {
             appointment_id: dto.appointment_id,
@@ -81,31 +99,15 @@ export class MedicalRecordMapper {
         };
     }
 
-    /**
-     * Map UpdateDto to Entity (for updates)
-     */
     toUpdateEntity(dto: UpdateMedicalRecordDto): Partial<MedicalRecord> {
         const updateData: Partial<MedicalRecord> = {};
-
-        if (dto.subjektif !== undefined) {
-            updateData.subjektif = dto.subjektif?.trim() || undefined;
-        }
-        if (dto.objektif !== undefined) {
-            updateData.objektif = dto.objektif?.trim() || undefined;
-        }
-        if (dto.assessment !== undefined) {
-            updateData.assessment = dto.assessment?.trim() || undefined;
-        }
-        if (dto.plan !== undefined) {
-            updateData.plan = dto.plan?.trim() || undefined;
-        }
-
+        if (dto.subjektif !== undefined) updateData.subjektif = dto.subjektif?.trim() || undefined;
+        if (dto.objektif !== undefined) updateData.objektif = dto.objektif?.trim() || undefined;
+        if (dto.assessment !== undefined) updateData.assessment = dto.assessment?.trim() || undefined;
+        if (dto.plan !== undefined) updateData.plan = dto.plan?.trim() || undefined;
         return updateData;
     }
 
-    /**
-     * Create minimal response (without relations)
-     */
     toMinimalResponse(entity: MedicalRecord): Partial<MedicalRecordResponseDto> {
         return {
             id: entity.id,

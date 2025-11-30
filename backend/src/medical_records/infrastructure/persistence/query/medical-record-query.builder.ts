@@ -23,11 +23,28 @@ export class MedicalRecordQueryBuilder {
     createBaseQuery(): SelectQueryBuilder<MedicalRecord> {
         return this.repository
             .createQueryBuilder('record')
+
+            // 1. Join ke Appointment (Info Jadwal)
             .leftJoinAndSelect('record.appointment', 'appointment')
-            .leftJoinAndSelect('appointment.patient', 'patient')
+
+            // [PERBAIKAN 1] Join ke Patient LANGSUNG dari Record
+            // Agar data nama pasien & No RM muncul di tabel
+            .leftJoinAndSelect('record.patient', 'patient')
+
+            // Join ke Dokter (Info Dokter Pemeriksa)
+            .leftJoinAndSelect('record.doctor', 'doctor')
+
+            // [PERBAIKAN 2] Join ke Tabel Pivot (Medical Record Treatments)
+            // Tanpa ini, rincian biaya & tindakan akan KOSONG!
+            .leftJoinAndSelect('record.medicalRecordTreatments', 'medicalRecordTreatments')
+
+            // [PERBAIKAN 3] Join ke Tabel Master Treatment
+            // Untuk mengambil nama tindakan ('namaPerawatan') dan harga ('harga')
+            .leftJoinAndSelect('medicalRecordTreatments.treatment', 'treatment')
+
+            // Optional: Info detail dokter dari appointment (jika perlu role/user details)
             .leftJoinAndSelect('appointment.doctor', 'appointmentDoctor')
-            .leftJoinAndSelect('appointmentDoctor.roles', 'doctorRoles')
-            .leftJoinAndSelect('record.doctor', 'doctor');
+            .leftJoinAndSelect('appointmentDoctor.roles', 'doctorRoles');
     }
 
     /**

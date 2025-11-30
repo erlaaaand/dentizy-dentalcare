@@ -1,6 +1,9 @@
 import { Appointment } from '../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../users/domains/entities/user.entity';
 import { Patient } from '../../../patients/domains/entities/patient.entity';
+// [1] Tambahkan Import ini
+import { MedicalRecordTreatment } from '../../../medical-record-treatments/domains/entities/medical-record-treatments.entity';
+
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -13,7 +16,8 @@ import {
     BeforeInsert,
     BeforeUpdate,
     OneToOne,
-    JoinColumn
+    JoinColumn,
+    OneToMany // [2] Tambahkan Import ini
 } from 'typeorm';
 
 @Entity('medical_records')
@@ -68,6 +72,10 @@ export class MedicalRecord {
     @ManyToOne(() => Patient, (patient) => patient.medical_records)
     @JoinColumn({ name: 'patient_id' })
     patient: Patient;
+
+    // [3] RELASI PENTING: Tanpa ini, data tindakan tidak bisa diambil
+    @OneToMany(() => MedicalRecordTreatment, (mrt) => mrt.medicalRecord)
+    medicalRecordTreatments: MedicalRecordTreatment[];
 
     // normalize
     @BeforeInsert()

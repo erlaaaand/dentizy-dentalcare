@@ -2,8 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
 
-// 1. Membuat Sub-Class untuk Nested Object agar terbaca di Swagger
-// (Ini tidak mengubah struktur JSON, hanya definisi Type-nya)
+// ... (PatientSubsetDto, DoctorSubsetDto, AppointmentSubsetDto biarkan tetap sama)
 
 export class PatientSubsetDto {
   @ApiProperty({ example: 1 })
@@ -16,7 +15,7 @@ export class PatientSubsetDto {
 
   @ApiProperty({ example: 'RM-2023-001' })
   @Expose()
-  no_rm: string;
+  nomor_rekam_medis: string;
 
   @ApiPropertyOptional({ example: '1990-01-01', type: Date, nullable: true })
   @Expose()
@@ -31,7 +30,37 @@ export class DoctorSubsetDto {
 
   @ApiProperty({ example: 'dr. Strange' })
   @Expose()
-  name: string;
+  nama_lengkap: string;
+}
+
+export class TreatmentSubsetDto {
+  @ApiProperty({ example: 'Scalling Gigi' })
+  @Expose()
+  namaPerawatan: string;
+
+  @ApiProperty({ example: 500000 })
+  @Expose()
+  harga: number;
+}
+
+// [FIX] Ganti nama class ini agar tidak bentrok dengan DTO di modul lain
+export class MedicalRecordTreatmentSubsetDto {
+  @ApiProperty({ example: 1 })
+  @Expose()
+  id: number;
+
+  @ApiProperty({ example: 1 })
+  @Expose()
+  jumlah: number;
+
+  @ApiProperty({ example: 500000 })
+  @Expose()
+  price_snapshot: number;
+
+  @ApiPropertyOptional({ type: TreatmentSubsetDto })
+  @Expose()
+  @Type(() => TreatmentSubsetDto)
+  treatment?: TreatmentSubsetDto;
 }
 
 export class AppointmentSubsetDto {
@@ -61,7 +90,7 @@ export class MedicalRecordResponseDto {
   @Expose()
   id: number;
 
-  @ApiProperty({ example: 500, description: 'ID perjanjian terkait' })
+  @ApiProperty({ example: 500 })
   @Expose()
   appointment_id: number;
 
@@ -104,12 +133,12 @@ export class MedicalRecordResponseDto {
   @Type(() => Date)
   deleted_at: Date | null;
 
-  @ApiProperty({ example: 35, description: 'Umur pasien saat rekam medis dibuat (tahun)' })
+  @ApiProperty({ example: 35 })
   @Expose()
   umur_rekam: number;
 
-  // Relations
-  
+  // --- RELATIONS ---
+
   @ApiPropertyOptional({ type: AppointmentSubsetDto })
   @Expose()
   @Type(() => AppointmentSubsetDto)
@@ -124,4 +153,10 @@ export class MedicalRecordResponseDto {
   @Expose()
   @Type(() => PatientSubsetDto)
   patient?: PatientSubsetDto | null;
+
+  // [FIX] Update referensi class di sini juga
+  @ApiPropertyOptional({ type: [MedicalRecordTreatmentSubsetDto] })
+  @Expose()
+  @Type(() => MedicalRecordTreatmentSubsetDto)
+  medical_record_treatments?: MedicalRecordTreatmentSubsetDto[];
 }
