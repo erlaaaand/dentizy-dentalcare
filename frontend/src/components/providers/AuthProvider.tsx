@@ -1,130 +1,219 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
+
+// SERVICES & CONFIG
 import { storageService } from '@/core/services/cache/storage.service';
-import { useLogin, useLogout } from '@/core/services/api/auth.api';
-import { ROUTES } from '@/core/constants';
-import { User } from '@/core/api/model';
+import { ROUTES } from '@/core/constants/routes.constants';
+import { useToast } from '@/core';
 
-interface LoginResponse {
-    access_token: string;
-    user: User;
-}
+// API HOOKS (GENERATED)
+import {
+    useAuthControllerLogin,
+    useAuthControllerLogout,
+    useAuthControllerGetProfile,
+} from '@/core/api/generated/auth/auth';
 
+// TYPES
+import type { LoginDto } from '@/core/api/model';
+import type { AuthUser } from '@/core/types/auth-user.types';
+
+// INTERFACE CONTEXT
 interface AuthContextType {
-    user: User | null;
+    user: AuthUser | null;
     isAuthenticated: boolean;
     loading: boolean;
-    login: (credentials: { username: string; password: string }) => Promise<void>;
+    login: (credentials: LoginDto) => Promise<void>;
     logout: () => Promise<void>;
-    updateUser: (user: User) => void;
+    setUser: (user: AuthUser | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// --- Helper Functions: Cookie Management ---
-const setAuthCookie = (token: string, expiresInSeconds: number = 86400) => {
-    // Cek protokol untuk secure cookie (HTTPS)
-    const secure = typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
-    // Simpan token di cookie 'access_token'
-    document.cookie = `access_token=${token}; path=/; max-age=${expiresInSeconds}; SameSite=Lax${secure}`;
+// COOKIE HELPER
+const setAuthCookie = (token: string, expiresInSeconds = 86400) => {
+    try {
+        const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+        document.cookie = `access_token=${token}; Path=/; Max-Age=${expiresInSeconds}; SameSite=Lax${secure}`;
+        document.cookie = `dental_clinic_access_token=${token}; Path=/; Max-Age=${expiresInSeconds}; SameSite=Lax${secure}`;
+    } catch (e) {
+        console.warn('Cookie set failed:', e);
+    }
 };
 
-const removeAuthCookie = () => {
-    // Hapus cookie
-    document.cookie = `access_token=; path=/; max-age=0;`;
+const clearAuthCookie = () => {
+    document.cookie = `access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    document.cookie = `dental_clinic_access_token=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
 };
-// --------------------------------------------
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUserState] = useState<AuthUser | null>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
+    const [hasToken, setHasToken] = useState(false);
+
+    // Loading state gabungan (initial check + profile fetch)
     const [loading, setLoading] = useState(true);
+
     const router = useRouter();
+    const { showSuccess, showError } = useToast();
+    const queryClient = useQueryClient();
 
-    const loginMutation = useLogin();
-    const logoutMutation = useLogout();
+    // API Mutations & Queries
+    const loginMutation = useAuthControllerLogin();
+    const logoutMutation = useAuthControllerLogout();
 
+    const {
+        data: profileData,
+        isLoading: isLoadingProfile,
+        isError: isProfileError,
+        error: profileError
+    } = useAuthControllerGetProfile({
+        query: {
+            enabled: hasToken && isInitialized,
+            retry: 1,
+            staleTime: 5 * 60 * 1000,
+            refetchOnWindowFocus: false,
+        },
+    });
+
+    // 1. INITIALIZATION FROM STORAGE
     useEffect(() => {
-        const initAuth = () => {
-            const storedUser = storageService.getUser<User>();
-            const token = storageService.getAccessToken();
+        const token = storageService.getAccessToken();
+        const storedUser = storageService.getUser();
 
-            if (storedUser && token) {
-                setUser(storedUser);
+        if (token) {
+            setHasToken(true);
+            if (storedUser) {
+                // Casting aman
+                const u = storedUser as unknown as AuthUser;
+                setUserState(u);
+                setIsAuthenticated(true);
             }
-            setLoading(false);
-        };
-
-        initAuth();
+        }
+        setIsInitialized(true);
     }, []);
 
-    const login = async (credentials: { username: string; password: string }) => {
+    // 2. SYNC PROFILE DATA
+    useEffect(() => {
+        if (!isInitialized) return;
+
+        // Jika tidak ada token, stop loading
+        if (!hasToken) {
+            setLoading(false);
+            return;
+        }
+
+        // Jika sedang fetch profile, set loading
+        if (isLoadingProfile) {
+            setLoading(true);
+            return;
+        }
+
+        // Handle Error Profile (misal Token Expired)
+        if (isProfileError) {
+            const axiosErr = profileError as unknown as AxiosError;
+            if (axiosErr?.response?.status === 401) {
+                handleLogoutCleanup(); // Force logout jika 401
+            }
+            setLoading(false);
+            return;
+        }
+
+        // Jika sukses fetch profile
+        if (profileData) {
+            const u = profileData as AuthUser;
+            setUserState(u);
+            setIsAuthenticated(true);
+            storageService.setUser(u);
+        }
+
+        setLoading(false);
+    }, [isInitialized, hasToken, isLoadingProfile, isProfileError, profileError, profileData]);
+
+    // CLEANUP HELPER
+    const handleLogoutCleanup = useCallback(() => {
+        setHasToken(false);
+        setUserState(null);
+        setIsAuthenticated(false);
+        storageService.clearAll();
+        clearAuthCookie();
+        queryClient.clear();
+    }, [queryClient]);
+
+    // LOGIN ACTION
+    const login = async (credentials: LoginDto) => {
         try {
-            const response = await loginMutation.mutateAsync({ data: credentials }) as unknown as LoginResponse;
+            const response = await loginMutation.mutateAsync({ data: credentials });
 
-            if (response?.access_token) {
-                // 1. Simpan ke LocalStorage (Client Side)
-                storageService.setAccessToken(response.access_token);
+            // Sesuaikan dengan respon API Anda
+            const data = response as any; // Temporary cast jika tipe generated tidak pas
+            const accessToken = data.access_token || data.accessToken;
+            const refreshToken = data.refresh_token || data.refreshToken;
+            const userData = data.user;
 
-                // 2. Simpan ke Cookie (Server Side / Middleware) -> WAJIB ADA
-                setAuthCookie(response.access_token);
+            if (accessToken) {
+                storageService.setAccessToken(accessToken);
+                setAuthCookie(accessToken);
+                setHasToken(true);
             }
 
-            if (response?.user) {
-                storageService.setUser(response.user);
-                setUser(response.user);
+            if (refreshToken) {
+                storageService.setRefreshToken(refreshToken);
             }
 
-            // 3. Redirect ke Dashboard
-            router.push(ROUTES.DASHBOARD);
+            if (userData) {
+                const u = userData as AuthUser;
+                storageService.setUser(u);
+                setUserState(u);
+                setIsAuthenticated(true);
+            }
 
-            // 4. Refresh agar middleware membaca cookie baru
-            router.refresh();
-
+            showSuccess('Login berhasil!');
+            router.replace(ROUTES.DASHBOARD);
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('Login error:', error);
+            showError('Email atau password salah.');
             throw error;
         }
     };
 
+    // LOGOUT ACTION
     const logout = async () => {
+        handleLogoutCleanup();
         try {
             await logoutMutation.mutateAsync();
-        } catch (error) {
-            console.error('Logout error:', error);
-        } finally {
-            // Bersihkan semua storage
-            storageService.clearAuth();
-            removeAuthCookie(); // Hapus cookie juga
-
-            setUser(null);
-            router.push(ROUTES.LOGIN);
-            router.refresh();
+        } catch (e) {
+            console.warn('Logout API failed (ignoring):', e);
         }
+        router.replace(ROUTES.LOGIN);
     };
 
-    const updateUser = (updatedUser: User) => {
-        setUser(updatedUser);
-        storageService.setUser(updatedUser);
-    };
-
-    const value: AuthContextType = {
-        user,
-        isAuthenticated: !!user,
-        loading,
-        login,
-        logout,
-        updateUser,
+    // MANUAL SET USER (untuk update profile tanpa refetch)
+    const setUser = (u: AuthUser | null) => {
+        setUserState(u);
+        if (u) storageService.setUser(u);
+        else storageService.removeUser();
     };
 
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{
+            user,
+            isAuthenticated,
+            loading,
+            login,
+            logout,
+            setUser
+        }}>
             {children}
         </AuthContext.Provider>
     );
 }
 
+// HOOK UTAMA
 export function useAuth() {
     const context = useContext(AuthContext);
     if (context === undefined) {
