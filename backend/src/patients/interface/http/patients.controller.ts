@@ -218,6 +218,18 @@ export class PatientsController {
         return this.patientsService.remove(id);
     }
 
+    @Patch(':id/activate')
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+    @HttpCode(HttpStatus.OK)
+    @ApiOperation({
+        summary: 'Verifikasi & Aktifkan Pasien (dari Pendaftaran Online)',
+        description: 'Digunakan saat pasien datang ke klinik untuk memverifikasi data dan mengaktifkan statusnya.'
+    })
+    @ApiResponse({ status: 200, description: 'Pasien berhasil diaktifkan', type: PatientResponseDto })
+    async activatePatient(@Param('id', ParseIntPipe) id: number): Promise<PatientResponseDto> {
+        return this.patientsService.update(id, { is_active: true });
+    }
+
     @Patch(':id/restore')
     @Roles(UserRole.KEPALA_KLINIK)
     @HttpCode(HttpStatus.OK)

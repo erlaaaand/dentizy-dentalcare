@@ -11,8 +11,8 @@ export class PatientDomainService {
      * Check if patient is eligible for appointment
      */
     isEligibleForAppointment(patient: Patient): boolean {
-        // Business rule: Patient harus aktif
-        if (!patient.is_active) {
+        // UPDATE: Izinkan jika pasien tidak aktif TAPI terdaftar online (kasus belum verifikasi)
+        if (!patient.is_active && !patient.is_registered_online) {
             return false;
         }
 

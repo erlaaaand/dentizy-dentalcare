@@ -21,6 +21,7 @@ import { PatientUpdateService } from './application/use-cases/patient-update.ser
 import { PatientDeletionService } from './application/use-cases/patient-deletion.service';
 import { PatientRestoreService } from './application/use-cases/patient-restore.service';
 import { PatientStatisticsService } from './application/use-cases/patient-statistics.service';
+import { PatientCleanupService } from './application/use-cases/patient-cleanup.service'; // IMPORT INI
 
 // Validators
 import { PatientCreateValidator } from './domains/validators/patient-create.validator';
@@ -80,6 +81,7 @@ import { PatientMapper } from './domains/mappers/patient.mapper';
     PatientDeletionService,
     PatientRestoreService,
     PatientStatisticsService,
+    PatientCleanupService,
 
     // Infrastructure
     PatientRepository,
@@ -100,6 +102,6 @@ import { PatientMapper } from './domains/mappers/patient.mapper';
     PatientSearchValidator,
     PatientValidator,
   ],
-  exports: [PatientsService, PatientRepository, PatientValidator],
+  exports: [PatientsService, PatientRepository, PatientValidator, PatientCreationService],
 })
 export class PatientsModule { }
