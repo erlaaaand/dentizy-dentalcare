@@ -21,12 +21,6 @@ export class TreatmentsService {
             throw new NotFoundException(`Kategori dengan ID ${dto.categoryId} tidak ditemukan`);
         }
 
-        // Check if kode already exists
-        const kodeExists = await this.treatmentRepository.isKodeExists(dto.kodePerawatan);
-        if (kodeExists) {
-            throw new ConflictException(`Kode perawatan ${dto.kodePerawatan} sudah digunakan`);
-        }
-
         try {
             const treatment = await this.treatmentRepository.create(dto);
             return this.mapToResponseDto(treatment);
@@ -86,12 +80,12 @@ export class TreatmentsService {
         }
 
         // Check if kode already exists (excluding current record)
-        if (dto.kodePerawatan) {
-            const kodeExists = await this.treatmentRepository.isKodeExists(dto.kodePerawatan, id);
-            if (kodeExists) {
-                throw new ConflictException(`Kode perawatan ${dto.kodePerawatan} sudah digunakan`);
-            }
-        }
+        // if (dto.kodePerawatan) {
+        //     const kodeExists = await this.treatmentRepository.isKodeExists(dto.kodePerawatan, id);
+        //     if (kodeExists) {
+        //         throw new ConflictException(`Kode perawatan ${dto.kodePerawatan} sudah digunakan`);
+        //     }
+        // }
 
         try {
             const treatment = await this.treatmentRepository.update(id, dto);

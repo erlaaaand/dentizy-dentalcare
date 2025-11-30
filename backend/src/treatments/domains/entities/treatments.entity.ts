@@ -1,4 +1,4 @@
-// backend/src/treatments/domain/entities/treatment.entity.ts
+// backend/src/treatments/domains/entities/treatments.entity.ts
 import {
     Entity,
     PrimaryGeneratedColumn,
@@ -15,6 +15,8 @@ import { TreatmentCategory } from '../../../treatment-categories/domains/entitie
 import { MedicalRecordTreatment } from '../../../medical-record-treatments/domains/entities/medical-record-treatments.entity';
 
 @Entity('treatments')
+@Index(['kodePerawatan', 'deletedAt'])
+@Index(['categoryId', 'isActive', 'deletedAt'])
 export class Treatment {
     @PrimaryGeneratedColumn()
     id: number;
@@ -53,10 +55,30 @@ export class Treatment {
     @DeleteDateColumn({ type: 'datetime', precision: 6, name: 'deleted_at', nullable: true })
     deletedAt: Date;
 
-    @ManyToOne(() => TreatmentCategory, (category) => category.treatments)
+    @ManyToOne(() => TreatmentCategory, (category) => category.treatments, { onDelete: 'RESTRICT' })
     @JoinColumn({ name: 'category_id' })
     category: TreatmentCategory;
 
     @OneToMany(() => MedicalRecordTreatment, (mrt) => mrt.treatment)
     medicalRecordTreatments: MedicalRecordTreatment[];
+
+    // Domain methods
+    activate(): void {
+        this.isActive = true;
+    }
+
+    deactivate(): void {
+        this.isActive = false;
+    }
+
+    updatePrice(newPrice: number): void {
+        if (newPrice < 0) {
+            throw new Error('Price cannot be negative');
+        }
+        this.harga = newPrice;
+    }
+
+    isAvailable(): boolean {
+        return this.isActive && !this.deletedAt;
+    }
 }
