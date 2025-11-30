@@ -10,3 +10,4 @@ export * from './treatments.api';
 export * from './treatment-categories.api';
 export * from './payments.api';
 export * from './medical-record-treatments.api';
+export * from './public-appointment.api';
