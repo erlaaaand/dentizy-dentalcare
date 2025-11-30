@@ -8,6 +8,8 @@ export const badgeVariants = {
   info: 'bg-cyan-100 text-cyan-900 border-cyan-200 hover:bg-cyan-200',
   secondary: 'bg-purple-100 text-purple-900 border-purple-200 hover:bg-purple-200',
 
+  danger: 'bg-red-200 text-red-900 border-red-300 hover:bg-red-300',
+
   // Outline variants
   outline: 'bg-transparent text-gray-700 border-gray-300 hover:bg-gray-50',
 
@@ -25,6 +27,7 @@ export const gradientVariants: Record<string, string> = {
   secondary: 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-transparent',
   outline: 'bg-gradient-to-r from-gray-400 to-gray-500 text-white border-transparent',
   ghost: 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700 border-transparent',
+  danger: 'bg-gradient-to-r from-red-500 to-red-700 text-white border-transparent',
 };
 
 export const sizeClasses = {

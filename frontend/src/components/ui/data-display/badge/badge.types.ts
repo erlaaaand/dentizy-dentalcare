@@ -2,7 +2,7 @@ import { LucideIcon } from "lucide-react";
 
 export interface BadgeProps {
   children?: React.ReactNode;
-  variant?: 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' | 'secondary' | 'outline' | 'ghost';
+  variant?: 'default' | 'primary' | 'success' | 'error' | 'warning' | 'info' | 'secondary' | 'outline' | 'ghost' | 'success' | 'danger';
   size?: 'xs' | 'sm' | 'md' | 'lg';
   shape?: 'rounded' | 'square' | 'pill';
   icon?: LucideIcon;
