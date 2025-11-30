@@ -240,7 +240,7 @@ export function KepalaKlinikDashboard() {
                                 <EmptyState icon={<Users className="w-12 h-12 text-gray-300" />} title="Belum Ada Pasien" description="Belum ada data pasien yang terdaftar." variant="minimal" />
                             </div>
                         ) : (
-                            <DataTable data={recentPatients} columns={recentPatientColumns} hoverable compact={false} className="border-none" />
+                            <DataTable data={recentPatients} columns={recentPatientColumns} className="border-none" />
                         )}
                     </TabPanel>
 
@@ -265,7 +265,7 @@ export function KepalaKlinikDashboard() {
                                 <EmptyState icon={<Clock className="w-12 h-12 text-gray-300" />} title="Tidak Ada Jadwal" description="Tidak ada janji temu untuk hari ini." variant="minimal" />
                             </div>
                         ) : (
-                            <DataTable data={todayAppointments} columns={appointmentColumns} hoverable striped className="border-none" />
+                            <DataTable data={todayAppointments} columns={appointmentColumns} className="border-none" />
                         )}
                     </TabPanel>
 

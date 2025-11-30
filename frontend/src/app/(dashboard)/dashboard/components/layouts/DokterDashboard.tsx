@@ -1,7 +1,7 @@
 // frontend/src/app/(dashboard)/dashboard/components/layouts/DokterDashboard.tsx
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, Calendar, ClipboardList, Activity, Clock, CheckCircle2 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -12,6 +12,8 @@ import { Card, DataTable, Badge, EmptyState, Skeleton, Button, StatsCard, Tabs, 
 import type { StatCardData, AppointmentListItem, DashboardLayoutProps } from '../../types/dashboard.types';
 import { StatsGrid } from '../stats/StatsGrid';
 import { AppointmentList } from '../widgets/AppointmentList';
+import { useDebounce } from '@/core/hooks/ui/useDebounce';
+import { useGetPatients} from '@/core/services/api';
 
 export function DokterDashboard({
     user,
@@ -37,6 +39,37 @@ export function DokterDashboard({
             status: apt.status
         })) || []
         , [todayAppointments]);
+
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(10);
+    const [search, setSearch] = useState('');
+    const debouncedSearch = useDebounce(search, 500);
+    const [genderFilter, setGenderFilter] = useState<string>('');
+
+    const { data: patientsResponse, isLoading, refetch } = useGetPatients({
+        page,
+        limit,
+        search: debouncedSearch || undefined,
+        jenis_kelamin: (genderFilter as any) || undefined,
+    });
+
+    const patientsList = Array.isArray(patientsResponse)
+        ? patientsResponse
+        : (patientsResponse as any)?.data || [];
+
+    const meta = (patientsResponse as any)?.meta || (patientsResponse as any)?.pagination || {
+        total: patientsList.length,
+        totalPages: 1,
+        page: 1,
+        limit: 10
+    };
+
+    const paginationProps = {
+        currentPage: page,
+        totalPages: meta.totalPages || 1,
+        totalItems: meta.total || 0,
+        itemsPerPage: limit,
+    };
 
     const appointmentColumns = useMemo(() => [
         {
@@ -173,10 +206,16 @@ export function DokterDashboard({
                         ) : (
                             <DataTable
                                 data={todayAppointments?.data || []}
-                                columns={appointmentColumns}
-                                hoverable
-                                striped
-                                className="border-none"
+                                columns={appointmentColumns || []}
+                                pagination={{
+                                    currentPage: paginationProps.currentPage,
+                                    totalPages: paginationProps.totalPages,
+                                    totalItems: paginationProps.totalItems,
+                                    itemsPerPage: limit,
+                                }}
+                                onPageChange={setPage}
+                                onLimitChange={setLimit}
+                                isLoading={isLoading}
                             />
                         )}
                     </TabPanel>

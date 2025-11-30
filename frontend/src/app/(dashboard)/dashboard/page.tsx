@@ -8,7 +8,7 @@ import { DokterDashboard } from './components/layouts/DokterDashboard';
 import { StafDashboard } from './components/layouts/StafDashboard';
 
 export default function DashboardPage() {
-    const { user, loading: authLoading } = useAuth();
+    const { loading: authLoading } = useAuth();
     const { isKepalaKlinik, isDokter, isStaf } = useRole();
 
     // Loading state awal (Auth check)

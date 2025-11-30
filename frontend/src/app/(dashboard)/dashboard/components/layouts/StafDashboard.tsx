@@ -191,8 +191,6 @@ export function StafDashboard({
                             <DataTable
                                 data={recentPatients}
                                 columns={recentPatientColumns}
-                                hoverable
-                                compact={false}
                                 className="border-none"
                             />
                         )}
