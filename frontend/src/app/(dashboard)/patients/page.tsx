@@ -1,300 +1,104 @@
 'use client';
 
-import React, { useState } from 'react';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Tabs, TabPanel } from '@/components/ui/navigation/Tabs';
+import { Card, CardBody } from '@/components/ui/data-display/card';
+import { Users, ShieldAlert, Loader2, UserCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { Plus, Eye, Edit, Trash2, Download, RefreshCw, Users } from 'lucide-react';
+import { ROLES, useAuth } from '@/core';
 
-// Core & Services
-import { useGetPatients, useDeletePatient } from '@/core/services/api';
-import { useConfirm } from '@/core/hooks/ui/useConfirm';
-import { useToast } from '@/core/hooks/ui/useToast';
-import { formatDate } from '@/core';
-import { useDebounce } from '@/core/hooks/ui/useDebounce';
-
-// UI Components
-import {
-    PageContainer,
-    PageHeader,
-    DataTable,
-    Button,
-    IconButton,
-    Input,
-    EmptyPatientsState,
-    SkeletonTable,
-    Select,
-    ButtonGroup,
-    Badge,
-    StatsCard,
-    ToastContainer,
-} from '@/components';
+// Component Baru
+import PatientList from './tabs/PatientList';
 
 export default function PatientsPage() {
-    const router = useRouter();
-    const { confirm } = useConfirm();
-    const { showSuccess, showError } = useToast();
+    const { user, loading: authLoading } = useAuth();
 
-    const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(10);
-    const [search, setSearch] = useState('');
-    const [genderFilter, setGenderFilter] = useState<string>('');
+    const userRoles = user?.roles?.map((r: any) => r.name) || [];
 
-    const debouncedSearch = useDebounce(search, 500);
+    // Identifikasi Role
+    const isHeadClinic = userRoles.includes(ROLES.KEPALA_KLINIK);
+    const isStaff = userRoles.includes(ROLES.STAF);
+    const isDoctor = userRoles.includes(ROLES.DOKTER);
 
-    const { data: patientsResponse, isLoading, refetch } = useGetPatients({
-        page,
-        limit,
-        search: debouncedSearch || undefined,
-        jenis_kelamin: (genderFilter as any) || undefined,
-    });
+    // Permission Logic
+    // Head & Staff: Bisa Manage (Create/Edit/Delete) & Lihat Semua
+    const canManage = isHeadClinic || isStaff;
 
-    const patientsList = Array.isArray(patientsResponse)
-        ? patientsResponse
-        : (patientsResponse as any)?.data || [];
+    // Access Check
+    const hasAccess = isHeadClinic || isStaff || isDoctor;
 
-    const meta = (patientsResponse as any)?.meta || (patientsResponse as any)?.pagination || {
-        total: patientsList.length,
-        totalPages: 1,
-        page: 1,
-        limit: 10
-    };
+    if (authLoading) {
+        return (
+            <PageContainer title="Data Pasien">
+                <Card><CardBody className="p-12 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" /></CardBody></Card>
+            </PageContainer>
+        );
+    }
 
-    const deleteMutation = useDeletePatient();
+    if (!hasAccess) {
+        return (
+            <PageContainer title="Akses Ditolak">
+                <Card>
+                    <CardBody className="p-12 text-center">
+                        <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
+                        <h3 className="text-lg font-semibold">Akses Ditolak</h3>
+                        <p className="text-gray-500">Anda tidak memiliki izin untuk halaman ini.</p>
+                    </CardBody>
+                </Card>
+            </PageContainer>
+        );
+    }
 
-    const handleSearch = (value: string) => {
-        setSearch(value);
-        setPage(1);
-    };
+    // Konfigurasi Tabs
+    const tabs = [];
 
-    const handleGenderFilter = (value: string) => {
-        setGenderFilter(value);
-        setPage(1);
-    };
-
-    const handleDelete = async (id: number, name: string) => {
-        const isConfirmed = await confirm({
-            title: 'Hapus Data Pasien',
-            message: `Apakah Anda yakin ingin menghapus data pasien "${name}"? Data yang dihapus tidak dapat dikembalikan.`,
-            confirmText: 'Ya, Hapus',
-            cancelText: 'Batal',
-            type: 'danger',
+    // Tab 1: Semua Pasien (Untuk Head & Staff)
+    if (canManage) {
+        tabs.push({
+            id: 'all-patients',
+            label: 'Semua Pasien',
+            icon: <Users className="w-4 h-4" />
         });
+    }
 
-        if (isConfirmed) {
-            try {
-                await deleteMutation.mutateAsync({ id });
-                showSuccess('Data pasien berhasil dihapus');
-                refetch();
-            } catch (error: any) {
-                showError(error?.message || 'Gagal menghapus data pasien');
-            }
-        }
-    };
+    // Tab 2: Pasien Saya (Untuk Dokter & Kepala Klinik yg praktek)
+    if (isDoctor || isHeadClinic) {
+        tabs.push({
+            id: 'my-patients',
+            label: 'Pasien Saya',
+            icon: <UserCheck className="w-4 h-4" />
+        });
+    }
 
-    const columns = [
-        {
-            header: 'No. RM',
-            accessorKey: 'nomor_rekam_medis',
-            cell: (info: any) => (
-                <span className="font-mono font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-md">
-                    {info.getValue() || '-'}
-                </span>
-            ),
-        },
-        {
-            header: 'Nama Pasien',
-            accessorKey: 'nama_lengkap',
-            cell: (info: any) => (
-                <div className="font-semibold text-gray-900">{info.getValue()}</div>
-            ),
-        },
-        {
-            header: 'Jenis Kelamin',
-            accessorKey: 'jenis_kelamin',
-            cell: (info: any) => {
-                const val = info.getValue();
-                return (
-                    <Badge variant={val === 'L' ? 'info' : 'success'} dot>
-                        {val === 'L' ? 'Laki-laki' : 'Perempuan'}
-                    </Badge>
-                );
-            },
-        },
-        {
-            header: 'No. Telepon',
-            accessorKey: 'no_hp',
-            cell: (info: any) => (
-                <span className="text-gray-700">{info.getValue() || '-'}</span>
-            ),
-        },
-        {
-            header: 'Tanggal Lahir',
-            accessorKey: 'tanggal_lahir',
-            cell: (info: any) => (
-                <span className="text-gray-700">{formatDate(info.getValue())}</span>
-            ),
-        },
-        {
-            id: 'actions',
-            header: 'Aksi',
-            align: 'right',
-            cell: (info: any) => {
-                const patient = info.row.original;
-                return (
-                    <div className="flex justify-end gap-2">
-                        <IconButton
-                            variant="ghost"
-                            size="sm"
-                            icon={<Eye className="w-4 h-4" />}
-                            onClick={() => router.push(`/patients/${patient.id}`)}
-                            title="Lihat Detail"
-                            aria-label='Lihat Detail'
-                            className="text-blue-600 hover:bg-blue-50"
-                        />
-                        <IconButton
-                            variant="ghost"
-                            size="sm"
-                            className="text-amber-600 hover:bg-amber-50"
-                            icon={<Edit className="w-4 h-4" />}
-                            onClick={() => router.push(`/patients/${patient.id}/edit`)}
-                            title="Edit"
-                            aria-label="Edit"
-                        />
-                        <IconButton
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-600 hover:bg-red-50"
-                            icon={<Trash2 className="w-4 h-4" />}
-                            onClick={() => handleDelete(patient.id, patient.nama_lengkap)}
-                            title="Hapus"
-                            aria-label="Hapus"
-                        />
-                    </div>
-                );
-            },
-        },
-    ];
-
-    const paginationProps = {
-        currentPage: page,
-        totalPages: meta.totalPages || 1,
-        totalItems: meta.total || 0,
-        itemsPerPage: limit,
-    };
-
-    // Calculate stats
-    const totalPatients = meta.total || 0;
-    const maleCount = patientsList.filter((p: any) => p.jenis_kelamin === 'L').length;
-    const femaleCount = patientsList.filter((p: any) => p.jenis_kelamin === 'P').length;
+    // Default Tab Logic
+    const defaultTab = canManage ? 'all-patients' : 'my-patients';
 
     return (
-        <PageContainer>
-            <PageHeader
-                title="Kelola Pasien"
-                description="Manajemen data pasien dan rekam medis"
-                actions={
-                    <ButtonGroup>
-                        <Button
-                            variant="outline"
-                            icon={<Download className="w-4 h-4" />}
-                            iconPosition="left"
-                            onClick={() => showSuccess('Fitur export akan segera tersedia')}
-                        >
-                            Export
-                        </Button>
-                        <Button
-                            icon={<Plus className="w-4 h-4" />}
-                            iconPosition="left"
-                            onClick={() => router.push('/patients/new')}
-                        >
-                            Tambah Pasien
-                        </Button>
-                    </ButtonGroup>
-                }
-            />
+        <PageContainer
+            title="Data Pasien"
+            subtitle={canManage
+                ? "Kelola data induk pasien klinik."
+                : "Daftar pasien yang pernah Anda tangani."}
+        >
+            <Tabs tabs={tabs} defaultTab={defaultTab} variant="pills">
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                <StatsCard
-                    title="Total Pasien"
-                    value={totalPatients.toString()}
-                    icon={<Users className="w-5 h-5" />}
-                    trend={totalPatients > 0 ? { value: 0, isPositive: true } : undefined}
-                />
-                <StatsCard
-                    title="Laki-laki"
-                    value={maleCount.toString()}
-                    icon={<Users className="w-5 h-5" />}
-                    className="bg-blue-50 border-blue-200"
-                />
-                <StatsCard
-                    title="Perempuan"
-                    value={femaleCount.toString()}
-                    icon={<Users className="w-5 h-5" />}
-                    className="bg-pink-50 border-pink-200"
-                />
-            </div>
-
-            {/* Filter & Search Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6 p-6">
-                <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="flex-1">
-                        <Input
-                            placeholder="Cari nama, No RM, atau No HP..."
-                            value={search}
-                            onChange={(e) => handleSearch(e.target.value)}
-                        />
-                    </div>
-                    <div className="w-full sm:w-56">
-                        <Select
-                            value={genderFilter}
-                            onChange={(val) => handleGenderFilter(val)}
-                            options={[
-                                { value: '', label: 'Semua Gender' },
-                                { value: 'L', label: 'Laki-laki' },
-                                { value: 'P', label: 'Perempuan' },
-                            ]}
-                        />
-                    </div>
-                    <IconButton
-                        variant="outline"
-                        icon={<RefreshCw className="w-4 h-4" />}
-                        onClick={() => refetch()}
-                        title="Refresh Data"
-                        aria-label="Refresh Data"
-                    />
-                </div>
-            </div>
-
-            {/* Data Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {isLoading ? (
-                    <div className="p-6">
-                        <SkeletonTable rows={5} cols={6} />
-                    </div>
-                ) : !patientsList || patientsList.length === 0 ? (
-                    <div className="p-12">
-                        <EmptyPatientsState
-                            onAddPatient={() => router.push('/patients/new')}
-                        />
-                    </div>
-                ) : (
-                    <DataTable
-                        data={patientsList}
-                        columns={columns as any}
-                        pagination={{
-                            currentPage: paginationProps.currentPage,
-                            totalPages: paginationProps.totalPages,
-                            totalItems: paginationProps.totalItems,
-                            itemsPerPage: limit,
-                        }}
-                        onPageChange={setPage}
-                        onLimitChange={setLimit}
-                        isLoading={isLoading}
-                    />
+                {/* Tab Semua Pasien */}
+                {canManage && (
+                    <TabPanel tabId="all-patients">
+                        <PatientList scope="all" canManage={true} />
+                    </TabPanel>
                 )}
-            </div>
 
-            <ToastContainer />
+                {/* Tab Pasien Saya */}
+                {(isDoctor || isHeadClinic) && (
+                    <TabPanel tabId="my-patients">
+                        {/* Scope 'me' mengirim sinyal filter doctor_id ke komponen */}
+                        {/* canManage=false artinya di tab ini dokter tidak bisa edit/hapus sembarangan, hanya view */}
+                        <PatientList scope="me" canManage={false} />
+                    </TabPanel>
+                )}
+
+            </Tabs>
         </PageContainer>
     );
 }
