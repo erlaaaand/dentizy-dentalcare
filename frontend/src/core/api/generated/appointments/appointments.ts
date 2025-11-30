@@ -416,7 +416,7 @@ export function useAppointmentsControllerFindOne<TData = Awaited<ReturnType<type
 
 
 /**
- * Mengupdate data appointment dengan validasi conflict jika waktu berubah
+ * Mengupdate data appointment. Jika status SELESAI & ada medical_record, akan memicu transaksi rekam medis.
  * @summary Update appointment
  */
 export const appointmentsControllerUpdate = (

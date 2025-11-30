@@ -881,6 +881,68 @@ export const usePatientsControllerRemove = <TError = void | void | void,
       return useMutation(mutationOptions, queryClient);
     }
     /**
+ * Digunakan saat pasien datang ke klinik untuk memverifikasi data dan mengaktifkan statusnya.
+ * @summary Verifikasi & Aktifkan Pasien (dari Pendaftaran Online)
+ */
+export const patientsControllerActivatePatient = (
+    id: number,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<PatientResponseDto>(
+      {url: `/patients/${id}/activate`, method: 'PATCH'
+    },
+      options);
+    }
+  
+
+
+export const getPatientsControllerActivatePatientMutationOptions = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patientsControllerActivatePatient>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof patientsControllerActivatePatient>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['patientsControllerActivatePatient'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof patientsControllerActivatePatient>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  patientsControllerActivatePatient(id,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PatientsControllerActivatePatientMutationResult = NonNullable<Awaited<ReturnType<typeof patientsControllerActivatePatient>>>
+    
+    export type PatientsControllerActivatePatientMutationError = void | void
+
+    /**
+ * @summary Verifikasi & Aktifkan Pasien (dari Pendaftaran Online)
+ */
+export const usePatientsControllerActivatePatient = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof patientsControllerActivatePatient>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof patientsControllerActivatePatient>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getPatientsControllerActivatePatientMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Hanya KEPALA_KLINIK yang dapat memulihkan pasien yang telah dihapus (soft delete)
  * @summary Pulihkan pasien (restore soft delete)
  */
