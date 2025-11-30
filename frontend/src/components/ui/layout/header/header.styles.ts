@@ -32,7 +32,6 @@ export const variantClasses = {
 };
 
 export const defaultMenuOptions: HeaderMenuOption[] = [
-    { value: 'profile', label: 'Profil Saya' },
-    { value: 'settings', label: 'Pengaturan' },
+    { value: 'profile', label: 'Profil Saya', type: 'default'},
     { value: 'logout', label: 'Keluar', type: 'danger' },
 ];

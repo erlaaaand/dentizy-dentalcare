@@ -16,6 +16,7 @@ import { SimpleHeader } from './SimpleHeader';
 import { HeaderSection } from './HeaderSection';
 import { HeaderTitle } from './HeaderTitle';
 import { HeaderSubtitle } from './HeaderSubtitle';
+import { useQueryClient } from "@tanstack/react-query";
 
 // Force cleanup function
 const forceLogoutCleanup = () => {
@@ -77,71 +78,92 @@ export function Header({
     const sizeClass = sizeClasses[size];
     const variantClass = variantClasses[variant];
 
+    const queryClient = useQueryClient();
+    const { setHasToken } = useAuth();
+
     const handleLogout = async () => {
-        // Prevent double clicks
         if (isLoggingOut) {
-            console.log('⚠️ Already logging out, ignoring...');
+            console.log("⚠️ Logout already in progress…");
             return;
         }
 
-        console.log('🔴 === LOGOUT PROCESS STARTED ===');
+        console.log("🔴 === LOGOUT START ===");
 
-        // Close dialog and show loading
-        setShowLogoutDialog(false);
         setIsLoggingOut(true);
+        setShowLogoutDialog(false);
 
-        // Execute cleanup after a tiny delay to ensure loading shows
-        setTimeout(async () => {
+        //
+        // 1) HENTIKAN semua activity React Query + auth snapshot
+        //
+        try {
+            console.log("⛔ Stopping queries…");
+            queryClient.cancelQueries();
+            queryClient.removeQueries({ queryKey: ["auth.me"], exact: false });
+
+            // cegah komponen lain dari memicu /auth/me lagi
+            console.log("🔐 Disabling auth state…");
+            setHasToken(false);
+        } catch (e) {
+            console.warn("Query cleanup warning:", e);
+        }
+
+        //
+        // 2) CALL API logout TIDAK BOLEH BLOCKING
+        //    → kalau timeout, tetap lanjut
+        //
+        const callLogoutApi = async () => {
             try {
-                console.log('🔄 Starting cleanup process...');
-
-                // Try to call logout API (optional, don't wait)
-                try {
-                    console.log('📡 Calling logout API...');
-                    await Promise.race([
-                        authLogout(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 2000))
-                    ]);
-                    console.log('✅ Logout API completed');
-                } catch (apiError) {
-                    console.warn('⚠️ Logout API error/timeout (continuing):', apiError);
-                }
-
-                // Force cleanup (ALWAYS execute)
-                console.log('🧹 Executing force cleanup...');
-                forceLogoutCleanup();
-
-                // Show success message
-                try {
-                    showSuccess('Logout berhasil! Sampai jumpa kembali.');
-                } catch (toastError) {
-                    console.warn('Toast error:', toastError);
-                }
-
-                console.log('🔄 Redirecting to login...');
-                console.log('🔴 === LOGOUT PROCESS COMPLETED ===');
-
-                // Force redirect
-                window.location.href = ROUTES.LOGIN || '/login';
-
-            } catch (error) {
-                console.error('❌ Critical logout error:', error);
-
-                // Still force cleanup and redirect
-                forceLogoutCleanup();
-
-                try {
-                    showError('Terjadi kesalahan, memaksa keluar...');
-                } catch (e) {
-                    // Ignore
-                }
-
-                // Force redirect anyway
-                setTimeout(() => {
-                    window.location.href = ROUTES.LOGIN || '/login';
-                }, 500);
+                await Promise.race([
+                    authLogout(), // dari backend
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error("Logout timeout")), 1500)
+                    ),
+                ]);
+                console.log("✅ Logout API responded");
+            } catch (err) {
+                console.warn("⚠️ Logout API error — ignored:", err);
             }
-        }, 100);
+        };
+
+        //
+        // Delay mikro supaya overlay loader muncul smooth
+        //
+        setTimeout(async () => {
+            await callLogoutApi();
+
+            //
+            // 3) FORCE CLEANUP (HARUS jalan, apapun hasil API)
+            //
+            try {
+                console.log("🧹 Clearing tokens & storage…");
+                forceLogoutCleanup();
+            } catch (cleanupErr) {
+                console.error("Cleanup error:", cleanupErr);
+            }
+
+            //
+            // 4) Clear React Query total
+            //
+            try {
+                console.log("🗑️ Clearing React Query cache…");
+                queryClient.clear();
+            } catch { }
+
+            //
+            // 5) Notifikasi
+            //
+            try {
+                showSuccess("Logout berhasil! Sampai jumpa kembali.");
+            } catch { }
+
+            console.log("➡️ Redirecting to login…");
+            console.log("🔴 === LOGOUT END ===");
+
+            //
+            // 6) Redirect pakai replace (tidak bisa back)
+            //
+            window.location.replace(ROUTES.LOGIN ?? "/login");
+        }, 80);
     };
 
     const handleMenuSelect = async (value: string) => {
