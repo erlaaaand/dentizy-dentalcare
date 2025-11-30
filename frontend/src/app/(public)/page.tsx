@@ -4,8 +4,9 @@ import { HeroSection } from '@/components/landing/HeroSection';
 import { ServicesSection } from '@/components/landing/ServicesSection';
 import { AboutSection } from '@/components/landing/AboutSection';
 import { DoctorsSection } from '@/components/landing/DoctorsSection';
-import { ContactSection } from '@/components/landing/ContactSection';
+import { ContactSection } from '@/components/landing/contact-section/ContactSection';
 import { LandingFooter } from '@/components/landing/LandingFooter';
+import { FeaturesSection } from '@/components/landing/FeatureSection';
 
 // Metadata khusus untuk landing page
 export const metadata = {
@@ -21,6 +22,8 @@ export default function LandingPage() {
             <HeroSection />
 
             <ServicesSection />
+
+            <FeaturesSection />
 
             <AboutSection />
 
