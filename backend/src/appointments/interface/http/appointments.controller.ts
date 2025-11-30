@@ -164,10 +164,10 @@ export class AppointmentsController {
     }
 
     @Patch(':id')
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Pastikan role sesuai kebutuhan bisnis
     @ApiOperation({
         summary: 'Update appointment',
-        description: 'Mengupdate data appointment dengan validasi conflict jika waktu berubah',
+        description: 'Mengupdate data appointment. Jika status SELESAI & ada medical_record, akan memicu transaksi rekam medis.',
     })
     @ApiParam({ name: 'id', description: 'ID Appointment' })
     @ApiResponse({
@@ -180,9 +180,11 @@ export class AppointmentsController {
     @ApiResponse({ status: 409, description: 'Konflik jadwal atau status tidak valid' })
     async update(
         @Param('id', ParseIntPipe) id: number,
-        @Body(ValidationPipe) updateDto: UpdateAppointmentDto
+        @Body(ValidationPipe) updateDto: UpdateAppointmentDto,
+        @GetUser() user: User // [BARU] Inject User dari token JWT
     ): Promise<AppointmentResponseDto> {
-        return await this.appointmentsService.update(id, updateDto);
+        // [BARU] Teruskan 'user' ke service
+        return await this.appointmentsService.update(id, updateDto, user);
     }
 
     @Delete(':id')

@@ -17,6 +17,7 @@ export enum AppointmentStatus {
     DIJADWALKAN = 'dijadwalkan',
     SELESAI = 'selesai',
     DIBATALKAN = 'dibatalkan',
+    MENUNGGU_KONFIRMASI = 'menunggu_konfirmasi',
 }
 
 @Entity('appointments')

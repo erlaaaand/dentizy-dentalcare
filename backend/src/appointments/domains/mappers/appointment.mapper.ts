@@ -30,6 +30,8 @@ export class AppointmentMapper {
                 id: appointment.patient.id,
                 nama_lengkap: appointment.patient.nama_lengkap,
                 nomor_rekam_medis: appointment.patient.nomor_rekam_medis,
+                nik: appointment.patient.nik,
+                is_active: appointment.patient.is_active,
                 email: appointment.patient.email ?? undefined,
                 nomor_telepon: appointment.patient.no_hp ?? undefined,
             } : undefined,

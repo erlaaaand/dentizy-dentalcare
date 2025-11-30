@@ -11,10 +11,10 @@ export class AppointmentConflictValidator {
     private readonly BUFFER_MINUTES = 30;
 
     /**
-     * Cek konflik jadwal dengan buffer time (30 menit)
-     * Menggunakan pessimistic lock untuk mencegah race condition
+     * 1. Cek konflik jadwal DOKTER (Untuk Creation)
+     * Memastikan Dokter tidak double-book di jam yang sama (Hanya status DIJADWALKAN)
      */
-    async validateNoConflict(
+    async validateDoctorNoConflict(
         queryRunner: QueryRunner,
         doctorId: number,
         tanggalJanji: Date,
@@ -22,45 +22,80 @@ export class AppointmentConflictValidator {
         bufferStart: string,
         bufferEnd: string
     ): Promise<void> {
-        this.logger.debug(`Checking conflict for doctor #${doctorId} at ${jamJanji}`);
-        this.logger.debug(`Buffer window: ${bufferStart} - ${bufferEnd}`);
-
         const conflictingAppointment = await queryRunner.manager
             .createQueryBuilder(Appointment, 'appointment')
             .where('appointment.doctor_id = :doctorId', { doctorId })
             .andWhere('appointment.tanggal_janji = :tanggalJanji', { tanggalJanji })
+            // [PENTING] Hanya cek yang statusnya DIJADWALKAN.
             .andWhere('appointment.status = :status', { status: AppointmentStatus.DIJADWALKAN })
             .andWhere(
                 new Brackets((qb) => {
-                    // Check if new appointment overlaps with existing ones
                     qb.where('appointment.jam_janji BETWEEN :bufferStart AND :bufferEnd', {
                         bufferStart,
                         bufferEnd,
                     })
-                        // OR if existing appointment overlaps with new one
                         .orWhere(
                             `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) 
-                             BETWEEN -1800 AND 1800`,
+                         BETWEEN -1800 AND 1800`,
                             { requestedTime: jamJanji }
                         );
                 })
             )
-            .setLock('pessimistic_write') // Lock untuk prevent race condition
+            .setLock('pessimistic_write')
             .getOne();
 
         if (conflictingAppointment) {
             throw new ConflictException(
-                `Dokter sudah memiliki janji temu di waktu yang berdekatan (${conflictingAppointment.jam_janji}). ` +
-                `Silakan pilih waktu minimal ${this.BUFFER_MINUTES} menit sebelum atau sesudah.`
+                `Dokter sudah memiliki jadwal aktif di jam ${conflictingAppointment.jam_janji}.`
             );
         }
-
-        this.logger.debug('✅ No conflict found');
     }
 
     /**
-     * Cek konflik untuk update appointment
-     * Exclude appointment yang sedang diupdate
+     * 2. Cek konflik jadwal PASIEN (Untuk Creation)
+     * Memastikan Pasien tidak booking 2 dokter di jam yang sama
+     */
+    async validatePatientNoConflict(
+        queryRunner: QueryRunner,
+        patientId: number,
+        tanggalJanji: Date,
+        jamJanji: string,
+        bufferStart: string,
+        bufferEnd: string
+    ): Promise<void> {
+        const conflictingAppointment = await queryRunner.manager
+            .createQueryBuilder(Appointment, 'appointment')
+            .where('appointment.patient_id = :patientId', { patientId })
+            .andWhere('appointment.tanggal_janji = :tanggalJanji', { tanggalJanji })
+            // [PENTING] Abaikan appointment masa lalu yang sudah SELESAI
+            .andWhere('appointment.status = :status', { status: AppointmentStatus.DIJADWALKAN })
+            .andWhere(
+                new Brackets((qb) => {
+                    qb.where('appointment.jam_janji BETWEEN :bufferStart AND :bufferEnd', {
+                        bufferStart,
+                        bufferEnd,
+                    })
+                        .orWhere(
+                            `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) 
+                         BETWEEN -1800 AND 1800`,
+                            { requestedTime: jamJanji }
+                        );
+                })
+            )
+            .setLock('pessimistic_write')
+            .getOne();
+
+        if (conflictingAppointment) {
+            throw new ConflictException(
+                `Pasien ini masih memiliki jadwal aktif di jam ${conflictingAppointment.jam_janji}. ` +
+                `Selesaikan atau batalkan jadwal tersebut sebelum membuat janji baru di jam yang sama.`
+            );
+        }
+    }
+
+    /**
+     * 3. Cek konflik untuk UPDATE Appointment
+     * Logika sama dengan Dokter Conflict, tapi mengecualikan ID diri sendiri.
      */
     async validateNoConflictForUpdate(
         queryRunner: QueryRunner,
@@ -73,9 +108,11 @@ export class AppointmentConflictValidator {
     ): Promise<void> {
         const conflictingAppointment = await queryRunner.manager
             .createQueryBuilder(Appointment, 'appointment')
+            // Exclude diri sendiri agar tidak dianggap bentrok
             .where('appointment.id != :appointmentId', { appointmentId })
             .andWhere('appointment.doctor_id = :doctorId', { doctorId })
             .andWhere('appointment.tanggal_janji = :tanggalJanji', { tanggalJanji })
+            // Tetap hanya cek yang DIJADWALKAN
             .andWhere('appointment.status = :status', { status: AppointmentStatus.DIJADWALKAN })
             .andWhere(
                 new Brackets((qb) => {

@@ -14,6 +14,14 @@ class AppointmentPatientDto {
     @ApiProperty({ example: 'RM-123456' })
     nomor_rekam_medis: string;
 
+    // [BARU] Tambahkan NIK untuk verifikasi
+    @ApiPropertyOptional({ example: '3201123456789001' })
+    nik?: string;
+
+    // [BARU] Tambahkan status aktif untuk indikator
+    @ApiPropertyOptional({ example: false })
+    is_active?: boolean;
+
     @ApiPropertyOptional({ example: 'budi@example.com' })
     email?: string;
 
@@ -74,10 +82,10 @@ export class AppointmentResponseDto {
     @ApiProperty({ description: 'ID Dokter', example: 2 })
     doctor_id: number;
 
-    @ApiProperty({ 
+    @ApiProperty({
         description: 'Status appointment saat ini',
-        enum: AppointmentStatus, 
-        example: AppointmentStatus.DIJADWALKAN 
+        enum: AppointmentStatus,
+        example: AppointmentStatus.DIJADWALKAN
     })
     status: AppointmentStatus;
 
@@ -98,7 +106,7 @@ export class AppointmentResponseDto {
 
     // --- RELATIONS ---
     // Sekarang kita cukup memanggil Class yang sudah dibuat di atas
-    
+
     @ApiPropertyOptional({ type: AppointmentPatientDto })
     patient?: AppointmentPatientDto | null;
 
@@ -114,7 +122,7 @@ export class AppointmentResponseDto {
  */
 export class PaginatedAppointmentResponseDto {
     // isArray: true memberitahu swagger bahwa ini adalah list
-    @ApiProperty({ type: [AppointmentResponseDto] }) 
+    @ApiProperty({ type: [AppointmentResponseDto] })
     data: AppointmentResponseDto[];
 
     @ApiProperty({ description: 'Total data keseluruhan', example: 100 })

@@ -9,6 +9,7 @@ import { User } from '../users/domains/entities/user.entity';
 
 // Interface Layer
 import { AppointmentsController } from './interface/http/appointments.controller';
+import { PublicAppointmentsController } from './interface/http/public-appointments.controller';
 
 // Application Layer
 import { AppointmentsService } from './applications/orchestrator/appointments.service';
@@ -19,6 +20,7 @@ import { AppointmentFindService } from './applications/use-cases/appointment-fin
 import { AppointmentSearchService } from './applications/use-cases/appointment-search.service';
 import { AppointmentUpdateService } from './applications/use-cases/appointment-update.service';
 import { AppointmentDeletionService } from './applications/use-cases/appointment-deletion.service';
+import { PublicBookingService } from './applications/use-cases/public-booking.service';
 
 // Domain Layer
 import { AppointmentMapper } from './domains/mappers/appointment.mapper';
@@ -37,14 +39,27 @@ import { AppointmentEventListener } from './infrastructures/listeners/appointmen
 
 // External Modules
 import { NotificationsModule } from '../notifications/notifications.module';
+import { PatientsModule } from '../patients/patients.module'; // IMPORT PATIENTS MODULE
+import { MedicalRecordsModule } from '../medical_records/medical_records.module';
+import { TreatmentsModule } from '../treatments/treatments.module';
+import { MedicalRecordTreatmentsModule } from '../medical-record-treatments/medical-record-treatments.module';
+import { PaymentsModule } from '../payments/payments.module';
 
 @Module({
     imports: [
         TypeOrmModule.forFeature([Appointment, Patient, User]),
         EventEmitterModule.forRoot(),
         NotificationsModule,
+        PatientsModule,
+        MedicalRecordsModule,
+        TreatmentsModule,
+        MedicalRecordTreatmentsModule,
+        PaymentsModule,
     ],
-    controllers: [AppointmentsController],
+    controllers: [
+        AppointmentsController,
+        PublicAppointmentsController // REGISTER PUBLIC CONTROLLER
+    ],
     providers: [
         // Orchestrator
         AppointmentsService,
@@ -57,6 +72,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
         AppointmentSearchService,
         AppointmentUpdateService,
         AppointmentDeletionService,
+        PublicBookingService,
 
         // Domain Services
         AppointmentDomainService,

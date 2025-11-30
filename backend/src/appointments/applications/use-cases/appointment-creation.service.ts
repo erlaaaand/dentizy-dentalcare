@@ -10,10 +10,6 @@ import { AppointmentDomainService } from '../../domains/services/appointment-dom
 import { TransactionManager } from '../../infrastructures/transactions/transaction.manager';
 import { AppointmentCreatedEvent } from '../../infrastructures/events';
 
-/**
- * Use Case: Create Appointment
- * Membuat appointment baru dengan validasi lengkap
- */
 @Injectable()
 export class AppointmentCreationService {
     private readonly logger = new Logger(AppointmentCreationService.name);
@@ -28,9 +24,6 @@ export class AppointmentCreationService {
         private readonly eventEmitter: EventEmitter2,
     ) { }
 
-    /**
-     * Execute: Create new appointment
-     */
     async execute(dto: CreateAppointmentDto): Promise<Appointment> {
         const queryRunner = this.repository.createQueryRunner();
 
@@ -38,30 +31,17 @@ export class AppointmentCreationService {
             const appointment = await this.transactionManager.executeInTransaction(
                 queryRunner,
                 async (qr) => {
-                    // 1. VALIDASI: Patient exists
-                    const patient = await this.repository.findPatientByIdInTransaction(
-                        qr,
-                        dto.patient_id
-                    );
+                    // 1. Get Entities
+                    const patient = await this.repository.findPatientByIdInTransaction(qr, dto.patient_id);
+                    const doctor = await this.repository.findDoctorByIdInTransaction(qr, dto.doctor_id);
 
-                    // 2. VALIDASI: Doctor exists
-                    const doctor = await this.repository.findDoctorByIdInTransaction(
-                        qr,
-                        dto.doctor_id
-                    );
+                    // 2. Validasi Role & Eksistensi
+                    this.createValidator.validateCreateAppointment(patient, dto.patient_id, doctor, dto.doctor_id);
 
-                    // 3. VALIDASI: Patient & Doctor roles
-                    this.createValidator.validateCreateAppointment(
-                        patient,
-                        dto.patient_id,
-                        doctor,
-                        dto.doctor_id
-                    );
-
-                    // 4. VALIDASI: Tanggal & jam kerja
+                    // 3. Validasi Format Waktu
                     this.timeValidator.validateAppointmentTime(dto.tanggal_janji, dto.jam_janji);
 
-                    // 5. VALIDASI: Conflict detection dengan buffer
+                    // 4. Hitung Buffer
                     const appointmentDate = new Date(dto.tanggal_janji);
                     appointmentDate.setHours(0, 0, 0, 0);
 
@@ -70,7 +50,10 @@ export class AppointmentCreationService {
                         dto.jam_janji
                     );
 
-                    await this.conflictValidator.validateNoConflict(
+                    // 5. [UPDATE] VALIDASI KONFLIK DUA ARAH
+
+                    // A. Cek Jadwal Dokter (Dokter tidak boleh sibuk)
+                    await this.conflictValidator.validateDoctorNoConflict(
                         qr,
                         dto.doctor_id,
                         appointmentDate,
@@ -79,7 +62,17 @@ export class AppointmentCreationService {
                         bufferEnd
                     );
 
-                    // 6. CREATE APPOINTMENT
+                    // B. Cek Jadwal Pasien (Pasien tidak boleh punya jadwal aktif lain di jam sama)
+                    await this.conflictValidator.validatePatientNoConflict(
+                        qr,
+                        dto.patient_id,
+                        appointmentDate,
+                        dto.jam_janji,
+                        bufferStart,
+                        bufferEnd
+                    );
+
+                    // 6. Create Entity
                     const appointmentData = this.domainService.createAppointmentEntity(
                         dto,
                         patient!,
@@ -92,17 +85,16 @@ export class AppointmentCreationService {
                 'create-appointment'
             );
 
-            // 7. EMIT EVENT (di luar transaction)
+            // 7. Emit Event
             const shouldScheduleReminder = this.domainService.shouldScheduleReminder(appointment);
-
             this.eventEmitter.emit(
                 'appointment.created',
                 new AppointmentCreatedEvent(appointment, shouldScheduleReminder)
             );
 
             this.logger.log(`✅ Appointment created: #${appointment.id}`);
-
             return appointment;
+
         } catch (error) {
             this.logger.error('❌ Error creating appointment:', error.stack);
             throw error;

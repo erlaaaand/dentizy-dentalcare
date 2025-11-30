@@ -6,7 +6,7 @@ export class FindAppointmentsQueryDto {
     @IsOptional()
     @IsNumber()
     @Type(() => Number) // Transform query string to number
-    doctorId?: number;
+    doctor_id?: number;
 
     @IsOptional()
     @IsDateString()

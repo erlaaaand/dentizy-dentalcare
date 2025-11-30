@@ -20,7 +20,7 @@ export class AppointmentQueryBuilder {
         user: User,
         queryDto: FindAppointmentsQueryDto
     ): SelectQueryBuilder<Appointment> {
-        const { doctorId, date, status, page = 1, limit = 10 } = queryDto;
+        const { doctor_id, date, status, page = 1, limit = 10 } = queryDto;
         const skip = (page - 1) * limit;
 
         // Join relations
@@ -46,9 +46,9 @@ export class AppointmentQueryBuilder {
         // Authorization: Dokter hanya bisa lihat appointmentnya sendiri
         if (this.appointmentValidator.isDoctorOnly(user)) {
             baseQuery.andWhere('appointment.doctor_id = :userId', { userId: user.id });
-        } else if (doctorId) {
+        } else if (doctor_id) {
             // Kepala Klinik atau Staf bisa filter by doctor
-            baseQuery.andWhere('appointment.doctor_id = :doctorId', { doctorId });
+            baseQuery.andWhere('appointment.doctor_id = :doctor_id', { doctor_id });
         }
 
         // Filter by status

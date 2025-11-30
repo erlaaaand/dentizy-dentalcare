@@ -1,15 +1,52 @@
-import { 
-    IsEnum, 
-    IsOptional, 
+import {
+    IsEnum,
+    IsOptional,
     IsString,
     IsDateString,
     Matches,
-    MaxLength
+    MaxLength,
+    IsNumber,
+    ValidateNested, // [BARU]
+    IsArray         // [BARU]
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { AppointmentStatus } from '../../domains/entities/appointment.entity';
 
+// [BARU] Definisi DTO untuk Medical Record yang bersarang
+class MedicalRecordPayloadDto {
+    @IsOptional()
+    @IsString()
+    subjektif?: string;
+
+    @IsOptional()
+    @IsString()
+    objektif?: string;
+
+    @IsOptional()
+    @IsString()
+    assessment?: string;
+
+    @IsOptional()
+    @IsString()
+    plan?: string;
+
+    @IsOptional()
+    @IsArray()
+    @IsNumber({}, { each: true })
+    treatment_ids?: number[];
+}
+
 export class UpdateAppointmentDto {
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    patient_id?: number;
+
+    @IsOptional()
+    @IsNumber()
+    @Type(() => Number)
+    doctor_id?: number;
+
     @IsOptional()
     @IsEnum(AppointmentStatus)
     status?: AppointmentStatus;
@@ -28,4 +65,10 @@ export class UpdateAppointmentDto {
     @MaxLength(1000)
     @Transform(({ value }) => value?.trim())
     keluhan?: string;
+
+    // [BARU] Property ini mengizinkan payload nested 'medical_record'
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => MedicalRecordPayloadDto)
+    medical_record?: MedicalRecordPayloadDto;
 }
