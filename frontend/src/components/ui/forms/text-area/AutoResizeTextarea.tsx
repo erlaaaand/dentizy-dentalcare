@@ -20,7 +20,10 @@ export function AutoResizeTextarea(props: Omit<TextareaProps, 'resize'>) {
     return (
         <Textarea
             ref={textareaRef}
-            onInput={autoResize}
+            onInput={(e) => {
+                autoResize();
+                props.onInput?.(e); // Pastikan prop onInput asli tetap dipanggil
+            }}
             resize="none"
             {...props}
         />
