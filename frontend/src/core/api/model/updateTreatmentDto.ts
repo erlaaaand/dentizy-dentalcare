@@ -10,11 +10,6 @@ export interface UpdateTreatmentDto {
   /** ID kategori perawatan */
   categoryId?: number;
   /**
-   * Kode unik perawatan
-   * @maxLength 50
-   */
-  kodePerawatan?: string;
-  /**
    * Nama perawatan
    * @maxLength 250
    */

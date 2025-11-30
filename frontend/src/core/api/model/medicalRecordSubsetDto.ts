@@ -6,12 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface AppointmentPatientDto {
+export interface MedicalRecordSubsetDto {
   id: number;
-  nama_lengkap: string;
-  nomor_rekam_medis: string;
-  nik?: string;
-  is_active?: boolean;
-  email?: string;
-  nomor_telepon?: string;
 }

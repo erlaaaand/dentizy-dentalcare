@@ -13,11 +13,11 @@ import type { MedicalRecordResponseDtoDeletedAt } from './medicalRecordResponseD
 import type { AppointmentSubsetDto } from './appointmentSubsetDto';
 import type { DoctorSubsetDto } from './doctorSubsetDto';
 import type { PatientSubsetDto } from './patientSubsetDto';
+import type { MedicalRecordTreatmentSubsetDto } from './medicalRecordTreatmentSubsetDto';
 
 export interface MedicalRecordResponseDto {
   /** ID unik rekam medis */
   id: number;
-  /** ID perjanjian terkait */
   appointment_id: number;
   doctor_id: number;
   patient_id: number;
@@ -33,9 +33,9 @@ export interface MedicalRecordResponseDto {
   updated_at: string;
   /** @nullable */
   deleted_at?: MedicalRecordResponseDtoDeletedAt;
-  /** Umur pasien saat rekam medis dibuat (tahun) */
   umur_rekam: number;
   appointment?: AppointmentSubsetDto;
   doctor?: DoctorSubsetDto;
   patient?: PatientSubsetDto;
+  medical_record_treatments?: MedicalRecordTreatmentSubsetDto[];
 }

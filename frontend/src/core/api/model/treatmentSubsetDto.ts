@@ -6,10 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface PatientSubsetDto {
-  id: number;
-  nama_lengkap: string;
-  nomor_rekam_medis: string;
-  /** @nullable */
-  tanggal_lahir?: string | null;
+export interface TreatmentSubsetDto {
+  namaPerawatan: string;
+  harga: number;
 }

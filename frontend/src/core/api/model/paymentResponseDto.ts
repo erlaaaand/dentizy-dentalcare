@@ -5,6 +5,8 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import type { PatientSubsetDto } from './patientSubsetDto';
+import type { MedicalRecordSubsetDto } from './medicalRecordSubsetDto';
 
 export interface PaymentResponseDto {
   /** ID Pembayaran */
@@ -39,4 +41,6 @@ export interface PaymentResponseDto {
   createdAt: string;
   /** Tanggal Diupdate */
   updatedAt: string;
+  patient?: PatientSubsetDto;
+  medicalRecord?: MedicalRecordSubsetDto;
 }
