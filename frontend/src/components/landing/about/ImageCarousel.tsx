@@ -1,21 +1,33 @@
-// frontend/src/components/landing/about/ImageCarousel.tsx
-import React from "react";
+import React, { useState } from "react";
 
-interface ImageCarouselProps {
-  images: Array<{ src: string; desc: string }>;
-  currentIndex: number;
-  onNext: () => void;
-  onPrev: () => void;
-  onSelectImage: (index: number) => void;
+function LazyImage({ src, alt, isActive }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  return (
+    <div className="relative w-full h-full">
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
+        onLoad={() => setIsLoaded(true)}
+        loading={isActive ? "eager" : "lazy"}
+      />
+    </div>
+  );
 }
 
-export function ImageCarousel({
+export default function ImageCarousel({
   images,
   currentIndex,
   onNext,
   onPrev,
   onSelectImage,
-}: ImageCarouselProps) {
+}) {
   return (
     <div className="relative group">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl">
@@ -28,10 +40,10 @@ export function ImageCarousel({
                 idx === currentIndex ? "opacity-100" : "opacity-0"
               }`}
             >
-              <img
+              <LazyImage
                 src={img.src}
                 alt={img.desc}
-                className="w-full h-full object-cover"
+                isActive={idx === currentIndex}
               />
             </div>
           ))}
@@ -42,7 +54,8 @@ export function ImageCarousel({
           {/* Navigation Buttons */}
           <button
             onClick={onPrev}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-300 opacity-0 group-hover:opacity-100"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100"
+            aria-label="Previous image"
           >
             <svg
               className="w-5 h-5"
@@ -61,7 +74,8 @@ export function ImageCarousel({
 
           <button
             onClick={onNext}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-300 opacity-0 group-hover:opacity-100"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 hover:scale-110 transition-all duration-300 opacity-0 group-hover:opacity-100"
+            aria-label="Next image"
           >
             <svg
               className="w-5 h-5"
@@ -84,27 +98,30 @@ export function ImageCarousel({
               <button
                 key={idx}
                 onClick={() => onSelectImage(idx)}
-                className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                  idx === currentIndex ? "bg-white w-6" : "bg-white/50"
+                className={`transition-all duration-300 rounded-full ${
+                  idx === currentIndex
+                    ? "bg-white w-6 h-2"
+                    : "bg-white/50 w-2 h-2 hover:bg-white/75"
                 }`}
+                aria-label={`Go to image ${idx + 1}`}
               />
             ))}
           </div>
 
           {/* Stats Badges */}
-          <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg">
+          <div className="absolute top-6 left-6 bg-white/95 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg transform hover:scale-105 transition-transform duration-300">
             <div className="text-2xl font-bold text-gray-800">1000+</div>
             <div className="text-sm text-gray-600">Pasien Puas</div>
           </div>
 
-          <div className="absolute top-6 right-6 bg-emerald-500/95 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg text-white">
+          <div className="absolute top-6 right-6 bg-emerald-500/95 backdrop-blur-sm rounded-xl px-4 py-3 shadow-lg text-white transform hover:scale-105 transition-transform duration-300">
             <div className="text-2xl font-bold">99%</div>
             <div className="text-sm opacity-90">Kepuasan</div>
           </div>
 
           {/* Bottom Badge */}
           <div className="absolute bottom-6 left-6 right-6">
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-6 py-4 shadow-xl">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl px-6 py-4 shadow-xl transform hover:scale-[1.02] transition-transform duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-bold text-gray-800 text-base">

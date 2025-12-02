@@ -1,5 +1,4 @@
-// frontend/src/components/landing/doctors/DoctorsSection.tsx
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const doctors = [
   {
@@ -16,7 +15,71 @@ const doctors = [
   },
 ];
 
-export function DoctorsSection() {
+function DoctorCard({ doctor, index }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      {
+        rootMargin: "100px",
+        threshold: 0.1,
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      if (observer && cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`group relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-xl transform transition-all duration-700 ${
+        isInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+      }`}
+      style={{ transitionDelay: `${index * 150}ms` }}
+    >
+      {!isLoaded && isInView && (
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-400 animate-pulse" />
+      )}
+
+      {isInView && (
+        <img
+          src={doctor.image}
+          alt={doctor.name}
+          className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-105 ${
+            isLoaded ? "opacity-100" : "opacity-0"
+          }`}
+          onLoad={() => setIsLoaded(true)}
+          loading="lazy"
+        />
+      )}
+
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+        <div className="absolute bottom-0 left-0 right-0 p-8 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+          <h3 className="text-2xl font-bold text-white mb-2">{doctor.name}</h3>
+          {doctor.title && <p className="text-blue-300">{doctor.title}</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function DoctorsSection() {
   return (
     <section
       id="dokter"
@@ -24,8 +87,14 @@ export function DoctorsSection() {
     >
       {/* Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-20 w-60 h-60 bg-blue-400/10 rounded-full blur-3xl" />
+        <div
+          className="absolute top-20 left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDuration: "4s" }}
+        />
+        <div
+          className="absolute bottom-20 right-20 w-60 h-60 bg-blue-400/10 rounded-full blur-3xl animate-pulse"
+          style={{ animationDuration: "6s" }}
+        />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
@@ -41,27 +110,7 @@ export function DoctorsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:max-w-4xl lg:mx-auto">
           {doctors.map((doctor, idx) => (
-            <div
-              key={idx}
-              className="group relative aspect-[4/5] w-full rounded-2xl overflow-hidden shadow-xl"
-            >
-              <img
-                src={doctor.image}
-                alt={doctor.name}
-                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              />
-
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {doctor.name}
-                  </h3>
-                  {doctor.title && (
-                    <p className="text-blue-300">{doctor.title}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+            <DoctorCard key={idx} doctor={doctor} index={idx} />
           ))}
         </div>
       </div>
