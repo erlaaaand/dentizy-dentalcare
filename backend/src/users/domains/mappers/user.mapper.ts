@@ -11,6 +11,7 @@ export class UserMapper {
             id: user.id,
             username: user.username,
             nama_lengkap: user.nama_lengkap,
+            email: user.email || undefined,
             roles: user.roles?.map(role => ({
                 id: role.id,
                 name: role.name,

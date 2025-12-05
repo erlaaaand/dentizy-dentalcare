@@ -125,8 +125,10 @@ export default function AppointmentManager() {
 
     // [5] Update logic callback saat Medical Modal sukses
     const handleMedicalSuccess = () => {
+        // Refresh semua data terkait agar sinkron di seluruh aplikasi
         queryClient.invalidateQueries({ queryKey: ['/appointments'] });
-        // Jika Anda punya query key untuk rekam medis, invalidate juga di sini
+        queryClient.invalidateQueries({ queryKey: ['/payments'] });        // Refresh Kasir
+        queryClient.invalidateQueries({ queryKey: ['/medical-records'] }); // Refresh Rekam Medis
     };
 
     // Columns Definition

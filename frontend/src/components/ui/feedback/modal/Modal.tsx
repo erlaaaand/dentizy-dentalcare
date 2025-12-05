@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect, useRef } from 'react';
 import { cn } from '@/core';
 import { X, Maximize2, Minimize2 } from 'lucide-react';

@@ -4,7 +4,6 @@ import { PageContainer } from '@/components/layout/PageContainer';
 import { Tabs, TabPanel } from '@/components/ui/navigation/Tabs';
 import { Card, CardBody } from '@/components/ui/data-display/card';
 import { Users, ShieldAlert, Loader2, UserCheck } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { ROLES, useAuth } from '@/core';
 
 // Component Baru

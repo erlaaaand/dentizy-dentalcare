@@ -32,6 +32,7 @@ import type {
   PaymentsControllerGetRevenueByPeriodParams,
   PaymentsControllerGetStatisticsParams,
   PaymentsControllerGetTotalRevenueParams,
+  ProcessPaymentDto,
   UpdatePaymentDto
 } from '../../model';
 
@@ -43,6 +44,71 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * Endpoint khusus kasir untuk input pembayaran, hitung kembalian, dan update status lunas.
+ * @summary Proses Pembayaran (Kasir)
+ */
+export const paymentsControllerProcess = (
+    id: number,
+    processPaymentDto: ProcessPaymentDto,
+ options?: SecondParameter<typeof customInstance>,) => {
+      
+      
+      return customInstance<PaymentResponseDto>(
+      {url: `/payments/${id}/process`, method: 'PATCH',
+      headers: {'Content-Type': 'application/json', },
+      data: processPaymentDto
+    },
+      options);
+    }
+  
+
+
+export const getPaymentsControllerProcessMutationOptions = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext> => {
+
+const mutationKey = ['paymentsControllerProcess'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerProcess>>, {id: number;data: ProcessPaymentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paymentsControllerProcess(id,data,requestOptions)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerProcessMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerProcess>>>
+    export type PaymentsControllerProcessMutationBody = ProcessPaymentDto
+    export type PaymentsControllerProcessMutationError = void | void
+
+    /**
+ * @summary Proses Pembayaran (Kasir)
+ */
+export const usePaymentsControllerProcess = <TError = void | void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerProcess>>,
+        TError,
+        {id: number;data: ProcessPaymentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerProcessMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Endpoint untuk membuat data pembayaran baru. Status pembayaran akan otomatis ditentukan berdasarkan jumlah bayar.
  * @summary Membuat pembayaran baru
  */

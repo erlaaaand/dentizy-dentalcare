@@ -32,6 +32,10 @@ export class UserResponseDto {
     @Expose()
     nama_lengkap: string;
 
+    @ApiProperty({ example: 'dokter@klinik.com', required: false, nullable: true })
+    @Expose()
+    email?: string;
+
     @ApiProperty({ type: [UserRoleDto], description: 'Daftar role user' })
     @Expose()
     @Type(() => UserRoleDto) // PENTING: Agar array object berubah jadi instance UserRoleDto

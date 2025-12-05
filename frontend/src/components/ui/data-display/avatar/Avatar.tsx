@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { cn, getInitials } from '@/core';
 import { AvatarProps } from './avatar.types';

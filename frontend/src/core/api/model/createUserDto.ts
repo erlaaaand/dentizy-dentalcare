@@ -11,8 +11,10 @@ export interface CreateUserDto {
   nama_lengkap: string;
   /** Username unik untuk login */
   username: string;
-  /** Password pengguna, minimal 8 karakter dan harus strong */
+  /** Password pengguna, minimal 8 karakter */
   password: string;
+  /** Email pengguna */
+  email?: string;
   /** Daftar ID role yang dimiliki user */
   roles: number[];
 }

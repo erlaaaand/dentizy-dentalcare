@@ -22,7 +22,8 @@ import {
     ApiBearerAuth,
     ApiParam,
     ApiUnauthorizedResponse,
-    ApiForbiddenResponse
+    ApiForbiddenResponse,
+    ApiQuery
 } from '@nestjs/swagger';
 import { MedicalRecordTreatmentsService } from '../../applications/orchestrator/medical-record-treatments.service';
 import { CreateMedicalRecordTreatmentDto } from '../../applications/dto/create-medical-record-treatment.dto';
@@ -83,6 +84,29 @@ export class MedicalRecordTreatmentsController {
             statusCode: HttpStatus.OK,
             message: 'Data perawatan rekam medis berhasil diambil',
             ...result,
+        };
+    }
+
+    @Get('stats/top-treatments')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
+    @ApiOperation({ summary: 'Statistik layanan terlaris' })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    async getTopTreatments(
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+        @Query('limit') limit: number = 10
+    ) {
+        const start = startDate ? new Date(startDate) : undefined;
+        const end = endDate ? new Date(endDate) : undefined;
+
+        const data = await this.medicalRecordTreatmentsService.getTopTreatments(limit, start, end);
+        
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Statistik layanan berhasil diambil',
+            data
         };
     }
 

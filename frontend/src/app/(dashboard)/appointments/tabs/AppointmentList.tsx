@@ -10,19 +10,15 @@ import { DataTable } from '@/components/ui/data-display/datatable';
 import SearchInput from '@/components/ui/forms/search-input';
 import { ConfirmDialog } from '@/components/ui/feedback/confirm-dialog';
 
-// [1] Import Modal
 import AppointmentModal from '../components/AppointmentModal';
-import MedicalRecordModal from '../components/MedicalRecordModal'; // Import Modal Rekam Medis
+import MedicalRecordModal from '../components/MedicalRecordModal';
 import { getAppointmentColumns } from '../table/appointment-columns';
 
 import { useToast, useModal, useAuth, ROLES } from '@/core';
 import {
     useGetAppointments,
     useCancelAppointment
-    // useCompleteAppointment <-- HAPUS INI (Logika pindah ke Modal Medis)
 } from '@/core/services/api/appointment.api';
-
-type ActionType = 'cancel'; // Hapus 'complete' dari sini
 
 interface AppointmentListProps {
     scope?: 'me' | 'all';
@@ -30,26 +26,22 @@ interface AppointmentListProps {
 
 export default function AppointmentList({ scope = 'all' }: AppointmentListProps) {
     const toast = useToast();
-    const queryClient = useQueryClient();
+    const queryClient = useQueryClient(); // [1] Pastikan hook ini ada
     const { user } = useAuth();
 
-    // Role Checking
     const userRoles = user?.roles?.map((r: any) => r.name) || [];
     const isDoctor = userRoles.includes(ROLES.DOKTER) || userRoles.includes(ROLES.KEPALA_KLINIK);
     const isHeadOrStaff = userRoles.includes(ROLES.STAF) || userRoles.includes(ROLES.KEPALA_KLINIK);
 
     const [searchQuery, setSearchQuery] = useState('');
-
-    // State Data
-    const [selectedItem, setSelectedItem] = useState<any | null>(null); // Untuk Edit/Cancel
-    const [selectedMedicalItem, setSelectedMedicalItem] = useState<any | null>(null); // [2] Untuk Rekam Medis
+    const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [selectedMedicalItem, setSelectedMedicalItem] = useState<any | null>(null);
 
     const [queryParams, setQueryParams] = useState({
         page: 1,
         limit: 10,
     });
 
-    // Filter Params
     const filterParams = useMemo(() => {
         if (scope === 'me' && user?.id) {
             return { doctor_id: user.id };
@@ -64,14 +56,12 @@ export default function AppointmentList({ scope = 'all' }: AppointmentListProps)
 
     const cancelMutation = useCancelAppointment();
 
-    // Modals Hooks
     const formModal = useModal();
     const confirmModal = useModal();
-    const medicalModal = useModal(); // [3] Hook Modal Medis
+    const medicalModal = useModal();
 
     const appointmentList = useMemo(() => (response as any)?.data || [], [response]);
 
-    // Filtering Client-side
     const filteredData = useMemo(() => {
         if (!appointmentList.length) return [];
         let data = appointmentList.filter((item: any) => item.status !== 'menunggu_konfirmasi');
@@ -99,19 +89,16 @@ export default function AppointmentList({ scope = 'all' }: AppointmentListProps)
         formModal.open();
     };
 
-    // [4] HANDLER BARU: Klik Selesai -> Buka Modal Medis
     const handleCompleteClick = (item: any) => {
-        setSelectedMedicalItem(item); // Set item untuk modal medis
-        medicalModal.open();          // Buka modal
+        setSelectedMedicalItem(item);
+        medicalModal.open();
     };
 
-    // Handler Cancel -> Buka Confirm Dialog
     const handleCancelClick = (item: any) => {
         setSelectedItem(item);
         confirmModal.open();
     };
 
-    // Eksekusi Pembatalan
     const handleConfirmCancel = async () => {
         if (!selectedItem) return;
         try {
@@ -126,17 +113,26 @@ export default function AppointmentList({ scope = 'all' }: AppointmentListProps)
         }
     };
 
-    // [5] Callback setelah Rekam Medis Disimpan
+    // [FIX UTAMA] Callback ini dipanggil setelah Rekam Medis selesai dibuat
     const handleMedicalSuccess = () => {
-        // Refresh tabel agar status berubah jadi 'selesai'
+        // 1. Refresh data Appointment (agar status berubah jadi Selesai)
         queryClient.invalidateQueries({ queryKey: ['/appointments'] });
+        
+        // 2. Refresh data Payments (agar tagihan baru muncul di kasir tanpa reload)
+        // Pastikan key ini cocok dengan queryKey di useGetPayments
+        queryClient.invalidateQueries({ queryKey: ['/payments'] }); 
+
+        // 3. Refresh data Medical Records (agar muncul di list riwayat)
+        queryClient.invalidateQueries({ queryKey: ['/medical-records'] });
+
+        // 4. Refresh data Treatments (jika ada update stok/statistik)
+        queryClient.invalidateQueries({ queryKey: ['/treatments'] });
     };
 
     const showDoctorColumn = scope === 'all';
 
-    // [6] Update Columns Definition
     const columns = useMemo(() => getAppointmentColumns({
-        onComplete: handleCompleteClick, // <-- PENTING: Panggil handler modal, BUKAN openConfirm
+        onComplete: handleCompleteClick,
         onCancel: handleCancelClick,
         onEdit: handleEdit,
         isDoctor: isDoctor,
@@ -188,7 +184,6 @@ export default function AppointmentList({ scope = 'all' }: AppointmentListProps)
                 </CardBody>
             </Card>
 
-            {/* Modal Edit/Create Appointment */}
             <AppointmentModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
@@ -200,15 +195,14 @@ export default function AppointmentList({ scope = 'all' }: AppointmentListProps)
                 }}
             />
 
-            {/* [7] Modal Rekam Medis (SOAP & Harga) */}
+            {/* Modal Rekam Medis */}
             <MedicalRecordModal
                 isOpen={medicalModal.isOpen}
                 onClose={medicalModal.close}
                 appointment={selectedMedicalItem}
-                onSuccess={handleMedicalSuccess}
+                onSuccess={handleMedicalSuccess} // Panggil fungsi refresh komplit
             />
 
-            {/* Dialog Konfirmasi (Hanya untuk Cancel) */}
             <ConfirmDialog
                 isOpen={confirmModal.isOpen}
                 onClose={confirmModal.close}

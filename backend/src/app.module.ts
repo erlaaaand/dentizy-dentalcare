@@ -25,6 +25,7 @@ import { TreatmentCategoriesModule } from './treatment-categories/treatment-cate
 import { TreatmentsModule } from './treatments/treatments.module';
 import { MedicalRecordTreatmentsModule } from './medical-record-treatments/medical-record-treatments.module';
 import { PaymentsModule } from './payments/payments.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -119,6 +120,7 @@ import { PaymentsModule } from './payments/payments.module';
     TreatmentsModule,
     MedicalRecordTreatmentsModule,
     PaymentsModule,
+    UploadsModule
   ],
   // ✅ FIX: Add HealthController here
   controllers: [HealthController],

@@ -11,6 +11,7 @@ import { CreateMedicalRecordTreatmentDto } from '../dto/create-medical-record-tr
 import { UpdateMedicalRecordTreatmentDto } from '../dto/update-medical-record-treatment.dto';
 import { QueryMedicalRecordTreatmentDto } from '../dto/query-medical-record-treatment.dto';
 import { MedicalRecordTreatmentResponseDto } from '../dto/medical-record-treatment-response.dto';
+import { MedicalRecordTreatmentRepository } from '../../../medical-record-treatments/infrastructures/persistence/repositories/medical-record-treatment.repository';
 
 @Injectable()
 export class MedicalRecordTreatmentsService {
@@ -22,6 +23,7 @@ export class MedicalRecordTreatmentsService {
         private readonly findOneUseCase: FindOneMedicalRecordTreatmentUseCase,
         private readonly findByMedicalRecordIdUseCase: FindByMedicalRecordIdUseCase,
         private readonly getTotalUseCase: GetTotalByMedicalRecordIdUseCase,
+        private readonly repository: MedicalRecordTreatmentRepository
     ) { }
 
     async create(dto: CreateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatmentResponseDto> {
@@ -50,5 +52,9 @@ export class MedicalRecordTreatmentsService {
 
     async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
         return await this.getTotalUseCase.execute(medicalRecordId);
+    }
+
+    async getTopTreatments(limit: number = 10, startDate?: Date, endDate?: Date): Promise<any[]> {
+        return await this.repository.getTopTreatments(limit, startDate, endDate);
     }
 }

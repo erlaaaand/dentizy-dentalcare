@@ -17,4 +17,6 @@ export interface UpdateProfileDto {
    * @minLength 3
    */
   nama_lengkap?: string;
+  /** URL foto profil (dari response upload) */
+  profile_photo?: string;
 }

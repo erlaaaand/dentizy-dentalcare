@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, ReactNode, useRef, useEffect, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { useClickOutside, cn } from '@/core';

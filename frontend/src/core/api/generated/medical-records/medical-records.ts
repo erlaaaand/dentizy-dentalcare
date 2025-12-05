@@ -28,6 +28,7 @@ import type {
   CreateMedicalRecordDto,
   MedicalRecordResponseDto,
   MedicalRecordsControllerFindAllParams,
+  MedicalRecordsControllerGetDoctorStatsParams,
   MedicalRecordsControllerSearchParams,
   UpdateMedicalRecordDto
 } from '../../model';
@@ -370,6 +371,98 @@ export function useMedicalRecordsControllerFindByAppointmentId<TData = Awaited<R
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getMedicalRecordsControllerFindByAppointmentIdQueryOptions(appointmentId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * @summary Statistik kinerja dokter
+ */
+export const medicalRecordsControllerGetDoctorStats = (
+    params?: MedicalRecordsControllerGetDoctorStatsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/medical-records/stats/doctors`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getMedicalRecordsControllerGetDoctorStatsQueryKey = (params?: MedicalRecordsControllerGetDoctorStatsParams,) => {
+    return [
+    `/medical-records/stats/doctors`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMedicalRecordsControllerGetDoctorStatsQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError = void | void>(params?: MedicalRecordsControllerGetDoctorStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordsControllerGetDoctorStatsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>> = ({ signal }) => medicalRecordsControllerGetDoctorStats(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordsControllerGetDoctorStatsQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>>
+export type MedicalRecordsControllerGetDoctorStatsQueryError = void | void
+
+
+export function useMedicalRecordsControllerGetDoctorStats<TData = Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError = void | void>(
+ params: undefined |  MedicalRecordsControllerGetDoctorStatsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordsControllerGetDoctorStats<TData = Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError = void | void>(
+ params?: MedicalRecordsControllerGetDoctorStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordsControllerGetDoctorStats<TData = Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError = void | void>(
+ params?: MedicalRecordsControllerGetDoctorStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Statistik kinerja dokter
+ */
+
+export function useMedicalRecordsControllerGetDoctorStats<TData = Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError = void | void>(
+ params?: MedicalRecordsControllerGetDoctorStatsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordsControllerGetDoctorStats>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordsControllerGetDoctorStatsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

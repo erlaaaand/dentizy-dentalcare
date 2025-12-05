@@ -1,267 +1,79 @@
 'use client';
 
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { UserPlus, Shield, Trash2, Edit } from 'lucide-react';
-
 import { PageContainer } from '@/components/layout/PageContainer';
-import { Card, CardHeader, CardTitle, CardDescription, CardBody } from '@/components/ui/data-display/card';
-import { Button } from '@/components/ui/button';
-import { DataTable } from '@/components/ui/data-display/datatable';
-import { Badge } from '@/components/ui/data-display/badge';
-import { Modal } from '@/components/ui/feedback/modal';
-import { Input } from '@/components/ui/forms/input';
-import { FormSelect } from '@/components/ui/forms/select';
-import { PasswordInput } from '@/components/ui/forms/input/PasswordInput';
-import { default as Avatar } from '@/components/ui/data-display/avatar/Avatar';
+import { Tabs, TabPanel } from '@/components/ui/navigation/Tabs';
+import { Card, CardBody } from '@/components/ui/data-display/card';
+import { Users, ShieldAlert, Loader2, Stethoscope, Briefcase } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ROLES, useAuth } from '@/core';
 
-import { useAuth } from '@/core/hooks/auth/useAuth';
-import { useToast } from '@/core/hooks/ui/useToast';
-import { useModal } from '@/core/hooks/ui/useModal';
-import { useForm } from '@/core/hooks/forms/useForm';
-import { useGetUsers, useCreateUser, useDeleteUser } from '@/core/services/api/user.api';
-import { useGetRoles } from '@/core/services/api/role.api';
-import { ROLES } from '@/core/constants/role.constants';
+import UserList from './tabs/UserList';
 
-export default function UserSettingsPage() {
-    const { user: currentUser } = useAuth();
-    const toast = useToast();
-    const queryClient = useQueryClient();
+export default function UserManagementPage() {
+    const { user, loading } = useAuth();
+    const router = useRouter();
 
-    // Check if user is Kepala Klinik
-    const userRoles = currentUser?.roles?.map((role: any) => role.name) || [];
-    const isKepalaKlinik = userRoles.includes(ROLES.KEPALA_KLINIK);
-
-    // Services
-    const { data: users, isLoading: isLoadingUsers } = useGetUsers();
-    const { data: rolesData } = useGetRoles();
-
-    const createUser = useCreateUser();
-    const deleteUser = useDeleteUser();
-
-    // Modal
-    const createModal = useModal();
-
-    // Form Configuration
-    const form = useForm({
-        initialValues: {
-            name: '',
-            username: '',
-            email: '',
-            password: '',
-            roleId: '',
-            specialization: '',
-        },
-        onSubmit: async (values) => {
-            try {
-                await createUser.mutateAsync({
-                    nama_lengkap: values.name,
-                    username: values.username,
-                    password: values.password,
-                    roles: values.roleId ? [Number(values.roleId)] : [],
-                });
-
-                toast.success('Pengguna berhasil ditambahkan');
-                createModal.close();
-                form.reset();
-                queryClient.invalidateQueries({ queryKey: ['users'] });
-            } catch (error) {
-                toast.error('Gagal menambahkan pengguna');
-            }
-        }
-    });
-
-    const handleDelete = async (id: number) => {
-        if (confirm('Apakah Anda yakin ingin menghapus pengguna ini?')) {
-            try {
-                await deleteUser.mutateAsync(id);
-                toast.success('Pengguna dihapus');
-                queryClient.invalidateQueries({ queryKey: ['users'] });
-            } catch (e) {
-                toast.error('Gagal menghapus pengguna');
-            }
-        }
-    };
-
-    const isDoctorSelected = () => {
-        if (!rolesData || !form.values.roleId) return false;
-        const selectedRole = (rolesData as any)?.find((r: any) => r.id === Number(form.values.roleId));
-        return selectedRole?.name === ROLES.DOKTER;
-    };
-
-    const getRoleBadgeVariant = (roleName: string) => {
-        switch (roleName) {
-            case ROLES.KEPALA_KLINIK: return 'primary';
-            case ROLES.DOKTER: return 'success';
-            case ROLES.STAF: return 'warning';
-            default: return 'default';
-        }
-    };
-
-    const columns = [
-        {
-            header: 'Nama & Username',
-            accessorKey: 'nama_lengkap',
-            cell: (info: any) => (
-                <div className="flex items-center gap-3">
-                    <Avatar
-                        name={info.getValue()}
-                        src={info.row.original.profile_photo}
-                        size="sm"
-                    />
-                    <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{info.getValue()}</span>
-                        <span className="text-xs text-gray-500">@{info.row.original.username}</span>
-                    </div>
-                </div>
-            )
-        },
-        {
-            header: 'Role',
-            accessorKey: 'roles',
-            cell: (info: any) => {
-                const userRoles = info.getValue() as any[];
-                if (!userRoles || userRoles.length === 0) {
-                    return <span className="text-gray-400">-</span>;
-                }
-
-                return (
-                    <div className="flex flex-wrap gap-1">
-                        {userRoles.map((role) => (
-                            <Badge
-                                key={role.id}
-                                variant={getRoleBadgeVariant(role.name)}
-                                size="sm"
-                            >
-                                {role.name.replace(/_/g, ' ')}
-                            </Badge>
-                        ))}
-                    </div>
-                );
-            }
-        },
-        {
-            header: 'Aksi',
-            id: 'actions',
-            cell: (info: any) => (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={(info.row.original as any).id === currentUser?.id}
-                    onClick={() => handleDelete((info.row.original as any).id)}
-                >
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-            )
-        }
-    ];
-
-    if (!isKepalaKlinik) {
+    if (loading) {
         return (
-            <PageContainer title="Akses Ditolak">
-                <div className="flex flex-col items-center justify-center p-12 bg-white rounded-lg border border-gray-200 text-center">
-                    <Shield className="w-16 h-16 text-red-500 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-900">Anda tidak memiliki akses</h3>
-                    <p className="text-gray-500 mt-2">Halaman ini hanya dapat diakses oleh Kepala Klinik.</p>
-                </div>
+            <PageContainer title="Manajemen Pengguna">
+                <Card><CardBody className="p-12 text-center"><Loader2 className="w-10 h-10 animate-spin mx-auto text-blue-600" /></CardBody></Card>
             </PageContainer>
         );
     }
 
+    // RBAC: Hanya Kepala Klinik
+    const userRoles = user?.roles?.map((r: any) => r.name) || [];
+    const isHeadClinic = userRoles.includes(ROLES.KEPALA_KLINIK);
+
+    if (!isHeadClinic) {
+        return (
+            <PageContainer title="Akses Ditolak">
+                <Card>
+                    <CardBody className="p-12 text-center flex flex-col items-center">
+                        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
+                        <h3 className="text-lg font-semibold text-gray-900">Area Terbatas</h3>
+                        <p className="text-gray-500 mt-2 max-w-md">
+                            Halaman manajemen pengguna hanya dapat diakses oleh Kepala Klinik.
+                        </p>
+                        <button 
+                            onClick={() => router.push('/dashboard')}
+                            className="mt-6 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+                        >
+                            Kembali ke Dashboard
+                        </button>
+                    </CardBody>
+                </Card>
+            </PageContainer>
+        );
+    }
+
+    // Konfigurasi Tabs
+    const tabs = [
+        { id: 'all', label: 'Semua Pengguna', icon: <Users className="w-4 h-4" /> },
+        { id: 'dokter', label: 'Dokter', icon: <Stethoscope className="w-4 h-4" /> },
+        { id: 'staf', label: 'Staf & Admin', icon: <Briefcase className="w-4 h-4" /> },
+    ];
+
     return (
-        <PageContainer
-            title="Manajemen Pengguna"
-            subtitle="Kelola akun dokter, staf, dan admin klinik."
-            actions={
-                <Button onClick={createModal.open}>
-                    <UserPlus className="w-4 h-4 mr-2" />
-                    Tambah Pengguna
-                </Button>
-            }
+        <PageContainer 
+            title="Manajemen Pengguna" 
+            subtitle="Kelola akun, hak akses, dan data dokter serta staf klinik."
         >
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daftar Pengguna Aktif</CardTitle>
-                    <CardDescription>
-                        Total {(users as any)?.meta?.total || 0} pengguna terdaftar dalam sistem.
-                    </CardDescription>
-                </CardHeader>
-                <CardBody>
-                    <DataTable
-                        data={(users as any)?.data || []}
-                        columns={columns}
-                        isLoading={isLoadingUsers}
-                    />
-                </CardBody>
-            </Card>
+            <Tabs tabs={tabs} defaultTab="all" variant="pills">
+                
+                <TabPanel tabId="all">
+                    <UserList roleFilter="all" />
+                </TabPanel>
 
-            <Modal
-                isOpen={createModal.isOpen}
-                onClose={createModal.close}
-                title="Tambah Pengguna Baru"
-                description="Buat akun baru untuk staf atau dokter."
-            >
-                <div className="space-y-4 py-4">
-                    <Input
-                        label="Nama Lengkap"
-                        placeholder="Drg. Budi Santoso"
-                        name="name"
-                        value={form.values.name}
-                        onChange={form.handleChange('name')}
-                        error={form.errors.name}
-                    />
-                    <Input
-                        label="Username"
-                        placeholder="drg_budi"
-                        name="username"
-                        value={form.values.username}
-                        onChange={form.handleChange('username')}
-                        error={form.errors.username}
-                    />
-                    <Input
-                        label="Email"
-                        type="email"
-                        placeholder="dokter@dentizy.com"
-                        name="email"
-                        value={form.values.email}
-                        onChange={form.handleChange('email')}
-                    />
-                    <PasswordInput
-                        label="Password"
-                        placeholder="********"
-                        name="password"
-                        value={form.values.password}
-                        onChange={form.handleChange('password')}
-                        error={form.errors.password}
-                    />
+                <TabPanel tabId="dokter">
+                    <UserList roleFilter="dokter" />
+                </TabPanel>
 
-                    <FormSelect
-                        label="Role / Jabatan"
-                        placeholder="Pilih Role"
-                        options={(rolesData as any)?.map((role: any) => ({
-                            label: role.name.charAt(0).toUpperCase() + role.name.slice(1).replace(/_/g, ' '),
-                            value: role.id
-                        })) || []}
-                        value={form.values.roleId}
-                        onChange={form.handleChange('roleId')}
-                        error={form.errors.roleId}
-                    />
+                <TabPanel tabId="staf">
+                    <UserList roleFilter="staf" />
+                </TabPanel>
 
-                    {isDoctorSelected() && (
-                        <Input
-                            label="Spesialisasi"
-                            placeholder="Contoh: Ortodonti"
-                            name="specialization"
-                            value={form.values.specialization}
-                            onChange={form.handleChange('specialization')}
-                        />
-                    )}
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                    <Button variant="outline" onClick={createModal.close}>Batal</Button>
-                    <Button onClick={form.handleSubmit} isLoading={createUser.isPending}>Buat Akun</Button>
-                </div>
-            </Modal>
+            </Tabs>
         </PageContainer>
     );
 }

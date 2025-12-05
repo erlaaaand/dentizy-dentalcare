@@ -140,6 +140,26 @@ export class MedicalRecordsController {
         return await this.medicalRecordsService.findByAppointmentId(appointmentId, user);
     }
 
+    @Get('stats/doctors')
+    @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
+    @ApiOperation({ summary: 'Statistik kinerja dokter' })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    async getDoctorStats(
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string
+    ) {
+        const start = startDate ? new Date(startDate) : undefined;
+        const end = endDate ? new Date(endDate) : undefined;
+        
+        const data = await this.medicalRecordsService.getDoctorStatistics(start, end);
+        return {
+            statusCode: HttpStatus.OK,
+            message: 'Statistik dokter berhasil diambil',
+            data
+        };
+    }
+
     @Get(':id')
     @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
     @UseInterceptors(CacheInterceptor)

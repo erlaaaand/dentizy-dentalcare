@@ -31,14 +31,14 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
     const isEdit = !!initialData;
     const isLoading = createMutation.isPending || updateMutation.isPending;
 
-    // ✅ FIX 1: Tentukan Initial Values yang STABIL
+    //  FIX 1: Tentukan Initial Values yang STABIL
     // Hanya berubah jika initialData berubah, TIDAK saat user mengetik
     const initialFormValues = useMemo(() => ({
         namaKategori: initialData?.namaKategori || '',
         deskripsi: initialData?.deskripsi || '',
     }), [initialData]);
 
-    // ✅ FIX 2: Submit Handler yang stabil
+    //  FIX 2: Submit Handler yang stabil
     const handleFormSubmit = useCallback(async (values: any) => {
         try {
             const payload = {
@@ -48,20 +48,20 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
 
             if (isEdit && initialData?.id) {
                 await updateMutation.mutateAsync({ id: initialData.id, data: payload });
-                toast.showSuccess('✅ Kategori berhasil diperbarui');
+                toast.showInfo(' Kategori berhasil diperbarui');
             } else {
                 await createMutation.mutateAsync({ data: payload });
-                toast.showSuccess('✅ Kategori berhasil dibuat');
+                toast.showSuccess(' Kategori berhasil dibuat');
             }
             onSuccess();
             onClose();
         } catch (error: any) {
             const errorMessage = error?.response?.data?.message || error?.message || 'Terjadi kesalahan';
-            toast.showError(`❌ Gagal ${isEdit ? 'memperbarui' : 'membuat'} kategori: ${errorMessage}`);
+            toast.showError(`Gagal ${isEdit ? 'memperbarui' : 'membuat'} kategori: ${errorMessage}`);
         }
     }, [isEdit, initialData?.id, createMutation, updateMutation, toast, onSuccess, onClose]);
 
-    // ✅ FIX 3: Config Form Stabil
+    //  FIX 3: Config Form Stabil
     // Hapus 'localValues' dari dependency array. 
     // Config ini tidak akan dibuat ulang saat user mengetik, jadi fokus AMAN.
     const formConfig = useMemo(() => ({
@@ -74,7 +74,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
 
     const form = useForm(formConfig);
 
-    // ✅ FIX 4: Reset form hanya saat Modal dibuka/ditutup atau data berubah
+    //  FIX 4: Reset form hanya saat Modal dibuka/ditutup atau data berubah
     useEffect(() => {
         if (isOpen) {
             // Reset form ke initialValues yang baru
@@ -105,7 +105,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         label="Nama Kategori"
                         placeholder="Contoh: Konservasi Gigi"
                         name="namaKategori"
-                        // ✅ FIX 5: Gunakan values dan handler langsung dari form
+                        //  FIX 5: Gunakan values dan handler langsung dari form
                         value={form.values.namaKategori}
                         onChange={(e) => form.setFieldValue('namaKategori', e.target.value)}
                         disabled={isLoading}
@@ -118,7 +118,7 @@ export default function CategoryModal({ isOpen, onClose, initialData, onSuccess 
                         label="Deskripsi"
                         placeholder="Keterangan singkat..."
                         name="deskripsi"
-                        // ✅ FIX 5: Gunakan values dan handler langsung dari form
+                        //  FIX 5: Gunakan values dan handler langsung dari form
                         value={form.values.deskripsi}
                         onChange={(e) => form.setFieldValue('deskripsi', e.target.value)}
                         disabled={isLoading}

@@ -91,6 +91,13 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
     setErrors({});
   }, []);
 
+  const setFieldError = useCallback(
+    (name: keyof T, error: string | undefined) => {
+      setErrors(prev => ({ ...prev, [name]: error }));
+    },
+    []
+  );
+
   const handleSubmit = useCallback(
     async (e?: React.FormEvent) => {
       e?.preventDefault();
@@ -132,6 +139,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
     setValues,
     setFieldValue,
     setFieldTouched,
+    setFieldError,
     handleChange,
     handleBlur,
     handleSubmit,

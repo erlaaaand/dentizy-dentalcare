@@ -1,9 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-react';
 
-import { useToast, cn } from '@/core';
+// [FIX] Import Store Global
+import { toastStore } from '@/components/ui/feedback/toast/toast.store'; 
+import { cn } from '@/core'; 
+import { ToastMessage } from '@/components/ui/feedback/toast/toast.types'; // Pastikan path type benar
 
 // Mapping Icon
 const ICON_MAP = {
@@ -41,11 +44,30 @@ const TOAST_VARIANTS = {
 };
 
 export function ToastProvider() {
-  // ✅ Menggunakan Hook dari Core
-  const { toasts, removeToast } = useToast();
+  // [FIX] Gunakan local state untuk menyimpan list toast
+  const [toasts, setToasts] = useState<ToastMessage[]>([]); 
+
+  // [FIX] Subscribe ke Global Store saat komponen dipasang
+  useEffect(() => {
+      // Fungsi listener yang akan dipanggil saat store berubah
+      const handleStoreChange = (updatedToasts: ToastMessage[]) => {
+          setToasts([...updatedToasts]); // Update state agar re-render
+      };
+
+      // Subscribe
+      const unsubscribe = toastStore.subscribe(handleStoreChange);
+
+      // Cleanup saat unmount
+      return () => unsubscribe();
+  }, []);
+
+  // Helper remove (langsung ke store)
+  const removeToast = (id: string) => {
+      toastStore.remove(id);
+  };
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2 w-full max-w-md pointer-events-none pr-4 pl-4 md:p-0">
+    <div className="fixed top-4 right-4 z-[9999] space-y-2 w-full max-w-md pointer-events-none pr-4 pl-4 md:p-0">
       {toasts.map((toast) => {
         const Icon = ICON_MAP[toast.type] || Info;
         const styles = TOAST_VARIANTS[toast.type] || TOAST_VARIANTS.info;
@@ -53,9 +75,8 @@ export function ToastProvider() {
         return (
           <div
             key={toast.id}
-            // ✅ Menggunakan 'cn' untuk merging class yang aman (Best Practice)
             className={cn(
-              "pointer-events-auto flex items-start gap-3 p-4 rounded-lg border shadow-lg transition-all duration-300 animate-slide-in",
+              "pointer-events-auto flex items-start gap-3 p-4 rounded-lg border shadow-lg transition-all duration-300 animate-in slide-in-from-right",
               styles.container
             )}
             role="alert"

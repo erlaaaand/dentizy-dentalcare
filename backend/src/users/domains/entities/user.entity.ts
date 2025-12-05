@@ -31,6 +31,15 @@ export class User {
   @Exclude()
   password: string;
 
+  @Column({ 
+      type: 'varchar', // <--- [WAJIB DITAMBAHKAN]
+      length: 255, 
+      unique: true, 
+      nullable: true 
+  })
+  @Index('idx_user_email')
+  email: string | null;
+
   @CreateDateColumn()
   @Index('idx_user_created_at') // Index untuk sorting
   created_at: Date;

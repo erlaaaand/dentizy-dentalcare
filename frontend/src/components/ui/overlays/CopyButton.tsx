@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { cn} from '@/core'; // ✅ Import terpusat
 import { copyToClipboard } from '@/core/utils/copy-to-clipboard/ctc';

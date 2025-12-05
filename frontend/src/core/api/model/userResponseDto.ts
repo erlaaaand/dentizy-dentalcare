@@ -11,6 +11,8 @@ export interface UserResponseDto {
   id: number;
   username: string;
   nama_lengkap: string;
+  /** @nullable */
+  email?: string | null;
   /** Daftar role user */
   roles: UserRoleDto[];
   created_at: string;

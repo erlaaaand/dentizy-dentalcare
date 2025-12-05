@@ -65,7 +65,7 @@ export default function TreatmentManager() {
         return treatmentList.find((item: any) => item.id == selectedItemId) || null;
     }, [selectedItemId, treatmentList]);
 
-    // ✅ FIX UTAMA: Jangan parse harga di sini. Biarkan modal yang handle.
+    //  FIX UTAMA: Jangan parse harga di sini. Biarkan modal yang handle.
     const updateModalState = useCallback((item: any | null) => {
         if (item) {
             modalStateRef.current = {
@@ -138,11 +138,11 @@ export default function TreatmentManager() {
             switch (actionType) {
                 case 'delete':
                     await deleteTreatment.mutateAsync({ id: Number(selectedItemId) });
-                    toast.showSuccess('Layanan berhasil dihapus');
+                    toast.showError('Layanan berhasil dihapus');
                     break;
                 case 'restore':
                     await restoreTreatment.mutateAsync({ id: Number(selectedItemId) });
-                    toast.showSuccess('Layanan berhasil dipulihkan');
+                    toast.showInfo('Layanan berhasil dipulihkan');
                     break;
                 case 'activate':
                     await activateTreatment.mutateAsync({ id: Number(selectedItemId) });
@@ -150,7 +150,7 @@ export default function TreatmentManager() {
                     break;
                 case 'deactivate':
                     await deactivateTreatment.mutateAsync({ id: Number(selectedItemId) });
-                    toast.showSuccess('Layanan berhasil dinonaktifkan');
+                    toast.showWarning('Layanan berhasil dinonaktifkan');
                     break;
             }
 

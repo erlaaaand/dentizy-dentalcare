@@ -28,6 +28,7 @@ import type {
   CreateMedicalRecordTreatmentDto,
   MedicalRecordTreatmentResponseDto,
   MedicalRecordTreatmentsControllerFindAllParams,
+  MedicalRecordTreatmentsControllerGetTopTreatmentsParams,
   MedicalRecordTreatmentsControllerGetTotalByMedicalRecordId200,
   MedicalRecordTreatmentsControllerRemove200,
   UpdateMedicalRecordTreatmentDto
@@ -186,6 +187,98 @@ export function useMedicalRecordTreatmentsControllerFindAll<TData = Awaited<Retu
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getMedicalRecordTreatmentsControllerFindAllQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
+ * @summary Statistik layanan terlaris
+ */
+export const medicalRecordTreatmentsControllerGetTopTreatments = (
+    params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<void>(
+      {url: `/medical-record-treatments/stats/top-treatments`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryKey = (params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams,) => {
+    return [
+    `/medical-record-treatments/stats/top-treatments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void | void>(params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>> = ({ signal }) => medicalRecordTreatmentsControllerGetTopTreatments(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerGetTopTreatmentsQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>>
+export type MedicalRecordTreatmentsControllerGetTopTreatmentsQueryError = void | void
+
+
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void | void>(
+ params: undefined |  MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void | void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void | void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Statistik layanan terlaris
+ */
+
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void | void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryOptions(params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

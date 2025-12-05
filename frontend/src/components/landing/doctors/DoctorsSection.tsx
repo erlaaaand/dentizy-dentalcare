@@ -1,6 +1,13 @@
+'use client';
 import React, { useState, useEffect, useRef } from "react";
 
-const doctors = [
+interface Doctor {
+  name: string;
+  title: string;
+  image: string;
+}
+
+const doctors: Doctor[] = [
   {
     name: "drg. Budi Santoso",
     title: "Dokter Gigi Umum",
@@ -15,10 +22,15 @@ const doctors = [
   },
 ];
 
-function DoctorCard({ doctor, index }) {
+interface DoctorCardProps {
+  doctor: Doctor;
+  index: number;
+}
+
+function DoctorCard({ doctor, index }: DoctorCardProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const cardRef = useRef(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -39,7 +51,7 @@ function DoctorCard({ doctor, index }) {
     }
 
     return () => {
-      if (observer && cardRef.current) {
+      if (cardRef.current) {
         observer.unobserve(cardRef.current);
       }
     };
@@ -79,7 +91,7 @@ function DoctorCard({ doctor, index }) {
   );
 }
 
-export default function DoctorsSection() {
+export function DoctorsSection() {
   return (
     <section
       id="dokter"

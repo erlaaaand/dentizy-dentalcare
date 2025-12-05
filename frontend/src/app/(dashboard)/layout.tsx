@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import Sidebar from '@/components/ui/layout/sidebar/Sidebar';
 import { Header } from '@/components/ui/layout/header/';
 import { Footer } from '@/components/ui/layout/footer/';
-import { default as AuthGuard } from '@/components/guards/AuthGuard'; // (Lihat catatan di bawah)
+import { default as AuthGuard } from '@/components/guards/AuthGuard';
 
 export const metadata: Metadata = {
   title: 'Dentizy Dentalcare - Dashboard',

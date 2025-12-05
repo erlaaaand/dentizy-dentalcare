@@ -19,18 +19,21 @@ export class UserRepository {
 
     /**
      * Create new user
+     * [FIX] Tambahkan email ke parameter dan payload creation
      */
     async create(data: {
         username: string;
         nama_lengkap: string;
         password: string;
         roles: Role[];
+        email?: string | null; // <--- Tambahkan ini
     }): Promise<User> {
         const user = this.repository.create({
             username: data.username,
             nama_lengkap: data.nama_lengkap,
             password: data.password,
             roles: data.roles,
+            email: data.email, // <--- Pastikan ini ikut disimpan
             is_active: true
         });
 
@@ -72,6 +75,7 @@ export class UserRepository {
             'user.id',
             'user.username',
             'user.nama_lengkap',
+            'user.email', // [OPTIONAL] Tambahkan ini jika ingin email muncul di list
             'user.created_at',
             'user.updated_at',
             'user.profile_photo',
@@ -81,10 +85,10 @@ export class UserRepository {
             'role.description'
         ]);
 
-        // Filter by search (nama_lengkap OR username)
+        // Filter by search (nama_lengkap OR username OR email)
         if (params.search) {
             qb.andWhere(
-                '(LOWER(user.nama_lengkap) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search))',
+                '(LOWER(user.nama_lengkap) LIKE LOWER(:search) OR LOWER(user.username) LIKE LOWER(:search) OR LOWER(user.email) LIKE LOWER(:search))',
                 { search: `%${params.search}%` }
             );
         }
@@ -118,6 +122,7 @@ export class UserRepository {
                 'id',
                 'username',
                 'nama_lengkap',
+                'email', // [FIX] Agar saat edit data, emailnya terambil
                 'created_at',
                 'updated_at',
                 'profile_photo',
@@ -148,14 +153,24 @@ export class UserRepository {
     }
 
     /**
-     * Find user by username (with password) - for authentication
+     * [FIX] Find user by username OR email (with password) - for authentication
+     * Sesuai rencana fitur login via email
      */
-    async findByUsernameWithPassword(username: string): Promise<User | null> {
+    async findByUsernameOrEmailWithPassword(identifier: string): Promise<User | null> {
         return this.repository.createQueryBuilder('user')
             .leftJoinAndSelect('user.roles', 'role')
-            .where('user.username = :username', { username })
             .addSelect('user.password')
+            .where('user.username = :identifier OR user.email = :identifier', { identifier })
             .getOne();
+    }
+
+    /**
+     * Find user by email
+     */
+    async findByEmail(email: string): Promise<User | null> {
+        return this.repository.findOne({
+            where: { email }
+        });
     }
 
     /**
@@ -187,6 +202,7 @@ export class UserRepository {
                 'id',
                 'username',
                 'nama_lengkap',
+                'email',
                 'created_at',
                 'updated_at',
                 'profile_photo',

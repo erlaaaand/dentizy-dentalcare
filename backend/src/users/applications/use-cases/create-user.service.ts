@@ -1,4 +1,3 @@
-// application/use-cases/create-user.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
@@ -9,11 +8,6 @@ import { UserResponseDto } from '../dto/user-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserCreatedEvent } from '../../infrastructures/events/user-created.event';
 
-/**
- * CreateUserService - Pure business logic for user creation
- * Input: CreateUserDto (already validated by class-validator)
- * Output: UserResponseDto
- */
 @Injectable()
 export class CreateUserService {
     private readonly logger = new Logger(CreateUserService.name);
@@ -26,29 +20,31 @@ export class CreateUserService {
     ) { }
 
     async execute(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-        const { roles: roleIds, password, username, nama_lengkap } = createUserDto;
+        // [FIX] Hapus specialization dari destructuring
+        const { roles: roleIds, password, username, nama_lengkap, email } = createUserDto;
 
         try {
-            // 1. Check username uniqueness (business rule)
             const existingUser = await this.userRepository.findByUsernameWithoutPassword(username);
             this.userValidation.validateUsernameUniqueness(existingUser, username);
 
-            // 2. Validate roles exist (business rule)
+            if (email) {
+                 await this.userValidation.validateUniqueEmail(email);
+            }
+
             const roles = await this.userRepository.findRolesByIds(roleIds);
             this.userValidation.validateRolesExist(roleIds, roles);
 
-            // 3. Hash password (security operation)
             const hashedPassword = await this.passwordHasher.hash(password);
 
-            // 4. Create user entity
             const newUser = await this.userRepository.create({
                 username,
                 nama_lengkap,
                 password: hashedPassword,
-                roles
-            });
+                roles,
+                email: email || null,
+                // [FIX] Hapus specialization dari payload create
+            } as any);
 
-            // 5. Emit domain event
             this.eventEmitter.emit(
                 'user.created',
                 new UserCreatedEvent(
@@ -59,10 +55,7 @@ export class CreateUserService {
                 )
             );
 
-            // 6. Log success
             this.logger.log(`✅ User created: ${newUser.username} (ID: ${newUser.id})`);
-
-            // 7. Map to DTO and return
             return UserMapper.toResponseDto(newUser);
 
         } catch (error) {

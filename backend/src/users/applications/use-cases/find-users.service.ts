@@ -1,6 +1,6 @@
 // application/use-cases/find-users.service.ts
 
-import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { UserMapper } from '../../domains/mappers/user.mapper';
@@ -15,21 +15,19 @@ export class FindUsersService {
 
     /**
      * Find all users with pagination, filters, and search
-     * Sesuai dengan FindUsersQueryDto
      */
     async findAll(query: FindUsersQueryDto): Promise<{
         data: UserResponseDto[];
         meta: any;
     }> {
         try {
+            // Log debug tidak masalah, tapi hati-hati jika query object membesar
             this.logger.debug(`Finding users with query: ${JSON.stringify(query)}`);
 
-            // Ambil nilai dari DTO (sudah tervalidasi dan ter-transform)
             const page = query.page || 1;
             const limit = query.limit || 10;
             const skip = (page - 1) * limit;
 
-            // Gunakan method repository yang sesuai dengan DTO
             const [users, total] = await this.userRepository.findAndCountUsers({
                 skip,
                 take: limit,
@@ -40,7 +38,6 @@ export class FindUsersService {
 
             this.logger.log(`📋 Retrieved ${users.length} users (Total: ${total})`);
 
-            // Return dengan struktur yang konsisten
             return {
                 data: UserMapper.toResponseDtoArray(users),
                 meta: {
@@ -53,14 +50,14 @@ export class FindUsersService {
                 }
             };
         } catch (error) {
-            this.logger.error('Error fetching users:', error.message);
-            throw new BadRequestException('Gagal mengambil daftar users: ' + error.message);
+            this.logger.error('Error fetching users:', error);
+            // [FIX] Jangan ekspos error.message asli ke user (bisa bocor info database)
+            throw new BadRequestException('Gagal mengambil daftar users. Silakan coba lagi.');
         }
     }
 
     /**
      * Find single user by ID
-     * Return: UserResponseDto (tanpa password)
      */
     async findOne(userId: number): Promise<UserResponseDto> {
         try {
@@ -72,17 +69,16 @@ export class FindUsersService {
 
             return UserMapper.toResponseDto(user);
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-            this.logger.error(`Error finding user ID ${userId}:`, error.message);
-            throw new BadRequestException('Gagal mengambil data user');
+            // Re-throw jika itu adalah HttpException (seperti NotFoundException di atas)
+            if (error instanceof NotFoundException) throw error;
+            
+            this.logger.error(`Error finding user ID ${userId}:`, error);
+            throw new InternalServerErrorException('Terjadi kesalahan saat mengambil data user');
         }
     }
 
     /**
-     * Find user for authentication (with password)
-     * Return: User entity (dengan password untuk validasi)
+     * Find user for authentication (by ID)
      */
     async findOneForAuth(userId: number): Promise<User> {
         try {
@@ -94,23 +90,23 @@ export class FindUsersService {
 
             return user;
         } catch (error) {
-            if (error instanceof NotFoundException) {
-                throw error;
-            }
-            this.logger.error(`Error finding user for auth ID ${userId}:`, error.message);
-            throw new BadRequestException('Gagal mengambil data user');
+            if (error instanceof NotFoundException) throw error;
+            this.logger.error(`Error finding user for auth ID ${userId}:`, error);
+            throw new InternalServerErrorException('Gagal memverifikasi user');
         }
     }
 
     /**
-     * Find user by username for authentication (with password)
-     * Return: User entity (dengan password untuk login)
+     * [FIX UTAMA] Find user by Username OR Email
+     * Digunakan oleh LoginService
      */
-    async findByUsernameForAuth(username: string): Promise<User> {
-        const user = await this.userRepository.findByUsernameWithPassword(username);
+    async findByUsernameOrEmailForAuth(identifier: string): Promise<User> {
+        // Kita panggil method baru di repository (pastikan Anda sudah update repository juga)
+        const user = await this.userRepository.findByUsernameOrEmailWithPassword(identifier);
 
         if (!user) {
-            throw new NotFoundException(`User dengan username "${username}" tidak ditemukan`);
+            // Pesan error umum untuk keamanan (jangan spesifik "Username salah" atau "Email salah")
+            throw new NotFoundException('User tidak ditemukan');
         }
 
         return user;
@@ -118,7 +114,6 @@ export class FindUsersService {
 
     /**
      * Check username availability
-     * Return: { available: boolean, message: string }
      */
     async checkUsernameAvailability(username: string): Promise<{
         available: boolean;
@@ -134,14 +129,13 @@ export class FindUsersService {
                     : `Username "${username}" tersedia`
             };
         } catch (error) {
-            this.logger.error('Error checking username availability:', error.message);
+            this.logger.error('Error checking username availability:', error);
             throw new BadRequestException('Gagal memeriksa ketersediaan username');
         }
     }
 
     /**
      * Get user statistics
-     * Return: { total, byRole, active, inactive }
      */
     async getUserStatistics(): Promise<{
         total: number;
@@ -152,28 +146,25 @@ export class FindUsersService {
         try {
             return await this.userRepository.getStatistics();
         } catch (error) {
-            this.logger.error('Error getting user statistics:', error.message);
+            this.logger.error('Error getting user statistics:', error);
             throw new BadRequestException('Gagal mengambil statistik users');
         }
     }
 
     /**
      * Get recently created users
-     * Return: UserResponseDto[]
      */
     async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
         try {
+            // Validasi limit sebaiknya di Controller/DTO, tapi double check disini tidak apa-apa
             if (limit < 1 || limit > 50) {
-                throw new BadRequestException('Limit harus antara 1 dan 50');
+                limit = 10; // Fallback ke default daripada error
             }
 
             const users = await this.userRepository.findRecentlyCreated(limit);
             return UserMapper.toResponseDtoArray(users);
         } catch (error) {
-            if (error instanceof BadRequestException) {
-                throw error;
-            }
-            this.logger.error('Error getting recently created users:', error.message);
+            this.logger.error('Error getting recently created users:', error);
             throw new BadRequestException('Gagal mengambil daftar user terbaru');
         }
     }

@@ -13,6 +13,7 @@ import { MedicalRecordAppointmentFinderService } from '../use-cases/medical-reco
 import { MedicalRecordDeletionService } from '../use-cases/medical-record-deletion.service';
 import { FindAllMedicalRecordQueryDto } from '../dto/find-all-medical-record.dto';
 import { MedicalRecordQueryBuilder } from '../../infrastructure/persistence/query/medical-record-query.builder';
+import { MedicalRecordsRepository } from '../../../medical_records/infrastructure/persistence/repositories/medical-records.repository';
 
 /**
  * Orchestrator Service
@@ -29,6 +30,7 @@ export class MedicalRecordsService {
         private readonly appointmentFinderService: MedicalRecordAppointmentFinderService,
         private readonly deletionService: MedicalRecordDeletionService,
         private readonly queryBuilder: MedicalRecordQueryBuilder,
+        private readonly repository: MedicalRecordsRepository,
     ) { }
 
     /**
@@ -144,5 +146,10 @@ export class MedicalRecordsService {
      */
     async existsForAppointment(appointmentId: number): Promise<boolean> {
         return await this.appointmentFinderService.exists(appointmentId);
+    }
+
+    async getDoctorStatistics(startDate?: Date, endDate?: Date): Promise<any[]> {
+        // Memanggil method baru di repository (pastikan repo sudah diupdate)
+        return await this.repository.getDoctorPerformance(startDate, endDate);
     }
 }

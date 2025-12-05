@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength, IsUrl } from 'class-validator';
 
 /**
  * DTO untuk mengupdate profil pengguna yang sedang login.
@@ -27,4 +27,13 @@ export class UpdateProfileDto {
     @IsString()
     @MinLength(3, { message: 'Nama lengkap minimal harus 3 karakter' })
     nama_lengkap?: string;
+
+    @ApiProperty({
+        required: false,
+        description: 'URL foto profil (dari response upload)',
+        example: '/uploads/profiles/foto-user-123.jpg'
+    })
+    @IsOptional()
+    @IsString()
+    profile_photo?: string;
 }

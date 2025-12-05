@@ -1,3 +1,4 @@
+'use client';
 import React, { useEffect } from 'react';
 import { X, CheckCircle, AlertTriangle, AlertCircle, Info, Bell } from 'lucide-react';
 import { cn } from '@/core';

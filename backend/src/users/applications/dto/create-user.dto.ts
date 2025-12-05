@@ -3,7 +3,9 @@ import {
     IsNotEmpty,
     IsNumber,
     IsString,
-    MinLength
+    MinLength,
+    IsEmail,
+    IsOptional
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -29,7 +31,7 @@ export class CreateUserDto {
     username: string;
 
     @ApiProperty({
-        description: `Password pengguna, minimal ${PASSWORD_MIN_LENGTH} karakter dan harus strong`,
+        description: `Password pengguna, minimal ${PASSWORD_MIN_LENGTH} karakter`,
         example: 'Admin@123'
     })
     @IsNotEmpty({ message: 'Password harus diisi' })
@@ -38,10 +40,18 @@ export class CreateUserDto {
         message: `Password minimal ${PASSWORD_MIN_LENGTH} karakter`
     })
     @IsStrongPassword({
-        message:
-            'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter spesial'
+        message: 'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter spesial'
     })
     password: string;
+
+    @ApiProperty({
+        description: 'Email pengguna',
+        example: 'dokter@klinik.com',
+        required: false // Dokumentasi Swagger bahwa ini opsional
+    })
+    @IsOptional()
+    @IsEmail({}, { message: 'Format email tidak valid' })
+    email?: string; // [TIPS] Tambahkan '?' agar TypeScript tahu ini opsional
 
     @ApiProperty({
         description: 'Daftar ID role yang dimiliki user',

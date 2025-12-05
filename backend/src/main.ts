@@ -8,15 +8,26 @@ import { DataSource } from 'typeorm';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import helmet from 'helmet';
 import { writeFileSync } from 'fs';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   try {
-    const app = await NestFactory.create(AppModule, {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, { // <--- Tambah <NestExpressApplication>
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 
     app.useGlobalFilters(new HttpExceptionFilter());
+
+    app.useStaticAssets(join(__dirname, '..', 'public'), {
+      prefix: '/public/', // url: http://localhost:3000/public/uploads/...
+    });
+    
+    // Atau jika ingin akses langsung seperti return controller saya tadi (/uploads/...):
+    app.useStaticAssets(join(__dirname, '..', 'public/uploads'), {
+      prefix: '/uploads/', // url: http://localhost:3000/uploads/profiles/...
+    });
 
     // ✅ Get ConfigService
     const configService = app.get(ConfigService);
@@ -34,69 +45,85 @@ async function bootstrap() {
     }
 
     // ✅ 1. SECURITY HEADERS dengan Helmet
-    app.use(helmet({
-      contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
-      crossOriginEmbedderPolicy: nodeEnv === 'production',
-      crossOriginResourcePolicy: { policy: "cross-origin" },
-    }));
+    app.use(
+      helmet({
+        contentSecurityPolicy: nodeEnv === 'production' ? undefined : false,
+        crossOriginEmbedderPolicy: nodeEnv === 'production',
+        crossOriginResourcePolicy: { policy: 'cross-origin' },
+      }),
+    );
 
     // ✅ 2. IMPROVED CORS Configuration
-    const allowedOrigins = nodeEnv === 'production'
-      ? [frontendUrl] // Production: strict origin
-      : [frontendUrl, 'http://localhost:3001', 'http://localhost:3000']; // Development
+    const localIp = configService.get('LOCAL_IP');
+
+    // Backend (NestJS) LAN address → untuk HP mengakses backend
+    const localNetworkBackend = `http://${localIp}:${port}`;
+
+    // Frontend LAN address (dari ENV)
+    const lanFrontendUrl = configService.get<string>('FRONTEND_URL_LAN');
+
+    const allowedOrigins =
+      nodeEnv === 'production'
+        ? [frontendUrl] // Strict mode only use production domain
+        : [
+            // Frontend laptop
+            frontendUrl,
+            'http://localhost:3000',
+            'http://localhost:3001',
+
+            // Frontend HP atau device lain via LAN
+            lanFrontendUrl,
+
+            // Backend via LAN (kadang frontend fetch ke backend LAN)
+            localNetworkBackend,
+          ];
 
     app.enableCors({
       origin: (origin, callback) => {
-        // ✅ FIX: Stricter origin checking
-
-        // In production, ALWAYS require origin header
         if (!origin) {
-          if (nodeEnv === 'production') {
-            logger.error(`🚫 CORS blocked: Missing origin header (Production mode)`);
-            return callback(new Error('Origin header required in production'));
-          }
+          // No origin → allow only in development
+          if (nodeEnv !== 'production') return callback(null, true);
+          return callback(new Error('Origin header required in production'));
+        }
 
-          // Development: Allow no-origin (e.g., Postman, curl)
-          logger.debug(`⚠️ No origin header - allowing (Development mode only)`);
+        if (allowedOrigins.includes(origin)) {
           return callback(null, true);
         }
 
-        // Check if origin is in whitelist
-        if (allowedOrigins.includes(origin)) {
-          if (nodeEnv !== 'production') {
-            logger.debug(`✅ CORS allowed: ${origin}`);
-          }
-          callback(null, true);
-        } else {
-          // ✅ FIX: Log with proper error level and detailed info
-          logger.error(`🚫 CORS blocked: ${origin} not in whitelist`);
-          logger.error(`Allowed origins: ${allowedOrigins.join(', ')}`);
-          callback(new Error(`Origin ${origin} not allowed by CORS policy`));
-        }
+        console.error(`🚫 CORS BLOCKED — Origin: ${origin}`);
+        console.error(`Allowed:`, allowedOrigins);
+
+        return callback(new Error(`Origin ${origin} is not allowed by CORS`));
       },
+
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'X-Requested-With',
+      ],
       exposedHeaders: ['X-Total-Count', 'X-Page-Number'],
-      maxAge: 3600, // Cache preflight request for 1 hour
-      preflightContinue: false,
-      optionsSuccessStatus: 204,
+      maxAge: 3600,
     });
 
     // ✅ 3. GLOBAL VALIDATION PIPE
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true, // Remove properties yang tidak ada di DTO
-      forbidNonWhitelisted: true, // Throw error jika ada property tidak dikenal
-      transform: true, // Auto transform ke tipe yang sesuai
-      transformOptions: {
-        enableImplicitConversion: true,
-      },
-      disableErrorMessages: nodeEnv === 'production', // Hide detailed errors in production
-      validationError: {
-        target: false, // Don't expose target object
-        value: false,  // Don't expose submitted values in production
-      },
-    }));
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true, // Remove properties yang tidak ada di DTO
+        forbidNonWhitelisted: true, // Throw error jika ada property tidak dikenal
+        transform: true, // Auto transform ke tipe yang sesuai
+        transformOptions: {
+          enableImplicitConversion: true,
+        },
+        disableErrorMessages: nodeEnv === 'production', // Hide detailed errors in production
+        validationError: {
+          target: false, // Don't expose target object
+          value: false, // Don't expose submitted values in production
+        },
+      }),
+    );
 
     // ✅ 4. SWAGGER (hanya untuk development)
     if (nodeEnv !== 'production') {
@@ -120,8 +147,14 @@ async function bootstrap() {
         .addTag('Medical Records', 'Manajemen rekam medis')
         .addTag('Notifications', 'Sistem notifikasi dan reminder')
         .addTag('Treatments', 'Manajemen master data tindakan/perawatan gigi')
-        .addTag('Treatment Categories', 'Manajemen kategori tindakan (Scaling, Cabut Gigi, dll)')
-        .addTag('Medical Record Treatments', 'Manajemen rincian tindakan yang dilakukan pada pasien')
+        .addTag(
+          'Treatment Categories',
+          'Manajemen kategori tindakan (Scaling, Cabut Gigi, dll)',
+        )
+        .addTag(
+          'Medical Record Treatments',
+          'Manajemen rincian tindakan yang dilakukan pada pasien',
+        )
         .addTag('Payments', 'Manajemen transaksi pembayaran dan invoice')
         .build();
 
@@ -137,8 +170,8 @@ async function bootstrap() {
       try {
         logger.log('📝 Generating swagger.json file...');
         writeFileSync(
-          'D:/kuliah/3D_ErlandSemester5/Proyek/dentizy-app/frontend/swagger.json',   // <- path absolut
-          JSON.stringify(document, null, 2)
+          '/home/erlaaaand/kuliah/Projects/dentizy-dentalcare/frontend/swagger.json',
+          JSON.stringify(document, null, 2),
         );
         logger.log('✅ swagger.json generated successfully in root directory');
       } catch (err) {
@@ -157,7 +190,9 @@ async function bootstrap() {
       logger.error('❌ Database connection failed:', error.message);
 
       if (nodeEnv === 'production') {
-        throw new Error('Cannot connect to database. Please check your configuration.');
+        throw new Error(
+          'Cannot connect to database. Please check your configuration.',
+        );
       } else {
         logger.warn('⚠️ Continuing without database in development mode');
       }
@@ -228,7 +263,6 @@ ${nodeEnv !== 'production' ? `║   📖 API Docs:     http://localhost:${port}/
       logger.log('🛠️ Running in DEVELOPMENT mode');
       logger.log('🔓 CORS is relaxed for local development');
     }
-
   } catch (error) {
     logger.error('❌ Application failed to start:', error);
     process.exit(1);

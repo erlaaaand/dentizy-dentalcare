@@ -1,4 +1,3 @@
-// application/use-cases/update-user.service.ts
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UpdateUserDto } from '../dto/update-user.dto';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
@@ -9,6 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserUpdatedEvent } from '../../infrastructures/events/user-updated.event';
 import { UsernameValidator } from '../../domains/validators/username.validator';
 import { UserDataValidator } from '../../domains/validators/user-data.validator';
+import { PasswordHasherService } from '../../../auth/infrastructures/security/password-hasher.service';
 
 @Injectable()
 export class UpdateUserService {
@@ -17,14 +17,15 @@ export class UpdateUserService {
     constructor(
         private readonly userRepository: UserRepository,
         private readonly userValidation: UserValidationService,
+        private readonly passwordHasher: PasswordHasherService,
         private readonly eventEmitter: EventEmitter2
     ) { }
 
     async execute(userId: number, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
-        const { roles: roleIds, username, nama_lengkap } = updateUserDto;
+        // [FIX] Hapus specialization dari destructuring
+        const { roles: roleIds, username, nama_lengkap, email, password } = updateUserDto;
 
         try {
-            // 1. Find user
             const user = await this.userRepository.findByIdWithPassword(userId);
             this.userValidation.validateUserExists(user, userId);
 
@@ -34,49 +35,53 @@ export class UpdateUserService {
 
             const changes: Record<string, any> = {};
 
-            // 2. Update username if provided
             if (username && username !== user.username) {
                 UsernameValidator.validate(username);
-
                 const existingUser = await this.userRepository.findByUsernameWithoutPassword(username);
-                this.userValidation.validateUsernameUniqueness(
-                    existingUser,
-                    username,
-                    user.username
-                );
-
+                this.userValidation.validateUsernameUniqueness(existingUser, username, user.username);
                 user.username = username;
                 changes.username = username;
             }
 
-            // 3. Update nama_lengkap if provided
             if (nama_lengkap && nama_lengkap !== user.nama_lengkap) {
                 UserDataValidator.validateNamaLengkap(nama_lengkap);
                 user.nama_lengkap = nama_lengkap;
                 changes.nama_lengkap = nama_lengkap;
             }
 
-            // 4. Update roles if provided
+            if (email !== undefined && email !== user.email) {
+                if (email === '') {
+                    user.email = null;
+                } else {
+                    await this.userValidation.validateUniqueEmail(email, userId);
+                    user.email = email;
+                }
+                changes.email = email;
+            }
+
+            if (password) {
+                const hashedPassword = await this.passwordHasher.hash(password);
+                user.password = hashedPassword;
+                changes.password = '***CHANGED***';
+            }
+
             if (roleIds && roleIds.length > 0) {
                 UserDataValidator.validateRoles(roleIds);
-
                 const roles = await this.userRepository.findRolesByIds(roleIds);
                 this.userValidation.validateRolesExist(roleIds, roles);
-
                 user.roles = roles;
                 changes.roles = roleIds;
             }
+            
+            // [FIX] Hapus blok logika update specialization di sini
 
-            // 5. Save changes
             const updatedUser = await this.userRepository.update(user);
 
-            // 6. Emit event
             this.eventEmitter.emit(
                 'user.updated',
                 new UserUpdatedEvent(updatedUser.id, updatedUser.username, changes)
             );
 
-            // 7. Log and return
             this.logger.log(`✅ User updated: ${updatedUser.username} (ID: ${updatedUser.id})`);
             return UserMapper.toResponseDto(updatedUser);
 

@@ -4,21 +4,21 @@
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-    Users, UserPlus, BarChart3, Settings,
-    TrendingUp, Clock, Stethoscope,
-    Calendar as CalendarIcon, Bell, ArrowRight
+    Users, BarChart3, Settings,
+    TrendingUp, Activity, Stethoscope, ArrowRight,
+    UserPlus, FileText
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
 
 import { ROUTES } from '@/core/constants';
 import {
-    DataTable, Card, EmptyState, Badge, Skeleton,
-    Tabs, TabPanel, Avatar, StatusBadge, AlertBanner, Button, StatsCard
+    DataTable, Card,
+    Tabs, TabPanel, Avatar, Badge, Button, StatsCard
 } from '@/components/ui';
-import { QuickActions } from '../widgets/QuickActions';
-import type { QuickAction } from '../../types/dashboard.types';
+import { DashboardHeader } from '../shared/DashboardHeader';
+import { QuickActionGrid } from '../shared/QuickActionGrid';
+import { DashboardSkeleton } from '../skeleton/DashboardSkeleton';
 
+// Import Hooks
 import {
     usePatientsControllerGetStatistics,
     usePatientsControllerFindAll
@@ -28,12 +28,8 @@ import {
     useUsersControllerFindAll
 } from '@/core/api/generated/users/users';
 import {
-    useNotificationsControllerGetStatistics
-} from '@/core/api/generated/notifications/notifications';
-import {
     useAppointmentsControllerFindAll
 } from '@/core/api/generated/appointments/appointments';
-
 import {
     PatientsControllerFindAllSortBy,
     PatientsControllerFindAllSortOrder,
@@ -43,270 +39,214 @@ import {
 export function KepalaKlinikDashboard() {
     const router = useRouter();
     const [activeTab, setActiveTab] = useState('overview');
-    const todayDate = format(new Date(), 'yyyy-MM-dd');
 
-    const formatSafeDate = (dateString: string | null | undefined, formatStr = 'dd MMM yyyy') => {
-        if (!dateString) return '-';
-        try {
-            return format(new Date(dateString), formatStr, { locale: id });
-        } catch {
-            return '-';
-        }
-    };
-
-    // Fetch data
-    const { data: patientStats, isLoading: loadingPatientStats, error: errorPatientStats } = usePatientsControllerGetStatistics();
-    const { data: userStats, isLoading: loadingUserStats, error: errorUserStats } = useUsersControllerGetStatistics();
-    const { data: notifStats, isLoading: loadingNotifStats, error: errorNotifStats } = useNotificationsControllerGetStatistics();
-    const { data: recentPatientsData, isLoading: loadingRecentPatients, error: errorRecentPatients } = usePatientsControllerFindAll({
-        page: 1, limit: 5, sortBy: PatientsControllerFindAllSortBy.created_at, sortOrder: PatientsControllerFindAllSortOrder.desc
+    // [FIX] State untuk Pagination (Sesuai contekan)
+    const [queryParams, setQueryParams] = useState({
+        page: 1,
+        limit: 10
     });
-    const { data: todayAppointmentsData, isLoading: loadingAppointments, error: errorAppointments } = useAppointmentsControllerFindAll({ date: todayDate, limit: 50 });
-    const { data: doctorsData, isLoading: loadingDoctors, error: errorDoctors } = useUsersControllerFindAll({ role: UsersControllerFindAllRole.dokter, limit: 10, isActive: true });
 
-    const { recentPatients, todayAppointments, activeDoctors, pStats, uStats, nStats } = useMemo(() => ({
-        recentPatients: (recentPatientsData as any)?.data || [],
-        todayAppointments: (todayAppointmentsData as any)?.data || [],
-        activeDoctors: (doctorsData as any)?.data || [],
-        pStats: { total: (patientStats as any)?.total ?? 0, new_this_month: (patientStats as any)?.new_this_month ?? 0, trend: (patientStats as any)?.trend ?? null },
-        uStats: { total: (userStats as any)?.total ?? 0, active: (userStats as any)?.active ?? 0 },
-        nStats: { pending: (notifStats as any)?.pending ?? 0 }
-    }), [patientStats, userStats, notifStats, recentPatientsData, todayAppointmentsData, doctorsData]);
+    // --- FETCH DATA ---
+    const { data: patientStats, isLoading: l1 } = usePatientsControllerGetStatistics();
+    const { data: userStats, isLoading: l2 } = useUsersControllerGetStatistics();
+    
+    // [FIX] Gunakan queryParams untuk fetch data pasien
+    const { 
+        data: recentPatientsData, 
+        isLoading: loadingRecentPatients 
+    } = usePatientsControllerFindAll({ 
+        page: queryParams.page, 
+        limit: queryParams.limit, 
+        sortBy: PatientsControllerFindAllSortBy.created_at, 
+        sortOrder: PatientsControllerFindAllSortOrder.desc 
+    });
 
-    const recentPatientColumns = useMemo(() => [
-        {
-            key: 'nama_lengkap',
-            header: 'Pasien',
-            render: (row: any) => (
+    const { data: todayAppointmentsData, isLoading: l4 } = useAppointmentsControllerFindAll({ 
+        date: new Date().toISOString().split('T')[0], 
+        limit: 50 
+    });
+
+    const { data: doctorsData, isLoading: l5 } = useUsersControllerFindAll({ 
+        role: UsersControllerFindAllRole.dokter, 
+        limit: 20, 
+        isActive: true 
+    });
+
+    const isLoadingStats = l1 || l2 || l4 || l5;
+
+    // --- DATA PROCESSING ---
+    const stats = useMemo(() => ({
+        totalPatients: (patientStats as any)?.total ?? 0,
+        newPatients: (patientStats as any)?.new_this_month ?? 0,
+        totalUsers: (userStats as any)?.total ?? 0,
+        activeDoctors: (doctorsData as any)?.data?.length ?? 0,
+        todayApts: (todayAppointmentsData as any)?.data?.length ?? 0
+    }), [patientStats, userStats, doctorsData, todayAppointmentsData]);
+
+    // [FIX] Extract patientList dan Meta untuk Pagination
+    const patientList = useMemo(() => (recentPatientsData as any)?.data || [], [recentPatientsData]);
+    const patientMeta = useMemo(() => (recentPatientsData as any)?.meta || {}, [recentPatientsData]);
+
+    const quickActions = [
+        { label: 'Manajemen User', icon: <Users className="w-5 h-5 text-blue-600" />, route: ROUTES.USERS, bgColor: 'bg-blue-50', hoverColor: 'blue-500' },
+        { label: 'Laporan Klinik', icon: <BarChart3 className="w-5 h-5 text-emerald-600" />, route: ROUTES.REPORTS, bgColor: 'bg-emerald-50', hoverColor: 'emerald-500' },
+        { label: 'Keuangan', icon: <FileText className="w-5 h-5 text-amber-600" />, route: ROUTES.REPORTS, bgColor: 'bg-amber-50', hoverColor: 'amber-500' },
+        { label: 'Pengaturan', icon: <Settings className="w-5 h-5 text-gray-600" />, route: ROUTES.SETTINGS, bgColor: 'bg-gray-50', hoverColor: 'gray-500' },
+    ];
+
+    // --- COLUMN DEFINITIONS ---
+    const recentPatientColumns = [
+        { 
+            header: 'Nama Pasien', 
+            render: (r: any) => (
                 <div className="flex items-center gap-3">
-                    <Avatar name={row.nama_lengkap || 'Unknown'} size="sm" className="ring-2 ring-white shadow-sm" />
+                    <Avatar name={r.nama_lengkap} size="sm" />
                     <div className="flex flex-col">
-                        <span className="font-medium text-gray-900">{row.nama_lengkap || 'Nama Tidak Tersedia'}</span>
-                        <span className="text-xs text-gray-500">{row.nomor_rekam_medis || '-'}</span>
+                        <span className="font-medium text-gray-900">{r.nama_lengkap}</span>
+                        <span className="text-xs text-gray-500">{r.nomor_rekam_medis || '-'}</span>
                     </div>
                 </div>
             )
         },
-        {
-            key: 'created_at',
-            header: 'Terdaftar Pada',
-            render: (row: any) => (
-                <span className="text-gray-600 flex items-center gap-2 text-sm">
-                    <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
-                    {formatSafeDate(row.created_at)}
-                </span>
-            )
+        { 
+            header: 'NIK', 
+            render: (r: any) => <span className="text-gray-600 font-mono text-sm">{r.nik || '-'}</span> 
         },
-        {
-            key: 'jenis_kelamin',
-            header: 'Gender',
-            render: (row: any) => (
-                <Badge variant="outline" size="sm">
-                    {row.jenis_kelamin === 'L' ? 'Laki-laki' : row.jenis_kelamin === 'P' ? 'Perempuan' : 'Tidak Diketahui'}
+        { 
+            header: 'Tanggal Daftar', 
+            render: (r: any) => <span className="text-gray-500 text-sm">{r.created_at ? new Date(r.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-'}</span> 
+        },
+        { 
+            header: 'L/P', 
+            render: (r: any) => (
+                <Badge variant="outline" size="sm" className={r.jenis_kelamin === 'L' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-pink-50 text-pink-700 border-pink-200'}>
+                    {r.jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan'}
                 </Badge>
             )
         },
-    ], []);
-
-    const appointmentColumns = useMemo(() => [
         {
-            key: 'jam_janji',
-            header: 'Waktu',
-            width: '100px',
-            render: (row: any) => (
-                <div className="font-mono text-sm bg-gray-50 px-2 py-1 rounded text-gray-700 border border-gray-100 text-center">
-                    {row.jam_janji ? row.jam_janji.slice(0, 5) : '-'}
-                </div>
-            )
-        },
-        {
-            key: 'patient',
-            header: 'Pasien',
-            render: (row: any) => <span className="font-medium text-gray-900">{row.patient?.nama_lengkap || 'Pasien Tidak Diketahui'}</span>
-        },
-        {
-            key: 'doctor',
-            header: 'Dokter',
-            render: (row: any) => (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Stethoscope className="w-3.5 h-3.5 text-blue-500" />
-                    {row.doctor?.nama_lengkap || 'Dokter Tidak Ditentukan'}
-                </div>
-            )
-        },
-        {
-            key: 'status',
-            header: 'Status',
-            render: (row: any) => <StatusBadge status={row.status || 'unknown'} showDot />
-        },
-    ], []);
+            header: 'No. HP',
+            render: (r: any) => <span className="text-gray-600 text-sm">{r.no_hp || '-'}</span>
+        }
+    ];
 
-    const quickActions: QuickAction[] = useMemo(() => [
-        { id: '1', label: 'Tambah User', icon: <UserPlus className="w-5 h-5 text-blue-600" />, href: ROUTES.USER_CREATE },
-        { id: '2', label: 'Laporan', icon: <BarChart3 className="w-5 h-5 text-emerald-600" />, href: ROUTES.REPORTS },
-        { id: '3', label: 'Manajemen Akun', icon: <Users className="w-5 h-5 text-violet-600" />, href: ROUTES.USERS },
-        { id: '4', label: 'Pengaturan', icon: <Settings className="w-5 h-5 text-gray-600" />, href: ROUTES.SETTINGS },
-    ], []);
-
-    const isLoading = loadingPatientStats || loadingUserStats || loadingNotifStats || loadingRecentPatients || loadingAppointments || loadingDoctors;
-    const hasError = errorPatientStats || errorUserStats || errorNotifStats || errorRecentPatients || errorAppointments || errorDoctors;
-
-    if (hasError) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
-                <div className="text-center">
-                    <div className="text-6xl mb-4">⚠️</div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">Terjadi Kesalahan</h3>
-                    <p className="text-gray-600 mb-4">Gagal memuat data dashboard</p>
-                    <Button onClick={() => window.location.reload()}>Muat Ulang</Button>
-                </div>
-            </div>
-        );
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col gap-6 w-full pb-24 animate-pulse">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 w-full rounded-2xl bg-gray-100" />)}
-                </div>
-                <Skeleton className="h-24 w-full rounded-xl bg-gray-100" />
-                <Skeleton className="h-96 w-full rounded-2xl bg-gray-100" />
-            </div>
-        );
-    }
+    if (isLoadingStats) return <DashboardSkeleton />;
 
     return (
-        <div className="flex flex-col gap-8 w-full min-h-screen pb-24 animate-in fade-in duration-500 bg-gradient-to-br from-gray-50/50 via-white to-blue-50/20 rounded-3xl p-1">
-            {nStats.pending > 0 && (
-                <AlertBanner
-                    type="info"
-                    title="Pemberitahuan Sistem"
-                    message={`Terdapat ${nStats.pending} notifikasi yang belum dibaca atau memerlukan tindakan Anda.`}
-                    action={
-                        <Button size="xs" variant="ghost" className="text-blue-700 hover:bg-blue-100" onClick={() => router.push('/dashboard/notifications')}>
-                            Lihat Detail <ArrowRight className="w-3 h-3 ml-1" />
-                        </Button>
-                    }
-                    icon={Bell}
-                    className="border-blue-100 bg-blue-50/50 shadow-sm backdrop-blur-sm"
-                />
-            )}
+        <div className="w-full pb-24 animate-in fade-in duration-500">
+            <DashboardHeader 
+                title="Dashboard Kepala Klinik" 
+                subtitle="Ringkasan operasional dan statistik klinik hari ini"
+            />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatsCard title="Total Pasien" value={pStats.total} icon={<Users className="w-5 h-5 text-blue-600" />}
-                    trend={pStats.trend ? { value: pStats.trend, isPositive: pStats.trend > 0 } : undefined}
-                    description="Total pasien terdaftar" className="hover:shadow-md transition-shadow duration-300 border-blue-100/50 bg-white" />
-                <StatsCard title="Pasien Baru (Bulan Ini)" value={pStats.new_this_month} icon={<UserPlus className="w-5 h-5 text-emerald-600" />}
-                    description="Registrasi bulan ini" className="hover:shadow-md transition-shadow duration-300 border-emerald-100/50 bg-white" />
-                <StatsCard title="Jadwal Hari Ini" value={todayAppointments.length} icon={<CalendarIcon className="w-5 h-5 text-violet-600" />}
-                    description={formatSafeDate(new Date().toISOString(), 'dd MMMM yyyy')} className="hover:shadow-md transition-shadow duration-300 border-violet-100/50 bg-white" />
-                <StatsCard title="Total Pengguna" value={uStats.total} icon={<Clock className="w-5 h-5 text-amber-600" />}
-                    description={`${uStats.active} Akun Aktif`} className="hover:shadow-md transition-shadow duration-300 border-amber-100/50 bg-white" />
-            </div>
+            <div className="flex flex-col gap-8">
+                {/* 1. Statistik Utama */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatsCard 
+                        title="Total Pasien" 
+                        value={stats.totalPatients} 
+                        icon={<Users className="w-5 h-5" />} 
+                        // color="blue"
+                        description="Database pasien"
+                    />
+                    <StatsCard 
+                        title="Kunjungan Hari Ini" 
+                        value={stats.todayApts} 
+                        icon={<Activity className="w-5 h-5" />} 
+                        // color="violet"
+                        description="Janji temu aktif"
+                    />
+                    <StatsCard 
+                        title="Pasien Baru (Bulan Ini)" 
+                        value={stats.newPatients} 
+                        icon={<TrendingUp className="w-5 h-5" />} 
+                        // color="emerald"
+                        description="Pertumbuhan"
+                    />
+                    <StatsCard 
+                        title="Dokter Tersedia" 
+                        value={stats.activeDoctors} 
+                        icon={<Stethoscope className="w-5 h-5" />} 
+                        // color="amber"
+                        description="Siap melayani"
+                    />
+                </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-1">
-                <QuickActions actions={quickActions} />
-            </div>
+                {/* 2. Quick Actions */}
+                <div>
+                    <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">Akses Cepat</h3>
+                    <QuickActionGrid actions={quickActions} />
+                </div>
 
-            <Card className="overflow-hidden border-gray-100 shadow-lg shadow-gray-100/50 bg-white">
-                <Tabs variant="line" className="w-full" defaultTab="overview"
-                    tabs={[
-                        { id: 'overview', label: 'Pasien Terbaru', icon: <TrendingUp className="w-4 h-4" />, badge: recentPatients.length > 0 ? recentPatients.length : undefined },
-                        { id: 'appointments', label: 'Jadwal Hari Ini', icon: <Clock className="w-4 h-4" />, badge: todayAppointments.length > 0 ? todayAppointments.length : undefined },
-                        { id: 'staff', label: 'Daftar Dokter', icon: <Stethoscope className="w-4 h-4" />, badge: activeDoctors.length > 0 ? activeDoctors.length : undefined }
-                    ]}
-                    onChange={setActiveTab}>
-                    <TabPanel tabId="overview">
-                        <div className="p-6 flex items-center justify-between border-b border-gray-50 bg-gray-50/30">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Registrasi Terbaru</h3>
-                                <p className="text-sm text-gray-500">
-                                    Daftar pasien yang baru saja didaftarkan ke sistem.
-                                    {recentPatients.length > 0 && ` (${recentPatients.length} pasien)`}
-                                </p>
-                            </div>
-                            <Button variant="outline" size="sm" onClick={() => router.push(ROUTES.PATIENTS)} className="bg-white hover:bg-gray-50">
-                                Lihat Semua Pasien
-                            </Button>
-                        </div>
-
-                        {loadingRecentPatients ? (
-                            <div className="p-12 flex justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                            </div>
-                        ) : recentPatients.length === 0 ? (
-                            <div className="p-12">
-                                <EmptyState icon={<Users className="w-12 h-12 text-gray-300" />} title="Belum Ada Pasien" description="Belum ada data pasien yang terdaftar." variant="minimal" />
-                            </div>
-                        ) : (
-                            <DataTable data={recentPatients} columns={recentPatientColumns} className="border-none" />
-                        )}
-                    </TabPanel>
-
-                    <TabPanel tabId="appointments">
-                        <div className="p-6 flex items-center justify-between border-b border-gray-50 bg-gray-50/30">
-                            <div>
-                                <h3 className="text-lg font-bold text-gray-900">Operasional Hari Ini</h3>
-                                <p className="text-sm text-gray-500">
-                                    Daftar janji temu untuk tanggal {formatSafeDate(new Date().toISOString(), 'dd MMMM yyyy')}.
-                                    {todayAppointments.length > 0 && ` (${todayAppointments.length} janji temu)`}
-                                </p>
-                            </div>
-                            <Button variant="primary" size="sm" onClick={() => router.push(ROUTES.APPOINTMENTS)}>Kelola Jadwal</Button>
-                        </div>
-
-                        {loadingAppointments ? (
-                            <div className="p-12 flex justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600"></div>
-                            </div>
-                        ) : todayAppointments.length === 0 ? (
-                            <div className="p-12">
-                                <EmptyState icon={<Clock className="w-12 h-12 text-gray-300" />} title="Tidak Ada Jadwal" description="Tidak ada janji temu untuk hari ini." variant="minimal" />
-                            </div>
-                        ) : (
-                            <DataTable data={todayAppointments} columns={appointmentColumns} className="border-none" />
-                        )}
-                    </TabPanel>
-
-                    <TabPanel tabId="staff">
-                        <div className="p-6 border-b border-gray-50 bg-gray-50/30">
-                            <div className="flex items-center justify-between">
+                {/* 3. Tabel Utama (FULL WIDTH & FIXED) */}
+                <Card className="border-gray-200 shadow-lg shadow-gray-100/50 overflow-hidden">
+                    <Tabs variant="line" className="w-full" defaultTab="overview"
+                        tabs={[
+                            { id: 'overview', label: 'Data Pasien Terbaru', icon: <UserPlus className="w-4 h-4" /> },
+                            { id: 'staff', label: 'Jadwal Dokter Aktif', icon: <Stethoscope className="w-4 h-4" /> }
+                        ]}
+                        onChange={setActiveTab}
+                    >
+                        <TabPanel tabId="overview">
+                            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between border-b border-gray-50 gap-4 bg-gray-50/30">
                                 <div>
-                                    <h3 className="text-lg font-bold text-gray-900">Tim Dokter</h3>
-                                    <p className="text-sm text-gray-500">
-                                        Daftar dokter aktif yang tersedia di klinik.
-                                        {activeDoctors.length > 0 && ` (${activeDoctors.length} dokter)`}
+                                    <h3 className="text-lg font-bold text-gray-900">Registrasi Terakhir</h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Data real-time dari database pasien klinik.
                                     </p>
                                 </div>
+                                <Button onClick={() => router.push(ROUTES.PATIENTS)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200">
+                                    Lihat Database Lengkap <ArrowRight className="w-4 h-4 ml-2"/>
+                                </Button>
                             </div>
-                        </div>
+                            
+                            <div className="w-full">
+                                {/* [FIX] DataTable Implementation sesuai patokan */}
+                                <DataTable
+                                    data={patientList}
+                                    columns={recentPatientColumns}
+                                    isLoading={loadingRecentPatients}
+                                    emptyMessage="Tidak ada data pasien ditemukan."
+                                    className="border-none w-full"
+                                    pagination={{
+                                        currentPage: queryParams.page,
+                                        totalPages: patientMeta?.lastPage || patientMeta?.pageCount || 1,
+                                        totalItems: patientMeta?.total || 0,
+                                        itemsPerPage: queryParams.limit,
+                                        // onPageChange: (p: number) => setQueryParams(prev => ({ ...prev, page: p }))
+                                    }}
+                                />
+                            </div>
+                        </TabPanel>
 
-                        {loadingDoctors ? (
-                            <div className="p-12 flex justify-center">
-                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
-                            </div>
-                        ) : (
-                            <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {activeDoctors.length > 0 ? activeDoctors.map((doc: any) => (
-                                    <div key={doc.id} className="flex items-center p-4 bg-white rounded-xl border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-300 group">
-                                        <Avatar name={doc.nama_lengkap || 'Unknown'} src={doc.profile_photo} size="lg" className="mr-4 ring-2 ring-gray-50 group-hover:ring-blue-50 transition-all" />
-                                        <div>
-                                            <h4 className="font-semibold text-gray-900 text-sm">{doc.nama_lengkap || 'Nama Tidak Tersedia'}</h4>
-                                            <p className="text-xs text-gray-500 mb-2">@{doc.username || 'unknown'}</p>
-                                            <Badge variant="success" size="xs" className="px-2">Aktif</Badge>
+                        <TabPanel tabId="staff">
+                            <div className="p-6">
+                                <h3 className="text-lg font-bold text-gray-900 mb-4">Tim Dokter yang Bertugas</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {(doctorsData as any)?.data?.map((doc: any) => (
+                                        <div key={doc.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 hover:border-blue-300 hover:shadow-md bg-white transition-all duration-300">
+                                            <Avatar name={doc.nama_lengkap} src={doc.profile_photo} size="lg" className="ring-2 ring-gray-50" />
+                                            <div>
+                                                <p className="font-bold text-gray-900">{doc.nama_lengkap}</p>
+                                                <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide mt-0.5">Dokter Gigi</p>
+                                                <div className="flex items-center gap-1 mt-2">
+                                                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                                                    <span className="text-xs text-gray-500">Online</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                )) : (
-                                    <div className="col-span-full py-12">
-                                        <EmptyState icon={<Stethoscope className="w-12 h-12 text-gray-300" />} title="Tidak Ada Dokter" description="Tidak ada data dokter aktif ditemukan." variant="minimal" />
-                                    </div>
-                                )}
+                                    ))}
+                                    {(doctorsData as any)?.data?.length === 0 && (
+                                        <div className="col-span-full py-12 text-center text-gray-500">
+                                            Tidak ada dokter yang aktif saat ini.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </TabPanel>
-                </Tabs>
-            </Card>
+                        </TabPanel>
+                    </Tabs>
+                </Card>
+            </div>
         </div>
     );
 }

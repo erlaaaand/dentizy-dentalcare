@@ -69,9 +69,9 @@ export class UsersService {
      * Input: username (string)
      * Output: User entity (with password)
      */
-    async findOneByUsername(username: string): Promise<User | null> {
+    async findByUsernameOrEmail(username: string): Promise<User | null> {
         this.logger.debug(`Finding user by username: ${username}`);
-        return this.findUsersService.findByUsernameForAuth(username);
+        return this.findUsersService.findByUsernameOrEmailForAuth(username);
     }
 
     /**

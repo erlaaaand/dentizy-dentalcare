@@ -1,10 +1,14 @@
 import {
     IsArray,
+    IsEmail,
     IsNumber,
     IsOptional,
-    IsString
+    IsString,
+    MinLength
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+// Pastikan path import validator ini sesuai dengan struktur project Anda
+import { IsStrongPassword, PASSWORD_MIN_LENGTH } from '../../../shared/validators/password.validator';
 
 export class UpdateUserDto {
     @ApiProperty({
@@ -24,6 +28,28 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString({ message: 'Username harus berupa teks' })
     username?: string;
+
+    // [FIX] Tambahkan Field Email
+    @ApiProperty({
+        required: false,
+        description: 'Email pengguna',
+        example: 'adi@dentizy.com'
+    })
+    @IsOptional()
+    @IsEmail({}, { message: 'Format email tidak valid' })
+    email?: string;
+
+    // [FIX] Tambahkan Field Password (Opsional untuk reset)
+    @ApiProperty({
+        required: false,
+        description: 'Password baru (kosongkan jika tidak ingin mengubah)',
+        example: 'NewPass123!'
+    })
+    @IsOptional()
+    @IsString()
+    @MinLength(PASSWORD_MIN_LENGTH, { message: `Password minimal ${PASSWORD_MIN_LENGTH} karakter` })
+    @IsStrongPassword()
+    password?: string;
 
     @ApiProperty({
         required: false,

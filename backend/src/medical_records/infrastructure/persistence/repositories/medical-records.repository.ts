@@ -186,4 +186,25 @@ export class MedicalRecordsRepository {
             byDoctor,
         };
     }
+
+    /**
+     * Get doctor performance statistics (Top Doctors by Patient Count)
+     */
+    async getDoctorPerformance(startDate?: Date, endDate?: Date): Promise<any[]> {
+        const query = this.repository
+            .createQueryBuilder('record')
+            .leftJoin('record.doctor', 'doctor')
+            .select([
+                'doctor.nama_lengkap AS doctorName',
+                'COUNT(record.id) AS totalPatients'
+            ])
+            .groupBy('doctor.id')
+            .orderBy('totalPatients', 'DESC');
+
+        if (startDate && endDate) {
+            query.andWhere('record.created_at BETWEEN :startDate AND :endDate', { startDate, endDate });
+        }
+
+        return await query.getRawMany();
+    }
 }

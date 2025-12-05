@@ -40,7 +40,7 @@ export default function CategoryManager() {
     const formModal = useModal();
     const confirmModal = useModal();
 
-    // ✅ FIX: Gunakan ref untuk modal state (TIDAK PERNAH BERUBAH)
+    //  FIX: Gunakan ref untuk modal state (TIDAK PERNAH BERUBAH)
     const modalStateRef = useRef<ModalState>({
         isEdit: false,
         initialData: undefined
@@ -54,13 +54,13 @@ export default function CategoryManager() {
         return data;
     }, [response]);
 
-    // ✅ FIX: Cari item berdasarkan ID
+    //  FIX: Cari item berdasarkan ID
     const selectedItem = useMemo(() => {
         if (!selectedItemId || !categoryList.length) return null;
         return categoryList.find((cat: any) => cat.id == selectedItemId) || null;
     }, [selectedItemId, categoryList]);
 
-    // ✅ FIX: Update modal state ref (TANPA RE-RENDER)
+    //  FIX: Update modal state ref (TANPA RE-RENDER)
     const updateModalState = useCallback((item: any | null) => {
         if (item) {
             modalStateRef.current = {
@@ -79,12 +79,12 @@ export default function CategoryManager() {
         }
     }, []);
 
-    // ✅ FIX: Stable action handlers dengan ref
+    //  FIX: Stable action handlers dengan ref
     const actionHandlersRef = useRef({
         onEdit: (item: any) => {
             console.log('Editing item ID:', item?.id);
             setSelectedItemId(item?.id || null);
-            updateModalState(item); // ✅ Update ref, TIDAK setState
+            updateModalState(item); //  Update ref, TIDAK setState
             formModal.open();
         },
         onDelete: (item: any) => {
@@ -110,15 +110,15 @@ export default function CategoryManager() {
         );
     }, [categoryList, searchQuery]);
 
-    // ✅ FIX: Handler create - update ref saja
+    //  FIX: Handler create - update ref saja
     const handleCreate = useCallback(() => {
         console.log('Creating new category');
         setSelectedItemId(null);
-        updateModalState(null); // ✅ Update ref, TIDAK setState
+        updateModalState(null); //  Update ref, TIDAK setState
         formModal.open();
     }, [formModal, updateModalState]);
 
-    // ✅ FIX: Type-safe confirm action
+    //  FIX: Type-safe confirm action
     const handleConfirmAction = useCallback(async () => {
         if (!selectedItemId) return;
 
@@ -127,7 +127,7 @@ export default function CategoryManager() {
 
             if (actionType === 'delete') {
                 await deleteCategory.mutateAsync({ id });
-                toast.showSuccess('Kategori berhasil dihapus');
+                toast.showError('Kategori berhasil dihapus');
             } else {
                 await restoreCategory.mutateAsync({ id });
                 toast.showSuccess('Kategori berhasil dipulihkan');
@@ -142,7 +142,7 @@ export default function CategoryManager() {
         }
     }, [selectedItemId, actionType, deleteCategory, restoreCategory, toast, confirmModal, queryClient]);
 
-    // ✅ FIX: Handler success
+    //  FIX: Handler success
     const handleFormSuccess = useCallback(() => {
         console.log('Form success, closing modal');
         formModal.close();
@@ -154,14 +154,14 @@ export default function CategoryManager() {
         setSearchQuery(value);
     }, []);
 
-    // ✅ STABLE: Columns dengan ref
+    //  STABLE: Columns dengan ref
     const columns = useMemo(() =>
         getCategoryColumns(actionHandlersRef.current),
         []);
 
     const isActionLoading = deleteCategory.isPending || restoreCategory.isPending;
 
-    // ✅ FIX: Modal initial data - GUNAKAN REF (TIDAK PERNAH BERUBAH)
+    //  FIX: Modal initial data - GUNAKAN REF (TIDAK PERNAH BERUBAH)
     const getModalInitialData = useCallback(() => {
         return modalStateRef.current.initialData;
     }, []);
@@ -230,11 +230,11 @@ export default function CategoryManager() {
                 </CardBody>
             </Card>
 
-            {/* ✅ MODAL dengan PROP YANG STABIL - TIDAK PERNAH BERUBAH */}
+            {/*  MODAL dengan PROP YANG STABIL - TIDAK PERNAH BERUBAH */}
             <CategoryModal
                 isOpen={formModal.isOpen}
                 onClose={formModal.close}
-                initialData={getModalInitialData()} // ✅ Function yang selalu return sama
+                initialData={getModalInitialData()} //  Function yang selalu return sama
                 onSuccess={handleFormSuccess}
             />
 

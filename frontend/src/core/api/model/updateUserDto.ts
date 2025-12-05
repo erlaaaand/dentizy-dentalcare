@@ -11,6 +11,10 @@ export interface UpdateUserDto {
   nama_lengkap?: string;
   /** Username baru untuk login */
   username?: string;
+  /** Email pengguna */
+  email?: string;
+  /** Password baru (kosongkan jika tidak ingin mengubah) */
+  password?: string;
   /** Daftar ID role pengguna */
   roles?: number[];
 }

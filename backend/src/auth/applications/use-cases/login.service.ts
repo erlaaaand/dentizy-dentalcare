@@ -40,7 +40,7 @@ export class LoginService {
             }
 
             // 2. Find user
-            const user = await this.usersService.findOneByUsername(username);
+            const user = await this.usersService.findByUsernameOrEmail(loginDto.username);
 
             // 3. Verify password (always compare even if user not found)
             const passwordToCheck = user?.password || null;

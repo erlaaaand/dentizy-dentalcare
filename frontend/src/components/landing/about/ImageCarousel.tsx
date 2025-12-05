@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 
-function LazyImage({ src, alt, isActive }) {
+interface LazyImageProps {
+  src: string;
+  alt: string;
+  isActive: boolean;
+}
+
+function LazyImage({ src, alt, isActive }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
 
   return (
@@ -21,13 +27,24 @@ function LazyImage({ src, alt, isActive }) {
   );
 }
 
-export default function ImageCarousel({
+interface ImageCarouselProps {
+  images: Array<{
+    src: string;
+    desc: string;
+  }>;
+  currentIndex: number;
+  onNext: () => void;
+  onPrev: () => void;
+  onSelectImage: (index: number) => void;
+}
+
+export function ImageCarousel({
   images,
   currentIndex,
   onNext,
   onPrev,
   onSelectImage,
-}) {
+}: ImageCarouselProps) {
   return (
     <div className="relative group">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl">

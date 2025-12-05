@@ -21,7 +21,7 @@ export default function ClinicSettingsPage() {
         userRoles.includes('kepala_klinik') ||
         userRoles.includes('head_clinic');
 
-    // ✅ FIX: Show loading while checking authentication
+    //  FIX: Show loading while checking authentication
     if (authLoading) {
         return (
             <PageContainer title="Pengaturan">

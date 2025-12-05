@@ -119,4 +119,27 @@ export class MedicalRecordTreatmentRepository {
         const count = await this.repository.count({ where: { id } });
         return count > 0;
     }
+
+    /**
+     * Get top treatments statistics
+     */
+    async getTopTreatments(limit: number = 10, startDate?: Date, endDate?: Date): Promise<any[]> {
+        const query = this.repository
+            .createQueryBuilder('mrt')
+            .leftJoin('mrt.treatment', 'treatment')
+            .select([
+                'treatment.namaPerawatan AS treatmentName',
+                'COUNT(mrt.id) AS usageCount',
+                'SUM(mrt.subtotal) AS totalRevenue'
+            ])
+            .groupBy('treatment.id')
+            .orderBy('usageCount', 'DESC')
+            .limit(limit);
+
+        if (startDate && endDate) {
+            query.andWhere('mrt.created_at BETWEEN :startDate AND :endDate', { startDate, endDate });
+        }
+
+        return await query.getRawMany();
+    }
 }

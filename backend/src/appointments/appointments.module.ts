@@ -44,6 +44,7 @@ import { MedicalRecordsModule } from '../medical_records/medical_records.module'
 import { TreatmentsModule } from '../treatments/treatments.module';
 import { MedicalRecordTreatmentsModule } from '../medical-record-treatments/medical-record-treatments.module';
 import { PaymentsModule } from '../payments/payments.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
     imports: [
@@ -55,6 +56,7 @@ import { PaymentsModule } from '../payments/payments.module';
         TreatmentsModule,
         MedicalRecordTreatmentsModule,
         PaymentsModule,
+        UsersModule
     ],
     controllers: [
         AppointmentsController,

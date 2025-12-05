@@ -121,10 +121,10 @@ export default function TreatmentModal({ isOpen, onClose, initialData, onSuccess
                         id: Number(initialData.id),
                         data: payload
                     });
-                    toast.showSuccess('✅ Layanan diperbarui');
+                    toast.showInfo('Layanan diperbarui');
                 } else {
                     await createMutation.mutateAsync({ data: payload });
-                    toast.showSuccess('✅ Layanan ditambahkan');
+                    toast.showSuccess('Layanan ditambahkan');
                 }
                 onSuccess();
                 onClose();

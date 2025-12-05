@@ -3,18 +3,20 @@
 import React, { useEffect } from 'react';
 import { cn } from '@/core';
 import type { ToastProps } from './toast.types';
-import { sizeClasses, toastTypes, animationClasses } from './toast.styles';
+import { sizeClasses, toastTypes } from './toast.styles'; // Hapus animationClasses
 import { ToastIcons } from './toast.icon';
 
 export function Toast({
     id, message, type = 'info', variant = 'default', size = 'md',
-    position = 'top-right', duration = 5000, showIcon = true,
-    showClose = true, action, onClose, className,
+    duration = 5000, showIcon = true, showClose = true, 
+    action, onClose, className,
+    // Hapus prop 'position' dari sini karena tidak dipakai untuk styling card
 }: ToastProps) {
+    
     const sizeClass = sizeClasses[size];
     const toastType = toastTypes[type];
-    const animationClass = animationClasses[position];
 
+    // Auto-close logic
     useEffect(() => {
         if (duration > 0) {
             const timer = setTimeout(() => onClose(id), duration);
@@ -33,11 +35,12 @@ export function Toast({
     return (
         <div
             className={cn(
-                'flex items-start gap-3 rounded-lg border shadow-lg transition-all duration-300',
-                getVariantClasses(), sizeClass.container, animationClass, className
+                'flex items-start gap-3 rounded-lg border shadow-lg pointer-events-auto', // pointer-events-auto penting
+                getVariantClasses(), 
+                sizeClass.container, 
+                className
             )}
             role="alert"
-            aria-live="polite"
         >
             {showIcon && (
                 <div className={cn(
@@ -76,10 +79,9 @@ export function Toast({
                             ? 'text-white/70 hover:text-white'
                             : 'text-gray-400 hover:text-gray-600'
                     )}
-                    aria-label="Close notification"
                 >
                     <svg className={sizeClass.close} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414-1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
                 </button>
             )}

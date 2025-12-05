@@ -1,10 +1,16 @@
 // domains/services/user-validation.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { UserRepository } from '../../infrastructures/repositories/user.repository';
 
 @Injectable()
 export class UserValidationService {
     private readonly logger = new Logger(UserValidationService.name);
+
+    // [FIX 1] Tambahkan Constructor untuk inject repository
+    constructor(
+        private readonly userRepository: UserRepository
+    ) {}
 
     /**
      * Validate username uniqueness
@@ -54,16 +60,12 @@ export class UserValidationService {
      * Validate user can be deleted
      */
     validateCanDelete(user: any): { canDelete: boolean; reason?: string } {
-        // Business rule: Check if user has related records
-        // This is a placeholder - implement based on your business logic
-
         if (user.medical_records && user.medical_records.length > 0) {
             return {
                 canDelete: false,
                 reason: 'User memiliki medical records dan tidak dapat dihapus'
             };
         }
-
         return { canDelete: true };
     }
 
@@ -92,5 +94,15 @@ export class UserValidationService {
         }
 
         return { valid: true };
+    }
+
+    // [FIX 2] Validasi Email Unik (Pastikan method findByEmail ada di Repository!)
+    async validateUniqueEmail(email: string, currentUserId?: number): Promise<void> {
+        const existingUser = await this.userRepository.findByEmail(email);
+        
+        // Jika user ditemukan dan ID-nya BUKAN user yang sedang diedit -> Error
+        if (existingUser && existingUser.id !== currentUserId) {
+            throw new ConflictException(`Email "${email}" sudah digunakan oleh pengguna lain`);
+        }
     }
 }
