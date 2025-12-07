@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Edit, Trash2, Shield, UserCog } from "lucide-react";
+import { Edit, Trash2, UserCog } from "lucide-react";
 
 import {
   Card,
@@ -18,14 +18,82 @@ import SearchInput from "@/components/ui/forms/search-input";
 import { ConfirmDialog } from "@/components/ui/feedback/confirm-dialog";
 import Avatar from "@/components/ui/data-display/avatar/Avatar";
 
-// Modals
 import UserFormModal from "../components/UserFormModal";
 
 import { useModal, useToast, useAuth, ROLES } from "@/core";
 import { useGetUsers, useDeleteUser } from "@/core/services/api/user.api";
 
 interface UserListProps {
-  roleFilter?: string; // 'all', 'dokter', 'staf'
+  roleFilter?: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+}
+
+interface UserData {
+  id: number;
+  nama_lengkap: string;
+  username: string;
+  roles?: Role[];
+}
+
+function isRoleArray(data: unknown): data is Role[] {
+  return Array.isArray(data) && data.every(item => 
+    typeof item === 'object' &&
+    item !== null &&
+    'id' in item &&
+    typeof (item as Record<string, unknown>).id === 'number' &&
+    'name' in item &&
+    typeof (item as Record<string, unknown>).name === 'string'
+  );
+}
+
+function convertToUserData(user: Record<string, unknown>): UserData | undefined {
+  const id = user.id;
+  const namaLengkap = user.nama_lengkap;
+  const username = user.username;
+  
+  if (
+    typeof id === 'number' &&
+    typeof namaLengkap === 'string' &&
+    typeof username === 'string'
+  ) {
+    const roles = isRoleArray(user.roles) ? user.roles : undefined;
+    return {
+      id,
+      nama_lengkap: namaLengkap,
+      username,
+      roles
+    };
+  }
+  
+  return undefined;
+}
+
+function extractUsersFromResponse(response: unknown): Record<string, unknown>[] {
+  if (!response) return [];
+
+  if (Array.isArray(response)) {
+    return response as Record<string, unknown>[];
+  }
+
+  const responseObj = response as Record<string, unknown>;
+  
+  if (Array.isArray(responseObj.data)) {
+    return responseObj.data as Record<string, unknown>[];
+  }
+  
+  if (Array.isArray(responseObj.users)) {
+    return responseObj.users as Record<string, unknown>[];
+  }
+  
+  if (Array.isArray(responseObj.items)) {
+    return responseObj.items as Record<string, unknown>[];
+  }
+
+  return [];
 }
 
 export default function UserList({ roleFilter }: UserListProps) {
@@ -33,122 +101,129 @@ export default function UserList({ roleFilter }: UserListProps) {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  // Modals
   const formModal = useModal();
   const confirmModal = useModal();
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<Record<string, unknown> | undefined>(undefined);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
 
-  // Fetch API
   const { data: response, isLoading } = useGetUsers({
     page,
     limit,
-    // search: searchQuery,
   });
 
   const deleteMutation = useDeleteUser();
 
-  // Filtering Logic Client Side (Sementara)
   const filteredUsers = useMemo(() => {
-    const list = Array.isArray(response)
-      ? response
-      : (response as any)?.data || [];
-
-    return list.filter((u: any) => {
+    const users = extractUsersFromResponse(response);
+    
+    return users.filter((user) => {
+      const namaLengkap = typeof user.nama_lengkap === 'string' ? user.nama_lengkap : "";
+      const username = typeof user.username === 'string' ? user.username : "";
+      
       const matchSearch =
-        u.nama_lengkap.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.username.toLowerCase().includes(searchQuery.toLowerCase());
+        namaLengkap.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        username.toLowerCase().includes(searchQuery.toLowerCase());
 
       let matchRole = true;
       if (roleFilter && roleFilter !== "all") {
-        const targetRole =
-          roleFilter === "dokter"
-            ? ROLES.DOKTER
-            : roleFilter === "staf"
-            ? ROLES.STAF
-            : roleFilter;
+        const targetRole = roleFilter === "dokter" ? ROLES.DOKTER :
+                          roleFilter === "staf" ? ROLES.STAF : roleFilter;
 
-        matchRole = u.roles?.some((r: any) => r.name === targetRole);
+        const roles = user.roles;
+        if (isRoleArray(roles)) {
+          matchRole = roles.some((r: Role) => r.name === targetRole);
+        } else {
+          matchRole = false;
+        }
       }
 
       return matchSearch && matchRole;
     });
   }, [response, searchQuery, roleFilter]);
 
-  // Handlers
   const handleCreate = () => {
-    setSelectedUser(null);
+    setSelectedUser(undefined);
     formModal.open();
   };
 
-  const handleEdit = (user: any) => {
+  const handleEdit = (user: Record<string, unknown>) => {
     setSelectedUser(user);
     formModal.open();
   };
 
-  const handleDelete = (user: any) => {
+  const handleDelete = (user: Record<string, unknown>) => {
     setSelectedUser(user);
     confirmModal.open();
   };
 
   const confirmDelete = async () => {
-    if (!selectedUser) return;
+    if (!selectedUser || typeof selectedUser.id !== 'number') return;
     try {
-      await deleteMutation.mutateAsync(selectedUser.id);
+      await deleteMutation.mutateAsync({ id: selectedUser.id });
       toast.showSuccess("Pengguna berhasil dihapus");
       confirmModal.close();
-
-      // [FIX 1] Gunakan '/users' agar sesuai dengan key di hook useGetUsers
       queryClient.invalidateQueries({ queryKey: ["/users"] });
-    } catch (error: any) {
+    } catch (error) {
+      console.error(error);
       toast.showError("Gagal menghapus pengguna");
     }
   };
 
-  // Columns
   const columns = useMemo(
     () => [
       {
         header: "Pengguna",
         accessorKey: "nama_lengkap",
-        cell: (info: any) => (
-          <div className="flex items-center gap-3">
-            <Avatar name={info.getValue()} size="sm" />
-            <div className="flex flex-col">
-              <span className="font-medium text-gray-900">
-                {info.getValue()}
-              </span>
-              <span className="text-xs text-gray-500">
-                @{info.row.original.username}
-              </span>
+        cell: (info: { getValue: () => unknown; row: { original: Record<string, unknown> } }) => {
+          const value = info.getValue();
+          const original = info.row.original;
+          const namaLengkap = typeof value === 'string' ? value : "";
+          const username = typeof original.username === 'string' ? original.username : "";
+          
+          return (
+            <div className="flex items-center gap-3">
+              <Avatar name={namaLengkap} size="sm" />
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-900">
+                  {namaLengkap}
+                </span>
+                <span className="text-xs text-gray-500">
+                  @{username}
+                </span>
+              </div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
         header: "Role",
         accessorKey: "roles",
-        cell: (info: any) => {
-          const roles = info.getValue() || [];
-          return (
-            <div className="flex flex-wrap gap-1">
-              {roles.map((r: any) => {
-                let color = "default";
-                if (r.name === ROLES.KEPALA_KLINIK) color = "primary";
-                if (r.name === ROLES.DOKTER) color = "success";
-                if (r.name === ROLES.STAF) color = "warning";
+        cell: (info: { getValue: () => unknown; row: { original: Record<string, unknown> } }) => {
+          const roles = info.getValue();
+          
+          if (isRoleArray(roles)) {
+            return (
+              <div className="flex flex-wrap gap-1">
+                {roles.map((r) => {
+                  let color = "default";
+                  if (r.name === ROLES.KEPALA_KLINIK) color = "primary";
+                  if (r.name === ROLES.DOKTER) color = "success";
+                  if (r.name === ROLES.STAF) color = "warning";
 
-                return (
-                  <Badge key={r.id} variant={color as any} size="sm">
-                    {r.name.replace(/_/g, " ").toUpperCase()}
-                  </Badge>
-                );
-              })}
-            </div>
-          );
+                  return (
+                    <Badge key={r.id} variant={color as "default" | "primary" | "success" | "warning"} size="sm">
+                      {r.name.replace(/_/g, " ").toUpperCase()}
+                    </Badge>
+                  );
+                })}
+              </div>
+            );
+          }
+          
+          return null;
         },
       },
       {
@@ -163,9 +238,12 @@ export default function UserList({ roleFilter }: UserListProps) {
       {
         header: "Aksi",
         id: "actions",
-        cell: (info: any) => {
+        cell: (info: { getValue: () => unknown; row: { original: Record<string, unknown> } }) => {
           const rowUser = info.row.original;
-          const isSelf = rowUser.id === currentUser?.id;
+          const rowUserId = typeof rowUser.id === 'number' ? rowUser.id : undefined;
+          const currentUserRecord = currentUser as Record<string, unknown>;
+          const currentUserId = typeof currentUserRecord?.id === 'number' ? currentUserRecord.id : undefined;
+          const isSelf = rowUserId !== undefined && currentUserId !== undefined && rowUserId === currentUserId;
 
           return (
             <div className="flex gap-1 justify-end">
@@ -202,6 +280,17 @@ export default function UserList({ roleFilter }: UserListProps) {
     if (roleFilter === "dokter") return "Data Dokter";
     if (roleFilter === "staf") return "Data Staf";
     return "Semua Pengguna";
+  };
+
+  const getSelectedUserName = (): string => {
+    if (!selectedUser) return "";
+    const namaLengkap = selectedUser.nama_lengkap;
+    return typeof namaLengkap === 'string' ? namaLengkap : "";
+  };
+
+  const getUserDataForModal = (): UserData | undefined => {
+    if (!selectedUser) return undefined;
+    return convertToUserData(selectedUser);
   };
 
   return (
@@ -251,9 +340,8 @@ export default function UserList({ roleFilter }: UserListProps) {
       <UserFormModal
         isOpen={formModal.isOpen}
         onClose={formModal.close}
-        initialData={selectedUser}
+        initialData={getUserDataForModal()}
         onSuccess={() => {
-          // [FIX 2] Gunakan '/users' di sini juga agar refresh otomatis jalan
           queryClient.invalidateQueries({ queryKey: ["/users"] });
         }}
       />
@@ -263,7 +351,7 @@ export default function UserList({ roleFilter }: UserListProps) {
         onClose={confirmModal.close}
         onConfirm={confirmDelete}
         title="Hapus Pengguna?"
-        message={`Anda akan menghapus akun "${selectedUser?.nama_lengkap}". Pengguna ini tidak akan bisa login lagi.`}
+        message={`Anda akan menghapus akun "${getSelectedUserName()}". Pengguna ini tidak akan bisa login lagi.`}
         variant="danger"
         isLoading={deleteMutation.isPending}
       />

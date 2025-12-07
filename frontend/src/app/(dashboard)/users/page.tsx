@@ -22,7 +22,11 @@ export default function UserManagementPage() {
     }
 
     // RBAC: Hanya Kepala Klinik
-    const userRoles = user?.roles?.map((r: any) => r.name) || [];
+    const userRoles =
+        user?.roles
+            ?.map((r) => (r as { name?: string }).name)
+            .filter((name): name is string => Boolean(name)) || [];
+
     const isHeadClinic = userRoles.includes(ROLES.KEPALA_KLINIK);
 
     if (!isHeadClinic) {
@@ -35,7 +39,7 @@ export default function UserManagementPage() {
                         <p className="text-gray-500 mt-2 max-w-md">
                             Halaman manajemen pengguna hanya dapat diakses oleh Kepala Klinik.
                         </p>
-                        <button 
+                        <button
                             onClick={() => router.push('/dashboard')}
                             className="mt-6 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
                         >
@@ -55,12 +59,12 @@ export default function UserManagementPage() {
     ];
 
     return (
-        <PageContainer 
-            title="Manajemen Pengguna" 
+        <PageContainer
+            title="Manajemen Pengguna"
             subtitle="Kelola akun, hak akses, dan data dokter serta staf klinik."
         >
             <Tabs tabs={tabs} defaultTab="all" variant="pills">
-                
+
                 <TabPanel tabId="all">
                     <UserList roleFilter="all" />
                 </TabPanel>
