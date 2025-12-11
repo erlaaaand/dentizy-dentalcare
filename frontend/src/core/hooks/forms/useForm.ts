@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from 'react';
 import { ZodError, ZodIssue } from 'zod';
 import { FormState, FormConfig } from '@/core/types/forms';
 
-export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
+export function useForm<T extends Record<string, unknown>>(config: FormConfig<T>) {
   const [values, setValues] = useState<T>(config.initialValues);
   const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({});
@@ -35,7 +35,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
   );
 
   const validateField = useCallback(
-    (name: keyof T, value: any): string | undefined => {
+    (name: keyof T, value: unknown): string | undefined => {
       const fieldErrors = validate({ ...values, [name]: value });
       return fieldErrors[name];
     },
@@ -43,7 +43,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
   );
 
   const setFieldValue = useCallback(
-    (name: keyof T, value: any) => {
+    (name: keyof T, value: unknown) => {
       setValues(prev => ({ ...prev, [name]: value }));
 
       if (config.validateOnChange) {
@@ -67,7 +67,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
   );
 
   const handleChange = useCallback(
-    (name: keyof T) => (value: any) => {
+    (name: keyof T) => (value: unknown) => {
       setFieldValue(name, value);
     },
     [setFieldValue]

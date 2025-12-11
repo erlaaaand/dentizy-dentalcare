@@ -1,27 +1,31 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+    createContext,
+    useContext,
+    useState,
+    useEffect,
+    useCallback
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { AxiosError } from 'axios';
 
-// SERVICES & CONFIG
+// SERVICES
 import { storageService } from '@/core/services/cache/storage.service';
 import { ROUTES } from '@/core/constants/routes.constants';
 import { useToast } from '@/core';
 
-// API HOOKS (GENERATED)
+// API HOOKS
 import {
     useAuthControllerLogin,
     useAuthControllerLogout,
     useAuthControllerGetProfile,
 } from '@/core/api/generated/auth/auth';
 
-// TYPES
 import type { LoginDto } from '@/core/api/model';
 import type { AuthUser } from '@/core/types/auth-user.types';
 
-// INTERFACE CONTEXT
 interface AuthContextType {
     user: AuthUser | null;
     isAuthenticated: boolean;
@@ -33,7 +37,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// COOKIE HELPER
 const setAuthCookie = (token: string, expiresInSeconds = 86400) => {
     try {
         const secure = window.location.protocol === 'https:' ? '; Secure' : '';
@@ -52,17 +55,15 @@ const clearAuthCookie = () => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUserState] = useState<AuthUser | null>(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
     const [hasToken, setHasToken] = useState(false);
-
-    // Loading state gabungan (initial check + profile fetch)
+    const [isInitialized, setIsInitialized] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const router = useRouter();
     const { showSuccess, showError } = useToast();
     const queryClient = useQueryClient();
 
-    // API Mutations & Queries
+    // API hooks
     const loginMutation = useAuthControllerLogin();
     const logoutMutation = useAuthControllerLogout();
 
@@ -80,50 +81,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
     });
 
-    // 1. INITIALIZATION FROM STORAGE
     useEffect(() => {
         const token = storageService.getAccessToken();
         const storedUser = storageService.getUser();
 
         if (token) {
             setHasToken(true);
+
             if (storedUser) {
-                // Casting aman
-                const u = storedUser as unknown as AuthUser;
-                setUserState(u);
+                setUserState(storedUser as AuthUser);
                 setIsAuthenticated(true);
             }
         }
+
         setIsInitialized(true);
     }, []);
 
-    // 2. SYNC PROFILE DATA
     useEffect(() => {
         if (!isInitialized) return;
 
-        // Jika tidak ada token, stop loading
         if (!hasToken) {
             setLoading(false);
             return;
         }
 
-        // Jika sedang fetch profile, set loading
         if (isLoadingProfile) {
             setLoading(true);
             return;
         }
 
-        // Handle Error Profile (misal Token Expired)
+        function isAxiosError(error: unknown): error is AxiosError {
+            return typeof error === "object" && error !== null && "isAxiosError" in error;
+        }
+
         if (isProfileError) {
-            const axiosErr = profileError as unknown as AxiosError;
-            if (axiosErr?.response?.status === 401) {
-                handleLogoutCleanup(); // Force logout jika 401
+            if (isAxiosError(profileError)) {
+                if (profileError.response?.status === 401) {
+                    handleLogoutCleanup();
+                }
             }
+
             setLoading(false);
             return;
         }
 
-        // Jika sukses fetch profile
         if (profileData) {
             const u = profileData as AuthUser;
             setUserState(u);
@@ -132,9 +133,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         setLoading(false);
-    }, [isInitialized, hasToken, isLoadingProfile, isProfileError, profileError, profileData]);
+    }, [
+        isInitialized,
+        hasToken,
+        isLoadingProfile,
+        isProfileError,
+        profileError,
+        profileData
+    ]);
 
-    // CLEANUP HELPER
     const handleLogoutCleanup = useCallback(() => {
         setHasToken(false);
         setUserState(null);
@@ -144,55 +151,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         queryClient.clear();
     }, [queryClient]);
 
-    // LOGIN ACTION
     const login = async (credentials: LoginDto) => {
         try {
             const response = await loginMutation.mutateAsync({ data: credentials });
 
-            // Sesuaikan dengan respon API Anda
-            const data = response as any; // Temporary cast jika tipe generated tidak pas
-            const accessToken = data.access_token || data.accessToken;
-            const refreshToken = data.refresh_token || data.refreshToken;
-            const userData = data.user;
+            if (!response || typeof response !== "object") {
+                throw new Error("Invalid server response");
+            }
 
-            if (accessToken) {
-                storageService.setAccessToken(accessToken);
-                setAuthCookie(accessToken);
+            const {
+                access_token,
+                accessToken,
+                refresh_token,
+                refreshToken,
+                user
+            } = response as {
+                access_token?: string;
+                accessToken?: string;
+                refresh_token?: string;
+                refreshToken?: string;
+                user?: AuthUser;
+            };
+
+            const accessTokenValue = access_token || accessToken;
+            const refreshTokenValue = refresh_token || refreshToken;
+
+            if (accessTokenValue) {
+                storageService.setAccessToken(accessTokenValue);
+                setAuthCookie(accessTokenValue);
                 setHasToken(true);
             }
 
-            if (refreshToken) {
-                storageService.setRefreshToken(refreshToken);
+            if (refreshTokenValue) {
+                storageService.setRefreshToken(refreshTokenValue);
             }
 
-            if (userData) {
-                const u = userData as AuthUser;
-                storageService.setUser(u);
-                setUserState(u);
+            if (user) {
+                storageService.setUser(user);
+                setUserState(user);
                 setIsAuthenticated(true);
             }
 
-            showSuccess('Login berhasil!');
+            showSuccess("Login berhasil!");
             router.replace(ROUTES.DASHBOARD);
+
         } catch (error) {
-            console.error('Login error:', error);
-            showError('Email atau password salah.');
-            throw error;
+            console.error("Login error:", error);
+            showError("Email atau password salah.");
         }
     };
 
-    // LOGOUT ACTION
+
+    // =============================
+    // LOGOUT FUNCTION
+    // =============================
     const logout = async () => {
         handleLogoutCleanup();
+
         try {
             await logoutMutation.mutateAsync();
         } catch (e) {
-            console.warn('Logout API failed (ignoring):', e);
+            console.warn("Logout API failed, ignoring:", e);
         }
+
         router.replace(ROUTES.LOGIN);
     };
 
-    // MANUAL SET USER (untuk update profile tanpa refetch)
+
+    // =============================
+    // SET USER MANUAL UPDATE
+    // =============================
     const setUser = (u: AuthUser | null) => {
         setUserState(u);
         if (u) storageService.setUser(u);
@@ -200,24 +228,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{
-            user,
-            isAuthenticated,
-            loading,
-            login,
-            logout,
-            setUser
-        }}>
+        <AuthContext.Provider
+            value={{
+                user,
+                isAuthenticated,
+                loading,
+                login,
+                logout,
+                setUser,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );
 }
 
-// HOOK UTAMA
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (context === undefined) {
-        throw new Error('useAuth must be used within an AuthProvider');
+    if (!context) {
+        throw new Error("useAuth must be used within an AuthProvider");
     }
     return context;
 }

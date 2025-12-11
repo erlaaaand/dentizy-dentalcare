@@ -8,27 +8,75 @@ import {
   ClockIcon,
   MessageIcon,
 } from "../shared/Icons";
-import { useBookPublicAppointment } from "@/core/services/api";
+
 import {
   PublicBookingDto,
   PublicBookingDtoJenisKelamin,
 } from "@/core/api/model";
 import { useToast } from "@/core";
-// Import hook yang baru digenerate (pastikan path ini benar sesuai struktur project Anda)
+
+// Hooks
+import { useBookPublicAppointment } from "@/core/services/api";
 import { usePublicAppointmentsControllerGetDoctors } from "@/core/api/generated/public-appointments/public-appointments";
+import { AxiosError } from "axios";
+
+// ----------------------
+// Type definitions
+// ----------------------
+
+interface DoctorItem {
+  id: number | string;
+  nama_lengkap?: string;
+  username?: string;
+}
+
+interface InfoItemProps {
+  icon: React.ReactNode;
+  title: string;
+  content: string;
+  gradientFrom: string;
+  gradientTo: string;
+}
+
+interface FormSectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+interface SelectOption {
+  value: string | number;
+  label: string;
+}
+
+interface FormSelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  options: SelectOption[];
+}
+
+interface FormInputProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+interface FormTextareaProps
+  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+}
+
+// ----------------------
+// MAIN COMPONENT
+// ----------------------
 
 export function ContactSection() {
-  // 1. Panggil API Public (Backend sudah menggabungkan Dokter + Ka. Klinik)
   const { data: doctorsData, isLoading: isLoadingDoctors } =
     usePublicAppointmentsControllerGetDoctors();
 
   const { mutate: bookAppointment, isPending } = useBookPublicAppointment();
   const { showSuccess, showError } = useToast();
 
-  // 2. Memoize data dokter agar tidak re-render berlebih
-  const AVAILABLE_DOCTORS = useMemo(() => {
+  const AVAILABLE_DOCTORS = useMemo<DoctorItem[]>(() => {
     if (!doctorsData) return [];
-    // Data dari backend sudah array bersih, langsung return
     return doctorsData;
   }, [doctorsData]);
 
@@ -38,7 +86,7 @@ export function ContactSection() {
     email: "",
     no_hp: "",
     alamat: "",
-    jenis_kelamin: undefined, // undefined agar select mereset ke default
+    jenis_kelamin: undefined,
     tanggal_lahir: "",
     doctor_id: undefined,
     tanggal_janji: "",
@@ -58,30 +106,21 @@ export function ContactSection() {
     }));
   };
 
-  // Validasi input angka untuk NIK
   const handleNikChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/\D/g, "");
     if (val.length <= 16) {
-      setFormData((prev) => ({
-        ...prev,
-        nik: val,
-      }));
+      setFormData((prev) => ({ ...prev, nik: val }));
     }
   };
 
-  // Validasi input angka/+ untuk No HP
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value.replace(/[^0-9+]/g, "");
-    setFormData((prev) => ({
-      ...prev,
-      no_hp: val,
-    }));
+    setFormData((prev) => ({ ...prev, no_hp: val }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Validasi field krusial sebelum kirim
     if (!formData.doctor_id || !formData.tanggal_janji || !formData.jam_janji) {
       showError("Mohon lengkapi jadwal dan dokter yang diinginkan.");
       return;
@@ -93,20 +132,19 @@ export function ContactSection() {
     }
 
     const payload: PublicBookingDto = {
-      nama_lengkap: formData.nama_lengkap,
-      nik: formData.nik,
-      email: formData.email,
-      no_hp: formData.no_hp,
+      nama_lengkap: formData.nama_lengkap!,
+      nik: formData.nik!,
+      email: formData.email || "",
+      no_hp: formData.no_hp!,
       alamat: formData.alamat || "-",
-      jenis_kelamin: formData.jenis_kelamin as PublicBookingDtoJenisKelamin,
+      jenis_kelamin: formData.jenis_kelamin!,
       tanggal_lahir: formData.tanggal_lahir!,
-      doctor_id: Number(formData.doctor_id), // Konversi string ke number
-      tanggal_janji: formData.tanggal_janji,
-      // Format jam agar sesuai DTO (HH:mm:ss)
+      doctor_id: Number(formData.doctor_id),
+      tanggal_janji: formData.tanggal_janji!,
       jam_janji:
-        formData.jam_janji.length === 5
+        formData.jam_janji!.length === 5
           ? `${formData.jam_janji}:00`
-          : formData.jam_janji,
+          : formData.jam_janji!,
       keluhan: formData.keluhan || "-",
     };
 
@@ -117,7 +155,7 @@ export function ContactSection() {
           showSuccess(
             "Permintaan jadwal berhasil dikirim! Silakan datang ke klinik untuk verifikasi."
           );
-          // Reset form
+
           setFormData({
             nama_lengkap: "",
             nik: "",
@@ -132,11 +170,16 @@ export function ContactSection() {
             keluhan: "",
           });
         },
-        onError: (error: any) => {
-          const msg =
-            error?.response?.data?.message ||
-            "Gagal membuat jadwal. Silakan coba lagi.";
-          showError(msg);
+
+        onError: (error: unknown) => {
+          let message = "Gagal membuat jadwal. Silakan coba lagi.";
+
+          if (error instanceof AxiosError) {
+            const errData = error.response?.data as Record<string, unknown>;
+            message = (errData?.["message"] as string) || error.message || message;
+          }
+
+          showError(message);
         },
       }
     );
@@ -147,7 +190,6 @@ export function ContactSection() {
       id="kontak"
       className="py-20 bg-gradient-to-br from-gray-900 to-slate-900 text-white relative overflow-hidden"
     >
-      {/* Background Effects */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute top-0 left-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl" />
@@ -165,7 +207,6 @@ export function ContactSection() {
         </div>
 
         <div className="grid md:grid-cols-12 gap-12 max-w-7xl mx-auto">
-          {/* Info Sidebar */}
           <div className="md:col-span-4 space-y-6">
             <h3 className="text-2xl font-bold text-blue-400">
               Informasi Klinik
@@ -206,7 +247,7 @@ export function ContactSection() {
             </a>
           </div>
 
-          {/* Form Section */}
+          {/* FORM */}
           <div className="md:col-span-8 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
             <h3 className="text-2xl font-bold text-blue-400 mb-6 flex items-center gap-2">
               <CalendarIcon className="w-6 h-6" />
@@ -214,28 +255,26 @@ export function ContactSection() {
             </h3>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* SECTION 1: Data Pasien */}
+              {/* DATA PASIEN */}
               <FormSection title="1. Data Pasien">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormInput
                     label="Nama Lengkap"
                     name="nama_lengkap"
-                    type="text"
                     value={formData.nama_lengkap}
                     onChange={handleChange}
-                    placeholder="Sesuai KTP"
                     required
+                    placeholder="Sesuai KTP"
                   />
                   <FormInput
                     label="NIK (16 Digit)"
                     name="nik"
-                    type="text"
                     value={formData.nik}
                     onChange={handleNikChange}
-                    placeholder="32xxxxxxxxxxxxxx"
                     required
                     minLength={16}
                     maxLength={16}
+                    placeholder="32xxxxxxxxxxxxxx"
                   />
                 </div>
 
@@ -253,18 +292,12 @@ export function ContactSection() {
                     name="jenis_kelamin"
                     value={formData.jenis_kelamin || ""}
                     onChange={handleChange}
+                    required
                     options={[
                       { value: "", label: "Pilih..." },
-                      {
-                        value: PublicBookingDtoJenisKelamin.L,
-                        label: "Laki-laki",
-                      },
-                      {
-                        value: PublicBookingDtoJenisKelamin.P,
-                        label: "Perempuan",
-                      },
+                      { value: PublicBookingDtoJenisKelamin.L, label: "Laki-laki" },
+                      { value: PublicBookingDtoJenisKelamin.P, label: "Perempuan" },
                     ]}
-                    required
                   />
                 </div>
 
@@ -272,11 +305,10 @@ export function ContactSection() {
                   <FormInput
                     label="No. WhatsApp"
                     name="no_hp"
-                    type="tel"
                     value={formData.no_hp}
                     onChange={handlePhoneChange}
-                    placeholder="08xxxxxxxxxx"
                     required
+                    placeholder="08xxxxxxxxxx"
                   />
                   <FormInput
                     label="Email"
@@ -291,22 +323,22 @@ export function ContactSection() {
                 <FormInput
                   label="Alamat Domisili"
                   name="alamat"
-                  type="text"
                   value={formData.alamat}
                   onChange={handleChange}
-                  placeholder="Nama jalan, nomor rumah, kota"
                   required
+                  placeholder="Nama jalan, nomor rumah, kota"
                 />
               </FormSection>
 
-              {/* SECTION 2: Rencana Kunjungan */}
+              {/* RENCANA KUNJUNGAN */}
               <FormSection title="2. Rencana Kunjungan">
                 <FormSelect
                   label="Pilih Dokter"
                   name="doctor_id"
+                  required
+                  disabled={isLoadingDoctors}
                   value={formData.doctor_id || ""}
                   onChange={handleChange}
-                  // Mapping data dokter + kepala klinik ke opsi dropdown
                   options={[
                     {
                       value: "",
@@ -314,13 +346,11 @@ export function ContactSection() {
                         ? "Memuat data dokter..."
                         : "-- Pilih Dokter & Layanan --",
                     },
-                    ...AVAILABLE_DOCTORS.map((doc: any) => ({
+                    ...AVAILABLE_DOCTORS.map((doc) => ({
                       value: doc.id,
-                      label: doc.nama_lengkap || doc.username, // Fallback ke username jika nama kosong
+                      label: doc.nama_lengkap || doc.username || "Tanpa Nama",
                     })),
                   ]}
-                  required
-                  disabled={isLoadingDoctors}
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -330,8 +360,8 @@ export function ContactSection() {
                     type="date"
                     value={formData.tanggal_janji}
                     onChange={handleChange}
-                    min={new Date().toISOString().split("T")[0]} // Disable tanggal masa lalu
                     required
+                    min={new Date().toISOString().split("T")[0]}
                   />
                   <div>
                     <FormInput
@@ -340,9 +370,9 @@ export function ContactSection() {
                       type="time"
                       value={formData.jam_janji}
                       onChange={handleChange}
+                      required
                       min="09:00"
                       max="21:00"
-                      required
                     />
                     <p className="text-xs text-gray-400 mt-1">
                       Jam Praktik: 09:00 - 21:00
@@ -355,8 +385,8 @@ export function ContactSection() {
                   name="keluhan"
                   value={formData.keluhan}
                   onChange={handleChange}
-                  placeholder="Jelaskan secara singkat keluhan gigi Anda..."
                   rows={3}
+                  placeholder="Jelaskan secara singkat keluhan gigi Anda..."
                 />
               </FormSection>
 
@@ -390,9 +420,17 @@ export function ContactSection() {
   );
 }
 
-// --- Helper Components (Tidak ada perubahan signifikan, hanya type any dirapikan sedikit jika mau) ---
+// ----------------------
+// HELPER COMPONENTS
+// ----------------------
 
-function InfoItem({ icon, title, content, gradientFrom, gradientTo }: any) {
+function InfoItem({
+  icon,
+  title,
+  content,
+  gradientFrom,
+  gradientTo,
+}: InfoItemProps) {
   return (
     <div className="flex items-start space-x-4">
       <div
@@ -408,7 +446,7 @@ function InfoItem({ icon, title, content, gradientFrom, gradientTo }: any) {
   );
 }
 
-function FormSection({ title, children }: any) {
+function FormSection({ title, children }: FormSectionProps) {
   return (
     <div className="space-y-4">
       <h4 className="text-sm font-semibold text-gray-400 uppercase tracking-wider border-b border-gray-700 pb-2">
@@ -419,7 +457,7 @@ function FormSection({ title, children }: any) {
   );
 }
 
-function FormInput({ label, ...props }: any) {
+function FormInput({ label, ...props }: FormInputProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -433,7 +471,7 @@ function FormInput({ label, ...props }: any) {
   );
 }
 
-function FormSelect({ label, options, ...props }: any) {
+function FormSelect({ label, options, ...props }: FormSelectProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-300 mb-1">
@@ -443,7 +481,7 @@ function FormSelect({ label, options, ...props }: any) {
         {...props}
         className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all outline-none appearance-none"
       >
-        {options.map((opt: any, i: number) => (
+        {options.map((opt, i) => (
           <option key={i} value={opt.value} className="bg-gray-800 text-white">
             {opt.label}
           </option>
@@ -453,7 +491,7 @@ function FormSelect({ label, options, ...props }: any) {
   );
 }
 
-function FormTextarea({ label, ...props }: any) {
+function FormTextarea({ label, ...props }: FormTextareaProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-gray-300 mb-1">

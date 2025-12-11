@@ -89,7 +89,7 @@ export const storageService = new StorageService();
 
 // OPTIONAL (jika ingin sessionStorage juga)
 export const sessionStorageService = {
-  set(key: string, value: any) {
+  set(key: string, value: unknown) {
     sessionStorage.setItem(key, JSON.stringify(value));
   },
   get<T>(key: string) {

@@ -18,16 +18,18 @@ import { useGetRoles } from '@/core/services/api/role.api';
    TYPE DEFINITIONS
 ============================= */
 
+// 1. Definisikan tipe Role dengan jelas
 interface Role {
     id: number;
     name: string;
 }
 
+// 2. Pastikan UserData mencakup kemungkinan null dari Backend
 interface UserData {
     id: number | string;
     nama_lengkap: string;
     username: string;
-    email?: string;
+    email?: string | null; // Update: tambahkan null agar sesuai respons DB
     roles?: Role[];
 }
 
@@ -42,12 +44,12 @@ interface ApiError {
 interface UserFormModalProps {
     isOpen: boolean;
     onClose: () => void;
-    initialData?: UserData;
+    initialData?: UserData | null; // Update: izinkan null explicit
     onSuccess: () => void;
 }
 
 /* ============================
-   VALIDATION SCHEMA
+   VALIDATION SCHEMA & TYPES
 ============================= */
 
 const PASSWORD_REGEX =
@@ -56,6 +58,7 @@ const PASSWORD_REGEX =
 const userSchema = z.object({
     nama_lengkap: z.string().min(3, 'Nama minimal 3 karakter'),
     username: z.string().min(3, 'Username minimal 3 karakter'),
+    // Handle string kosong atau undefined menjadi valid
     email: z.string().email('Email tidak valid').optional().or(z.literal('')),
     roleId: z.string().min(1, 'Role wajib dipilih'),
     password: z
@@ -69,6 +72,9 @@ const userSchema = z.object({
                 'Password harus mengandung Huruf Besar, Kecil, Angka, Simbol & Min 8 Karakter',
         }),
 });
+
+// 3. Extract Type dari Zod Schema untuk menghindari penggunaan 'any'
+type UserFormValues = z.infer<typeof userSchema>;
 
 export default function UserFormModal({
     isOpen,
@@ -89,10 +95,15 @@ export default function UserFormModal({
     ============================= */
 
     const roleOptions = useMemo(() => {
-        const list: Role[] =
-            Array.isArray(rolesData)
-                ? rolesData
-                : (rolesData as { data?: Role[] } | undefined)?.data ?? [];
+        // Safe access dengan type guard sederhana
+        const rawData = rolesData as unknown;
+        let list: Role[] = [];
+
+        if (Array.isArray(rawData)) {
+            list = rawData as Role[];
+        } else if (typeof rawData === 'object' && rawData !== null && 'data' in rawData) {
+            list = (rawData as { data: Role[] }).data || [];
+        }
 
         return list.map((r) => ({
             label: r.name.replace(/_/g, ' ').toUpperCase(),
@@ -104,7 +115,8 @@ export default function UserFormModal({
        FORM HANDLING
     ============================= */
 
-    const form = useForm({
+    // 4. Pass Generic Type <UserFormValues> ke useForm
+    const form = useForm<UserFormValues>({
         initialValues: {
             nama_lengkap: '',
             username: '',
@@ -125,25 +137,17 @@ export default function UserFormModal({
                     return;
                 }
 
-                const payload: CreateUserDto | UpdateUserDto = {
+                // Construct payload dengan type safe
+                const commonData = {
                     nama_lengkap: values.nama_lengkap,
                     username: values.username,
-                    email: values.email || undefined,
+                    email: values.email || undefined, // Konversi string kosong ke undefined
                     roles: values.roleId ? [Number(values.roleId)] : [],
-                    password: values.password || undefined, // password opsional saat update
                 };
 
-                if (values.password) {
-                    payload.password = values.password;
-                }
-
                 if (isEdit && initialData) {
-                    // Payload untuk update
                     const payload: UpdateUserDto = {
-                        nama_lengkap: values.nama_lengkap || undefined,
-                        username: values.username || undefined,
-                        email: values.email || undefined,
-                        roles: values.roleId ? [Number(values.roleId)] : undefined,
+                        ...commonData,
                         password: values.password || undefined,
                     };
 
@@ -151,22 +155,16 @@ export default function UserFormModal({
                         id: Number(initialData.id),
                         data: payload,
                     });
-
                     toast.showSuccess('Data pengguna diperbarui');
                 } else {
-                    // Payload untuk create
                     const payload: CreateUserDto = {
-                        nama_lengkap: values.nama_lengkap, // wajib string
-                        username: values.username,          // wajib string
-                        email: values.email || undefined,   // optional
-                        roles: values.roleId ? [Number(values.roleId)] : [], // wajib array
-                        password: values.password!,          // wajib string
+                        ...commonData,
+                        password: values.password!, // Non-null assertion aman karena validasi di atas
                     };
 
                     await createMutation.mutateAsync({
                         data: payload,
                     });
-
                     toast.showSuccess('Pengguna baru berhasil dibuat');
                 }
 
@@ -175,7 +173,6 @@ export default function UserFormModal({
             } catch (err: unknown) {
                 const error = err as ApiError;
                 const msg = error.response?.data?.message;
-
                 if (Array.isArray(msg)) {
                     toast.showError(msg[0]);
                 } else {
@@ -185,35 +182,30 @@ export default function UserFormModal({
         },
     });
 
-    /* ============================
-       HANDLE EDIT MODE
-    ============================= */
-
     useEffect(() => {
         if (isOpen) {
             form.resetForm();
 
             if (initialData) {
+                console.log('Editing User:', initialData.username, 'Email:', initialData.email);
+
                 const currentRoleId =
                     initialData.roles?.[0]?.id != null
                         ? String(initialData.roles[0].id)
                         : '';
 
-                form.setValues({
+                const newValues: UserFormValues = {
                     nama_lengkap: initialData.nama_lengkap ?? '',
                     username: initialData.username ?? '',
-                    email: initialData.email ?? '',
+                    email: initialData.email ?? '', 
                     password: '',
                     roleId: currentRoleId,
-                });
+                };
+
+                form.setValues(newValues);
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, initialData]);
-
-    /* ============================
-       RENDER
-    ============================= */
 
     return (
         <Modal
@@ -225,28 +217,22 @@ export default function UserFormModal({
                     ? 'Perbarui informasi akun & akses.'
                     : 'Buat akun untuk staf atau dokter klinik.'
             }
-            size="lg"
+            size="xl"
         >
-            <form
+             <form
                 onSubmit={form.handleSubmit}
                 className="space-y-4 py-4"
                 autoComplete="off"
             >
-                <input type="text" style={{ display: 'none' }} />
-                <input type="password" style={{ display: 'none' }} />
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* ... Input Fields ... */}
+                
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                        <Input
+                         <Input
                             label="Nama Lengkap"
                             placeholder="Contoh: Budi Santoso, S.Kom"
                             value={form.values.nama_lengkap}
-                            onChange={(e) =>
-                                form.setFieldValue(
-                                    'nama_lengkap',
-                                    e.target.value
-                                )
-                            }
+                            onChange={(e) => form.setFieldValue('nama_lengkap', e.target.value)}
                             error={form.errors.nama_lengkap}
                             disabled={isLoading}
                             required
@@ -257,9 +243,7 @@ export default function UserFormModal({
                         label="Username"
                         placeholder="budisantoso"
                         value={form.values.username}
-                        onChange={(e) =>
-                            form.setFieldValue('username', e.target.value)
-                        }
+                        onChange={(e) => form.setFieldValue('username', e.target.value)}
                         error={form.errors.username}
                         disabled={isLoading}
                         required
@@ -269,72 +253,51 @@ export default function UserFormModal({
                         label="Email"
                         type="email"
                         placeholder="email@klinik.com"
-                        value={form.values.email}
-                        onChange={(e) =>
-                            form.setFieldValue('email', e.target.value)
-                        }
+                        // Bagian krusial: value harus bind ke form state
+                        value={form.values.email} 
+                        onChange={(e) => form.setFieldValue('email', e.target.value)}
                         error={form.errors.email}
                         disabled={isLoading}
                     />
 
-                    <div className="md:col-span-2">
+                    {/* ... Sisa input lainnya (Role, Password, Button) ... */}
+                    
+                     <div className="md:col-span-2">
                         <FormSelect
                             label="Role / Jabatan"
                             placeholder="-- Pilih Role --"
                             options={roleOptions}
                             value={form.values.roleId}
-                            onChange={(val) =>
-                                form.setFieldValue('roleId', val)
-                            }
+                            onChange={(val) => form.setFieldValue('roleId', val)}
                             error={form.errors.roleId}
                             disabled={isLoading}
                             required
                         />
                     </div>
-
+                    
+                    {/* Security Section & Buttons (sama seperti sebelumnya) */}
                     <div className="md:col-span-2 border-t pt-4 mt-2">
-                        <p className="text-sm font-medium text-gray-700 mb-2">
-                            Keamanan
-                        </p>
-
+                        <p className="text-sm font-medium text-gray-700 mb-2">Keamanan</p>
                         <PasswordInput
-                            label={
-                                isEdit
-                                    ? 'Password Baru (Kosongkan jika tidak diubah)'
-                                    : 'Password'
-                            }
+                            label={isEdit ? 'Password Baru (Kosongkan jika tidak diubah)' : 'Password'}
                             placeholder="********"
                             value={form.values.password}
-                            onChange={(e) =>
-                                form.setFieldValue('password', e.target.value)
-                            }
+                            onChange={(e) => form.setFieldValue('password', e.target.value)}
                             error={form.errors.password}
                             disabled={isLoading}
                             autoComplete="new-password"
                         />
-
                         <p className="text-[11px] text-gray-500 mt-1">
-                            *Password harus minimal 8 karakter, mengandung huruf
-                            besar, kecil, angka, dan simbol.
+                            *Password harus minimal 8 karakter, mengandung huruf besar, kecil, angka, dan simbol.
                         </p>
                     </div>
                 </div>
 
                 <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                    >
+                    <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
                         Batal
                     </Button>
-
-                    <Button
-                        type="submit"
-                        disabled={isLoading}
-                        className="bg-blue-600 hover:bg-blue-700"
-                    >
+                    <Button type="submit" disabled={isLoading} className="bg-blue-600 hover:bg-blue-700">
                         {isLoading ? (
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         ) : isEdit ? (

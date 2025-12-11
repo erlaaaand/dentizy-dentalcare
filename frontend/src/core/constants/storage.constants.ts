@@ -69,7 +69,7 @@ class Storage {
     /**
      * Get item from storage with type safety
      */
-    get<T = any>(key: string): T | null {
+    get<T = unknown>(key: string): T | null {
         // Guard clause: Jika storage tidak ada (server), return null
         if (!this.storage) return null;
 
@@ -87,7 +87,7 @@ class Storage {
     /**
      * Set item in storage with type safety
      */
-    set<T = any>(key: string, value: T): boolean {
+    set<T = unknown>(key: string, value: T): boolean {
         if (!this.storage) return false; // Guard clause
 
         try {
@@ -154,11 +154,11 @@ class Storage {
     /**
      * Get all items with a specific prefix
      */
-    getByPrefix(prefix: string): Record<string, any> {
+    getByPrefix(prefix: string): Record<string, unknown> {
         if (!this.storage) return {}; // Guard clause
 
         try {
-            const items: Record<string, any> = {};
+            const items: Record<string, unknown> = {};
             const keys = this.getAllKeys().filter(key => key.startsWith(prefix));
 
             keys.forEach(key => {
@@ -233,10 +233,10 @@ export const tokenStorage = {
 
 // User data management
 export const userStorage = {
-    getUser: <T = any>(): T | null =>
+    getUser: <T = unknown>(): T | null =>
         localStorageManager.get<T>(LOCAL_STORAGE_KEYS.USER),
 
-    setUser: <T = any>(user: T): boolean =>
+    setUser: <T = unknown>(user: T): boolean =>
         localStorageManager.set(LOCAL_STORAGE_KEYS.USER, user),
 
     getUserRole: (): string | null =>
@@ -299,10 +299,10 @@ export const redirectStorage = {
 
 // Form data management (untuk autosave)
 export const formStorage = {
-    saveFormData: (formId: string, data: any): boolean =>
+    saveFormData: (formId: string, data: unknown): boolean =>
         sessionStorageManager.set(`${SESSION_STORAGE_KEYS.FORM_DATA}_${formId}`, data),
 
-    getFormData: <T = any>(formId: string): T | null =>
+    getFormData: <T = unknown>(formId: string): T | null =>
         sessionStorageManager.get<T>(`${SESSION_STORAGE_KEYS.FORM_DATA}_${formId}`),
 
     removeFormData: (formId: string): boolean =>

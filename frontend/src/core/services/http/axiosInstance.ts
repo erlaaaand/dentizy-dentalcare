@@ -12,28 +12,33 @@ const axiosInstance: AxiosInstance = axios.create({
     },
 });
 
+export type PromiseWithCancel<T> = Promise<T> & {
+  cancel: () => void;
+};
+
 // INITIALIZE INTERCEPTORS
 setupInterceptors(axiosInstance);
 
 // --- CUSTOM INSTANCE WRAPPER (TanStack Query / Orval) ---
 export const customInstance = <T>(
-    config: AxiosRequestConfig,
-    options?: AxiosRequestConfig
-): Promise<T> => {
-    const source = axios.CancelToken.source();
+  config: AxiosRequestConfig,
+  options?: AxiosRequestConfig
+): PromiseWithCancel<T> => { // <--- 1. Ubah Return Type fungsi ini
+  const source = axios.CancelToken.source();
 
-    const promise = axiosInstance({
-        ...config,
-        ...options,
-        cancelToken: source.token,
-    }).then(({ data }) => data);
+  // 2. Lakukan Casting 'as PromiseWithCancel<T>' saat inisialisasi
+  const promise = axiosInstance({
+    ...config,
+    ...options,
+    cancelToken: source.token,
+  }).then(({ data }) => data) as PromiseWithCancel<T>;
 
-    // @ts-ignore
-    promise.cancel = () => {
-        source.cancel('Query was cancelled');
-    };
+  // 3. Sekarang properti .cancel valid dan dikenali TypeScript
+  promise.cancel = () => {
+    source.cancel('Query was cancelled');
+  };
 
-    return promise;
+  return promise;
 };
 
 export default axiosInstance;

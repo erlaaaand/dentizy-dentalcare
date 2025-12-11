@@ -249,15 +249,35 @@ export function createErrorFromStatus(
 /**
  * Parse error from Axios error response
  */
-export function parseApiError(error: any): ApiError {
-  // Network error
-  if (!error.response) {
-    return new NetworkError(error.message);
-  }
+export function parseApiError(error: unknown): ApiError {
+    // Jika error bukan object, anggap sebagai network error generic
+    if (!error || typeof error !== "object") {
+        return new NetworkError("Terjadi kesalahan jaringan");
+    }
 
-  const { status, data } = error.response;
-  const message = data?.message || error.message || 'Terjadi kesalahan';
-  const errors = data?.errors;
+    // Pastikan error punya properti 'response'
+    if (!("response" in error)) {
+        const message =
+            "message" in error && typeof (error as Record<string, unknown>)["message"] === "string"
+                ? (error as Record<string, unknown>)["message"] as string
+                : "Terjadi kesalahan jaringan";
+        return new NetworkError(message);
+    }
 
-  return createErrorFromStatus(status, message, errors);
+    const response = (error as { response: { status: number; data?: Record<string, unknown> } }).response;
+    const status = response.status;
+    const data = response.data;
+
+    const message =
+        (data?.["message"] as string) ||
+        (typeof (error as Record<string, unknown>)["message"] === "string"
+            ? ((error as Record<string, unknown>)["message"] as string)
+            : "Terjadi kesalahan");
+
+    const errors =
+        data?.["errors"] && typeof data["errors"] === "object"
+            ? (data["errors"] as Record<string, string[]>)
+            : undefined;
+            
+    return createErrorFromStatus(status, message, errors);
 }

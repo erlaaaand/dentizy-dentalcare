@@ -1,10 +1,10 @@
-import React, { useMemo, useCallback } from 'react';
+import React from 'react';
 import { cn } from '@/core';
 
 export interface Column<T> {
     header: string | React.ReactNode;
     accessorKey?: keyof T | string;
-    cell?: (info: { getValue: () => any; row: { original: T }; }) => React.ReactNode;
+    cell?: (info: { getValue: () => unknown; row: { original: T }; }) => React.ReactNode;
     sortable?: boolean;
     width?: string;
     align?: 'left' | 'center' | 'right';
@@ -27,7 +27,7 @@ export interface DataTableProps<T> {
     emptyMessage?: string;
 }
 
-export default function DataTable<T extends Record<string, any>>({
+export default function DataTable<T extends Record<string, unknown>>({
     data,
     columns,
     pagination,
@@ -107,7 +107,7 @@ export default function DataTable<T extends Record<string, any>>({
                                                         getValue: () => value,
                                                         row: { original: row }
                                                     })
-                                                    : value
+                                                    : (value as React.ReactNode)
                                                 }
                                             </td>
                                         );

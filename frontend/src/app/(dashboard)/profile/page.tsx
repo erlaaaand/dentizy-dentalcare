@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/core/hooks/auth/useAuth';
 import { useToast } from '@/core/hooks/ui/useToast';
 import { useQueryClient } from '@tanstack/react-query';
@@ -25,8 +26,24 @@ const SaveIcon = ({ className }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
 );
 const LoadingSpinner = () => (
-    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+    <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-600 rounded-full animate-spin" />
 );
+
+// Tipe data untuk response upload
+interface UploadResponse {
+    message: string;
+    url: string;
+}
+
+// Tipe data extended untuk user
+interface ExtendedUserData {
+    id: number;
+    nama_lengkap: string;
+    username: string;
+    email?: string;
+    profile_photo?: string;
+    roles?: Array<{ name: string }>;
+}
 
 export default function ProfilePage() {
     const { user, isAuthenticated } = useAuth();
@@ -34,19 +51,16 @@ export default function ProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
-    // Pastikan user.id aman (number) untuk hook
-    // Menggunakan Number() untuk memaksa tipe data, dan fallback ke 0 jika null
     const userId = user?.id ? Number(user.id) : 0;
 
     const [activeTab, setActiveTab] = useState<'general' | 'security'>('general');
     const [isUploading, setIsUploading] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    // 1. Fetch Data User
-    // [FIX] Error overload diatasi dengan memastikan userId adalah number valid
-    const { data: userData, isLoading: isUserLoading, refetch } = useUsersControllerFindOne(userId, {
+    // Fetch Data User dengan type assertion
+    const { data: userData, refetch } = useUsersControllerFindOne(userId, {
         query: { 
-            enabled: !!userId, // Hanya fetch jika userId valid
+            enabled: !!userId,
             retry: false
         }
     });
@@ -69,13 +83,14 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (userData) {
+            const extendedUser = userData as ExtendedUserData;
             setFormData({
-                nama_lengkap: userData.nama_lengkap || '',
-                username: userData.username || '',
-                email: (userData as any).email || '', // Cast any jika email belum ada di type generated
-                profile_photo: (userData as any).profile_photo || ''
+                nama_lengkap: extendedUser.nama_lengkap || '',
+                username: extendedUser.username || '',
+                email: extendedUser.email || '',
+                profile_photo: extendedUser.profile_photo || ''
             });
-            setPreviewImage((userData as any).profile_photo || null);
+            setPreviewImage(extendedUser.profile_photo || null);
         }
     }, [userData]);
 
@@ -95,17 +110,14 @@ export default function ProfilePage() {
         uploadFormData.append('file', file);
 
         try {
-            // [FIX] Error customInstance.post diatasi
-            // customInstance adalah function, bukan object axios biasa
-            const response = await customInstance<{ message: string; url: string }>({
+            const response = await customInstance<UploadResponse>({
                 url: '/uploads/profile-photo',
                 method: 'POST',
                 data: uploadFormData,
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
 
-            // Ambil URL dari response
-            const newPhotoUrl = response.url; // Karena customInstance me-return data langsung (biasanya interceptor sudah unwrap .data)
+            const newPhotoUrl = response.url;
             
             setFormData(prev => ({ ...prev, profile_photo: newPhotoUrl }));
             setPreviewImage(newPhotoUrl);
@@ -122,10 +134,8 @@ export default function ProfilePage() {
         e.preventDefault();
         if (!userId) return;
 
-        // [FIX] Error 'profile_photo does not exist' diatasi
-        // Kita menggunakan "as any" untuk bypass type checking sementara 
-        // karena API client Anda belum di-generate ulang
-        const payload: any = {
+        // Membuat payload sesuai dengan UpdateUserDto
+        const payload = {
             nama_lengkap: formData.nama_lengkap,
             username: formData.username,
             email: formData.email,
@@ -139,11 +149,12 @@ export default function ProfilePage() {
             onSuccess: () => {
                 showSuccess('Profil berhasil diperbarui!');
                 refetch();
-                // Invalidate query agar data user di tempat lain juga update
                 queryClient.invalidateQueries({ queryKey: [`/users/${userId}`] });
             },
-            onError: (err: any) => {
-                showError(err?.response?.data?.message || 'Gagal memperbarui profil');
+            onError: (err) => {
+                const error = err as unknown as Error & { response?: { data?: { message?: string } } };
+                const errorMessage = error?.response?.data?.message;
+                showError(errorMessage || 'Gagal memperbarui profil');
             }
         });
     };
@@ -167,8 +178,10 @@ export default function ProfilePage() {
                 showSuccess('Password berhasil diubah!');
                 setPassData({ oldPassword: '', newPassword: '', confirmPassword: '' });
             },
-            onError: (err: any) => {
-                showError(err?.response?.data?.message || 'Gagal mengubah password');
+            onError: (err) => {
+                const error = err as unknown as Error & { response?: { data?: { message?: string } } };
+                const errorMessage = error?.response?.data?.message;
+                showError(errorMessage || 'Gagal mengubah password');
             }
         });
     };
@@ -176,35 +189,46 @@ export default function ProfilePage() {
     const getImageUrl = (url: string | null) => {
         if (!url) return 'https://ui-avatars.com/api/?background=random&name=' + (formData.nama_lengkap || 'User');
         if (url.startsWith('http')) return url;
-        // Gunakan environment variable atau default localhost
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
         return `${apiUrl}${url}`; 
     };
 
-    if (!isAuthenticated) return <div className="min-h-screen bg-gray-900 flex items-center justify-center"><LoadingSpinner /></div>;
+    if (!isAuthenticated) return <div className="min-h-screen bg-white flex items-center justify-center"><LoadingSpinner /></div>;
+
+    const extendedUserData = userData as ExtendedUserData | undefined;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-gray-100 p-6 md:p-12">
+        <div className="min-h-screen bg-white text-gray-900 p-6 md:p-12">
             <div className="max-w-4xl mx-auto space-y-8">
                 
                 {/* Header */}
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Pengaturan Akun</h1>
-                    <p className="text-gray-400 mt-2">Kelola informasi profil dan keamanan akun Anda.</p>
+                    <h1 className="text-3xl font-bold text-gray-900">Pengaturan Akun</h1>
+                    <p className="text-gray-600 mt-2">Kelola informasi profil dan keamanan akun Anda.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                     
                     {/* LEFT COLUMN */}
                     <div className="md:col-span-4 space-y-6">
-                        <div className="bg-gray-800 rounded-2xl p-6 border border-gray-700 text-center relative overflow-hidden">
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm text-center relative overflow-hidden">
                             <div className="relative inline-block group">
-                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-700 bg-gray-900 mx-auto relative">
-                                    <img 
-                                        src={getImageUrl(previewImage)} 
-                                        alt="Profile" 
-                                        className="w-full h-full object-cover"
-                                    />
+                                <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-gray-200 bg-gray-50 mx-auto relative">
+                                    {previewImage ? (
+                                        <Image 
+                                            src={getImageUrl(previewImage)} 
+                                            alt="Profile" 
+                                            width={128}
+                                            height={128}
+                                            className="w-full h-full object-cover"
+                                            priority
+                                            unoptimized={!previewImage.startsWith('http')}
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-4xl font-bold">
+                                            {formData.nama_lengkap?.charAt(0).toUpperCase() || 'U'}
+                                        </div>
+                                    )}
                                     {isUploading && (
                                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
                                             <LoadingSpinner />
@@ -216,7 +240,7 @@ export default function ProfilePage() {
                                     onClick={() => fileInputRef.current?.click()}
                                     disabled={isUploading}
                                     type="button"
-                                    className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full hover:bg-blue-500 transition shadow-lg group-hover:scale-110 z-20 cursor-pointer"
+                                    className="absolute bottom-0 right-0 bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition shadow-lg group-hover:scale-110 z-20 cursor-pointer"
                                 >
                                     <CameraIcon className="w-5 h-5 text-white" />
                                 </button>
@@ -229,9 +253,9 @@ export default function ProfilePage() {
                                 />
                             </div>
 
-                            <h2 className="mt-4 text-xl font-bold text-white">{formData.nama_lengkap || 'User'}</h2>
-                            <p className="text-sm text-blue-400 font-medium uppercase tracking-wider">
-                                {userData?.roles?.[0]?.name || 'Member'}
+                            <h2 className="mt-4 text-xl font-bold text-gray-900">{formData.nama_lengkap || 'User'}</h2>
+                            <p className="text-sm text-blue-600 font-medium uppercase tracking-wider">
+                                {extendedUserData?.roles?.[0]?.name || 'Member'}
                             </p>
                         </div>
 
@@ -240,8 +264,8 @@ export default function ProfilePage() {
                                 onClick={() => setActiveTab('general')}
                                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                                     activeTab === 'general' 
-                                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
-                                    : 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                                    ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                                    : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900 border border-transparent'
                                 }`}
                             >
                                 <UserIcon className="w-5 h-5" />
@@ -251,8 +275,8 @@ export default function ProfilePage() {
                                 onClick={() => setActiveTab('security')}
                                 className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                                     activeTab === 'security' 
-                                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30' 
-                                    : 'hover:bg-gray-800 text-gray-400 hover:text-white'
+                                    ? 'bg-blue-50 text-blue-600 border border-blue-200' 
+                                    : 'hover:bg-gray-50 text-gray-600 hover:text-gray-900 border border-transparent'
                                 }`}
                             >
                                 <LockIcon className="w-5 h-5" />
@@ -263,53 +287,53 @@ export default function ProfilePage() {
 
                     {/* RIGHT COLUMN */}
                     <div className="md:col-span-8">
-                        <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700 min-h-[400px]">
+                        <div className="bg-white rounded-2xl p-8 border border-gray-200 shadow-sm min-h-[400px]">
                             
                             {/* TAB: GENERAL */}
                             {activeTab === 'general' && (
                                 <form onSubmit={handleProfileUpdate} className="space-y-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-xl font-bold">Edit Profil</h3>
+                                        <h3 className="text-xl font-bold text-gray-900">Edit Profil</h3>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Nama Lengkap</label>
+                                            <label className="text-sm text-gray-600 font-medium">Nama Lengkap</label>
                                             <input
                                                 type="text"
                                                 value={formData.nama_lengkap}
                                                 onChange={(e) => setFormData({...formData, nama_lengkap: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                                                 placeholder="Nama Lengkap"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Username</label>
+                                            <label className="text-sm text-gray-600 font-medium">Username</label>
                                             <input
                                                 type="text"
                                                 value={formData.username}
                                                 onChange={(e) => setFormData({...formData, username: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                                                 placeholder="Username"
                                             />
                                         </div>
                                         <div className="space-y-2 md:col-span-2">
-                                            <label className="text-sm text-gray-400">Email</label>
+                                            <label className="text-sm text-gray-600 font-medium">Email</label>
                                             <input
                                                 type="email"
                                                 value={formData.email}
                                                 onChange={(e) => setFormData({...formData, email: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                                                 placeholder="email@domain.com"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-gray-700 flex justify-end">
+                                    <div className="pt-4 border-t border-gray-200 flex justify-end">
                                         <button
                                             type="submit"
                                             disabled={updateProfileMutation.isPending}
-                                            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                         >
                                             {updateProfileMutation.isPending ? <LoadingSpinner /> : <SaveIcon className="w-5 h-5" />}
                                             <span>Simpan Perubahan</span>
@@ -322,47 +346,47 @@ export default function ProfilePage() {
                             {activeTab === 'security' && (
                                 <form onSubmit={handleChangePassword} className="space-y-6">
                                     <div className="flex items-center justify-between mb-6">
-                                        <h3 className="text-xl font-bold text-red-400">Ganti Password</h3>
+                                        <h3 className="text-xl font-bold text-red-600">Ganti Password</h3>
                                     </div>
 
                                     <div className="space-y-4 max-w-lg">
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Password Lama</label>
+                                            <label className="text-sm text-gray-600 font-medium">Password Lama</label>
                                             <input
                                                 type="password"
                                                 value={passData.oldPassword}
                                                 onChange={(e) => setPassData({...passData, oldPassword: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                                                 placeholder="••••••••"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Password Baru</label>
+                                            <label className="text-sm text-gray-600 font-medium">Password Baru</label>
                                             <input
                                                 type="password"
                                                 value={passData.newPassword}
                                                 onChange={(e) => setPassData({...passData, newPassword: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                                                 placeholder="Min. 8 karakter, huruf besar, angka"
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-sm text-gray-400">Konfirmasi Password</label>
+                                            <label className="text-sm text-gray-600 font-medium">Konfirmasi Password</label>
                                             <input
                                                 type="password"
                                                 value={passData.confirmPassword}
                                                 onChange={(e) => setPassData({...passData, confirmPassword: e.target.value})}
-                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
+                                                className="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition"
                                                 placeholder="••••••••"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="pt-4 border-t border-gray-700 flex justify-end">
+                                    <div className="pt-4 border-t border-gray-200 flex justify-end">
                                         <button
                                             type="submit"
                                             disabled={changePasswordMutation.isPending}
-                                            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                                         >
                                             {changePasswordMutation.isPending ? <LoadingSpinner /> : <LockIcon className="w-5 h-5" />}
                                             <span>Update Password</span>

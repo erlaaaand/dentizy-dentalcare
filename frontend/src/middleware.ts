@@ -72,7 +72,7 @@ function isPublicRoute(pathname: string): boolean {
  * Verify JWT token (ROBUST VERSION)
  * Menangani format Base64Url dan Padding dengan benar agar tidak error di atob()
  */
-function verifyToken(token: string): { valid: boolean; payload?: any } {
+function verifyToken(token: string): { valid: boolean; payload?: unknown } {
     try {
         const parts = token.split('.');
         if (parts.length !== 3) {
@@ -97,19 +97,28 @@ function verifyToken(token: string): { valid: boolean; payload?: any } {
 
         return { valid: true, payload };
     } catch (error) {
+        console.error(error)
         return { valid: false };
     }
 }
 
-function extractRoles(payload: any): string[] {
-    if (!payload) return [];
+function extractRoles(payload: unknown): string[] {
+    if (!payload || typeof payload !== "object") return [];
 
-    if (Array.isArray(payload.roles)) {
-        return payload.roles.map((r: any) => typeof r === 'string' ? r : r.name);
+    const obj = payload as Record<string, unknown>;
+
+    if (Array.isArray(obj["roles"])) {
+        return (obj["roles"] as unknown[]).map((r) =>
+            typeof r === "string"
+                ? r
+                : typeof r === "object" && r !== null && "name" in r
+                ? String((r as Record<string, unknown>)["name"])
+                : ""
+        ).filter(Boolean);
     }
 
-    if (typeof payload.role === 'string') {
-        return [payload.role];
+    if (typeof obj["role"] === "string") {
+        return [obj["role"]];
     }
 
     return [];
@@ -186,7 +195,7 @@ export function middleware(request: NextRequest) {
         // A. No Token -> Redirect to Login
         if (!token) {
             const loginUrl = new URL(ROUTES.LOGIN, request.url);
-            loginUrl.searchParams.set('redirect', pathname);
+            loginUrl.searchParams.set("redirect", pathname);
             return NextResponse.redirect(loginUrl);
         }
 
@@ -194,7 +203,7 @@ export function middleware(request: NextRequest) {
         const { valid, payload } = verifyToken(token);
         if (!valid) {
             const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
-            response.cookies.delete('access_token');
+            response.cookies.delete("access_token");
             return response;
         }
 
@@ -207,8 +216,23 @@ export function middleware(request: NextRequest) {
 
         // D. Allow Access (Inject user info to headers)
         const requestHeaders = new Headers(request.headers);
-        requestHeaders.set('x-user-id', payload.sub || payload.id || '');
-        requestHeaders.set('x-user-roles', roles.join(','));
+
+        if (payload && typeof payload === "object") {
+            const obj = payload as Record<string, unknown>;
+
+            const userId =
+                typeof obj["sub"] === "string"
+                    ? obj["sub"]
+                    : typeof obj["id"] === "string"
+                    ? obj["id"]
+                    : "";
+
+            requestHeaders.set("x-user-id", userId);
+        } else {
+            requestHeaders.set("x-user-id", "");
+        }
+
+        requestHeaders.set("x-user-roles", roles.join(","));
 
         return NextResponse.next({
             request: {

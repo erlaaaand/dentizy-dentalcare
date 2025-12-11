@@ -67,10 +67,10 @@ export function exportMedicalRecordToText(record: MedicalRecordResponseDto): str
   return `
 REKAM MEDIS PASIEN
 
-Nomor RM: ${record.patient?.no_rm || '-'}
+Nomor RM: ${record.patient?.nomor_rekam_medis || '-'}
 Nama Pasien: ${record.patient?.nama_lengkap || '-'}
 Tanggal Janji: ${record.appointment?.appointment_date || '-'}
-Dokter: ${record.doctor?.name || '-'}
+Dokter: ${record.doctor?.nama_lengkap || '-'}
 
 ${formatSOAPSection('SUBJEKTIF', soap.subjektif)}
 ${formatSOAPSection('OBJEKTIF', soap.objektif)}

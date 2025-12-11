@@ -17,6 +17,7 @@ import { HeaderSection } from './HeaderSection';
 import { HeaderTitle } from './HeaderTitle';
 import { HeaderSubtitle } from './HeaderSubtitle';
 import { useQueryClient } from "@tanstack/react-query";
+import { Bell } from 'lucide-react';
 
 // Force cleanup function
 const forceLogoutCleanup = () => {
@@ -45,12 +46,10 @@ export function Header({
     className,
     variant = 'default',
     size = 'md',
-    showWelcome = true,
     showProfile = true,
     userName,
     userRole,
     userAvatar,
-    welcomeText,
     children,
     onProfileClick,
     onSettingsClick,
@@ -58,13 +57,22 @@ export function Header({
 }: HeaderProps) {
     const router = useRouter();
     const { user, logout: authLogout, isAuthenticated, loading: authLoading } = useAuth();
-    const { showSuccess, showError } = useToast();
+    const { showInfo, showError } = useToast();
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const [showLogoutDialog, setShowLogoutDialog] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
     const profileRef = useRef<HTMLDivElement>(null);
     const { data: profileData } = useGetProfile();
+
+    const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+    const notifRef = useRef(null);
+
+    const notifications = [
+        { id: 1, text: "Jadwal konsultasi baru", time: "Baru saja", unread: true },
+        { id: 2, text: "Rekam medis pasien diperbarui", time: "1 jam lalu", unread: false },
+        { id: 3, text: "Pengingat: Rapat bulanan", time: "Hari ini", unread: false },
+    ];
 
     // ✅ FIX: Wait for client-side mount to prevent hydration mismatch
     useEffect(() => {
@@ -153,7 +161,7 @@ export function Header({
             // 5) Notifikasi
             //
             try {
-                showSuccess("Logout berhasil! Sampai jumpa kembali.");
+                showInfo("Logout berhasil! Sampai jumpa kembali.");
             } catch { }
 
             console.log("➡️ Redirecting to login…");
@@ -203,6 +211,7 @@ export function Header({
             try {
                 showError('Terjadi kesalahan. Silakan coba lagi.');
             } catch (e) {
+                console.error(e);
                 // Ignore
             }
         }
@@ -241,10 +250,6 @@ export function Header({
         return userRole || getUserRoleLabel();
     };
 
-    const getWelcomeText = () => {
-        return welcomeText || 'Selamat datang kembali di dashboard Dentizy';
-    };
-
     // Custom children render
     if (children) {
         return (
@@ -276,12 +281,6 @@ export function Header({
         return (
             <header id="app-header" className={cn(variantClass, sizeClass.container, className)}>
                 <div className="flex items-center justify-between">
-                    {showWelcome && (
-                        <div className="min-w-0 flex-1">
-                            <div className="h-8 bg-gray-200 rounded animate-pulse w-48"></div>
-                            <div className="h-4 bg-gray-100 rounded animate-pulse w-64 mt-2"></div>
-                        </div>
-                    )}
                     {showProfile && (
                         <div className="flex items-center space-x-2">
                             <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
@@ -300,17 +299,48 @@ export function Header({
     return (
         <>
             <header id="app-header" className={cn(variantClass, sizeClass.container, className)}>
-                <div className="flex items-center justify-between">
-                    {showWelcome && (
-                        <div className="min-w-0 flex-1">
-                            <h1 className={cn('font-bold text-gray-900', sizeClass.title)}>
-                                Halo, {getUserName()}!
-                            </h1>
-                            <p className={cn('text-gray-600 mt-1', sizeClass.subtitle)}>
-                                {getWelcomeText()}
-                            </p>
-                        </div>
-                    )}
+                <div className="flex items-center justify-end">
+
+                    <div className="relative" ref={notifRef}>
+                        <button
+                            onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                            className="relative p-2 text-gray-600 hover:text-blue-600 hover:bg-gray-100 rounded-full transition-all duration-200 focus:outline-none"
+                        >
+                            {/* Icon Bell */}
+                            <Bell className="w-6 h-6" />
+                            
+                            {/* Badge Merah (Indikator ada notif) */}
+                            <span className="absolute top-1 right-1 flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                            </span>
+                        </button>
+
+                        {/* Dropdown Notifikasi */}
+                        {showNotifDropdown && (
+                            <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 className="font-semibold text-gray-800">Notifikasi</h3>
+                                    <span className="text-xs text-blue-500 cursor-pointer hover:underline">Tandai dibaca</span>
+                                </div>
+                                <div className="max-h-64 overflow-y-auto">
+                                    {notifications.length > 0 ? (
+                                        notifications.map((notif) => (
+                                            <div key={notif.id} className={`p-4 border-b border-gray-50 hover:bg-gray-50 cursor-pointer ${notif.unread ? 'bg-blue-50/50' : ''}`}>
+                                                <p className="text-sm text-gray-800 font-medium">{notif.text}</p>
+                                                <p className="text-xs text-gray-500 mt-1">{notif.time}</p>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-4 text-center text-gray-500 text-sm">Tidak ada notifikasi</div>
+                                    )}
+                                </div>
+                                <div className="p-2 bg-gray-50 text-center border-t border-gray-100">
+                                    <button className="text-xs text-blue-600 font-medium hover:text-blue-700">Lihat Semua</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     {showProfile && (
                         <div className="relative" ref={profileRef}>

@@ -43,11 +43,22 @@ export default function LoginPage() {
                 password: formData.password.trim()
             });
             // Redirect ke dashboard ditangani otomatis oleh AuthProvider
-        } catch (err: any) {
-            const errorMessage =
-                err.response?.data?.message ||
-                err.message ||
-                'Username atau password salah. Silakan coba lagi.';
+        } catch (err: unknown) {
+            let errorMessage = "Username atau password salah. Silakan coba lagi.";
+
+            if (err instanceof Error) {
+                // Standard JS Error
+                errorMessage = err.message;
+            } else if (
+                typeof err === "object" &&
+                err !== null &&
+                "response" in err &&
+                typeof (err).response === "object"
+            ) {
+                const response = (err as { response?: { data?: { message?: string } } }).response;
+                errorMessage = response?.data?.message || errorMessage;
+            }
+
             setError(errorMessage);
         } finally {
             setIsLoading(false);

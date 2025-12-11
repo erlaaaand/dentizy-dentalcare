@@ -1,7 +1,14 @@
 // frontend/src/core/errors/error.handler.ts
 
-import { ApiError, parseApiError } from './api.error';
-import { ERROR_MESSAGES } from '@/core/constants/error.constants';
+import { ApiError, parseApiError } from "./api.error";
+import { ERROR_MESSAGES } from "@/core/constants/error.constants";
+
+/**
+ * Type guard untuk mendeteksi AxiosError
+ */
+function isAxiosError(error: unknown): error is { isAxiosError: boolean; response?: unknown } {
+  return typeof error === "object" && error !== null && "isAxiosError" in error;
+}
 
 /**
  * Global error handler
@@ -22,12 +29,12 @@ export class ErrorHandler {
   /**
    * Handle error and return user-friendly message
    */
-  handle(error: any): ApiError {
+  handle(error: unknown): ApiError {
     const apiError = this.parseError(error);
-    
+
     // Log to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('Error handled:', apiError);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Error handled:", apiError);
     }
 
     // Notify listeners
@@ -39,14 +46,14 @@ export class ErrorHandler {
   /**
    * Parse error to ApiError
    */
-  private parseError(error: any): ApiError {
+  private parseError(error: unknown): ApiError {
     // Already an ApiError
     if (error instanceof ApiError) {
       return error;
     }
 
-    // Axios error
-    if (error.isAxiosError) {
+    // Axios error (gunakan type guard)
+    if (isAxiosError(error)) {
       return parseApiError(error);
     }
 
@@ -70,18 +77,18 @@ export class ErrorHandler {
    * Remove error listener
    */
   removeListener(listener: (error: ApiError) => void) {
-    this.errorListeners = this.errorListeners.filter(l => l !== listener);
+    this.errorListeners = this.errorListeners.filter((l) => l !== listener);
   }
 
   /**
    * Notify all listeners
    */
   private notifyListeners(error: ApiError) {
-    this.errorListeners.forEach(listener => {
+    this.errorListeners.forEach((listener) => {
       try {
         listener(error);
       } catch (err) {
-        console.error('Error in error listener:', err);
+        console.error("Error in error listener:", err);
       }
     });
   }
@@ -91,11 +98,11 @@ export class ErrorHandler {
    */
   handleAuthError() {
     // Clear tokens
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+
     // Redirect to login
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const currentPath = window.location.pathname;
       const redirectUrl = `/login?redirect=${encodeURIComponent(currentPath)}`;
       window.location.href = redirectUrl;
@@ -107,7 +114,7 @@ export class ErrorHandler {
    */
   handlePermissionError() {
     // Show toast or redirect to home
-    console.warn('Permission denied');
+    console.warn("Permission denied");
   }
 }
 
@@ -128,7 +135,7 @@ export async function handleAsync<T>(
     return [null, data];
   } catch (error) {
     const handledError = errorHandler.handle(error);
-    
+
     if (errorMessage) {
       handledError.message = errorMessage;
     }
@@ -145,23 +152,29 @@ export async function retryWithBackoff<T>(
   maxRetries: number = 3,
   delay: number = 1000
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let i = 0; i < maxRetries; i++) {
     try {
       return await fn();
     } catch (error) {
       lastError = error;
-      
+
       // Don't retry on certain errors
       const apiError = errorHandler.handle(error);
-      if (apiError.isAuthError() || apiError.isPermissionError() || apiError.isValidationError()) {
+      if (
+        apiError.isAuthError() ||
+        apiError.isPermissionError() ||
+        apiError.isValidationError()
+      ) {
         throw apiError;
       }
 
       // Wait before retry
       if (i < maxRetries - 1) {
-        await new Promise(resolve => setTimeout(resolve, delay * Math.pow(2, i)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, delay * Math.pow(2, i))
+        );
       }
     }
   }
@@ -181,7 +194,7 @@ export function safeExecute<T>(
     return fn();
   } catch (error) {
     const handledError = errorHandler.handle(error);
-    
+
     if (onError) {
       onError(handledError);
     }

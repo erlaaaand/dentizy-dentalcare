@@ -148,6 +148,7 @@ export function hasItem(
         const storage = getStorage(type);
         return storage.getItem(key) !== null;
     } catch (error) {
+        console.error(error);
         return false;
     }
 }
@@ -271,7 +272,7 @@ export function removeSession(key: string): boolean {
  */
 export function subscribe(
     key: string,
-    callback: (newValue: any, oldValue: any) => void,
+    callback: (newValue: unknown, oldValue: unknown) => void,
     type: StorageType = 'local'
 ): () => void {
     const handleStorageChange = (e: StorageEvent) => {
@@ -297,14 +298,14 @@ export function subscribe(
 /**
  * Backup storage to object
  */
-export function backup(type: StorageType = 'local'): Record<string, any> {
+export function backup(type: StorageType = 'local'): Record<string, unknown> {
     try {
         if (!isStorageAvailable(type)) {
             return {};
         }
 
         const storage = getStorage(type);
-        const backup: Record<string, any> = {};
+        const backup: Record<string, unknown> = {};
 
         for (const key in storage) {
             if (storage.hasOwnProperty(key)) {
@@ -327,7 +328,7 @@ export function backup(type: StorageType = 'local'): Record<string, any> {
  * Restore storage from backup
  */
 export function restore(
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     type: StorageType = 'local'
 ): boolean {
     try {
@@ -377,7 +378,7 @@ export function removeByPrefix(
 /**
  * Get all items as object
  */
-export function getAll(type: StorageType = 'local'): Record<string, any> {
+export function getAll(type: StorageType = 'local'): Record<string, unknown> {
     return backup(type);
 }
 
@@ -385,7 +386,7 @@ export function getAll(type: StorageType = 'local'): Record<string, any> {
  * Merge object into storage
  */
 export function merge(
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     type: StorageType = 'local'
 ): boolean {
     try {
@@ -395,10 +396,10 @@ export function merge(
 
         for (const key in data) {
             if (data.hasOwnProperty(key)) {
-                const existing = getItem<any>(key, type);
+                const existing = getItem<unknown>(key, type);
 
                 if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
-                    setItem(key, { ...existing, ...data[key] }, type);
+                    setItem(key, { ...existing, ...data[key] as object }, type);
                 } else {
                     setItem(key, data[key], type);
                 }

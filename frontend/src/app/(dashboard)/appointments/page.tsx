@@ -7,14 +7,12 @@ import { Calendar, Inbox, Loader2, ShieldAlert, Users, CalendarCheck } from 'luc
 import AppointmentList from './tabs/AppointmentList';
 import VerificationManager from './tabs/VerificationManager';
 import PatientBookingManager from './tabs/PatientBookingManager';
-import { useRouter } from 'next/navigation';
 import { ROLES, useAuth } from '@/core';
 
 export default function AppointmentsPage() {
-    const router = useRouter();
     const { user, loading: authLoading } = useAuth();
 
-    const userRoles = user?.roles?.map((r: any) => r.name) || [];
+    const userRoles = user?.roles?.map((r: { name: string }) => r.name) || [];
     const isHeadClinic = userRoles.includes(ROLES.KEPALA_KLINIK); // Cek spesifik Kepala Klinik
     const isHeadOrStaff = isHeadClinic || userRoles.includes(ROLES.STAF);
     const isDoctor = userRoles.includes(ROLES.DOKTER);

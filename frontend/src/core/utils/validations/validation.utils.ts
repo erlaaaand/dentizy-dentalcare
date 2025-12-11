@@ -6,7 +6,7 @@
 /**
  * Check if value is empty
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
     if (value === null || value === undefined) return true;
     if (typeof value === 'string') return value.trim().length === 0;
     if (Array.isArray(value)) return value.length === 0;
@@ -358,7 +358,7 @@ export function isValidIPv4(ip: string): boolean {
  * Create validation schema
  */
 export function createValidator<T>(
-    rules: Partial<Record<keyof T, (value: any) => boolean | string>>
+    rules: Partial<Record<keyof T, (value: unknown) => boolean | string>>
 ) {
     return (data: T): { isValid: boolean; errors: Partial<Record<keyof T, string>> } => {
         const errors: Partial<Record<keyof T, string>> = {};

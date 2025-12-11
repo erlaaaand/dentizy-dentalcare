@@ -2,10 +2,10 @@ import { useCallback } from 'react';
 
 interface UseFieldProps<T> {
   name: keyof T;
-  value: any;
+  value: unknown;
   error?: string;
   touched?: boolean;
-  onChange: (name: keyof T) => (value: any) => void;
+  onChange: (name: keyof T) => (value: unknown) => void;
   onBlur: (name: keyof T) => () => void;
 }
 

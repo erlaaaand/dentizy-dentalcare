@@ -306,7 +306,7 @@ export function parseDate(dateStr: string): Date | null {
 /**
  * Check if date is valid
  */
-export function isValidDate(date: any): boolean {
+export function isValidDate(date: unknown): boolean {
     return date instanceof Date && !isNaN(date.getTime());
 }
 

@@ -36,6 +36,7 @@ interface UserData {
   id: number;
   nama_lengkap: string;
   username: string;
+  email?: string | null;
   roles?: Role[];
 }
 
@@ -54,7 +55,8 @@ function convertToUserData(user: Record<string, unknown>): UserData | undefined 
   const id = user.id;
   const namaLengkap = user.nama_lengkap;
   const username = user.username;
-  
+  const email = typeof user.email === 'string' ? user.email : null;
+
   if (
     typeof id === 'number' &&
     typeof namaLengkap === 'string' &&
@@ -65,6 +67,7 @@ function convertToUserData(user: Record<string, unknown>): UserData | undefined 
       id,
       nama_lengkap: namaLengkap,
       username,
+      email,
       roles
     };
   }

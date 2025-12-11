@@ -1,19 +1,30 @@
-// interceptors.ts
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { storageService } from '../cache/storage.service';
 import { API_CONFIG } from '@/core/config/api.config';
 
+// 1. Buat Interface untuk mendefinisikan bentuk item di dalam queue
+interface FailedRequestQueueItem {
+  resolve: (value: string) => void; // Kita resolve dengan token baru (string)
+  reject: (error: Error) => void;     // Kita reject dengan error
+}
+
 // Flag untuk mencegah multiple refresh call
 let isRefreshing = false;
-// Antrian request yang gagal karena 401
-let failedQueue: any[] = [];
+
+// 2. Ganti tipe 'any[]' dengan tipe Interface array
+let failedQueue: FailedRequestQueueItem[] = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
     } else {
-      prom.resolve(token);
+      // Pastikan token ada sebelum resolve, atau reject jika null (safety check)
+      if (token) {
+        prom.resolve(token);
+      } else {
+        prom.reject(new Error('Token refresh failed'));
+      }
     }
   });
   failedQueue = [];
@@ -24,8 +35,6 @@ export const setupInterceptors = (instance: AxiosInstance) => {
   instance.interceptors.request.use(
     (config) => {
       const token = storageService.getAccessToken();
-      // Jangan inject header jika request ditujukan ke endpoint refresh
-      // untuk mencegah pengiriman access token yang sudah expired
       if (token && !config.url?.includes('/auth/refresh')) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -40,17 +49,14 @@ export const setupInterceptors = (instance: AxiosInstance) => {
     async (error: AxiosError) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-      // Cek jika error 401 dan bukan karena retry
       if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-
-        // Mencegah loop pada endpoint login/refresh itu sendiri
         if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
           return Promise.reject(error);
         }
 
-        // Jika sedang refreshing, masukkan request ke antrian
         if (isRefreshing) {
-          return new Promise(function (resolve, reject) {
+          // 3. Tambahkan Generic <string> pada Promise agar TypeScript tahu return-nya string
+          return new Promise<string>(function (resolve, reject) {
             failedQueue.push({ resolve, reject });
           })
             .then((token) => {
@@ -67,7 +73,6 @@ export const setupInterceptors = (instance: AxiosInstance) => {
 
         const refreshToken = storageService.getRefreshToken();
 
-        // Jika tidak ada refresh token, logout
         if (!refreshToken) {
           isRefreshing = false;
           storageService.clearAuth();
@@ -75,8 +80,6 @@ export const setupInterceptors = (instance: AxiosInstance) => {
         }
 
         try {
-          // PENTING: Gunakan instance axios BARU/MURNI untuk refresh
-          // agar tidak terganggu oleh interceptor yang ada
           const response = await axios.post(`${API_CONFIG.baseURL}/auth/refresh`, {
             refreshToken: refreshToken,
           });
@@ -89,17 +92,13 @@ export const setupInterceptors = (instance: AxiosInstance) => {
           storageService.setAccessToken(newToken);
           if (newRefreshToken) storageService.setRefreshToken(newRefreshToken);
 
-          // Proses antrian yang menunggu
           processQueue(null, newToken);
 
-          // Ulangi request yang gagal tadi
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return instance(originalRequest);
         } catch (refreshError) {
-          // Jika refresh gagal, reject semua antrian dan logout
           processQueue(refreshError as Error, null);
           storageService.clearAll();
-          // Optional: Redirect ke login bisa ditangani di sini atau via useAuth
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
