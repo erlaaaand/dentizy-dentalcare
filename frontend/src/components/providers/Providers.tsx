@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'; // 1. Import ini
-// import { ToastProvider } from './ToastProvider';
+import { ToastProvider } from './ToastProvider';
 import { ModalProvider } from './ModalProvider';
 import { AuthProvider } from './AuthProvider';
 
@@ -28,7 +28,7 @@ export function Providers({ children }: ProvidersProps) {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         {children}
-        {/* <ToastProvider /> */}
+        <ToastProvider />
         <ModalProvider />
       </AuthProvider>
     </QueryClientProvider>
