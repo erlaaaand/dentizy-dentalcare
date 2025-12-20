@@ -7,9 +7,9 @@ import { ROLES, useAuth } from '@/core';
 import { useRouter } from 'next/navigation';
 
 // Components
-import FinancialReport from './components/FinancialReport';
-import DoctorPerformance from './components/DoctorPerformance';
-import TreatmentAnalytics from './components/TreatmentAnalytics';
+import FinancialReport from './tab/FinancialReport';
+import DoctorPerformance from './tab/DoctorPerformance';
+import TreatmentAnalytics from './tab/TreatmentAnalytics';
 
 export default function ReportsPage() {
     const { user, loading } = useAuth();
