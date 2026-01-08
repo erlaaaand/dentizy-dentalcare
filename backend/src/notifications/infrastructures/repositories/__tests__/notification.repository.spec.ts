@@ -3,7 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { NotificationRepository } from '../../../infrastructures/repositories/notification.repository';
-import { Notification, NotificationStatus, NotificationType } from '../../../domains/entities/notification.entity';
+import {
+  Notification,
+  NotificationStatus,
+  NotificationType,
+} from '../../../domains/entities/notification.entity';
 import { QueryNotificationsDto } from '../../../applications/dto/query-notifications.dto';
 import { Logger } from '@nestjs/common';
 
@@ -68,8 +72,8 @@ const mockQueryBuilder = {
 
 // --- PERBAIKAN PENTING 2: Mock Repository ---
 const mockRepository = {
-  create: jest.fn(data => data),
-  save: jest.fn(data => Promise.resolve(data)),
+  create: jest.fn((data) => data),
+  save: jest.fn((data) => Promise.resolve(data)),
   findOne: jest.fn(),
   find: jest.fn(() => Promise.resolve(mockNotifications)),
   count: jest.fn(() => Promise.resolve(3)),
@@ -104,12 +108,14 @@ describe('NotificationRepository', () => {
         {
           provide: Logger,
           useValue: mockLogger,
-        }
+        },
       ],
     }).compile();
 
     repository = module.get<NotificationRepository>(NotificationRepository);
-    typeormRepository = module.get<Repository<Notification>>(getRepositoryToken(Notification));
+    typeormRepository = module.get<Repository<Notification>>(
+      getRepositoryToken(Notification),
+    );
 
     jest.clearAllMocks();
   });
@@ -120,7 +126,7 @@ describe('NotificationRepository', () => {
     it('should create and save a new notification', async () => {
       const newNotification: Partial<Notification> = {
         appointment_id: 99,
-        type: NotificationType.EMAIL_REMINDER
+        type: NotificationType.EMAIL_REMINDER,
       };
       (typeormRepository.save as jest.Mock).mockResolvedValueOnce({
         id: 4,
@@ -129,7 +135,7 @@ describe('NotificationRepository', () => {
         retry_count: 0,
         created_at: new Date(),
         updated_at: new Date(),
-        ...newNotification
+        ...newNotification,
       } as Notification); // Konversi di sini sekarang memiliki overlap yang cukup
 
       const result = await repository.create(newNotification);
@@ -142,7 +148,9 @@ describe('NotificationRepository', () => {
 
   describe('findById', () => {
     it('should find a notification by ID with required relations', async () => {
-      (typeormRepository.findOne as jest.Mock).mockResolvedValueOnce(mockNotifications[0]);
+      (typeormRepository.findOne as jest.Mock).mockResolvedValueOnce(
+        mockNotifications[0],
+      );
 
       await repository.findById(1);
 
@@ -157,15 +165,21 @@ describe('NotificationRepository', () => {
     it('should find pending notifications that are due, ordered by send_at ASC', async () => {
       await repository.findPendingToSend(25);
 
-      expect(typeormRepository.find).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          status: NotificationStatus.PENDING,
-          send_at: expect.anything(),
+      expect(typeormRepository.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: NotificationStatus.PENDING,
+            send_at: expect.anything(),
+          }),
+          relations: [
+            'appointment',
+            'appointment.patient',
+            'appointment.doctor',
+          ],
+          order: { send_at: 'ASC' },
+          take: 25,
         }),
-        relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
-        order: { send_at: 'ASC' },
-        take: 25,
-      }));
+      );
     });
   });
 
@@ -193,7 +207,7 @@ describe('NotificationRepository', () => {
 
   describe('markAsProcessing (Update Implementation Bug/Feature)', () => {
     // CATATAN: Kode Anda menggunakan NotificationStatus.SENT dan sent_at baru
-    // untuk markAsProcessing, yang umumnya digunakan untuk marking "sent" 
+    // untuk markAsProcessing, yang umumnya digunakan untuk marking "sent"
     // bukan "processing" di TypeORM. Kita uji sesuai implementasi kode.
     it('should update status to SENT and set sent_at for given IDs', async () => {
       const ids = [1, 2];
@@ -205,7 +219,7 @@ describe('NotificationRepository', () => {
         expect.objectContaining({
           status: NotificationStatus.SENT, // Menguji sesuai implementasi
           sent_at: expect.any(Date),
-        })
+        }),
       );
     });
   });
@@ -219,7 +233,7 @@ describe('NotificationRepository', () => {
         expect.objectContaining({
           status: NotificationStatus.SENT,
           sent_at: expect.any(Date),
-        })
+        }),
       );
     });
   });
@@ -233,7 +247,9 @@ describe('NotificationRepository', () => {
       // Assert
       // 1. Increment call (PENTING: Menguji penambahan retry_count)
       expect(typeormRepository.increment).toHaveBeenCalledWith(
-        { id: 6 }, 'retry_count', 1
+        { id: 6 },
+        'retry_count',
+        1,
       );
       // 2. Update call
       expect(typeormRepository.update).toHaveBeenCalledWith(
@@ -241,7 +257,7 @@ describe('NotificationRepository', () => {
         expect.objectContaining({
           status: NotificationStatus.FAILED,
           error_message: errorMessage,
-        })
+        }),
       );
     });
 
@@ -253,7 +269,7 @@ describe('NotificationRepository', () => {
         expect.objectContaining({
           status: NotificationStatus.FAILED,
           error_message: null,
-        })
+        }),
       );
     });
   });
@@ -266,15 +282,23 @@ describe('NotificationRepository', () => {
       const affectedRows = 2;
 
       // Untuk tes ini, kita bisa override return value execute khusus di sini
-      mockQueryBuilder.execute.mockResolvedValueOnce({ affected: affectedRows, raw: {} });
+      mockQueryBuilder.execute.mockResolvedValueOnce({
+        affected: affectedRows,
+        raw: {},
+      });
 
       // Act
       const result = await repository.cancelForAppointment(101);
 
       // Assert
       expect(mockQueryBuilder.update).toHaveBeenCalledWith(Notification);
-      expect(mockQueryBuilder.set).toHaveBeenCalledWith({ status: NotificationStatus.FAILED });
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('appointment_id = :appointmentId', { appointmentId: 101 });
+      expect(mockQueryBuilder.set).toHaveBeenCalledWith({
+        status: NotificationStatus.FAILED,
+      });
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'appointment_id = :appointmentId',
+        { appointmentId: 101 },
+      );
       expect(result).toBe(affectedRows);
     });
   });
@@ -282,13 +306,23 @@ describe('NotificationRepository', () => {
   // Subgroup: findAll (Pagination and Filtering)
 
   describe('findAll', () => {
-    const query: QueryNotificationsDto = { page: 2, limit: 1, status: NotificationStatus.PENDING, type: NotificationType.EMAIL_REMINDER };
+    const query: QueryNotificationsDto = {
+      page: 2,
+      limit: 1,
+      status: NotificationStatus.PENDING,
+      type: NotificationType.EMAIL_REMINDER,
+    };
 
     // Di dalam describe('findAll', () => { ... })
 
     it('should execute complex query with pagination and filters including doctor relation', async () => {
       // Arrange
-      const query: QueryNotificationsDto = { page: 2, limit: 1, status: NotificationStatus.PENDING, type: NotificationType.EMAIL_REMINDER };
+      const query: QueryNotificationsDto = {
+        page: 2,
+        limit: 1,
+        status: NotificationStatus.PENDING,
+        type: NotificationType.EMAIL_REMINDER,
+      };
 
       // Mock spesifik untuk test ini jika perlu (opsional, karena default sudah ada di atas)
       // mockQueryBuilder.getManyAndCount.mockResolvedValue([mockNotifications, 3]);
@@ -299,16 +333,27 @@ describe('NotificationRepository', () => {
       // Assert
 
       // 1. Pastikan createQueryBuilder dipanggil dengan alias yang benar
-      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith('notification');
+      expect(mockRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'notification',
+      );
 
       // 2. Cek Joins
       // Karena mockRepository me-return mockQueryBuilder global, pengecekan ini sekarang VALID
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledTimes(3);
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('notification.appointment', 'appointment');
-      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith('appointment.doctor', 'doctor');
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'notification.appointment',
+        'appointment',
+      );
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
+        'appointment.doctor',
+        'doctor',
+      );
 
       // 3. Check filtering
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('notification.status = :status', { status: NotificationStatus.PENDING });
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'notification.status = :status',
+        { status: NotificationStatus.PENDING },
+      );
 
       // 4. Check pagination
       // Page 2, Limit 1 -> Skip = (2-1)*1 = 1
@@ -341,7 +386,8 @@ describe('NotificationRepository', () => {
       expect(typeormRepository.count).toHaveBeenCalledTimes(6);
 
       // Cek pemanggilan count untuk status PENDING (untuk scheduled_today/this_week)
-      const scheduledTodayCall = (typeormRepository.count as jest.Mock).mock.calls[4][0];
+      const scheduledTodayCall = (typeormRepository.count as jest.Mock).mock
+        .calls[4][0];
       expect(scheduledTodayCall.where.status).toBe(NotificationStatus.PENDING);
 
       // Check structure of result

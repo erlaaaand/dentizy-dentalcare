@@ -29,7 +29,10 @@ describe('MedicalRecordsRepository', () => {
     patient: {} as Patient,
   });
 
-  function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Omit<T, K> {
+  function omit<T extends object, K extends keyof T>(
+    obj: T,
+    keys: K[],
+  ): Omit<T, K> {
     const clone = { ...obj };
     for (const key of keys) delete clone[key];
     return clone;
@@ -69,7 +72,6 @@ describe('MedicalRecordsRepository', () => {
     });
   }
 
-
   // ==================== SETUP AND TEARDOWN ====================
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -102,7 +104,9 @@ describe('MedicalRecordsRepository', () => {
   // ==================== FIND BY APPOINTMENT ID TESTS ====================
   describe('findByAppointmentId', () => {
     it('should find medical record by appointment ID', async () => {
-      jest.spyOn(typeOrmRepository, 'findOne').mockResolvedValue(mockMedicalRecord);
+      jest
+        .spyOn(typeOrmRepository, 'findOne')
+        .mockResolvedValue(mockMedicalRecord);
 
       const result = await repository.findByAppointmentId(1);
 
@@ -122,13 +126,19 @@ describe('MedicalRecordsRepository', () => {
     });
 
     it('should include relations', async () => {
-      jest.spyOn(typeOrmRepository, 'findOne').mockResolvedValue(mockMedicalRecord);
+      jest
+        .spyOn(typeOrmRepository, 'findOne')
+        .mockResolvedValue(mockMedicalRecord);
 
       await repository.findByAppointmentId(1);
 
       expect(typeOrmRepository.findOne).toHaveBeenCalledWith(
         expect.objectContaining({
-          relations: expect.arrayContaining(['appointment', 'doctor', 'patient']),
+          relations: expect.arrayContaining([
+            'appointment',
+            'doctor',
+            'patient',
+          ]),
         }),
       );
     });
@@ -137,7 +147,9 @@ describe('MedicalRecordsRepository', () => {
   // ==================== FIND BY PATIENT ID TESTS ====================
   describe('findByPatientId', () => {
     it('should find all records for a patient', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.findByPatientId(1);
 
@@ -158,7 +170,9 @@ describe('MedicalRecordsRepository', () => {
     });
 
     it('should order by created_at DESC', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       await repository.findByPatientId(1);
 
@@ -173,7 +187,9 @@ describe('MedicalRecordsRepository', () => {
   // ==================== FIND BY DOCTOR ID TESTS ====================
   describe('findByDoctorId', () => {
     it('should find all records for a doctor', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.findByDoctorId(1);
 
@@ -200,7 +216,9 @@ describe('MedicalRecordsRepository', () => {
       const startDate = new Date('2025-01-01');
       const endDate = new Date('2025-12-31');
 
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.findByDateRange(startDate, endDate);
 
@@ -339,7 +357,9 @@ describe('MedicalRecordsRepository', () => {
   // ==================== GET RECENT RECORDS TESTS ====================
   describe('getRecentRecords', () => {
     it('should get recent records with default parameters', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.getRecentRecords();
 
@@ -352,7 +372,9 @@ describe('MedicalRecordsRepository', () => {
     });
 
     it('should accept custom days parameter', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       await repository.getRecentRecords(30, 10);
 
@@ -360,7 +382,9 @@ describe('MedicalRecordsRepository', () => {
     });
 
     it('should accept custom limit parameter', async () => {
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       await repository.getRecentRecords(7, 20);
 
@@ -380,8 +404,12 @@ describe('MedicalRecordsRepository', () => {
         { appointment_id: 2, patient_id: 2, doctor_id: 1 },
       ];
 
-      jest.spyOn(typeOrmRepository, 'create').mockReturnValue(mockMedicalRecords as any);
-      jest.spyOn(typeOrmRepository, 'save').mockResolvedValue(mockMedicalRecords as any);
+      jest
+        .spyOn(typeOrmRepository, 'create')
+        .mockReturnValue(mockMedicalRecords as any);
+      jest
+        .spyOn(typeOrmRepository, 'save')
+        .mockResolvedValue(mockMedicalRecords as any);
 
       const result = await repository.bulkInsert(recordsToInsert);
 
@@ -428,7 +456,6 @@ describe('MedicalRecordsRepository', () => {
       expect(result.byDoctor[1]).toBe(1);
       expect(result.byDoctor[2]).toBe(1);
     });
-
 
     it('should handle date range', async () => {
       jest.spyOn(typeOrmRepository, 'find').mockResolvedValue([]);
@@ -491,7 +518,9 @@ describe('MedicalRecordsRepository', () => {
   describe('findWithConditions', () => {
     it('should find records with custom conditions', async () => {
       const conditions = { patient_id: 1, doctor_id: 1 };
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.findWithConditions(conditions);
 
@@ -505,7 +534,9 @@ describe('MedicalRecordsRepository', () => {
 
     it('should handle array of conditions', async () => {
       const conditions = [{ patient_id: 1 }, { patient_id: 2 }];
-      jest.spyOn(typeOrmRepository, 'find').mockResolvedValue(mockMedicalRecords);
+      jest
+        .spyOn(typeOrmRepository, 'find')
+        .mockResolvedValue(mockMedicalRecords);
 
       const result = await repository.findWithConditions(conditions);
 

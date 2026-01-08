@@ -14,52 +14,58 @@ import { PatientCreatedEvent } from '../../infrastructure/events/patient-created
 
 @Injectable()
 export class PatientCreationService {
-    private readonly logger = new Logger(PatientCreationService.name);
+  private readonly logger = new Logger(PatientCreationService.name);
 
-    constructor(
-        @InjectRepository(Patient)
-        private readonly patientRepository: Repository<Patient>,
-        private readonly recordGenerator: MedicalRecordNumberGenerator,
-        private readonly validator: PatientValidator,
-        private readonly transactionManager: TransactionManager,
-        private readonly cacheService: PatientCacheService,
-        private readonly mapper: PatientMapper,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    @InjectRepository(Patient)
+    private readonly patientRepository: Repository<Patient>,
+    private readonly recordGenerator: MedicalRecordNumberGenerator,
+    private readonly validator: PatientValidator,
+    private readonly transactionManager: TransactionManager,
+    private readonly cacheService: PatientCacheService,
+    private readonly mapper: PatientMapper,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    /**
-     * Buat pasien baru dengan transaction dan retry mechanism
-     */
-    async execute(createPatientDto: CreatePatientDto): Promise<PatientResponseDto> {
-        const patient = await this.transactionManager.executeWithRetry(async (queryRunner) => {
-            // Validasi business logic
-            await this.validator.validateCreate(createPatientDto);
+  /**
+   * Buat pasien baru dengan transaction dan retry mechanism
+   */
+  async execute(
+    createPatientDto: CreatePatientDto,
+  ): Promise<PatientResponseDto> {
+    const patient = await this.transactionManager.executeWithRetry(
+      async (queryRunner) => {
+        // Validasi business logic
+        await this.validator.validateCreate(createPatientDto);
 
-            // Generate nomor rekam medis
-            const nomorRekamMedis = await this.recordGenerator.generate();
+        // Generate nomor rekam medis
+        const nomorRekamMedis = await this.recordGenerator.generate();
 
-            // Buat dan simpan pasien
-            const newPatient = queryRunner.manager.create(Patient, {
-                ...createPatientDto,
-                nomor_rekam_medis: nomorRekamMedis,
-                tanggal_lahir: createPatientDto.tanggal_lahir
-                    ? new Date(createPatientDto.tanggal_lahir)
-                    : undefined,
-                is_active: true,
-            });
-
-            const savedPatient = await queryRunner.manager.save(newPatient);
-            this.logger.log(`✅ Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`);
-
-            return savedPatient;
+        // Buat dan simpan pasien
+        const newPatient = queryRunner.manager.create(Patient, {
+          ...createPatientDto,
+          nomor_rekam_medis: nomorRekamMedis,
+          tanggal_lahir: createPatientDto.tanggal_lahir
+            ? new Date(createPatientDto.tanggal_lahir)
+            : undefined,
+          is_active: true,
         });
 
-        // Emit event untuk listener
-        this.eventEmitter.emit('patient.created', new PatientCreatedEvent(patient));
+        const savedPatient = await queryRunner.manager.save(newPatient);
+        this.logger.log(
+          `✅ Patient created: ${savedPatient.nama_lengkap} (${savedPatient.nomor_rekam_medis})`,
+        );
 
-        // Invalidate list caches
-        await this.cacheService.invalidateListCaches();
+        return savedPatient;
+      },
+    );
 
-        return this.mapper.toResponseDto(patient);
-    }
+    // Emit event untuk listener
+    this.eventEmitter.emit('patient.created', new PatientCreatedEvent(patient));
+
+    // Invalidate list caches
+    await this.cacheService.invalidateListCaches();
+
+    return this.mapper.toResponseDto(patient);
+  }
 }

@@ -1,10 +1,10 @@
 import {
-    ExceptionFilter,
-    Catch,
-    ArgumentsHost,
-    HttpException,
-    HttpStatus,
-    Logger,
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
@@ -15,137 +15,140 @@ import { QueryFailedError } from 'typeorm';
  */
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-    private readonly logger = new Logger('ExceptionFilter');
+  private readonly logger = new Logger('ExceptionFilter');
 
-    catch(exception: unknown, host: ArgumentsHost) {
-        const ctx = host.switchToHttp();
-        const response = ctx.getResponse<Response>();
-        const request = ctx.getRequest<Request>();
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
 
-        const timestamp = new Date().toISOString();
-        const path = request.url;
-        const method = request.method;
+    const timestamp = new Date().toISOString();
+    const path = request.url;
+    const method = request.method;
 
-        // Extract user info (if authenticated)
-        const user = (request as any).user;
-        const userId = user?.id || 'Anonymous';
-        const username = user?.username || 'Guest';
+    // Extract user info (if authenticated)
+    const user = (request as any).user;
+    const userId = user?.id || 'Anonymous';
+    const username = user?.username || 'Guest';
 
-        let status: number;
-        let message: string | string[];
-        let errorName: string;
-        let errorDetails: any = null;
+    let status: number;
+    let message: string | string[];
+    let errorName: string;
+    let errorDetails: any = null;
 
-        // ========================================
-        // 1. Handle HTTP Exceptions (NestJS)
-        // ========================================
-        if (exception instanceof HttpException) {
-            status = exception.getStatus();
-            const exceptionResponse = exception.getResponse();
-            
-            errorName = exception.name;
+    // ========================================
+    // 1. Handle HTTP Exceptions (NestJS)
+    // ========================================
+    if (exception instanceof HttpException) {
+      status = exception.getStatus();
+      const exceptionResponse = exception.getResponse();
 
-            if (typeof exceptionResponse === 'string') {
-                message = exceptionResponse;
-            } else if (typeof exceptionResponse === 'object') {
-                message = (exceptionResponse as any).message || exception.message;
-                errorDetails = (exceptionResponse as any).error;
-            } else {
-                message = exception.message;
-            }
-        }
-        // ========================================
-        // 2. Handle Database Errors (TypeORM)
-        // ========================================
-        else if (exception instanceof QueryFailedError) {
-            status = HttpStatus.BAD_REQUEST;
-            errorName = 'DatabaseError';
-            
-            const dbError = exception as any;
-            
-            // Handle duplicate entry error
-            if (dbError.code === 'ER_DUP_ENTRY') {
-                message = 'Data sudah ada (duplikat)';
-                errorDetails = this.extractDuplicateField(dbError.message);
-            }
-            // Handle foreign key constraint error
-            else if (dbError.code === 'ER_NO_REFERENCED_ROW_2') {
-                message = 'Referensi data tidak valid';
-                errorDetails = 'Foreign key constraint failed';
-            }
-            // Handle other database errors
-            else {
-                message = 'Kesalahan database';
-                errorDetails = process.env.NODE_ENV === 'development' 
-                    ? dbError.message 
-                    : 'Database operation failed';
-            }
+      errorName = exception.name;
 
-            this.logger.error(
-                `Database Error: ${dbError.message} | User: ${username} | Path: ${path}`
-            );
-        }
-        // ========================================
-        // 3. Handle Unknown/Unexpected Errors
-        // ========================================
-        else {
-            status = HttpStatus.INTERNAL_SERVER_ERROR;
-            errorName = 'InternalServerError';
-            message = 'Terjadi kesalahan pada server';
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else if (typeof exceptionResponse === 'object') {
+        message = (exceptionResponse as any).message || exception.message;
+        errorDetails = (exceptionResponse as any).error;
+      } else {
+        message = exception.message;
+      }
+    }
+    // ========================================
+    // 2. Handle Database Errors (TypeORM)
+    // ========================================
+    else if (exception instanceof QueryFailedError) {
+      status = HttpStatus.BAD_REQUEST;
+      errorName = 'DatabaseError';
 
-            // Log detail error untuk debugging
-            if (exception instanceof Error) {
-                this.logger.error(
-                    `Unhandled Error: ${exception.message} | User: ${username} | Path: ${path}`
-                );
-                
-                if (process.env.NODE_ENV === 'development') {
-                    this.logger.error(`Stack Trace: ${exception.stack}`);
-                    errorDetails = exception.message;
-                }
-            } else {
-                this.logger.error(
-                    `Unknown Error: ${JSON.stringify(exception)} | User: ${username} | Path: ${path}`
-                );
-            }
-        }
+      const dbError = exception as any;
 
-        // ========================================
-        // 4. Build Error Response
-        // ========================================
-        const errorResponse = {
-            success: false,
-            statusCode: status,
-            timestamp,
-            path,
-            method,
-            message,
-            error: errorName,
-            ...(errorDetails && { details: errorDetails }),
-            ...(process.env.NODE_ENV === 'development' && {
-                user: { id: userId, username },
-            }),
-        };
+      // Handle duplicate entry error
+      if (dbError.code === 'ER_DUP_ENTRY') {
+        message = 'Data sudah ada (duplikat)';
+        errorDetails = this.extractDuplicateField(dbError.message);
+      }
+      // Handle foreign key constraint error
+      else if (dbError.code === 'ER_NO_REFERENCED_ROW_2') {
+        message = 'Referensi data tidak valid';
+        errorDetails = 'Foreign key constraint failed';
+      }
+      // Handle other database errors
+      else {
+        message = 'Kesalahan database';
+        errorDetails =
+          process.env.NODE_ENV === 'development'
+            ? dbError.message
+            : 'Database operation failed';
+      }
 
-        // ========================================
-        // 5. Log Error untuk Audit Trail
-        // ========================================
+      this.logger.error(
+        `Database Error: ${dbError.message} | User: ${username} | Path: ${path}`,
+      );
+    }
+    // ========================================
+    // 3. Handle Unknown/Unexpected Errors
+    // ========================================
+    else {
+      status = HttpStatus.INTERNAL_SERVER_ERROR;
+      errorName = 'InternalServerError';
+      message = 'Terjadi kesalahan pada server';
+
+      // Log detail error untuk debugging
+      if (exception instanceof Error) {
         this.logger.error(
-            `❌ [${method}] ${path} | Status: ${status} | User: ${username} (${userId}) | Error: ${errorName}`
+          `Unhandled Error: ${exception.message} | User: ${username} | Path: ${path}`,
         );
 
-        // ========================================
-        // 6. Send Response
-        // ========================================
-        response.status(status).json(errorResponse);
+        if (process.env.NODE_ENV === 'development') {
+          this.logger.error(`Stack Trace: ${exception.stack}`);
+          errorDetails = exception.message;
+        }
+      } else {
+        this.logger.error(
+          `Unknown Error: ${JSON.stringify(exception)} | User: ${username} | Path: ${path}`,
+        );
+      }
     }
 
-    /**
-     * Extract duplicate field name dari MySQL error message
-     * Contoh: "Duplicate entry 'username123' for key 'username'"
-     */
-    private extractDuplicateField(errorMessage: string): string {
-        const match = errorMessage.match(/for key '([^']+)'/);
-        return match ? `Field '${match[1]}' sudah digunakan` : 'Duplicate entry detected';
-    }
+    // ========================================
+    // 4. Build Error Response
+    // ========================================
+    const errorResponse = {
+      success: false,
+      statusCode: status,
+      timestamp,
+      path,
+      method,
+      message,
+      error: errorName,
+      ...(errorDetails && { details: errorDetails }),
+      ...(process.env.NODE_ENV === 'development' && {
+        user: { id: userId, username },
+      }),
+    };
+
+    // ========================================
+    // 5. Log Error untuk Audit Trail
+    // ========================================
+    this.logger.error(
+      `❌ [${method}] ${path} | Status: ${status} | User: ${username} (${userId}) | Error: ${errorName}`,
+    );
+
+    // ========================================
+    // 6. Send Response
+    // ========================================
+    response.status(status).json(errorResponse);
+  }
+
+  /**
+   * Extract duplicate field name dari MySQL error message
+   * Contoh: "Duplicate entry 'username123' for key 'username'"
+   */
+  private extractDuplicateField(errorMessage: string): string {
+    const match = errorMessage.match(/for key '([^']+)'/);
+    return match
+      ? `Field '${match[1]}' sudah digunakan`
+      : 'Duplicate entry detected';
+  }
 }

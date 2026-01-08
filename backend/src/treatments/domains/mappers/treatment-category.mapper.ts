@@ -2,18 +2,18 @@
 import { Injectable } from '@nestjs/common';
 
 export interface TreatmentCategoryDto {
-    id: number;
-    namaKategori: string;
-    kodeKategori?: string;
+  id: number;
+  namaKategori: string;
+  kodeKategori?: string;
 }
 
 @Injectable()
 export class TreatmentCategoryMapper {
-    toDto(category: any): TreatmentCategoryDto {
-        return {
-            id: category.id,
-            namaKategori: category.namaKategori,
-            kodeKategori: category.kodeKategori,
-        };
-    }
+  toDto(category: any): TreatmentCategoryDto {
+    return {
+      id: category.id,
+      namaKategori: category.namaKategori,
+      kodeKategori: category.kodeKategori,
+    };
+  }
 }

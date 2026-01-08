@@ -5,19 +5,14 @@ import { TreatmentCategoryCreatedEvent } from '../../infrastructures/events/trea
 
 @Injectable()
 export class TreatmentCategoryCreatedListener {
-    private readonly logger = new Logger(TreatmentCategoryCreatedListener.name);
+  private readonly logger = new Logger(TreatmentCategoryCreatedListener.name);
 
-    @OnEvent('treatment-category.created')
-    handleCreatedEvent(event: TreatmentCategoryCreatedEvent) {
-        this.logger.log(
-            `Treatment category created: ID=${event.categoryId}, Name=${event.categoryName}`,
-        );
+  @OnEvent('treatment-category.created')
+  handleCreatedEvent(event: TreatmentCategoryCreatedEvent) {
+    this.logger.log(
+      `Treatment category created: ID=${event.categoryId}, Name=${event.categoryName}`,
+    );
 
-        // Additional actions: send notification, update cache, etc.
-    }
+    // Additional actions: send notification, update cache, etc.
+  }
 }
-
-
-
-
-

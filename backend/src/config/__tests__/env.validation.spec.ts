@@ -118,7 +118,9 @@ describe('EnvValidationSchema', () => {
       expect(error).toBeDefined();
       // Debug info untuk membantu troubleshooting
       if (!error) {
-        console.log('PORT validation passed for value 0, which should have failed');
+        console.log(
+          'PORT validation passed for value 0, which should have failed',
+        );
       }
     });
 
@@ -442,8 +444,10 @@ describe('EnvValidationSchema', () => {
 
     it('should handle extra unknown properties according to schema settings', () => {
       const env = { ...validEnvVars, UNKNOWN_PROP: 'value' };
-      const { error } = envValidationSchema.validate(env, { allowUnknown: true });
-      
+      const { error } = envValidationSchema.validate(env, {
+        allowUnknown: true,
+      });
+
       // Test ini mungkin gagal tergantung pada konfigurasi schema
       // Jika schema dikonfigurasi untuk menolak unknown properties, test ini diharapkan gagal
       if (error) {
@@ -457,7 +461,9 @@ describe('EnvValidationSchema', () => {
 
     it('should allow unknown properties when explicitly configured', () => {
       const env = { ...validEnvVars, UNKNOWN_PROP: 'value' };
-      const { error } = envValidationSchema.validate(env, { allowUnknown: true });
+      const { error } = envValidationSchema.validate(env, {
+        allowUnknown: true,
+      });
       // Dengan allowUnknown: true, seharusnya tidak ada error
       expect(error).toBeUndefined();
     });

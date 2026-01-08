@@ -6,18 +6,18 @@ import { PaymentMapper } from '../../domains/mappers/payment.mapper';
 
 @Injectable()
 export class GetPaymentDetailUseCase {
-    constructor(
-        private readonly paymentRepository: PaymentRepository,
-        private readonly paymentMapper: PaymentMapper,
-    ) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly paymentMapper: PaymentMapper,
+  ) {}
 
-    async execute(id: number): Promise<PaymentResponseDto> {
-        const payment = await this.paymentRepository.findOne(id);
+  async execute(id: number): Promise<PaymentResponseDto> {
+    const payment = await this.paymentRepository.findOne(id);
 
-        if (!payment) {
-            throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
-        }
-
-        return this.paymentMapper.toResponseDto(payment);
+    if (!payment) {
+      throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
     }
+
+    return this.paymentMapper.toResponseDto(payment);
+  }
 }

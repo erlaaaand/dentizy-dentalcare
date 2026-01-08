@@ -1,5 +1,8 @@
 import { AppointmentCreatedEvent } from '../appointment-created.event';
-import { Appointment, AppointmentStatus } from '../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../domains/entities/appointment.entity';
 
 describe('AppointmentCreatedEvent', () => {
   let mockAppointment: Appointment;

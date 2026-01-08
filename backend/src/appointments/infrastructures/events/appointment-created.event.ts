@@ -5,8 +5,8 @@ import { Appointment } from '../../domains/entities/appointment.entity';
  * Triggered ketika appointment baru dibuat
  */
 export class AppointmentCreatedEvent {
-    constructor(
-        public readonly appointment: Appointment,
-        public readonly shouldScheduleReminder: boolean,
-    ) { }
+  constructor(
+    public readonly appointment: Appointment,
+    public readonly shouldScheduleReminder: boolean,
+  ) {}
 }

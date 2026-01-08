@@ -77,7 +77,7 @@ describe('UpdateProfileDto', () => {
       (dto as any).username = 12345;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'username')).toBe(true);
+      expect(errors.some((e) => e.property === 'username')).toBe(true);
     });
 
     it('should accept username with underscore', async () => {
@@ -123,7 +123,7 @@ describe('UpdateProfileDto', () => {
       (dto as any).nama_lengkap = 12345;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'nama_lengkap')).toBe(true);
+      expect(errors.some((e) => e.property === 'nama_lengkap')).toBe(true);
     });
 
     it('should accept nama_lengkap with spaces', async () => {
@@ -194,7 +194,7 @@ describe('UpdateProfileDto', () => {
       const errors = await validate(dto);
       expect(errors.length).toBe(2);
 
-      const properties = errors.map(e => e.property);
+      const properties = errors.map((e) => e.property);
       expect(properties).toContain('username');
       expect(properties).toContain('nama_lengkap');
     });

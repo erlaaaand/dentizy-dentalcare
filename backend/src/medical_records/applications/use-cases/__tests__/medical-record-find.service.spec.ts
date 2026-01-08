@@ -349,9 +349,7 @@ describe('MedicalRecordFindService', () => {
           throw new Error('Forbidden');
         });
 
-      await expect(service.execute(1, mockDokter)).rejects.toThrow(
-        'Forbidden',
-      );
+      await expect(service.execute(1, mockDokter)).rejects.toThrow('Forbidden');
     });
 
     it('should provide helpful error message when not found', async () => {
@@ -392,9 +390,7 @@ describe('MedicalRecordFindService', () => {
 
       await service.execute(1, mockDokter);
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('(DOKTER)'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('(DOKTER)'));
     });
 
     it('should include record ID in log', async () => {
@@ -496,10 +492,9 @@ describe('MedicalRecordFindService', () => {
 
       await service.execute(1, mockDokter);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
-        'record.id = :id',
-        { id: 1 },
-      );
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('record.id = :id', {
+        id: 1,
+      });
     });
   });
 });

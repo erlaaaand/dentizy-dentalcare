@@ -10,45 +10,47 @@ import { AppointmentQueryBuilder } from '../../infrastructures/persistence/query
  */
 @Injectable()
 export class AppointmentSearchService {
-    private readonly logger = new Logger(AppointmentSearchService.name);
+  private readonly logger = new Logger(AppointmentSearchService.name);
 
-    constructor(
-        private readonly repository: AppointmentsRepository,
-        private readonly queryBuilder: AppointmentQueryBuilder,
-    ) { }
+  constructor(
+    private readonly repository: AppointmentsRepository,
+    private readonly queryBuilder: AppointmentQueryBuilder,
+  ) {}
 
-    /**
-     * Execute: Search appointments dengan filters
-     */
-    async execute(user: User, queryDto: FindAppointmentsQueryDto) {
-        try {
-            // 1. BUILD QUERY
-            const baseQuery = this.repository.createQueryBuilder('appointment');
+  /**
+   * Execute: Search appointments dengan filters
+   */
+  async execute(user: User, queryDto: FindAppointmentsQueryDto) {
+    try {
+      // 1. BUILD QUERY
+      const baseQuery = this.repository.createQueryBuilder('appointment');
 
-            const query = this.queryBuilder.buildFindAllQuery(
-                baseQuery,
-                user,
-                queryDto
-            );
+      const query = this.queryBuilder.buildFindAllQuery(
+        baseQuery,
+        user,
+        queryDto,
+      );
 
-            // 2. EXECUTE QUERY
-            const [appointments, total] = await query.getManyAndCount();
+      // 2. EXECUTE QUERY
+      const [appointments, total] = await query.getManyAndCount();
 
-            this.logger.log(`📋 Retrieved ${appointments.length}/${total} appointments`);
+      this.logger.log(
+        `📋 Retrieved ${appointments.length}/${total} appointments`,
+      );
 
-            // 3. RETURN PAGINATED RESULT
-            const { page = 1, limit = 10 } = queryDto;
+      // 3. RETURN PAGINATED RESULT
+      const { page = 1, limit = 10 } = queryDto;
 
-            return {
-                data: appointments,
-                count: total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            };
-        } catch (error) {
-            this.logger.error('❌ Error fetching appointments:', error.stack);
-            throw new BadRequestException('Gagal mengambil daftar janji temu');
-        }
+      return {
+        data: appointments,
+        count: total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      };
+    } catch (error) {
+      this.logger.error('❌ Error fetching appointments:', error.stack);
+      throw new BadRequestException('Gagal mengambil daftar janji temu');
     }
+  }
 }

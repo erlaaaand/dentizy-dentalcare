@@ -33,7 +33,8 @@ const mockMetadata = {
   userAgent: 'TestAgent/1.0',
 };
 
-const mockAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
+const mockAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
 
 // ======================
 // TEST SUITE
@@ -369,7 +370,11 @@ describe('LoginService', () => {
         const userWithMultipleRoles = {
           ...mockUser,
           roles: [
-            { id: 1, name: UserRole.KEPALA_KLINIK, description: 'Kepala Klinik' },
+            {
+              id: 1,
+              name: UserRole.KEPALA_KLINIK,
+              description: 'Kepala Klinik',
+            },
             { id: 2, name: UserRole.DOKTER, description: 'Dokter' },
             { id: 3, name: UserRole.STAF, description: 'Staf' },
           ],
@@ -425,7 +430,10 @@ describe('LoginService', () => {
         tokenService.generateToken.mockReturnValue(mockAccessToken);
 
         const metadataWithoutAgent = { ipAddress: '127.0.0.1' };
-        const result = await service.execute(mockLoginDto, metadataWithoutAgent);
+        const result = await service.execute(
+          mockLoginDto,
+          metadataWithoutAgent,
+        );
 
         expect(result).toBeDefined();
         expect(eventEmitter.emit).toHaveBeenCalledWith(

@@ -7,7 +7,7 @@ describe('GetUser Decorator', () => {
   const mockUser = {
     id: 1,
     username: 'testuser',
-    email: 'test@example.com'
+    email: 'test@example.com',
   };
 
   // Test 1: Verify the decorator is properly created
@@ -23,8 +23,8 @@ describe('GetUser Decorator', () => {
       const mockRequest = { user: mockUser };
       const mockExecutionContext: ExecutionContext = {
         switchToHttp: () => ({
-          getRequest: () => mockRequest
-        })
+          getRequest: () => mockRequest,
+        }),
       } as any;
 
       // Extract the logic from our decorator
@@ -42,8 +42,8 @@ describe('GetUser Decorator', () => {
       const mockRequest = {}; // No user
       const mockExecutionContext: ExecutionContext = {
         switchToHttp: () => ({
-          getRequest: () => mockRequest
-        })
+          getRequest: () => mockRequest,
+        }),
       } as any;
 
       const decoratorLogic = (data: unknown, ctx: ExecutionContext) => {
@@ -59,8 +59,8 @@ describe('GetUser Decorator', () => {
       const mockRequest = { user: mockUser };
       const mockExecutionContext: ExecutionContext = {
         switchToHttp: () => ({
-          getRequest: () => mockRequest
-        })
+          getRequest: () => mockRequest,
+        }),
       } as any;
 
       const decoratorLogic = (data: unknown, ctx: ExecutionContext) => {

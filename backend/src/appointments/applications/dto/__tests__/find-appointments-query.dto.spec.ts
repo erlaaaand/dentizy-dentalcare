@@ -92,7 +92,9 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const doctorIdError = errors.find(error => error.property === 'doctorId');
+      const doctorIdError = errors.find(
+        (error) => error.property === 'doctorId',
+      );
       expect(doctorIdError?.constraints).toBeDefined();
       expect(doctorIdError?.constraints?.isNumber).toBeDefined();
     });
@@ -117,7 +119,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const dateError = errors.find(error => error.property === 'date');
+      const dateError = errors.find((error) => error.property === 'date');
       expect(dateError?.constraints).toBeDefined();
       expect(dateError?.constraints?.isDateString).toBeDefined();
     });
@@ -152,7 +154,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const statusError = errors.find(error => error.property === 'status');
+      const statusError = errors.find((error) => error.property === 'status');
       expect(statusError?.constraints).toBeDefined();
       expect(statusError?.constraints?.isEnum).toBeDefined();
     });
@@ -189,7 +191,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const pageError = errors.find(error => error.property === 'page');
+      const pageError = errors.find((error) => error.property === 'page');
       expect(pageError?.constraints).toBeDefined();
       expect(pageError?.constraints?.min).toBeDefined();
     });
@@ -201,7 +203,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const pageError = errors.find(error => error.property === 'page');
+      const pageError = errors.find((error) => error.property === 'page');
       expect(pageError?.constraints).toBeDefined();
       expect(pageError?.constraints?.isNumber).toBeDefined();
     });
@@ -234,7 +236,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const limitError = errors.find(error => error.property === 'limit');
+      const limitError = errors.find((error) => error.property === 'limit');
       expect(limitError?.constraints).toBeDefined();
       expect(limitError?.constraints?.min).toBeDefined();
     });
@@ -246,7 +248,7 @@ describe('FindAppointmentsQueryDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const limitError = errors.find(error => error.property === 'limit');
+      const limitError = errors.find((error) => error.property === 'limit');
       expect(limitError?.constraints).toBeDefined();
       expect(limitError?.constraints?.isNumber).toBeDefined();
     });

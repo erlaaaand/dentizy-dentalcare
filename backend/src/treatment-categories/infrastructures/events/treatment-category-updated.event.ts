@@ -1,8 +1,8 @@
 // backend/src/treatment-categories/domains/events/treatment-category-updated.event.ts
 export class TreatmentCategoryUpdatedEvent {
-    constructor(
-        public readonly categoryId: number,
-        public readonly categoryName: string,
-        public readonly updatedAt: Date,
-    ) { }
+  constructor(
+    public readonly categoryId: number,
+    public readonly categoryName: string,
+    public readonly updatedAt: Date,
+  ) {}
 }

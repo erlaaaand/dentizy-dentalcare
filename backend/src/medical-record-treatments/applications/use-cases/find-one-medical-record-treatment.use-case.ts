@@ -6,16 +6,18 @@ import { MedicalRecordTreatmentResponseDto } from '../dto/medical-record-treatme
 
 @Injectable()
 export class FindOneMedicalRecordTreatmentUseCase {
-    constructor(
-        private readonly repository: MedicalRecordTreatmentRepository,
-        private readonly mapper: MedicalRecordTreatmentMapper,
-    ) { }
+  constructor(
+    private readonly repository: MedicalRecordTreatmentRepository,
+    private readonly mapper: MedicalRecordTreatmentMapper,
+  ) {}
 
-    async execute(id: number): Promise<MedicalRecordTreatmentResponseDto> {
-        const result = await this.repository.findOne(id);
-        if (!result) {
-            throw new NotFoundException(`Data perawatan rekam medis dengan ID ${id} tidak ditemukan`);
-        }
-        return this.mapper.toResponseDto(result);
+  async execute(id: number): Promise<MedicalRecordTreatmentResponseDto> {
+    const result = await this.repository.findOne(id);
+    if (!result) {
+      throw new NotFoundException(
+        `Data perawatan rekam medis dengan ID ${id} tidak ditemukan`,
+      );
     }
+    return this.mapper.toResponseDto(result);
+  }
 }

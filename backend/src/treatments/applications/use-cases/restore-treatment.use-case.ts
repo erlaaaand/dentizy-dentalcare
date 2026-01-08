@@ -8,25 +8,25 @@ import { TreatmentRestoredEvent } from '../../infrastructures/events/treatment-r
 
 @Injectable()
 export class RestoreTreatmentUseCase {
-    constructor(
-        private readonly treatmentRepository: TreatmentRepository,
-        private readonly treatmentMapper: TreatmentMapper,
-        private readonly eventEmitter: EventEmitter2,
-    ) {}
+  constructor(
+    private readonly treatmentRepository: TreatmentRepository,
+    private readonly treatmentMapper: TreatmentMapper,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number): Promise<TreatmentResponseDto> {
-        await this.treatmentRepository.restore(id);
-        const treatment = await this.treatmentRepository.findOne(id);
+  async execute(id: number): Promise<TreatmentResponseDto> {
+    await this.treatmentRepository.restore(id);
+    const treatment = await this.treatmentRepository.findOne(id);
 
-        if (!treatment) {
-            throw new NotFoundException(`Perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        this.eventEmitter.emit(
-            'treatment.restored',
-            new TreatmentRestoredEvent(id, treatment.kodePerawatan, new Date()),
-        );
-
-        return this.treatmentMapper.toResponseDto(treatment);
+    if (!treatment) {
+      throw new NotFoundException(`Perawatan dengan ID ${id} tidak ditemukan`);
     }
+
+    this.eventEmitter.emit(
+      'treatment.restored',
+      new TreatmentRestoredEvent(id, treatment.kodePerawatan, new Date()),
+    );
+
+    return this.treatmentMapper.toResponseDto(treatment);
+  }
 }

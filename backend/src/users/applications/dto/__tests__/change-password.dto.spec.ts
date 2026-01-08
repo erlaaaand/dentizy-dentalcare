@@ -15,7 +15,6 @@ const validData = {
 
 // 3. TEST SUITE
 describe('ChangePasswordDto', () => {
-
   // 4. SETUP AND TEARDOWN
   // DTO bersifat stateless, setup khusus tidak terlalu diperlukan
   // namun kita bisa reset variable jika dibutuhkan.
@@ -33,17 +32,25 @@ describe('ChangePasswordDto', () => {
 
   describe('oldPassword', () => {
     it('should fail if oldPassword is empty', async () => {
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, oldPassword: '' });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        oldPassword: '',
+      });
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
       expect(errors[0].property).toBe('oldPassword');
       expect(errors[0].constraints).toHaveProperty('isNotEmpty');
-      expect(errors[0].constraints?.isNotEmpty).toBe('Password lama harus diisi');
+      expect(errors[0].constraints?.isNotEmpty).toBe(
+        'Password lama harus diisi',
+      );
     });
 
     it('should fail if oldPassword is not a string', async () => {
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, oldPassword: 12345 });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        oldPassword: 12345,
+      });
       const errors = await validate(dto);
 
       expect(errors[0].property).toBe('oldPassword');
@@ -53,12 +60,15 @@ describe('ChangePasswordDto', () => {
 
   describe('newPassword', () => {
     it('should fail if newPassword is empty', async () => {
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, newPassword: '' });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        newPassword: '',
+      });
       const errors = await validate(dto);
 
       // Bisa memicu multiple error (isNotEmpty, minLength, isStrongPassword)
       // Kita cari error spesifik untuk properti ini
-      const error = errors.find(e => e.property === 'newPassword');
+      const error = errors.find((e) => e.property === 'newPassword');
       expect(error).toBeDefined();
       expect(error?.constraints).toHaveProperty('isNotEmpty');
       expect(error?.constraints?.isNotEmpty).toBe('Password baru harus diisi');
@@ -66,12 +76,17 @@ describe('ChangePasswordDto', () => {
 
     it(`should fail if newPassword is shorter than ${PASSWORD_MIN_LENGTH} characters`, async () => {
       const shortPass = 'Str1!'; // Terlalu pendek
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, newPassword: shortPass });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        newPassword: shortPass,
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'newPassword');
+      const error = errors.find((e) => e.property === 'newPassword');
       expect(error?.constraints).toHaveProperty('minLength');
-      expect(error?.constraints?.minLength).toContain(`minimal ${PASSWORD_MIN_LENGTH} karakter`);
+      expect(error?.constraints?.minLength).toContain(
+        `minimal ${PASSWORD_MIN_LENGTH} karakter`,
+      );
     });
 
     it('should fail if newPassword is NOT strong (Integration Test with IsStrongPassword)', async () => {
@@ -80,10 +95,13 @@ describe('ChangePasswordDto', () => {
       // Pastikan panjangnya cukup agar tidak kena error minLength
       const longWeakPass = weakPass.padEnd(PASSWORD_MIN_LENGTH + 1, 'a');
 
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, newPassword: longWeakPass });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        newPassword: longWeakPass,
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'newPassword');
+      const error = errors.find((e) => e.property === 'newPassword');
       // Nama constraint biasanya sesuai nama decorator (isStrongPassword)
       // atau custom validator name
       expect(error).toBeDefined();
@@ -95,12 +113,17 @@ describe('ChangePasswordDto', () => {
 
   describe('confirmPassword', () => {
     it('should fail if confirmPassword is empty', async () => {
-      const dto = plainToInstance(ChangePasswordDto, { ...validData, confirmPassword: '' });
+      const dto = plainToInstance(ChangePasswordDto, {
+        ...validData,
+        confirmPassword: '',
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'confirmPassword');
+      const error = errors.find((e) => e.property === 'confirmPassword');
       expect(error?.constraints).toHaveProperty('isNotEmpty');
-      expect(error?.constraints?.isNotEmpty).toBe('Konfirmasi password harus diisi');
+      expect(error?.constraints?.isNotEmpty).toBe(
+        'Konfirmasi password harus diisi',
+      );
     });
 
     it('should fail if confirmPassword does NOT match newPassword (Integration Test with Match)', async () => {
@@ -111,12 +134,14 @@ describe('ChangePasswordDto', () => {
       });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'confirmPassword');
+      const error = errors.find((e) => e.property === 'confirmPassword');
       expect(error).toBeDefined();
 
       // PERBAIKAN DISINI: Gunakan 'match' (huruf kecil)
       expect(error?.constraints).toHaveProperty('match');
-      expect(error?.constraints?.match).toBe('Konfirmasi password tidak sesuai dengan password baru');
+      expect(error?.constraints?.match).toBe(
+        'Konfirmasi password tidak sesuai dengan password baru',
+      );
     });
   });
 });

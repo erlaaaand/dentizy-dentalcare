@@ -20,10 +20,10 @@ describe('LoggingInterceptor', () => {
 
   // Spy untuk memantau output Logger
   const loggerSpies = {
-    log: jest.spyOn(Logger.prototype, 'log').mockImplementation(() => { }),
-    warn: jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => { }),
-    error: jest.spyOn(Logger.prototype, 'error').mockImplementation(() => { }),
-    debug: jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => { }),
+    log: jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {}),
+    warn: jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {}),
+    error: jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {}),
+    debug: jest.spyOn(Logger.prototype, 'debug').mockImplementation(() => {}),
   };
 
   // Menggunakan timer palsu untuk mengontrol Date.now()
@@ -85,60 +85,54 @@ describe('LoggingInterceptor', () => {
     });
 
     it('should log request and successful response', (done) => {
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
 
-          // Verifikasi log request awal
-          expect(loggerSpies.log).toHaveBeenCalledWith(
-            '[test-request-id] [GET] /test | User: testuser (ID: 1) | IP: 127.0.0.1',
-          );
+        // Verifikasi log request awal
+        expect(loggerSpies.log).toHaveBeenCalledWith(
+          '[test-request-id] [GET] /test | User: testuser (ID: 1) | IP: 127.0.0.1',
+        );
 
-          // Verifikasi log response sukses (sekarang harus berisi 50ms)
-          expect(loggerSpies.log).toHaveBeenCalledWith(
-            expect.stringContaining(
-              '[test-request-id] [GET] /test | Status: 200 | 50ms | User: testuser',
-            ),
-          );
+        // Verifikasi log response sukses (sekarang harus berisi 50ms)
+        expect(loggerSpies.log).toHaveBeenCalledWith(
+          expect.stringContaining(
+            '[test-request-id] [GET] /test | Status: 200 | 50ms | User: testuser',
+          ),
+        );
 
-          expect(loggerSpies.warn).not.toHaveBeenCalled();
-          expect(loggerSpies.error).not.toHaveBeenCalled();
-          done(); // done() sekarang akan terpanggil
-        });
+        expect(loggerSpies.warn).not.toHaveBeenCalled();
+        expect(loggerSpies.error).not.toHaveBeenCalled();
+        done(); // done() sekarang akan terpanggil
+      });
     });
 
     it('should set X-Request-ID header and attach requestId to request', (done) => {
       // Test ini tidak bergantung pada timer, jadi tidak perlu diubah
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          expect(mockResponse.setHeader).toHaveBeenCalledWith(
-            'X-Request-ID',
-            'test-request-id',
-          );
-          expect((mockRequest as any).requestId).toBe('test-request-id');
-          done();
-        });
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        expect(mockResponse.setHeader).toHaveBeenCalledWith(
+          'X-Request-ID',
+          'test-request-id',
+        );
+        expect((mockRequest as any).requestId).toBe('test-request-id');
+        done();
+      });
     });
 
     it('should use existing x-request-id header if present', (done) => {
       // Test ini tidak bergantung pada timer, jadi tidak perlu diubah
       mockRequest.headers!['x-request-id'] = 'existing-id';
 
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          expect(mockUuidv4).not.toHaveBeenCalled();
-          expect(mockResponse.setHeader).toHaveBeenCalledWith(
-            'X-Request-ID',
-            'existing-id',
-          );
-          expect(loggerSpies.log).toHaveBeenCalledWith(
-            expect.stringContaining('[existing-id]'),
-          );
-          done();
-        });
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        expect(mockUuidv4).not.toHaveBeenCalled();
+        expect(mockResponse.setHeader).toHaveBeenCalledWith(
+          'X-Request-ID',
+          'existing-id',
+        );
+        expect(loggerSpies.log).toHaveBeenCalledWith(
+          expect.stringContaining('[existing-id]'),
+        );
+        done();
+      });
     });
   });
 
@@ -214,48 +208,42 @@ describe('LoggingInterceptor', () => {
         },
       };
 
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          expect(loggerSpies.debug).toHaveBeenCalledWith(
-            expect.stringContaining(
-              `"username": "test",\n` +
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        expect(loggerSpies.debug).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `"username": "test",\n` +
               `  "password": "***MASKED***",\n` +
               `  "nested": {\n` +
               `    "token": "***MASKED***"\n` +
               `  }`,
-            ),
-          );
-          done();
-        });
+          ),
+        );
+        done();
+      });
     });
 
     it('should mask sensitive fields in response data (dev mode)', (done) => {
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          expect(loggerSpies.debug).toHaveBeenCalledWith(
-            expect.stringContaining(
-              `"username": "erland",\n` +
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        expect(loggerSpies.debug).toHaveBeenCalledWith(
+          expect.stringContaining(
+            `"username": "erland",\n` +
               `  "access_token": "***MASKED***",\n` +
               `  "refresh_token": "***MASKED***"`,
-            ),
-          );
-          done();
-        });
+          ),
+        );
+        done();
+      });
     });
 
     it('should NOT log response data in production mode', (done) => {
       process.env.NODE_ENV = 'production';
 
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          expect(loggerSpies.debug).not.toHaveBeenCalledWith(
-            expect.stringContaining('Response Data:'),
-          );
-          done();
-        });
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        expect(loggerSpies.debug).not.toHaveBeenCalledWith(
+          expect.stringContaining('Response Data:'),
+        );
+        done();
+      });
     });
   });
 
@@ -273,22 +261,20 @@ describe('LoggingInterceptor', () => {
         },
       };
 
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
 
-          // Peringatan dari tap() (sekarang 1500ms)
-          expect(loggerSpies.warn).toHaveBeenCalledWith(
-            '[test-request-id] ⚠️ Slow Response: [GET] /test took 1500ms',
-          );
-          // Peringatan dari trackPerformanceMetrics() (sekarang 1500ms)
-          expect(loggerSpies.warn).toHaveBeenCalledWith(
-            '🟡 SLOW ENDPOINT: [GET] /test took 1500ms (status: 200)',
-          );
-          expect(loggerSpies.error).not.toHaveBeenCalled();
-          done(); // done() sekarang akan terpanggil
-        });
+        // Peringatan dari tap() (sekarang 1500ms)
+        expect(loggerSpies.warn).toHaveBeenCalledWith(
+          '[test-request-id] ⚠️ Slow Response: [GET] /test took 1500ms',
+        );
+        // Peringatan dari trackPerformanceMetrics() (sekarang 1500ms)
+        expect(loggerSpies.warn).toHaveBeenCalledWith(
+          '🟡 SLOW ENDPOINT: [GET] /test took 1500ms (status: 200)',
+        );
+        expect(loggerSpies.error).not.toHaveBeenCalled();
+        done(); // done() sekarang akan terpanggil
+      });
     });
 
     it('should log an ERROR for responses > 3000ms', (done) => {
@@ -300,21 +286,19 @@ describe('LoggingInterceptor', () => {
         },
       };
 
-      interceptor
-        .intercept(mockContext, mockCallHandler)
-        .subscribe(() => {
-          // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
+      interceptor.intercept(mockContext, mockCallHandler).subscribe(() => {
+        // [DIHAPUS] Baris advanceTimersByTime dihapus dari sini
 
-          // Peringatan dari tap() (sekarang 3500ms)
-          expect(loggerSpies.warn).toHaveBeenCalledWith(
-            '[test-request-id] ⚠️ Slow Response: [GET] /test took 3500ms',
-          );
-          // Peringatan dari trackPerformanceMetrics() (sekarang 3500ms)
-          expect(loggerSpies.error).toHaveBeenCalledWith(
-            '🔴 CRITICAL SLOW ENDPOINT: [GET] /test took 3500ms (status: 200)',
-          );
-          done(); // done() sekarang akan terpanggil
-        });
+        // Peringatan dari tap() (sekarang 3500ms)
+        expect(loggerSpies.warn).toHaveBeenCalledWith(
+          '[test-request-id] ⚠️ Slow Response: [GET] /test took 3500ms',
+        );
+        // Peringatan dari trackPerformanceMetrics() (sekarang 3500ms)
+        expect(loggerSpies.error).toHaveBeenCalledWith(
+          '🔴 CRITICAL SLOW ENDPOINT: [GET] /test took 3500ms (status: 200)',
+        );
+        done(); // done() sekarang akan terpanggil
+      });
     });
   });
 });

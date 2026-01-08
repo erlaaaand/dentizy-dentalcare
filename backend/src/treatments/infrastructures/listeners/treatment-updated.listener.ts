@@ -5,17 +5,17 @@ import { TreatmentUpdatedEvent } from '../../infrastructures/events/treatment-up
 
 @Injectable()
 export class TreatmentUpdatedListener {
-    private readonly logger = new Logger(TreatmentUpdatedListener.name);
+  private readonly logger = new Logger(TreatmentUpdatedListener.name);
 
-    @OnEvent('treatment.updated')
-    async handleTreatmentUpdated(event: TreatmentUpdatedEvent): Promise<void> {
-        this.logger.log(
-            `Treatment updated: ID ${event.treatmentId}, Changes: ${JSON.stringify(event.changes)}`,
-        );
+  @OnEvent('treatment.updated')
+  async handleTreatmentUpdated(event: TreatmentUpdatedEvent): Promise<void> {
+    this.logger.log(
+      `Treatment updated: ID ${event.treatmentId}, Changes: ${JSON.stringify(event.changes)}`,
+    );
 
-        // Additional actions:
-        // - Invalidate cache
-        // - Notify related systems
-        // - Update search index
-    }
+    // Additional actions:
+    // - Invalidate cache
+    // - Notify related systems
+    // - Update search index
+  }
 }

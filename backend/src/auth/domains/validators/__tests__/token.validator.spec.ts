@@ -5,7 +5,8 @@ import { TokenValidator } from '../token.validator';
 // ======================
 // MOCK DATA
 // ======================
-const mockValidToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwic3ViIjoxfQ.signature';
+const mockValidToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwic3ViIjoxfQ.signature';
 const mockAuthHeader = `Bearer ${mockValidToken}`;
 
 // ======================
@@ -54,9 +55,9 @@ describe('TokenValidator', () => {
       });
 
       it('should throw error for null token', () => {
-        expect(() =>
-          TokenValidator.validateTokenFormat(null as any),
-        ).toThrow(UnauthorizedException);
+        expect(() => TokenValidator.validateTokenFormat(null as any)).toThrow(
+          UnauthorizedException,
+        );
       });
 
       it('should throw error for undefined token', () => {
@@ -138,7 +139,9 @@ describe('TokenValidator', () => {
 
       it('should handle very long token', () => {
         const longToken = `${'a'.repeat(10000)}.${'b'.repeat(10000)}.${'c'.repeat(10000)}`;
-        expect(() => TokenValidator.validateTokenFormat(longToken)).not.toThrow();
+        expect(() =>
+          TokenValidator.validateTokenFormat(longToken),
+        ).not.toThrow();
       });
 
       it('should handle token with numbers only', () => {
@@ -335,13 +338,16 @@ describe('TokenValidator', () => {
     });
 
     it('should handle valid JWT token end-to-end', () => {
-      const validJWT = 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
+      const validJWT =
+        'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U';
       const authHeader = `Bearer ${validJWT}`;
 
       const extractedToken = TokenValidator.extractBearerToken(authHeader);
       expect(extractedToken).toBe(validJWT);
 
-      expect(() => TokenValidator.validateTokenFormat(extractedToken)).not.toThrow();
+      expect(() =>
+        TokenValidator.validateTokenFormat(extractedToken),
+      ).not.toThrow();
     });
 
     it('should reject invalid token at validation stage', () => {
@@ -349,7 +355,9 @@ describe('TokenValidator', () => {
       const authHeader = `Bearer ${invalidToken}`;
 
       const extractedToken = TokenValidator.extractBearerToken(authHeader);
-      expect(() => TokenValidator.validateTokenFormat(extractedToken)).toThrow();
+      expect(() =>
+        TokenValidator.validateTokenFormat(extractedToken),
+      ).toThrow();
     });
   });
 });

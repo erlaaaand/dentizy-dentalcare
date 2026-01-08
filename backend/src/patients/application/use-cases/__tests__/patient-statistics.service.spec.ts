@@ -59,10 +59,10 @@ describe('PatientStatisticsService', () => {
       // Assert
       // 1. Pastikan Cache Wrapper dipanggil
       expect(cacheService.getCachedStats).toHaveBeenCalled();
-      
+
       // 2. Pastikan Repository dipanggil (membuktikan callback dijalankan)
       expect(customRepository.getStatistics).toHaveBeenCalled();
-      
+
       // 3. Pastikan hasil sesuai
       expect(result).toEqual(mockStats);
     });

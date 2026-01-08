@@ -24,11 +24,10 @@ const validQueryRaw = {
   page: '2',
   limit: '20',
   search: ' Budi ',
-  isActive: 'true'
+  isActive: 'true',
 };
 
 describe('FindUsersQueryDto', () => {
-
   it('should validate empty object with defaults', async () => {
     const { dto, errors } = await validateDto({});
 

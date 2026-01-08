@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentMapper } from '../appointment.mapper';
-import { Appointment, AppointmentStatus } from '../../entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { Patient } from '../../../../patients/domains/entities/patient.entity';
 import { MedicalRecord } from '../../../../medical_records/domains/entities/medical-record.entity';
@@ -85,9 +88,7 @@ describe('AppointmentMapper', () => {
       const doctor: Partial<User> = {
         id: 20,
         nama_lengkap: 'Dr. Smith',
-        roles: [
-          { id: 1, name: UserRole.DOKTER, description: 'Doctor' } as any,
-        ],
+        roles: [{ id: 1, name: UserRole.DOKTER, description: 'Doctor' } as any],
       };
 
       const appointment: Partial<Appointment> = {
@@ -163,7 +164,11 @@ describe('AppointmentMapper', () => {
         nama_lengkap: 'Dr. Smith',
         roles: [
           { id: 1, name: UserRole.DOKTER, description: 'Doctor' } as any,
-          { id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' } as any,
+          {
+            id: 2,
+            name: UserRole.KEPALA_KLINIK,
+            description: 'Clinic Head',
+          } as any,
         ],
       };
 
@@ -200,7 +205,10 @@ describe('AppointmentMapper', () => {
       expect(result.patient).toBeDefined();
       expect(result.doctor).toBeDefined();
       expect(result.medical_record).toBeDefined();
-      expect(result.doctor!.roles).toEqual([UserRole.DOKTER, UserRole.KEPALA_KLINIK]);
+      expect(result.doctor!.roles).toEqual([
+        UserRole.DOKTER,
+        UserRole.KEPALA_KLINIK,
+      ]);
     });
 
     it('should handle doctor without roles', () => {
@@ -320,7 +328,7 @@ describe('AppointmentMapper', () => {
         appointments as Appointment[],
         25,
         1,
-        10
+        10,
       );
 
       expect(result.data).toHaveLength(1);
@@ -368,7 +376,7 @@ describe('AppointmentMapper', () => {
         appointments as Appointment[],
         50,
         2,
-        5
+        5,
       );
 
       expect(result.data).toHaveLength(5);

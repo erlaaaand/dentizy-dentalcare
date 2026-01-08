@@ -127,7 +127,10 @@ describe('AppointmentsController', () => {
       const result = await controller.complete(id, mockUser);
 
       expect(result).toBe(expectedResult);
-      expect(mockAppointmentsService.complete).toHaveBeenCalledWith(id, mockUser);
+      expect(mockAppointmentsService.complete).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 
@@ -191,7 +194,10 @@ describe('AppointmentsController', () => {
       const result = await controller.findOne(id, mockUser);
 
       expect(result).toBe(expectedResult);
-      expect(mockAppointmentsService.findOne).toHaveBeenCalledWith(id, mockUser);
+      expect(mockAppointmentsService.findOne).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 
@@ -217,7 +223,10 @@ describe('AppointmentsController', () => {
       const result = await controller.update(id, updateDto);
 
       expect(result).toBe(expectedResult);
-      expect(mockAppointmentsService.update).toHaveBeenCalledWith(id, updateDto);
+      expect(mockAppointmentsService.update).toHaveBeenCalledWith(
+        id,
+        updateDto,
+      );
     });
   });
 

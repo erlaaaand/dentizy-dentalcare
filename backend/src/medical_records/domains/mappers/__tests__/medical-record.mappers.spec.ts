@@ -12,39 +12,40 @@ import { AppointmentStatus } from '../../../../appointments/domains/entities/app
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockMedicalRecord = (): MedicalRecord => ({
-  id: 1,
-  appointment_id: 10,
-  doctor_id: 2,
-  patient_id: 3,
-  subjektif: 'Pasien mengeluh sakit kepala',
-  objektif: 'TD: 120/80, Suhu: 36.5°C',
-  assessment: 'Tension headache',
-  plan: 'Istirahat cukup, paracetamol 500mg',
-  created_at: new Date('2024-01-15T10:00:00Z'),
-  updated_at: new Date('2024-01-15T10:00:00Z'),
-  deleted_at: null,
-  appointment: {
-    id: 10,
-    tanggal_janji: new Date('2024-01-15T09:00:00Z'),
-    status: AppointmentStatus.SELESAI,
+const createMockMedicalRecord = (): MedicalRecord =>
+  ({
+    id: 1,
+    appointment_id: 10,
+    doctor_id: 2,
+    patient_id: 3,
+    subjektif: 'Pasien mengeluh sakit kepala',
+    objektif: 'TD: 120/80, Suhu: 36.5°C',
+    assessment: 'Tension headache',
+    plan: 'Istirahat cukup, paracetamol 500mg',
+    created_at: new Date('2024-01-15T10:00:00Z'),
+    updated_at: new Date('2024-01-15T10:00:00Z'),
+    deleted_at: null,
+    appointment: {
+      id: 10,
+      tanggal_janji: new Date('2024-01-15T09:00:00Z'),
+      status: AppointmentStatus.SELESAI,
+      patient: {
+        id: 3,
+        nama_lengkap: 'Jane Smith',
+        nomor_rekam_medis: 'RM001',
+      },
+    } as any,
+    doctor: {
+      id: 2,
+      nama_lengkap: 'Dr. John Doe',
+    } as any,
     patient: {
       id: 3,
       nama_lengkap: 'Jane Smith',
       nomor_rekam_medis: 'RM001',
-    },
-  } as any,
-  doctor: {
-    id: 2,
-    nama_lengkap: 'Dr. John Doe',
-  } as any,
-  patient: {
-    id: 3,
-    nama_lengkap: 'Jane Smith',
-    nomor_rekam_medis: 'RM001',
-    tanggal_lahir: new Date('1990-05-20'),
-  } as any,
-} as MedicalRecord);
+      tanggal_lahir: new Date('1990-05-20'),
+    } as any,
+  }) as MedicalRecord;
 
 const createMockCreateDto = (): CreateMedicalRecordDto => ({
   appointment_id: 10,
@@ -121,7 +122,9 @@ describe('MedicalRecordMapper', () => {
 
       expect(result.appointment).toBeDefined();
       expect(result.appointment?.id).toBe(entity.appointment.id);
-      expect(result.appointment?.appointment_date).toEqual(entity.appointment.tanggal_janji);
+      expect(result.appointment?.appointment_date).toEqual(
+        entity.appointment.tanggal_janji,
+      );
       expect(result.appointment?.status).toBe(entity.appointment.status);
       expect(result.appointment?.patient).toBeDefined();
       expect(result.appointment?.patient?.id).toBe(3);
@@ -145,7 +148,9 @@ describe('MedicalRecordMapper', () => {
       expect(result.patient?.id).toBe(entity.patient.id);
       expect(result.patient?.nama_lengkap).toBe(entity.patient.nama_lengkap);
       expect(result.patient?.no_rm).toBe(entity.patient.nomor_rekam_medis);
-      expect(result.patient?.tanggal_lahir).toEqual(entity.patient.tanggal_lahir);
+      expect(result.patient?.tanggal_lahir).toEqual(
+        entity.patient.tanggal_lahir,
+      );
     });
 
     it('should handle missing relations gracefully', () => {
@@ -179,8 +184,12 @@ describe('MedicalRecordMapper', () => {
     it('should map array of entities to array of DTOs', () => {
       const entities: MedicalRecord[] = [
         createMockMedicalRecord(),
-        Object.assign(new MedicalRecord(), createMockMedicalRecord(), { id: 2 }),
-        Object.assign(new MedicalRecord(), createMockMedicalRecord(), { id: 3 }),
+        Object.assign(new MedicalRecord(), createMockMedicalRecord(), {
+          id: 2,
+        }),
+        Object.assign(new MedicalRecord(), createMockMedicalRecord(), {
+          id: 3,
+        }),
       ];
 
       const result = mapper.toResponseDtoArray(entities);

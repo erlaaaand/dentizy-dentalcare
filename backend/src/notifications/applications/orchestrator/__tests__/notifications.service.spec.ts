@@ -33,9 +33,18 @@ describe('NotificationsService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotificationsService,
-        { provide: ScheduleReminderService, useValue: mockScheduleReminderService },
-        { provide: CancelRemindersService, useValue: mockCancelRemindersService },
-        { provide: GetNotificationsService, useValue: mockGetNotificationsService },
+        {
+          provide: ScheduleReminderService,
+          useValue: mockScheduleReminderService,
+        },
+        {
+          provide: CancelRemindersService,
+          useValue: mockCancelRemindersService,
+        },
+        {
+          provide: GetNotificationsService,
+          useValue: mockGetNotificationsService,
+        },
         { provide: RetryFailedService, useValue: mockRetryFailedService },
       ],
     }).compile();
@@ -58,7 +67,9 @@ describe('NotificationsService', () => {
 
     await service.scheduleAppointmentReminder(appointment);
 
-    expect(mockScheduleReminderService.execute).toHaveBeenCalledWith(appointment);
+    expect(mockScheduleReminderService.execute).toHaveBeenCalledWith(
+      appointment,
+    );
   });
 
   // ===============================================================
@@ -78,7 +89,10 @@ describe('NotificationsService', () => {
   // ===============================================================
   it('should call getNotificationsService.findAll()', async () => {
     const query: any = { page: 1, limit: 10 };
-    const mockData = { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } };
+    const mockData = {
+      data: [],
+      meta: { page: 1, limit: 10, total: 0, totalPages: 0 },
+    };
 
     mockGetNotificationsService.findAll.mockResolvedValue(mockData);
 
@@ -119,12 +133,16 @@ describe('NotificationsService', () => {
   // ===============================================================
   it('should call getNotificationsService.getFailedNotifications()', async () => {
     const mockFails = [{ id: 1 }, { id: 2 }];
-    mockGetNotificationsService.getFailedNotifications.mockResolvedValue(mockFails);
+    mockGetNotificationsService.getFailedNotifications.mockResolvedValue(
+      mockFails,
+    );
 
     const result = await service.getFailedNotifications(20);
 
     expect(result).toEqual(mockFails);
-    expect(mockGetNotificationsService.getFailedNotifications).toHaveBeenCalledWith(20);
+    expect(
+      mockGetNotificationsService.getFailedNotifications,
+    ).toHaveBeenCalledWith(20);
   });
 
   // ===============================================================

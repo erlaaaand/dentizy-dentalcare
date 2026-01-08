@@ -13,81 +13,89 @@ import { StatusPembayaran } from '../../domains/entities/payments.entity';
 
 @Injectable()
 export class UpdatePaymentUseCase {
-    constructor(
-        private readonly paymentRepository: PaymentRepository,
-        private readonly paymentMapper: PaymentMapper,
-        private readonly calculatorService: PaymentCalculatorService,
-        private readonly validatorService: PaymentValidatorService,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly paymentMapper: PaymentMapper,
+    private readonly calculatorService: PaymentCalculatorService,
+    private readonly validatorService: PaymentValidatorService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number, dto: UpdatePaymentDto, updatedBy?: number): Promise<PaymentResponseDto> {
-        const payment = await this.paymentRepository.findOne(id);
+  async execute(
+    id: number,
+    dto: UpdatePaymentDto,
+    updatedBy?: number,
+  ): Promise<PaymentResponseDto> {
+    const payment = await this.paymentRepository.findOne(id);
 
-        if (!payment) {
-            throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
-        }
-
-        // Validate for update
-        this.validatorService.validateForUpdate(payment);
-
-        const previousStatus = payment.statusPembayaran;
-
-        // Recalculate if payment amounts changed
-        if (dto.jumlahBayar !== undefined || dto.totalBiaya !== undefined || dto.diskonTotal !== undefined) {
-            const totalBiaya = dto.totalBiaya ?? payment.totalBiaya;
-            const diskonTotal = dto.diskonTotal ?? payment.diskonTotal;
-            const jumlahBayar = dto.jumlahBayar ?? payment.jumlahBayar;
-
-            this.validatorService.validatePaymentData({
-                totalBiaya: Number(totalBiaya),
-                diskonTotal: Number(diskonTotal),
-                jumlahBayar: Number(jumlahBayar),
-            });
-
-            const calculation = this.calculatorService.calculate(
-                Number(totalBiaya),
-                Number(diskonTotal),
-                Number(jumlahBayar),
-                payment.statusPembayaran,
-            );
-
-            dto.statusPembayaran = calculation.statusPembayaran;
-        }
-
-        // Update payment
-        const updatedPayment = await this.paymentRepository.update(id, dto, updatedBy);
-        const response = this.paymentMapper.toResponseDto(updatedPayment);
-
-        // Emit updated event
-        this.eventEmitter.emit(
-            'payment.updated',
-            new PaymentUpdatedEvent(
-                updatedPayment.id,
-                previousStatus,
-                updatedPayment.statusPembayaran,
-                updatedBy,
-            ),
-        );
-
-        // Emit completed event if status changed to completed
-        if (
-            previousStatus !== StatusPembayaran.LUNAS &&
-            updatedPayment.statusPembayaran === StatusPembayaran.LUNAS
-        ) {
-            this.eventEmitter.emit(
-                'payment.completed',
-                new PaymentCompletedEvent(
-                    updatedPayment.id,
-                    updatedPayment.medicalRecordId,
-                    updatedPayment.patientId,
-                    updatedPayment.nomorInvoice,
-                    Number(updatedPayment.totalAkhir),
-                    updatedPayment.updatedAt,
-                ),
-            );
-        }
-
-        return response;
+    if (!payment) {
+      throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
     }
+
+    this.validatorService.validateForUpdate(payment);
+
+    const previousStatus = payment.statusPembayaran;
+
+    const totalBiaya = dto.totalBiaya ?? payment.totalBiaya;
+    const diskonTotal = dto.diskonTotal ?? payment.diskonTotal;
+    const jumlahBayar = dto.jumlahBayar ?? payment.jumlahBayar;
+
+    this.validatorService.validatePaymentData({
+      totalBiaya: Number(totalBiaya),
+      diskonTotal: Number(diskonTotal),
+      jumlahBayar: Number(jumlahBayar),
+    });
+
+    const calculation = this.calculatorService.calculate(
+      Number(totalBiaya),
+      Number(diskonTotal),
+      Number(jumlahBayar),
+      payment.statusPembayaran,
+    );
+
+    const kembalian = jumlahBayar - payment.totalAkhir;
+
+    const repoPayload = {
+      ...dto,
+      statusPembayaran: calculation.statusPembayaran,
+      kembalian,
+      tanggalPembayaran: dto.tanggalPembayaran ?? new Date(),
+    };
+
+    const updatedPayment = await this.paymentRepository.update(
+      id,
+      repoPayload,
+      updatedBy,
+    );
+    const response = this.paymentMapper.toResponseDto(updatedPayment);
+
+    this.eventEmitter.emit(
+      'payment.updated',
+      new PaymentUpdatedEvent(
+        updatedPayment.id,
+        previousStatus,
+        updatedPayment.statusPembayaran,
+        updatedBy,
+      ),
+    );
+
+    if (
+      previousStatus !== StatusPembayaran.LUNAS &&
+      updatedPayment.statusPembayaran === StatusPembayaran.LUNAS
+    ) {
+      this.eventEmitter.emit(
+        'payment.completed',
+        new PaymentCompletedEvent(
+          updatedPayment.id,
+          updatedPayment.medicalRecordId,
+          updatedPayment.patientId,
+          updatedPayment.nomorInvoice,
+          Number(updatedPayment.totalAkhir),
+          updatedPayment.updatedAt,
+        ),
+      );
+    }
+
+    return response;
+  }
 }

@@ -6,23 +6,23 @@ import { TreatmentMapper } from '../../domains/mappers/treatment.mapper';
 
 @Injectable()
 export class ListTreatmentsUseCase {
-    constructor(
-        private readonly treatmentRepository: TreatmentRepository,
-        private readonly treatmentMapper: TreatmentMapper,
-    ) {}
+  constructor(
+    private readonly treatmentRepository: TreatmentRepository,
+    private readonly treatmentMapper: TreatmentMapper,
+  ) {}
 
-    async execute(query: QueryTreatmentDto) {
-        const { data, total } = await this.treatmentRepository.findAll(query);
-        const { page = 1, limit = 10 } = query;
+  async execute(query: QueryTreatmentDto) {
+    const { data, total } = await this.treatmentRepository.findAll(query);
+    const { page = 1, limit = 10 } = query;
 
-        return {
-            data: this.treatmentMapper.toResponseDtoList(data),
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
-    }
+    return {
+      data: this.treatmentMapper.toResponseDtoList(data),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }

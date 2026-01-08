@@ -1,30 +1,30 @@
 import {
-    Controller,
-    Get,
-    Post,
-    Body,
-    Patch,
-    Param,
-    Delete,
-    UseGuards,
-    ParseIntPipe,
-    Query,
-    HttpCode,
-    HttpStatus,
-    UseInterceptors,
-    ClassSerializerInterceptor,
-    DefaultValuePipe,
-    BadRequestException
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  ParseIntPipe,
+  Query,
+  HttpCode,
+  HttpStatus,
+  UseInterceptors,
+  ClassSerializerInterceptor,
+  DefaultValuePipe,
+  BadRequestException,
 } from '@nestjs/common';
 import {
-    ApiTags,
-    ApiOperation,
-    ApiResponse,
-    ApiBearerAuth,
-    ApiQuery,
-    ApiParam,
-    ApiUnauthorizedResponse,
-    ApiForbiddenResponse
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiParam,
+  ApiUnauthorizedResponse,
+  ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
@@ -49,259 +49,293 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 @UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
-@ApiForbiddenResponse({ description: 'Role user tidak memiliki akses ke endpoint ini' })
+@ApiForbiddenResponse({
+  description: 'Role user tidak memiliki akses ke endpoint ini',
+})
 export class UsersController {
-    constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-    @Post()
-    @Roles(UserRole.KEPALA_KLINIK)
-    @HttpCode(HttpStatus.CREATED)
-    @ApiOperation({
-        summary: 'Buat user baru',
-        description: 'Hanya KEPALA_KLINIK yang dapat membuat user baru'
-    })
-    @ApiResponse({
-        status: 201,
-        description: 'User berhasil dibuat',
-        type: UserResponseDto
-    })
-    @ApiResponse({ status: 400, description: 'Data tidak valid' })
-    @ApiResponse({ status: 409, description: 'Username sudah terdaftar' })
-    async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
-        return this.usersService.create(createUserDto);
-    }
+  @Post()
+  @Roles(UserRole.KEPALA_KLINIK)
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Buat user baru',
+    description: 'Hanya KEPALA_KLINIK yang dapat membuat user baru',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User berhasil dibuat',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Data tidak valid' })
+  @ApiResponse({ status: 409, description: 'Username sudah terdaftar' })
+  async create(@Body() createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    return this.usersService.create(createUserDto);
+  }
 
-    @Get()
-    @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK)
-    @UseInterceptors(CacheInterceptor)
-    @CacheTTL(60)
-    @ApiOperation({
-        summary: 'Daftar semua user dengan pagination dan filter',
-        description: 'Mendukung filter: role, search (nama/username), isActive'
-    })
-    @ApiQuery({ name: 'page', required: false, type: Number, description: 'Halaman (default: 1)' })
-    @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Jumlah per halaman (default: 10, max: 100)' })
-    @ApiQuery({ name: 'role', required: false, enum: UserRole, description: 'Filter by role' })
-    @ApiQuery({ name: 'search', required: false, type: String, description: 'Cari nama atau username' })
-    @ApiQuery({ name: 'isActive', required: false, type: Boolean, description: 'Filter by status aktif' })
-    @ApiResponse({
-        status: 200,
-        description: 'Daftar user berhasil diambil',
-        type: '' // ✅ Type safe & auto-generated docs
-    })
-    async findAll(@Query() query: FindUsersQueryDto): Promise<{
-        data: UserResponseDto[];
-        meta: any;
-    }> {
-        return this.usersService.findAll(query);
-    }
+  @Get()
+  @Roles(UserRole.STAF, UserRole.DOKTER, UserRole.KEPALA_KLINIK)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60)
+  @ApiOperation({
+    summary: 'Daftar semua user dengan pagination dan filter',
+    description: 'Mendukung filter: role, search (nama/username), isActive',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Halaman (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Jumlah per halaman (default: 10, max: 100)',
+  })
+  @ApiQuery({
+    name: 'role',
+    required: false,
+    enum: UserRole,
+    description: 'Filter by role',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Cari nama atau username',
+  })
+  @ApiQuery({
+    name: 'isActive',
+    required: false,
+    type: Boolean,
+    description: 'Filter by status aktif',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Daftar user berhasil diambil',
+    type: '', // ✅ Type safe & auto-generated docs
+  })
+  async findAll(@Query() query: FindUsersQueryDto): Promise<{
+    data: UserResponseDto[];
+    meta: any;
+  }> {
+    return this.usersService.findAll(query);
+  }
 
-    @Get('statistics')
-    @Roles(UserRole.KEPALA_KLINIK)
-    @UseInterceptors(CacheInterceptor)
-    @CacheTTL(300)
-    @ApiOperation({ summary: 'Statistik user untuk dashboard' })
-    @ApiResponse({
-        status: 200,
-        description: 'Statistik user',
-        schema: {
-            example: {
-                total: 150,
-                byRole: {
-                    DOKTER: 20,
-                    STAF: 100,
-                    KEPALA_KLINIK: 5
-                },
-                active: 145,
-                inactive: 5
-            }
-        }
-    })
-    async getStatistics(): Promise<{
-        total: number;
-        byRole: Record<string, number>;
-        active: number;
-        inactive: number;
-    }> {
-        return this.usersService.getUserStatistics();
-    }
+  @Get('statistics')
+  @Roles(UserRole.KEPALA_KLINIK)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300)
+  @ApiOperation({ summary: 'Statistik user untuk dashboard' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistik user',
+    schema: {
+      example: {
+        total: 150,
+        byRole: {
+          DOKTER: 20,
+          STAF: 100,
+          KEPALA_KLINIK: 5,
+        },
+        active: 145,
+        inactive: 5,
+      },
+    },
+  })
+  async getStatistics(): Promise<{
+    total: number;
+    byRole: Record<string, number>;
+    active: number;
+    inactive: number;
+  }> {
+    return this.usersService.getUserStatistics();
+  }
 
-    @Get('recent')
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
-    @ApiOperation({ summary: 'User yang baru dibuat' })
-    @ApiQuery({
-        name: 'limit',
-        required: false,
-        type: Number,
-        description: 'Jumlah user (default: 10, max: 50)'
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Daftar user terbaru',
-        type: [UserResponseDto]
-    })
-    async getRecentUsers(
-        @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number
-    ): Promise<UserResponseDto[]> {
-        if (limit < 1 || limit > 50) {
-            throw new BadRequestException('Limit harus antara 1 dan 50');
-        }
-        return this.usersService.getRecentlyCreated(limit);
+  @Get('recent')
+  @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+  @ApiOperation({ summary: 'User yang baru dibuat' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Jumlah user (default: 10, max: 50)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Daftar user terbaru',
+    type: [UserResponseDto],
+  })
+  async getRecentUsers(
+    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+  ): Promise<UserResponseDto[]> {
+    if (limit < 1 || limit > 50) {
+      throw new BadRequestException('Limit harus antara 1 dan 50');
     }
+    return this.usersService.getRecentlyCreated(limit);
+  }
 
-    @Get('check-username/:username')
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
-    @ApiOperation({ summary: 'Cek ketersediaan username' })
-    @ApiParam({ name: 'username', description: 'Username yang akan dicek' })
-    @ApiResponse({
-        status: 200,
-        description: 'Status ketersediaan username',
-        schema: {
-            example: {
-                available: true,
-                message: 'Username "johndoe" tersedia'
-            }
-        }
-    })
-    async checkUsername(@Param('username') username: string): Promise<{
-        available: boolean;
-        message: string;
-    }> {
-        return this.usersService.checkUsernameAvailability(username);
-    }
+  @Get('check-username/:username')
+  @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+  @ApiOperation({ summary: 'Cek ketersediaan username' })
+  @ApiParam({ name: 'username', description: 'Username yang akan dicek' })
+  @ApiResponse({
+    status: 200,
+    description: 'Status ketersediaan username',
+    schema: {
+      example: {
+        available: true,
+        message: 'Username "johndoe" tersedia',
+      },
+    },
+  })
+  async checkUsername(@Param('username') username: string): Promise<{
+    available: boolean;
+    message: string;
+  }> {
+    return this.usersService.checkUsernameAvailability(username);
+  }
 
-    @Get(':id')
-    @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
-    @UseInterceptors(CacheInterceptor)
-    @CacheTTL(300)
-    @ApiOperation({ summary: 'Detail user by ID' })
-    @ApiParam({ name: 'id', description: 'ID User' })
-    @ApiResponse({
-        status: 200,
-        description: 'Detail user',
-        type: UserResponseDto
-    })
-    @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-    async findOne(@Param('id', ParseIntPipe) id: number): Promise<UserResponseDto> {
-        return this.usersService.findOne(id);
-    }
+  @Get(':id')
+  @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(300)
+  @ApiOperation({ summary: 'Detail user by ID' })
+  @ApiParam({ name: 'id', description: 'ID User' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detail user',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<UserResponseDto> {
+    return this.usersService.findOne(id);
+  }
 
-    @Patch(':id')
-    @Roles(UserRole.KEPALA_KLINIK)
-    @ApiOperation({
-        summary: 'Update data user',
-        description: 'Hanya KEPALA_KLINIK yang dapat update. Field opsional: nama_lengkap, username, roles'
-    })
-    @ApiParam({ name: 'id', description: 'ID User' })
-    @ApiResponse({
-        status: 200,
-        description: 'User berhasil diupdate',
-        type: UserResponseDto
-    })
-    @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-    @ApiResponse({ status: 409, description: 'Username sudah digunakan' })
-    async update(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() updateUserDto: UpdateUserDto
-    ): Promise<UserResponseDto> {
-        return this.usersService.update(id, updateUserDto);
-    }
+  @Patch(':id')
+  @Roles(UserRole.KEPALA_KLINIK)
+  @ApiOperation({
+    summary: 'Update data user',
+    description:
+      'Hanya KEPALA_KLINIK yang dapat update. Field opsional: nama_lengkap, username, roles',
+  })
+  @ApiParam({ name: 'id', description: 'ID User' })
+  @ApiResponse({
+    status: 200,
+    description: 'User berhasil diupdate',
+    type: UserResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  @ApiResponse({ status: 409, description: 'Username sudah digunakan' })
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    return this.usersService.update(id, updateUserDto);
+  }
 
-    @Delete(':id')
-    @Roles(UserRole.KEPALA_KLINIK)
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Hapus user',
-        description: 'Hanya KEPALA_KLINIK yang dapat menghapus user'
-    })
-    @ApiParam({ name: 'id', description: 'ID User' })
-    @ApiResponse({
-        status: 200,
-        description: 'User berhasil dihapus',
-        schema: {
-            example: { message: 'User johndoe berhasil dihapus' }
-        }
-    })
-    @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-    async remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
-        return this.usersService.remove(id);
-    }
+  @Delete(':id')
+  @Roles(UserRole.KEPALA_KLINIK)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Hapus user',
+    description: 'Hanya KEPALA_KLINIK yang dapat menghapus user',
+  })
+  @ApiParam({ name: 'id', description: 'ID User' })
+  @ApiResponse({
+    status: 200,
+    description: 'User berhasil dihapus',
+    schema: {
+      example: { message: 'User johndoe berhasil dihapus' },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
+    return this.usersService.remove(id);
+  }
 
-    @Post('change-password')
-    @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(ThrottlerGuard)
-    @ApiOperation({
-        summary: 'Ganti password sendiri',
-        description: 'User yang terautentikasi dapat mengganti password mereka sendiri. Memerlukan password lama, password baru, dan konfirmasi.'
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Password berhasil diubah',
-        type: PasswordChangeResponseDto
-    })
-    @ApiResponse({
-        status: 400,
-        description: 'Password lama salah, password tidak valid, atau konfirmasi tidak sesuai'
-    })
-    async changePassword(
-        @GetUser() user: User,
-        @Body() changePasswordDto: ChangePasswordDto
-    ): Promise<PasswordChangeResponseDto> {
-        // Validasi sudah dilakukan oleh DTO validators (@Match decorator)
-        return this.usersService.changePassword(
-            user.id,
-            changePasswordDto.oldPassword,
-            changePasswordDto.newPassword
-        );
-    }
+  @Post('change-password')
+  @Roles(UserRole.DOKTER, UserRole.STAF, UserRole.KEPALA_KLINIK)
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @ApiOperation({
+    summary: 'Ganti password sendiri',
+    description:
+      'User yang terautentikasi dapat mengganti password mereka sendiri. Memerlukan password lama, password baru, dan konfirmasi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password berhasil diubah',
+    type: PasswordChangeResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Password lama salah, password tidak valid, atau konfirmasi tidak sesuai',
+  })
+  async changePassword(
+    @GetUser() user: User,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<PasswordChangeResponseDto> {
+    // Validasi sudah dilakukan oleh DTO validators (@Match decorator)
+    return this.usersService.changePassword(
+      user.id,
+      changePasswordDto.oldPassword,
+      changePasswordDto.newPassword,
+    );
+  }
 
-    @Post(':id/reset-password')
-    @Roles(UserRole.KEPALA_KLINIK)
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Reset password user (admin)',
-        description: 'Hanya KEPALA_KLINIK yang dapat mereset password user lain. Tidak memerlukan password lama.'
-    })
-    @ApiParam({ name: 'id', description: 'ID User' })
-    @ApiResponse({
-        status: 200,
-        description: 'Password berhasil direset',
-        type: PasswordChangeResponseDto
-    })
-    @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-    async resetPassword(
-        @Param('id', ParseIntPipe) id: number,
-        @Body() resetPasswordDto: ResetPasswordDto
-    ): Promise<PasswordChangeResponseDto> {
-        return this.usersService.resetPassword(id, resetPasswordDto.newPassword);
-    }
+  @Post(':id/reset-password')
+  @Roles(UserRole.KEPALA_KLINIK)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Reset password user (admin)',
+    description:
+      'Hanya KEPALA_KLINIK yang dapat mereset password user lain. Tidak memerlukan password lama.',
+  })
+  @ApiParam({ name: 'id', description: 'ID User' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password berhasil direset',
+    type: PasswordChangeResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  async resetPassword(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ): Promise<PasswordChangeResponseDto> {
+    return this.usersService.resetPassword(id, resetPasswordDto.newPassword);
+  }
 
-    @Post(':id/generate-temp-password')
-    @Roles(UserRole.KEPALA_KLINIK)
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({
-        summary: 'Generate password temporary',
-        description: 'Hanya KEPALA_KLINIK yang dapat generate password temporary untuk user. Password akan di-generate otomatis dan memenuhi kebijakan keamanan.'
-    })
-    @ApiParam({ name: 'id', description: 'ID User' })
-    @ApiResponse({
-        status: 200,
-        description: 'Password temporary berhasil dibuat',
-        schema: {
-            example: {
-                temporaryPassword: 'Abc123!@#Xyz',
-                message: 'Password sementara berhasil dibuat untuk johndoe'
-            }
-        }
-    })
-    @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-    async generateTempPassword(
-        @Param('id', ParseIntPipe) id: number
-    ): Promise<{
-        temporaryPassword: string;
-        message: string;
-    }> {
-        return this.usersService.generateTemporaryPassword(id);
-    }
+  @Post(':id/generate-temp-password')
+  @Roles(UserRole.KEPALA_KLINIK)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Generate password temporary',
+    description:
+      'Hanya KEPALA_KLINIK yang dapat generate password temporary untuk user. Password akan di-generate otomatis dan memenuhi kebijakan keamanan.',
+  })
+  @ApiParam({ name: 'id', description: 'ID User' })
+  @ApiResponse({
+    status: 200,
+    description: 'Password temporary berhasil dibuat',
+    schema: {
+      example: {
+        temporaryPassword: 'Abc123!@#Xyz',
+        message: 'Password sementara berhasil dibuat untuk johndoe',
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
+  async generateTempPassword(@Param('id', ParseIntPipe) id: number): Promise<{
+    temporaryPassword: string;
+    message: string;
+  }> {
+    return this.usersService.generateTemporaryPassword(id);
+  }
 }

@@ -5,7 +5,11 @@ import { SendNotificationService } from '../send-notification.service';
 import { NotificationRepository } from '../../../infrastructures/repositories/notification.repository';
 import { EmailChannelService } from '../../../infrastructures/channels/email-channel.service';
 import { NotificationValidatorService } from '../../../domains/services/notification-validator.service';
-import { Notification, NotificationType, NotificationStatus } from '../../../domains/entities/notification.entity';
+import {
+  Notification,
+  NotificationType,
+  NotificationStatus,
+} from '../../../domains/entities/notification.entity';
 
 // 2. MOCK DATA
 const mockNotification: Notification = {
@@ -27,31 +31,31 @@ const mockNotification: Notification = {
       id: 789,
       nama_lengkap: 'John Doe',
       email: 'john.doe@example.com',
-      no_hp: '08123456789'
+      no_hp: '08123456789',
     } as any,
     doctor: {
       id: 321,
       nama_lengkap: 'Dr. Smith',
-    } as any
-  } as any
+    } as any,
+  } as any,
 };
 
 const mockSMSNotification: Notification = {
   ...mockNotification,
   id: 124,
-  type: NotificationType.SMS_REMINDER
+  type: NotificationType.SMS_REMINDER,
 };
 
 const mockWhatsAppNotification: Notification = {
   ...mockNotification,
   id: 125,
-  type: NotificationType.WHATSAPP_CONFIRMATION
+  type: NotificationType.WHATSAPP_CONFIRMATION,
 };
 
 const mockUnknownTypeNotification: Notification = {
   ...mockNotification,
   id: 126,
-  type: 'UNKNOWN_TYPE' as NotificationType
+  type: 'UNKNOWN_TYPE' as NotificationType,
 };
 
 const mockEmailData = {
@@ -62,15 +66,17 @@ const mockEmailData = {
     patientName: 'John Doe',
     doctorName: 'Dr. Smith',
     appointmentDate: '2024-01-16',
-    appointmentTime: '10:00'
-  }
+    appointmentTime: '10:00',
+  },
 };
 
 const mockValidationError = new Error('Notification cannot be sent');
 const mockEmailError = new Error('Email service unavailable');
 const mockSMSError = new Error('SMS channel not implemented yet');
 const mockWhatsAppError = new Error('WhatsApp channel not implemented yet');
-const mockUnknownTypeError = new Error('Unknown notification type: UNKNOWN_TYPE');
+const mockUnknownTypeError = new Error(
+  'Unknown notification type: UNKNOWN_TYPE',
+);
 
 // Mock Repository
 const mockNotificationRepository = {
@@ -125,9 +131,13 @@ describe('SendNotificationService', () => {
     }).compile();
 
     service = module.get<SendNotificationService>(SendNotificationService);
-    notificationRepository = module.get<NotificationRepository>(NotificationRepository);
+    notificationRepository = module.get<NotificationRepository>(
+      NotificationRepository,
+    );
     emailChannel = module.get<EmailChannelService>(EmailChannelService);
-    validator = module.get<NotificationValidatorService>(NotificationValidatorService);
+    validator = module.get<NotificationValidatorService>(
+      NotificationValidatorService,
+    );
 
     // Mock the logger
     Object.defineProperty(service, 'logger', {
@@ -175,8 +185,12 @@ describe('SendNotificationService', () => {
       await service.execute(mockNotification);
 
       // Assert
-      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledWith(mockNotification);
-      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledTimes(1);
+      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledWith(
+        mockNotification,
+      );
+      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledTimes(
+        1,
+      );
     });
 
     it('should generate email data using email channel', async () => {
@@ -190,7 +204,9 @@ describe('SendNotificationService', () => {
       await service.execute(mockNotification);
 
       // Assert
-      expect(mockEmailChannel.generateReminderEmail).toHaveBeenCalledWith(mockNotification);
+      expect(mockEmailChannel.generateReminderEmail).toHaveBeenCalledWith(
+        mockNotification,
+      );
       expect(mockEmailChannel.generateReminderEmail).toHaveBeenCalledTimes(1);
     });
 
@@ -220,7 +236,9 @@ describe('SendNotificationService', () => {
       await service.execute(mockNotification);
 
       // Assert
-      expect(mockNotificationRepository.markAsSent).toHaveBeenCalledWith(mockNotification.id);
+      expect(mockNotificationRepository.markAsSent).toHaveBeenCalledWith(
+        mockNotification.id,
+      );
       expect(mockNotificationRepository.markAsSent).toHaveBeenCalledTimes(1);
     });
 
@@ -236,7 +254,7 @@ describe('SendNotificationService', () => {
 
       // Assert
       expect(mockLogger.log).toHaveBeenCalledWith(
-        `✅ Notification #${mockNotification.id} sent successfully for appointment #${mockNotification.appointment_id}`
+        `✅ Notification #${mockNotification.id} sent successfully for appointment #${mockNotification.appointment_id}`,
       );
       expect(mockLogger.error).not.toHaveBeenCalled();
     });
@@ -252,10 +270,14 @@ describe('SendNotificationService', () => {
       await service.execute(mockNotification);
 
       // Assert call order
-      const validateCallOrder = mockNotificationValidator.validateCanSend.mock.invocationCallOrder[0];
-      const generateEmailCallOrder = mockEmailChannel.generateReminderEmail.mock.invocationCallOrder[0];
-      const sendEmailCallOrder = mockEmailChannel.sendEmail.mock.invocationCallOrder[0];
-      const markSentCallOrder = mockNotificationRepository.markAsSent.mock.invocationCallOrder[0];
+      const validateCallOrder =
+        mockNotificationValidator.validateCanSend.mock.invocationCallOrder[0];
+      const generateEmailCallOrder =
+        mockEmailChannel.generateReminderEmail.mock.invocationCallOrder[0];
+      const sendEmailCallOrder =
+        mockEmailChannel.sendEmail.mock.invocationCallOrder[0];
+      const markSentCallOrder =
+        mockNotificationRepository.markAsSent.mock.invocationCallOrder[0];
 
       expect(validateCallOrder).toBeLessThan(generateEmailCallOrder);
       expect(generateEmailCallOrder).toBeLessThan(sendEmailCallOrder);
@@ -284,8 +306,12 @@ describe('SendNotificationService', () => {
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockSMSNotification)).rejects.toThrow(mockSMSError);
-      await expect(service.execute(mockSMSNotification)).rejects.toThrow('SMS channel not implemented yet');
+      await expect(service.execute(mockSMSNotification)).rejects.toThrow(
+        mockSMSError,
+      );
+      await expect(service.execute(mockSMSNotification)).rejects.toThrow(
+        'SMS channel not implemented yet',
+      );
     });
 
     it('should throw error for WHATSAPP_CONFIRMATION type (not implemented)', async () => {
@@ -293,8 +319,12 @@ describe('SendNotificationService', () => {
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockWhatsAppNotification)).rejects.toThrow(mockWhatsAppError);
-      await expect(service.execute(mockWhatsAppNotification)).rejects.toThrow('WhatsApp channel not implemented yet');
+      await expect(service.execute(mockWhatsAppNotification)).rejects.toThrow(
+        mockWhatsAppError,
+      );
+      await expect(service.execute(mockWhatsAppNotification)).rejects.toThrow(
+        'WhatsApp channel not implemented yet',
+      );
     });
 
     it('should throw error for unknown notification types', async () => {
@@ -302,8 +332,12 @@ describe('SendNotificationService', () => {
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockUnknownTypeNotification)).rejects.toThrow(mockUnknownTypeError);
-      await expect(service.execute(mockUnknownTypeNotification)).rejects.toThrow('Unknown notification type: UNKNOWN_TYPE');
+      await expect(
+        service.execute(mockUnknownTypeNotification),
+      ).rejects.toThrow(mockUnknownTypeError);
+      await expect(
+        service.execute(mockUnknownTypeNotification),
+      ).rejects.toThrow('Unknown notification type: UNKNOWN_TYPE');
     });
   });
 
@@ -315,7 +349,9 @@ describe('SendNotificationService', () => {
       });
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow(mockValidationError);
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        mockValidationError,
+      );
 
       // Assert
       expect(mockEmailChannel.generateReminderEmail).not.toHaveBeenCalled();
@@ -331,16 +367,18 @@ describe('SendNotificationService', () => {
       mockNotificationRepository.markAsFailed.mockResolvedValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow(mockValidationError);
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        mockValidationError,
+      );
 
       // Assert
       expect(mockNotificationRepository.markAsFailed).toHaveBeenCalledWith(
         mockNotification.id,
-        mockValidationError.message
+        mockValidationError.message,
       );
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Failed to send notification #${mockNotification.id}:`,
-        mockValidationError.message
+        mockValidationError.message,
       );
     });
   });
@@ -355,12 +393,14 @@ describe('SendNotificationService', () => {
       mockNotificationRepository.markAsFailed.mockResolvedValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow(mockEmailError);
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        mockEmailError,
+      );
 
       // Assert
       expect(mockNotificationRepository.markAsFailed).toHaveBeenCalledWith(
         mockNotification.id,
-        mockEmailError.message
+        mockEmailError.message,
       );
       expect(mockEmailChannel.sendEmail).not.toHaveBeenCalled();
       expect(mockNotificationRepository.markAsSent).not.toHaveBeenCalled();
@@ -374,12 +414,14 @@ describe('SendNotificationService', () => {
       mockNotificationRepository.markAsFailed.mockResolvedValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow(mockEmailError);
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        mockEmailError,
+      );
 
       // Assert
       expect(mockNotificationRepository.markAsFailed).toHaveBeenCalledWith(
         mockNotification.id,
-        mockEmailError.message
+        mockEmailError.message,
       );
       expect(mockNotificationRepository.markAsSent).not.toHaveBeenCalled();
     });
@@ -392,12 +434,14 @@ describe('SendNotificationService', () => {
       mockNotificationRepository.markAsFailed.mockResolvedValue(undefined);
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow(mockEmailError);
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        mockEmailError,
+      );
 
       // Assert
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Failed to send notification #${mockNotification.id}:`,
-        mockEmailError.message
+        mockEmailError.message,
       );
     });
   });
@@ -408,10 +452,14 @@ describe('SendNotificationService', () => {
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
       mockEmailChannel.generateReminderEmail.mockReturnValue(mockEmailData);
       mockEmailChannel.sendEmail.mockResolvedValue(undefined);
-      mockNotificationRepository.markAsSent.mockRejectedValue(new Error('Database error'));
+      mockNotificationRepository.markAsSent.mockRejectedValue(
+        new Error('Database error'),
+      );
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow('Database error');
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        'Database error',
+      );
 
       // Assert
       expect(mockLogger.error).toHaveBeenCalled();
@@ -423,18 +471,19 @@ describe('SendNotificationService', () => {
         throw mockValidationError; // original error
       });
 
-      mockNotificationRepository.markAsFailed
-        .mockRejectedValue(new Error('Database error')); // repository failure
+      mockNotificationRepository.markAsFailed.mockRejectedValue(
+        new Error('Database error'),
+      ); // repository failure
 
       // Act + Assert: execute harus throw error repository
-      await expect(service.execute(mockNotification))
-        .rejects
-        .toThrow('Database error');
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        'Database error',
+      );
 
       // Assert: logger.error tetap harus dipanggil (untuk error original)
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Failed to send notification #${mockNotification.id}:`,
-        mockValidationError.message
+        mockValidationError.message,
       );
     });
   });
@@ -449,7 +498,9 @@ describe('SendNotificationService', () => {
       await service['sendEmailReminder'](mockNotification);
 
       // Assert
-      expect(mockEmailChannel.generateReminderEmail).toHaveBeenCalledWith(mockNotification);
+      expect(mockEmailChannel.generateReminderEmail).toHaveBeenCalledWith(
+        mockNotification,
+      );
       expect(mockEmailChannel.sendEmail).toHaveBeenCalledWith(mockEmailData);
     });
 
@@ -460,7 +511,9 @@ describe('SendNotificationService', () => {
       });
 
       // Act & Assert
-      await expect(service['sendEmailReminder'](mockNotification)).rejects.toThrow(mockEmailError);
+      await expect(
+        service['sendEmailReminder'](mockNotification),
+      ).rejects.toThrow(mockEmailError);
 
       // Assert
       expect(mockEmailChannel.sendEmail).not.toHaveBeenCalled();
@@ -472,7 +525,9 @@ describe('SendNotificationService', () => {
       mockEmailChannel.sendEmail.mockRejectedValue(mockEmailError);
 
       // Act & Assert
-      await expect(service['sendEmailReminder'](mockNotification)).rejects.toThrow(mockEmailError);
+      await expect(
+        service['sendEmailReminder'](mockNotification),
+      ).rejects.toThrow(mockEmailError);
     });
   });
 
@@ -505,11 +560,14 @@ describe('SendNotificationService', () => {
 
       // Act & Assert
       for (const appointmentId of appointmentIds) {
-        const notification = { ...mockNotification, appointment_id: appointmentId };
+        const notification = {
+          ...mockNotification,
+          appointment_id: appointmentId,
+        };
         await service.execute(notification);
 
         expect(mockLogger.log).toHaveBeenCalledWith(
-          expect.stringContaining(`appointment #${appointmentId}`)
+          expect.stringContaining(`appointment #${appointmentId}`),
         );
         jest.clearAllMocks();
       }
@@ -519,7 +577,7 @@ describe('SendNotificationService', () => {
       // Arrange
       const notificationWithRetry = {
         ...mockNotification,
-        retry_count: 3
+        retry_count: 3,
       };
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
       mockEmailChannel.generateReminderEmail.mockReturnValue(mockEmailData);
@@ -530,7 +588,9 @@ describe('SendNotificationService', () => {
       await service.execute(notificationWithRetry);
 
       // Assert
-      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledWith(notificationWithRetry);
+      expect(mockNotificationValidator.validateCanSend).toHaveBeenCalledWith(
+        notificationWithRetry,
+      );
     });
   });
 
@@ -562,25 +622,33 @@ describe('SendNotificationService', () => {
               throw new Error('Validation failed');
             });
           },
-          expectedError: 'Validation failed'
+          expectedError: 'Validation failed',
         },
         {
           setup: () => {
-            mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
+            mockNotificationValidator.validateCanSend.mockReturnValue(
+              undefined,
+            );
             mockEmailChannel.generateReminderEmail.mockImplementation(() => {
               throw new Error('Email generation failed');
             });
           },
-          expectedError: 'Email generation failed'
+          expectedError: 'Email generation failed',
         },
         {
           setup: () => {
-            mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
-            mockEmailChannel.generateReminderEmail.mockReturnValue(mockEmailData);
-            mockEmailChannel.sendEmail.mockRejectedValue(new Error('Email sending failed'));
+            mockNotificationValidator.validateCanSend.mockReturnValue(
+              undefined,
+            );
+            mockEmailChannel.generateReminderEmail.mockReturnValue(
+              mockEmailData,
+            );
+            mockEmailChannel.sendEmail.mockRejectedValue(
+              new Error('Email sending failed'),
+            );
           },
-          expectedError: 'Email sending failed'
-        }
+          expectedError: 'Email sending failed',
+        },
       ];
 
       for (const scenario of errorScenarios) {
@@ -588,16 +656,18 @@ describe('SendNotificationService', () => {
         mockNotificationRepository.markAsFailed.mockResolvedValue(undefined);
 
         // Act & Assert
-        await expect(service.execute(mockNotification)).rejects.toThrow(scenario.expectedError);
+        await expect(service.execute(mockNotification)).rejects.toThrow(
+          scenario.expectedError,
+        );
 
         // Assert common error handling
         expect(mockNotificationRepository.markAsFailed).toHaveBeenCalledWith(
           mockNotification.id,
-          scenario.expectedError
+          scenario.expectedError,
         );
         expect(mockLogger.error).toHaveBeenCalledWith(
           `❌ Failed to send notification #${mockNotification.id}:`,
-          scenario.expectedError
+          scenario.expectedError,
         );
 
         jest.clearAllMocks();
@@ -609,15 +679,19 @@ describe('SendNotificationService', () => {
       mockNotificationValidator.validateCanSend.mockReturnValue(undefined);
       mockEmailChannel.generateReminderEmail.mockReturnValue(mockEmailData);
       mockEmailChannel.sendEmail.mockResolvedValue(undefined);
-      mockNotificationRepository.markAsSent.mockRejectedValue(new Error('Mark as sent failed'));
+      mockNotificationRepository.markAsSent.mockRejectedValue(
+        new Error('Mark as sent failed'),
+      );
 
       // Act & Assert
-      await expect(service.execute(mockNotification)).rejects.toThrow('Mark as sent failed');
+      await expect(service.execute(mockNotification)).rejects.toThrow(
+        'Mark as sent failed',
+      );
 
       // Assert that markAsFailed was called for the repository error
       expect(mockNotificationRepository.markAsFailed).toHaveBeenCalledWith(
         mockNotification.id,
-        'Mark as sent failed'
+        'Mark as sent failed',
       );
     });
   });

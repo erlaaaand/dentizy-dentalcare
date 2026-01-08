@@ -370,9 +370,7 @@ describe('MedicalRecordAppointmentFinderService', () => {
 
       await service.execute(1, mockUser);
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('(DOKTER)'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('(DOKTER)'));
     });
   });
 
@@ -416,13 +414,10 @@ describe('MedicalRecordAppointmentFinderService', () => {
     });
 
     it('should handle deleted medical records', async () => {
-      const deletedRecord = Object.assign(
-        new MedicalRecord(),
-        {
-          ...mockMedicalRecord,
-          deleted_at: new Date()
-        }
-      );
+      const deletedRecord = Object.assign(new MedicalRecord(), {
+        ...mockMedicalRecord,
+        deleted_at: new Date(),
+      });
 
       jest.spyOn(repository, 'findOne').mockResolvedValue(deletedRecord);
 
@@ -432,15 +427,12 @@ describe('MedicalRecordAppointmentFinderService', () => {
     });
 
     it('should handle record without all relations', async () => {
-      const partialRecord = Object.assign(
-        new MedicalRecord(),
-        {
-          ...mockMedicalRecord,
-          appointment: null,
-          doctor: null,
-          patient: null,
-        }
-      );
+      const partialRecord = Object.assign(new MedicalRecord(), {
+        ...mockMedicalRecord,
+        appointment: null,
+        doctor: null,
+        patient: null,
+      });
       jest.spyOn(repository, 'findOne').mockResolvedValue(partialRecord);
       const result = await service.execute(1, mockUser);
       expect(result).toEqual(partialRecord);

@@ -79,7 +79,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.medicalRecordId).toBe(mockEventData.medicalRecordId);
@@ -99,12 +99,16 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.appointmentId,
         mockEventData.patientId,
         mockEventData.doctorId,
-        mockEventData.updatedBy
+        mockEventData.updatedBy,
       );
       const afterCreate = new Date();
 
-      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
-      expect(event.timestamp.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(
+        beforeCreate.getTime(),
+      );
+      expect(event.timestamp.getTime()).toBeLessThanOrEqual(
+        afterCreate.getTime(),
+      );
     });
 
     it('should create event without changes and metadata', () => {
@@ -114,7 +118,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.updatedBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       expect(event.changes).toBeUndefined();
@@ -130,7 +134,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       expect(event.changes?.subjektif).toEqual({
@@ -157,7 +161,9 @@ describe('MedicalRecordUpdatedEvent', () => {
   // ============================================================================
   describe('Static Properties', () => {
     it('should have correct event name', () => {
-      expect(MedicalRecordUpdatedEvent.eventName).toBe('medical_record.updated');
+      expect(MedicalRecordUpdatedEvent.eventName).toBe(
+        'medical_record.updated',
+      );
     });
 
     it('should have correct event version', () => {
@@ -178,7 +184,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const json = event.toJSON();
@@ -202,7 +208,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.updatedBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       const json = event.toJSON();
@@ -218,7 +224,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.updatedBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       const json = event.toJSON();
@@ -307,7 +313,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const description = event.getDescription();
@@ -325,7 +331,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.updatedBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       const description = event.getDescription();
@@ -342,7 +348,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       const description = event.getDescription();
@@ -364,7 +370,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.wasFieldUpdated('subjektif')).toBe(true);
@@ -380,7 +386,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.wasFieldUpdated('assessment')).toBe(false);
@@ -393,7 +399,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.appointmentId,
         mockEventData.patientId,
         mockEventData.doctorId,
-        mockEventData.updatedBy
+        mockEventData.updatedBy,
       );
 
       expect(event.wasFieldUpdated('subjektif')).toBe(false);
@@ -408,7 +414,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       expect(event.wasFieldUpdated('subjektif')).toBe(true);
@@ -431,7 +437,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.getUpdatedFieldsCount()).toBe(2);
@@ -446,7 +452,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       expect(event.getUpdatedFieldsCount()).toBe(4);
@@ -458,7 +464,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.appointmentId,
         mockEventData.patientId,
         mockEventData.doctorId,
-        mockEventData.updatedBy
+        mockEventData.updatedBy,
       );
 
       expect(event.getUpdatedFieldsCount()).toBe(0);
@@ -473,7 +479,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        { ...mockEventData.metadata, fieldsUpdated: [] }
+        { ...mockEventData.metadata, fieldsUpdated: [] },
       );
 
       expect(event.getUpdatedFieldsCount()).toBe(0);
@@ -493,19 +499,23 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const json = originalEvent.toJSON();
       const reconstructedEvent = MedicalRecordUpdatedEvent.fromJSON(json);
 
-      expect(reconstructedEvent.medicalRecordId).toBe(originalEvent.medicalRecordId);
-      expect(reconstructedEvent.appointmentId).toBe(originalEvent.appointmentId);
+      expect(reconstructedEvent.medicalRecordId).toBe(
+        originalEvent.medicalRecordId,
+      );
+      expect(reconstructedEvent.appointmentId).toBe(
+        originalEvent.appointmentId,
+      );
       expect(reconstructedEvent.patientId).toBe(originalEvent.patientId);
       expect(reconstructedEvent.doctorId).toBe(originalEvent.doctorId);
       expect(reconstructedEvent.updatedBy).toBe(originalEvent.updatedBy);
       expect(reconstructedEvent.timestamp.toISOString()).toBe(
-        originalEvent.timestamp.toISOString()
+        originalEvent.timestamp.toISOString(),
       );
       expect(reconstructedEvent.changes).toEqual(originalEvent.changes);
       expect(reconstructedEvent.metadata).toEqual(originalEvent.metadata);
@@ -520,23 +530,23 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       const json = originalEvent.toJSON();
       const reconstructedEvent = MedicalRecordUpdatedEvent.fromJSON(json);
 
       expect(reconstructedEvent.changes?.subjektif).toEqual(
-        mockCompleteEventData.changes.subjektif
+        mockCompleteEventData.changes.subjektif,
       );
       expect(reconstructedEvent.changes?.objektif).toEqual(
-        mockCompleteEventData.changes.objektif
+        mockCompleteEventData.changes.objektif,
       );
       expect(reconstructedEvent.changes?.assessment).toEqual(
-        mockCompleteEventData.changes.assessment
+        mockCompleteEventData.changes.assessment,
       );
       expect(reconstructedEvent.changes?.plan).toEqual(
-        mockCompleteEventData.changes.plan
+        mockCompleteEventData.changes.plan,
       );
     });
   });
@@ -554,7 +564,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.metadata?.wasComplete).toBe(false);
@@ -570,7 +580,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockEventData.updatedBy,
         mockEventData.timestamp,
         mockEventData.changes,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.metadata?.fieldsUpdated).toEqual(['subjektif', 'objektif']);
@@ -585,7 +595,7 @@ describe('MedicalRecordUpdatedEvent', () => {
         mockCompleteEventData.updatedBy,
         mockCompleteEventData.timestamp,
         mockCompleteEventData.changes,
-        mockCompleteEventData.metadata
+        mockCompleteEventData.metadata,
       );
 
       expect(event.metadata?.wasComplete).toBe(true);
@@ -610,7 +620,7 @@ describe('MedicalRecordUpdatedEvent', () => {
           fieldsUpdated: ['subjektif'],
           isNowComplete: false,
           wasComplete: false,
-        }
+        },
       );
 
       expect(event.getUpdatedFieldsCount()).toBe(1);
@@ -630,7 +640,7 @@ describe('MedicalRecordUpdatedEvent', () => {
           fieldsUpdated: ['subjektif'],
           isNowComplete: false,
           wasComplete: true,
-        }
+        },
       );
 
       expect(event.changes?.subjektif?.new).toBe('');

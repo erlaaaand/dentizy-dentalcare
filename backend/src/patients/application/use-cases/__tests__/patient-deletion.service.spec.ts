@@ -4,15 +4,18 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { 
-  NotFoundException, 
-  ConflictException, 
-  BadRequestException 
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { PatientDeletionService } from '../patient-deletion.service';
 import { Patient } from '../../../domains/entities/patient.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity'; // Asumsi path entity
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity'; // Asumsi path entity
 import { PatientRepository } from '../../../infrastructure/persistence/repositories/patients.repository';
 import { PatientCacheService } from '../../../infrastructure/cache/patient-cache.service';
 import { PatientDeletedEvent } from '../../../infrastructure/events/patient-deleted.event';
@@ -21,15 +24,27 @@ import { PatientDeletedEvent } from '../../../infrastructure/events/patient-dele
 const mockPatientId = 1;
 const mockPatientName = 'Budi Santoso';
 
-const mockAppointmentPast: Partial<Appointment> = { id: 101, status: AppointmentStatus.SELESAI };
-const mockAppointmentCancelled: Partial<Appointment> = { id: 102, status: AppointmentStatus.DIBATALKAN };
-const mockAppointmentScheduled: Partial<Appointment> = { id: 103, status: AppointmentStatus.DIJADWALKAN };
+const mockAppointmentPast: Partial<Appointment> = {
+  id: 101,
+  status: AppointmentStatus.SELESAI,
+};
+const mockAppointmentCancelled: Partial<Appointment> = {
+  id: 102,
+  status: AppointmentStatus.DIBATALKAN,
+};
+const mockAppointmentScheduled: Partial<Appointment> = {
+  id: 103,
+  status: AppointmentStatus.DIJADWALKAN,
+};
 
 // Pasien aman untuk dihapus (tidak ada appointment atau statusnya selesai/batal)
 const mockPatientSafe: Partial<Patient> = {
   id: mockPatientId,
   nama_lengkap: mockPatientName,
-  appointments: [mockAppointmentPast as Appointment, mockAppointmentCancelled as Appointment],
+  appointments: [
+    mockAppointmentPast as Appointment,
+    mockAppointmentCancelled as Appointment,
+  ],
 };
 
 // Pasien yang TIDAK BISA dihapus (ada yang dijadwalkan)
@@ -116,7 +131,7 @@ describe('PatientDeletionService', () => {
       // 3. Check Event Emission
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'patient.deleted',
-        expect.any(PatientDeletedEvent)
+        expect.any(PatientDeletedEvent),
       );
       // Verify Event Payload
       const eventPayload = eventEmitter.emit.mock.calls[0][1];
@@ -124,11 +139,15 @@ describe('PatientDeletionService', () => {
       expect(eventPayload.patientName).toBe(mockPatientName);
 
       // 4. Check Cache Invalidation
-      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(mockPatientId);
+      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(
+        mockPatientId,
+      );
       expect(cacheService.invalidateListCaches).toHaveBeenCalled();
 
       // 5. Check Return Message
-      expect(result).toEqual({ message: `Pasien ${mockPatientName} berhasil dihapus` });
+      expect(result).toEqual({
+        message: `Pasien ${mockPatientName} berhasil dihapus`,
+      });
     });
   });
 
@@ -141,7 +160,7 @@ describe('PatientDeletionService', () => {
 
       // Act & Assert
       await expect(service.execute(999)).rejects.toThrow(NotFoundException);
-      
+
       // Ensure delete logic not called
       expect(customRepository.softDelete).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -154,7 +173,7 @@ describe('PatientDeletionService', () => {
       // Act & Assert
       await expect(service.execute(2)).rejects.toThrow(ConflictException);
       await expect(service.execute(2)).rejects.toThrow('janji temu aktif');
-      
+
       expect(customRepository.softDelete).not.toHaveBeenCalled();
     });
   });
@@ -168,8 +187,12 @@ describe('PatientDeletionService', () => {
       customRepository.softDelete.mockRejectedValue(dbError);
 
       // Act & Assert
-      await expect(service.execute(mockPatientId)).rejects.toThrow(BadRequestException);
-      await expect(service.execute(mockPatientId)).rejects.toThrow('Gagal menghapus pasien');
+      await expect(service.execute(mockPatientId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.execute(mockPatientId)).rejects.toThrow(
+        'Gagal menghapus pasien',
+      );
 
       // Verify side effects did NOT happen
       expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -178,7 +201,7 @@ describe('PatientDeletionService', () => {
 
     it('should re-throw NotFoundException or ConflictException as is (not wrapping in BadRequest)', async () => {
       // Test untuk memastikan blok catch(error) di service tidak menelan Exception spesifik
-      
+
       // Case 1: NotFound re-throw
       typeOrmRepository.findOne.mockResolvedValue(null);
       await expect(service.execute(999)).rejects.toThrow(NotFoundException); // Should NOT be BadRequest

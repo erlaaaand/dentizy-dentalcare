@@ -83,8 +83,12 @@ describe('PatientCreateValidator', () => {
       expect(repository.findOne).toHaveBeenCalledTimes(2); // NIK check + Email check
 
       // 2. Check Field Format Delegation
-      expect(fieldValidator.validateBirthDate).toHaveBeenCalledWith(validDto.tanggal_lahir);
-      expect(fieldValidator.validatePhoneNumber).toHaveBeenCalledWith(validDto.no_hp);
+      expect(fieldValidator.validateBirthDate).toHaveBeenCalledWith(
+        validDto.tanggal_lahir,
+      );
+      expect(fieldValidator.validatePhoneNumber).toHaveBeenCalledWith(
+        validDto.no_hp,
+      );
       expect(fieldValidator.validateEmail).toHaveBeenCalledWith(validDto.email);
     });
   });
@@ -111,7 +115,6 @@ describe('PatientCreateValidator', () => {
       // Email check -> exists (conflict)
       (repository.findOne as jest.Mock).mockResolvedValueOnce(existingPatient);
 
-
       const promise = validator.validate(validDto);
 
       // Act & Assert
@@ -131,8 +134,12 @@ describe('PatientCreateValidator', () => {
       (repository.findOne as jest.Mock).mockResolvedValue(null);
 
       // Act & Assert
-      await expect(validator.validate(noContactDto)).rejects.toThrow(BadRequestException);
-      await expect(validator.validate(noContactDto)).rejects.toThrow(/harus memiliki minimal satu kontak/);
+      await expect(validator.validate(noContactDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(validator.validate(noContactDto)).rejects.toThrow(
+        /harus memiliki minimal satu kontak/,
+      );
     });
 
     it('should pass if ONLY Phone Number is provided', async () => {
@@ -157,7 +164,9 @@ describe('PatientCreateValidator', () => {
 
       // Assert
       // Check logic should proceed
-      expect(fieldValidator.validateEmail).toHaveBeenCalledWith(emailOnlyDto.email);
+      expect(fieldValidator.validateEmail).toHaveBeenCalledWith(
+        emailOnlyDto.email,
+      );
     });
   });
 
@@ -173,8 +182,12 @@ describe('PatientCreateValidator', () => {
       });
 
       // Act & Assert
-      await expect(validator.validate(validDto)).rejects.toThrow(BadRequestException);
-      await expect(validator.validate(validDto)).rejects.toThrow('Format tanggal salah');
+      await expect(validator.validate(validDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(validator.validate(validDto)).rejects.toThrow(
+        'Format tanggal salah',
+      );
     });
   });
 });

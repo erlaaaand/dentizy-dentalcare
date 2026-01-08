@@ -5,17 +5,17 @@ import { TreatmentDeletedEvent } from '../../infrastructures/events/treatment-de
 
 @Injectable()
 export class TreatmentDeletedListener {
-    private readonly logger = new Logger(TreatmentDeletedListener.name);
+  private readonly logger = new Logger(TreatmentDeletedListener.name);
 
-    @OnEvent('treatment.deleted')
-    async handleTreatmentDeleted(event: TreatmentDeletedEvent): Promise<void> {
-        this.logger.warn(
-            `Treatment soft deleted: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
-        );
+  @OnEvent('treatment.deleted')
+  async handleTreatmentDeleted(event: TreatmentDeletedEvent): Promise<void> {
+    this.logger.warn(
+      `Treatment soft deleted: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
+    );
 
-        // Additional actions:
-        // - Archive data
-        // - Update related records
-        // - Clear cache
-    }
+    // Additional actions:
+    // - Archive data
+    // - Update related records
+    // - Clear cache
+  }
 }

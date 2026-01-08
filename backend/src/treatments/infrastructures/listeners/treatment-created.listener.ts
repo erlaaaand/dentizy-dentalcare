@@ -5,18 +5,18 @@ import { TreatmentCreatedEvent } from '../../infrastructures/events/treatment-cr
 
 @Injectable()
 export class TreatmentCreatedListener {
-    private readonly logger = new Logger(TreatmentCreatedListener.name);
+  private readonly logger = new Logger(TreatmentCreatedListener.name);
 
-    @OnEvent('treatment.created')
-    async handleTreatmentCreated(event: TreatmentCreatedEvent): Promise<void> {
-        this.logger.log(
-            `Treatment created: ${event.kodePerawatan} - ${event.namaPerawatan} (ID: ${event.treatmentId})`,
-        );
+  @OnEvent('treatment.created')
+  async handleTreatmentCreated(event: TreatmentCreatedEvent): Promise<void> {
+    this.logger.log(
+      `Treatment created: ${event.kodePerawatan} - ${event.namaPerawatan} (ID: ${event.treatmentId})`,
+    );
 
-        // Additional actions:
-        // - Send notification
-        // - Update cache
-        // - Log to audit system
-        // - Trigger analytics
-    }
+    // Additional actions:
+    // - Send notification
+    // - Update cache
+    // - Log to audit system
+    // - Trigger analytics
+  }
 }

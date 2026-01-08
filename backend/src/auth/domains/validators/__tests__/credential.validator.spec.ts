@@ -88,9 +88,9 @@ describe('CredentialValidator', () => {
       });
 
       it('should throw error for undefined username', () => {
-        expect(() => CredentialValidator.validateUsername(undefined as any)).toThrow(
-          BadRequestException,
-        );
+        expect(() =>
+          CredentialValidator.validateUsername(undefined as any),
+        ).toThrow(BadRequestException);
       });
 
       it('should throw error for username with only whitespace', () => {
@@ -110,12 +110,12 @@ describe('CredentialValidator', () => {
 
       it('should throw error for username longer than 50 characters', () => {
         const longUsername = 'a'.repeat(51);
-        expect(() => CredentialValidator.validateUsername(longUsername)).toThrow(
-          BadRequestException,
-        );
-        expect(() => CredentialValidator.validateUsername(longUsername)).toThrow(
-          'Username must not exceed 50 characters',
-        );
+        expect(() =>
+          CredentialValidator.validateUsername(longUsername),
+        ).toThrow(BadRequestException);
+        expect(() =>
+          CredentialValidator.validateUsername(longUsername),
+        ).toThrow('Username must not exceed 50 characters');
       });
 
       it('should throw error for username with special characters', () => {
@@ -281,9 +281,9 @@ describe('CredentialValidator', () => {
       });
 
       it('should throw error for null password', () => {
-        expect(() =>
-          CredentialValidator.validatePassword(null as any),
-        ).toThrow(BadRequestException);
+        expect(() => CredentialValidator.validatePassword(null as any)).toThrow(
+          BadRequestException,
+        );
       });
 
       it('should throw error for undefined password', () => {

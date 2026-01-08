@@ -128,7 +128,7 @@ describe('LoginDto', () => {
       const errors = await validate(dto);
       expect(errors.length).toBe(2);
 
-      const properties = errors.map(e => e.property);
+      const properties = errors.map((e) => e.property);
       expect(properties).toContain('username');
       expect(properties).toContain('password');
     });

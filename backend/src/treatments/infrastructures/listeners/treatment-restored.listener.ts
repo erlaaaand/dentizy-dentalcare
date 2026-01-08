@@ -5,17 +5,17 @@ import { TreatmentRestoredEvent } from '../../infrastructures/events/treatment-r
 
 @Injectable()
 export class TreatmentRestoredListener {
-    private readonly logger = new Logger(TreatmentRestoredListener.name);
+  private readonly logger = new Logger(TreatmentRestoredListener.name);
 
-    @OnEvent('treatment.restored')
-    async handleTreatmentRestored(event: TreatmentRestoredEvent): Promise<void> {
-        this.logger.log(
-            `Treatment restored: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
-        );
+  @OnEvent('treatment.restored')
+  async handleTreatmentRestored(event: TreatmentRestoredEvent): Promise<void> {
+    this.logger.log(
+      `Treatment restored: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
+    );
 
-        // Additional actions:
-        // - Restore cache
-        // - Notify users
-        // - Update indexes
-    }
+    // Additional actions:
+    // - Restore cache
+    // - Notify users
+    // - Update indexes
+  }
 }

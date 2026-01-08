@@ -76,4 +76,4 @@ import { TreatmentCategoryRestoredListener } from './infrastructures/listeners/t
     TreatmentCategoryDomainService,
   ],
 })
-export class TreatmentCategoriesModule { }
+export class TreatmentCategoriesModule {}

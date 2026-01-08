@@ -140,15 +140,17 @@ describe('NotificationsController', () => {
       const result = await controller.getFailedNotifications(limit);
 
       expect(result).toBe(expectedResult);
-      expect(mockNotificationsService.getFailedNotifications).toHaveBeenCalledWith(
-        limit,
-      );
+      expect(
+        mockNotificationsService.getFailedNotifications,
+      ).toHaveBeenCalledWith(limit);
     });
   });
 
   describe('getJobStatus', () => {
     it('should return cron job statuses', () => {
-      const status = { 'reminder_job': { lastRun: new Date(), isRunning: false } };
+      const status = {
+        reminder_job: { lastRun: new Date(), isRunning: false },
+      };
       mockCronService.getJobStatus.mockReturnValue(status);
 
       const result = controller.getJobStatus();
@@ -186,7 +188,9 @@ describe('NotificationsController', () => {
       expect(result).toEqual({
         message: `Notification #${id} queued for retry`,
       });
-      expect(mockNotificationsService.retryNotification).toHaveBeenCalledWith(id);
+      expect(mockNotificationsService.retryNotification).toHaveBeenCalledWith(
+        id,
+      );
     });
   });
 
@@ -202,7 +206,9 @@ describe('NotificationsController', () => {
         message: `Successfully queued ${count} failed notification(s) for retry`,
         count,
       });
-      expect(mockNotificationsService.retryAllFailed).toHaveBeenCalledWith(limit);
+      expect(mockNotificationsService.retryAllFailed).toHaveBeenCalledWith(
+        limit,
+      );
     });
   });
 

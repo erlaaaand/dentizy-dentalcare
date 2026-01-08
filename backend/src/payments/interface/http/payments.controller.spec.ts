@@ -154,7 +154,7 @@
 
 //     it('should generate invoice with correct format', () => {
 //         const invoice = service.generate();
-        
+
 //         expect(invoice).toMatch(/^INV\/\d{8}\/\d{4}$/);
 //     });
 
@@ -163,7 +163,7 @@
 //         const year = today.getFullYear();
 //         const month = String(today.getMonth() + 1).padStart(2, '0');
 //         const day = String(today.getDate()).padStart(2, '0');
-        
+
 //         const lastInvoice = `INV/${year}${month}${day}/0001`;
 //         const newInvoice = service.generate(lastInvoice);
 

@@ -55,11 +55,12 @@ describe('PatientRestoreService', () => {
   // 5. EXECUTE METHOD TESTS
 
   describe('execute', () => {
-    
     // --- Scenario: Success ---
     it('should successfully restore a soft-deleted patient and invalidate cache', async () => {
       // Arrange
-      customRepository.findSoftDeletedById.mockResolvedValue(mockSoftDeletedPatient);
+      customRepository.findSoftDeletedById.mockResolvedValue(
+        mockSoftDeletedPatient,
+      );
       customRepository.restore.mockResolvedValue({ affected: 1 });
 
       // Act
@@ -67,13 +68,17 @@ describe('PatientRestoreService', () => {
 
       // Assert
       // 1. Verify Finder
-      expect(customRepository.findSoftDeletedById).toHaveBeenCalledWith(mockPatientId);
+      expect(customRepository.findSoftDeletedById).toHaveBeenCalledWith(
+        mockPatientId,
+      );
 
       // 2. Verify Restore Action
       expect(customRepository.restore).toHaveBeenCalledWith(mockPatientId);
 
       // 3. Verify Cache Invalidation
-      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(mockPatientId);
+      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(
+        mockPatientId,
+      );
       expect(cacheService.invalidateListCaches).toHaveBeenCalled();
 
       // 4. Verify Response
@@ -89,7 +94,9 @@ describe('PatientRestoreService', () => {
 
       // Act & Assert
       await expect(service.execute(999)).rejects.toThrow(NotFoundException);
-      await expect(service.execute(999)).rejects.toThrow(/tidak ditemukan atau tidak dihapus/);
+      await expect(service.execute(999)).rejects.toThrow(
+        /tidak ditemukan atau tidak dihapus/,
+      );
 
       // Verify operations stopped
       expect(customRepository.restore).not.toHaveBeenCalled();
@@ -99,14 +106,22 @@ describe('PatientRestoreService', () => {
     // --- Scenario: Database Error (Generic) ---
     it('should throw BadRequestException if restore operation fails', async () => {
       // Arrange
-      customRepository.findSoftDeletedById.mockResolvedValue(mockSoftDeletedPatient);
+      customRepository.findSoftDeletedById.mockResolvedValue(
+        mockSoftDeletedPatient,
+      );
       // Simulasi error database saat restore
-      customRepository.restore.mockRejectedValue(new Error('DB Constraint Error'));
+      customRepository.restore.mockRejectedValue(
+        new Error('DB Constraint Error'),
+      );
 
       // Act & Assert
       // Service harus membungkus error generik menjadi BadRequestException
-      await expect(service.execute(mockPatientId)).rejects.toThrow(BadRequestException);
-      await expect(service.execute(mockPatientId)).rejects.toThrow('Gagal memulihkan pasien');
+      await expect(service.execute(mockPatientId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.execute(mockPatientId)).rejects.toThrow(
+        'Gagal memulihkan pasien',
+      );
 
       // Verify cache NOT invalidated on failure
       expect(cacheService.invalidatePatientCache).not.toHaveBeenCalled();

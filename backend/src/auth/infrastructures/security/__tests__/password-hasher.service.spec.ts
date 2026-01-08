@@ -10,7 +10,8 @@ jest.mock('bcrypt');
 // MOCK DATA
 // ======================
 const mockPlainPassword = 'Password123!';
-const mockHashedPassword = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+const mockHashedPassword =
+  '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
 
 // ======================
 // TEST SUITE
@@ -44,7 +45,9 @@ describe('PasswordHasherService', () => {
   describe('hash', () => {
     describe('Successful Hashing', () => {
       beforeEach(() => {
-        jest.spyOn(bcrypt, 'hash').mockResolvedValue(mockHashedPassword as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockResolvedValue(mockHashedPassword as never);
       });
 
       it('should hash password successfully', async () => {
@@ -62,10 +65,7 @@ describe('PasswordHasherService', () => {
       it('should use 10 salt rounds', async () => {
         await service.hash(mockPlainPassword);
 
-        expect(bcrypt.hash).toHaveBeenCalledWith(
-          expect.any(String),
-          10,
-        );
+        expect(bcrypt.hash).toHaveBeenCalledWith(expect.any(String), 10);
       });
 
       it('should return hashed password string', async () => {
@@ -76,7 +76,8 @@ describe('PasswordHasherService', () => {
       });
 
       it('should hash different passwords differently', async () => {
-        jest.spyOn(bcrypt, 'hash')
+        jest
+          .spyOn(bcrypt, 'hash')
           .mockResolvedValueOnce('hash1' as never)
           .mockResolvedValueOnce('hash2' as never);
 
@@ -89,7 +90,9 @@ describe('PasswordHasherService', () => {
 
     describe('Hashing Different Inputs', () => {
       beforeEach(() => {
-        jest.spyOn(bcrypt, 'hash').mockResolvedValue(mockHashedPassword as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockResolvedValue(mockHashedPassword as never);
       });
 
       it('should hash simple password', async () => {
@@ -135,7 +138,9 @@ describe('PasswordHasherService', () => {
 
     describe('Hashing Failures', () => {
       it('should throw error when bcrypt fails', async () => {
-        jest.spyOn(bcrypt, 'hash').mockRejectedValue(new Error('Bcrypt error') as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockRejectedValue(new Error('Bcrypt error') as never);
 
         await expect(service.hash(mockPlainPassword)).rejects.toThrow(
           'Password hashing failed',
@@ -143,13 +148,17 @@ describe('PasswordHasherService', () => {
       });
 
       it('should handle bcrypt timeout', async () => {
-        jest.spyOn(bcrypt, 'hash').mockRejectedValue(new Error('Timeout') as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockRejectedValue(new Error('Timeout') as never);
 
         await expect(service.hash(mockPlainPassword)).rejects.toThrow();
       });
 
       it('should handle bcrypt out of memory', async () => {
-        jest.spyOn(bcrypt, 'hash').mockRejectedValue(new Error('Out of memory') as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockRejectedValue(new Error('Out of memory') as never);
 
         await expect(service.hash(mockPlainPassword)).rejects.toThrow();
       });
@@ -157,7 +166,9 @@ describe('PasswordHasherService', () => {
 
     describe('Edge Cases', () => {
       beforeEach(() => {
-        jest.spyOn(bcrypt, 'hash').mockResolvedValue(mockHashedPassword as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockResolvedValue(mockHashedPassword as never);
       });
 
       it('should handle empty string', async () => {
@@ -244,7 +255,11 @@ describe('PasswordHasherService', () => {
 
     describe('Comparison Failures', () => {
       it('should return false when bcrypt compare fails', async () => {
-        jest.spyOn(bcrypt, 'compare').mockImplementation((): Promise<boolean> => Promise.reject(new Error('Error')));
+        jest
+          .spyOn(bcrypt, 'compare')
+          .mockImplementation(
+            (): Promise<boolean> => Promise.reject(new Error('Error')),
+          );
 
         const result = await service.compare(
           mockPlainPassword,
@@ -255,7 +270,11 @@ describe('PasswordHasherService', () => {
       });
 
       it('should handle invalid hash format', async () => {
-        jest.spyOn(bcrypt, 'compare').mockImplementation((): Promise<boolean> => Promise.reject(new Error('Error')));
+        jest
+          .spyOn(bcrypt, 'compare')
+          .mockImplementation(
+            (): Promise<boolean> => Promise.reject(new Error('Error')),
+          );
 
         const result = await service.compare(mockPlainPassword, 'invalid-hash');
 
@@ -263,7 +282,11 @@ describe('PasswordHasherService', () => {
       });
 
       it('should handle bcrypt errors gracefully', async () => {
-        jest.spyOn(bcrypt, 'compare').mockImplementation((): Promise<boolean> => Promise.reject(new Error('Error')));
+        jest
+          .spyOn(bcrypt, 'compare')
+          .mockImplementation(
+            (): Promise<boolean> => Promise.reject(new Error('Error')),
+          );
 
         const result = await service.compare(
           mockPlainPassword,
@@ -352,7 +375,11 @@ describe('PasswordHasherService', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      jest.spyOn(bcrypt, 'compare').mockImplementation((): Promise<boolean> => Promise.reject(new Error('Error')));
+      jest
+        .spyOn(bcrypt, 'compare')
+        .mockImplementation(
+          (): Promise<boolean> => Promise.reject(new Error('Error')),
+        );
 
       const result = await service.dummyCompare(mockPlainPassword);
 
@@ -404,14 +431,18 @@ describe('PasswordHasherService', () => {
         const result = service.isStrongPassword('PASSWORD123!');
 
         expect(result.strong).toBe(false);
-        expect(result.reasons).toContain('Password harus mengandung huruf kecil');
+        expect(result.reasons).toContain(
+          'Password harus mengandung huruf kecil',
+        );
       });
 
       it('should reject password without uppercase', () => {
         const result = service.isStrongPassword('password123!');
 
         expect(result.strong).toBe(false);
-        expect(result.reasons).toContain('Password harus mengandung huruf besar');
+        expect(result.reasons).toContain(
+          'Password harus mengandung huruf besar',
+        );
       });
 
       it('should reject password without numbers', () => {
@@ -512,7 +543,9 @@ describe('PasswordHasherService', () => {
       const validation = service.isStrongPassword(mockPlainPassword);
 
       if (validation.strong) {
-        jest.spyOn(bcrypt, 'hash').mockResolvedValue(mockHashedPassword as never);
+        jest
+          .spyOn(bcrypt, 'hash')
+          .mockResolvedValue(mockHashedPassword as never);
         const hashed = await service.hash(mockPlainPassword);
         expect(hashed).toBeDefined();
       }

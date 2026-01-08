@@ -14,7 +14,8 @@ import { join } from 'path';
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   try {
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, { // <--- Tambah <NestExpressApplication>
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      // <--- Tambah <NestExpressApplication>
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 
@@ -23,7 +24,7 @@ async function bootstrap() {
     app.useStaticAssets(join(__dirname, '..', 'public'), {
       prefix: '/public/', // url: http://localhost:3000/public/uploads/...
     });
-    
+
     // Atau jika ingin akses langsung seperti return controller saya tadi (/uploads/...):
     app.useStaticAssets(join(__dirname, '..', 'public/uploads'), {
       prefix: '/uploads/', // url: http://localhost:3000/uploads/profiles/...
@@ -167,15 +168,25 @@ async function bootstrap() {
         },
       });
 
+      const fs = require('fs');
+      const path = require('path');
+
       try {
         logger.log('📝 Generating swagger.json file...');
-        writeFileSync(
-          '/home/erlaaaand/kuliah/Projects/dentizy-dentalcare/frontend/swagger.json',
-          JSON.stringify(document, null, 2),
+
+        const swaggerPath = path.join(
+          __dirname,
+          '..',
+          '..',
+          'frontend',
+          'swagger.json',
         );
-        logger.log('✅ swagger.json generated successfully in root directory');
+
+        fs.writeFileSync(swaggerPath, JSON.stringify(document, null, 2));
+
+        logger.log(`✅ swagger.json generated successfully at ${swaggerPath}`);
       } catch (err) {
-        logger.error('❌ Failed to generate swagger.json:', err.message);
+        logger.error('❌ Failed to generate swagger.json:', err);
       }
 
       logger.log('📚 Swagger available at: /api-docs');

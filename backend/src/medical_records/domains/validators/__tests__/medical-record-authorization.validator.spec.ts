@@ -4,7 +4,10 @@ import { MedicalRecordAuthorizationValidator } from '../medical-record-authoriza
 import { User } from '../../../../users/domains/entities/user.entity';
 import { Role, UserRole } from '../../../../roles/entities/role.entity';
 import { MedicalRecord } from '../../entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 
 describe('MedicalRecordAuthorizationValidator', () => {
   let validator: MedicalRecordAuthorizationValidator;
@@ -116,7 +119,10 @@ describe('MedicalRecordAuthorizationValidator', () => {
 
     it('should throw when user has no matching roles', () => {
       expect(() => {
-        validator.validateHasRole(mockStaf, [UserRole.DOKTER, UserRole.KEPALA_KLINIK]);
+        validator.validateHasRole(mockStaf, [
+          UserRole.DOKTER,
+          UserRole.KEPALA_KLINIK,
+        ]);
       }).toThrow(ForbiddenException);
     });
   });
@@ -232,7 +238,10 @@ describe('MedicalRecordAuthorizationValidator', () => {
     });
 
     it('should allow Staf to update records they created', () => {
-      const recordCreatedByStaf = { ...mockMedicalRecord, doctor_id: 3 } as unknown as MedicalRecord;
+      const recordCreatedByStaf = {
+        ...mockMedicalRecord,
+        doctor_id: 3,
+      } as unknown as MedicalRecord;
       expect(() => {
         validator.validateCanUpdate(mockStaf, recordCreatedByStaf);
       }).not.toThrow();
@@ -344,12 +353,18 @@ describe('MedicalRecordAuthorizationValidator', () => {
     });
 
     it('should include update when Dokter owns the record', () => {
-      const operations = validator.getAllowedOperations(mockDokter, mockMedicalRecord);
+      const operations = validator.getAllowedOperations(
+        mockDokter,
+        mockMedicalRecord,
+      );
       expect(operations).toContain('update');
     });
 
     it('should include update when Staf created the record', () => {
-      const recordByStaf = { ...mockMedicalRecord, doctor_id: 3 } as unknown as MedicalRecord;
+      const recordByStaf = {
+        ...mockMedicalRecord,
+        doctor_id: 3,
+      } as unknown as MedicalRecord;
       const operations = validator.getAllowedOperations(mockStaf, recordByStaf);
       expect(operations).toContain('update');
     });

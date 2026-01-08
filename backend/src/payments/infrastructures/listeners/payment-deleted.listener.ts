@@ -5,13 +5,13 @@ import { PaymentDeletedEvent } from '../events/payment-deleted.event';
 
 @Injectable()
 export class PaymentDeletedListener {
-    private readonly logger = new Logger(PaymentDeletedListener.name);
+  private readonly logger = new Logger(PaymentDeletedListener.name);
 
-    @OnEvent('payment.deleted')
-    async handlePaymentDeleted(event: PaymentDeletedEvent) {
-        this.logger.log(`Payment deleted: ${event.nomorInvoice}`);
+  @OnEvent('payment.deleted')
+  async handlePaymentDeleted(event: PaymentDeletedEvent) {
+    this.logger.log(`Payment deleted: ${event.nomorInvoice}`);
 
-        // TODO: Log audit trail
-        // TODO: Archive related documents
-    }
+    // TODO: Log audit trail
+    // TODO: Archive related documents
+  }
 }

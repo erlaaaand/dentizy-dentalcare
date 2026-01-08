@@ -8,33 +8,37 @@ import { PaginatedResponseDto } from '../../applications/dto/paginated-response.
 
 @Injectable()
 export class FindTreatmentCategoriesUseCase {
-    constructor(
-        private readonly repository: TreatmentCategoryRepository,
-        private readonly mapper: TreatmentCategoryMapper,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentCategoryRepository,
+    private readonly mapper: TreatmentCategoryMapper,
+  ) {}
 
-    async findAll(query: QueryTreatmentCategoryDto): Promise<PaginatedResponseDto<TreatmentCategoryResponseDto>> {
-        const { data, total } = await this.repository.findAll(query);
-        const { page = 1, limit = 10 } = query;
+  async findAll(
+    query: QueryTreatmentCategoryDto,
+  ): Promise<PaginatedResponseDto<TreatmentCategoryResponseDto>> {
+    const { data, total } = await this.repository.findAll(query);
+    const { page = 1, limit = 10 } = query;
 
-        return {
-            data: data.map((item) => this.mapper.toResponseDto(item)),
-            meta: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+    return {
+      data: data.map((item) => this.mapper.toResponseDto(item)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
+    const category = await this.repository.findOne(id);
+
+    if (!category) {
+      throw new NotFoundException(
+        `Kategori perawatan dengan ID ${id} tidak ditemukan`,
+      );
     }
 
-    async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
-        const category = await this.repository.findOne(id);
-
-        if (!category) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        return this.mapper.toResponseDto(category);
-    }
+    return this.mapper.toResponseDto(category);
+  }
 }

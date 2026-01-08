@@ -16,7 +16,9 @@ describe('CredentialValidationService', () => {
       providers: [CredentialValidationService],
     }).compile();
 
-    service = module.get<CredentialValidationService>(CredentialValidationService);
+    service = module.get<CredentialValidationService>(
+      CredentialValidationService,
+    );
   });
 
   it('should be defined', () => {
@@ -99,7 +101,9 @@ describe('CredentialValidationService', () => {
         const result = service.validateUsername('test@user');
 
         expect(result.valid).toBe(false);
-        expect(result.message).toBe('Username hanya boleh mengandung huruf, angka, dan underscore');
+        expect(result.message).toBe(
+          'Username hanya boleh mengandung huruf, angka, dan underscore',
+        );
       });
 
       it('should reject username with spaces', () => {
@@ -260,17 +264,20 @@ describe('CredentialValidationService', () => {
       });
 
       it('should reject invalid username format', () => {
-        const result = service.validateCredentials('test@user', 'ValidPassword123');
+        const result = service.validateCredentials(
+          'test@user',
+          'ValidPassword123',
+        );
 
         expect(result.valid).toBe(false);
-        expect(result.errors.some(e => e.includes('Username'))).toBe(true);
+        expect(result.errors.some((e) => e.includes('Username'))).toBe(true);
       });
 
       it('should reject short password', () => {
         const result = service.validateCredentials('validuser', 'short');
 
         expect(result.valid).toBe(false);
-        expect(result.errors.some(e => e.includes('Password'))).toBe(true);
+        expect(result.errors.some((e) => e.includes('Password'))).toBe(true);
       });
     });
 
@@ -283,7 +290,10 @@ describe('CredentialValidationService', () => {
       });
 
       it('should handle undefined values', () => {
-        const result = service.validateCredentials(undefined as any, undefined as any);
+        const result = service.validateCredentials(
+          undefined as any,
+          undefined as any,
+        );
 
         expect(result.valid).toBe(false);
         expect(result.errors.length).toBeGreaterThan(0);

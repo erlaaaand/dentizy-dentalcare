@@ -80,7 +80,7 @@ describe('TimingDefenseService', () => {
         }
 
         // Not all delays should be exactly the same due to jitter
-        const uniqueDelays = new Set(delays.map(d => Math.floor(d / 10)));
+        const uniqueDelays = new Set(delays.map((d) => Math.floor(d / 10)));
         expect(uniqueDelays.size).toBeGreaterThan(1);
       });
     });
@@ -194,9 +194,9 @@ describe('TimingDefenseService', () => {
         const startTime = Date.now();
         const operation = jest.fn().mockRejectedValue(new Error('Failed'));
 
-        await expect(
-          service.executeWithProtection(operation),
-        ).rejects.toThrow('Failed');
+        await expect(service.executeWithProtection(operation)).rejects.toThrow(
+          'Failed',
+        );
 
         const elapsed = Date.now() - startTime;
         expect(elapsed).toBeGreaterThanOrEqual(200);
@@ -207,9 +207,9 @@ describe('TimingDefenseService', () => {
           .fn()
           .mockRejectedValue(new Error('Custom error'));
 
-        await expect(
-          service.executeWithProtection(operation),
-        ).rejects.toThrow('Custom error');
+        await expect(service.executeWithProtection(operation)).rejects.toThrow(
+          'Custom error',
+        );
       });
 
       it('should handle operation throwing synchronously', async () => {
@@ -217,9 +217,9 @@ describe('TimingDefenseService', () => {
           throw new Error('Sync error');
         });
 
-        await expect(
-          service.executeWithProtection(operation),
-        ).rejects.toThrow('Sync error');
+        await expect(service.executeWithProtection(operation)).rejects.toThrow(
+          'Sync error',
+        );
       });
 
       it('should apply timing protection for different error types', async () => {
@@ -228,9 +228,9 @@ describe('TimingDefenseService', () => {
           .fn()
           .mockRejectedValue(new TypeError('Type error'));
 
-        await expect(
-          service.executeWithProtection(operation),
-        ).rejects.toThrow(TypeError);
+        await expect(service.executeWithProtection(operation)).rejects.toThrow(
+          TypeError,
+        );
 
         const elapsed = Date.now() - startTime;
         expect(elapsed).toBeGreaterThanOrEqual(200);
@@ -240,7 +240,9 @@ describe('TimingDefenseService', () => {
         const operation = jest.fn().mockRejectedValue(new Error('Error'));
 
         const start = Date.now();
-        await expect(service.executeWithProtection(operation)).rejects.toThrow();
+        await expect(
+          service.executeWithProtection(operation),
+        ).rejects.toThrow();
         const elapsed = Date.now() - start;
 
         expect(elapsed).toBeGreaterThanOrEqual(200);
@@ -302,7 +304,9 @@ describe('TimingDefenseService', () => {
         const time1 = Date.now() - start1;
 
         const start2 = Date.now();
-        await expect(service.executeWithProtection(failureOp)).rejects.toThrow();
+        await expect(
+          service.executeWithProtection(failureOp),
+        ).rejects.toThrow();
         const time2 = Date.now() - start2;
 
         const timeDifference = Math.abs(time1 - time2);
@@ -388,7 +392,7 @@ describe('TimingDefenseService', () => {
         }
 
         // Should have some variation
-        const uniqueRanges = new Set(delays.map(d => Math.floor(d / 20)));
+        const uniqueRanges = new Set(delays.map((d) => Math.floor(d / 20)));
         expect(uniqueRanges.size).toBeGreaterThan(1);
       });
 

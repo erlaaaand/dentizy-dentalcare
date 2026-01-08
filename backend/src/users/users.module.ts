@@ -41,7 +41,7 @@ import { ValidationExceptionFilter } from './interface/filters/validation-except
   imports: [
     forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([User, Role]),
-    EventEmitterModule.forRoot()
+    EventEmitterModule.forRoot(),
   ],
   controllers: [UsersController],
   providers: [
@@ -76,6 +76,6 @@ import { ValidationExceptionFilter } from './interface/filters/validation-except
       useClass: ValidationExceptionFilter,
     },
   ],
-  exports: [UsersService]
+  exports: [UsersService],
 })
-export class UsersModule { }
+export class UsersModule {}

@@ -9,7 +9,6 @@ const mockPatientName = 'Mantan Pasien';
 
 // 3. TEST SUITE
 describe('PatientDeletedEvent', () => {
-
   // 4. SETUP AND TEARDOWN
   // Class ini adalah POJO (Plain Old Java Object), tidak butuh DI/TestingModule.
   // Setup dilakukan langsung di dalam test case.
@@ -51,7 +50,7 @@ describe('PatientDeletedEvent', () => {
       const serialized = JSON.parse(JSON.stringify(event));
       expect(serialized).toEqual({
         patientId: mockPatientId,
-        patientName: mockPatientName
+        patientName: mockPatientName,
       });
     });
   });

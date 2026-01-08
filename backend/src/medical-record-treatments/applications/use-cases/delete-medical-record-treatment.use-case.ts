@@ -6,27 +6,29 @@ import { MedicalRecordTreatmentDeletedEvent } from '../../infrastructures/events
 
 @Injectable()
 export class DeleteMedicalRecordTreatmentUseCase {
-    constructor(
-        private readonly repository: MedicalRecordTreatmentRepository,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: MedicalRecordTreatmentRepository,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number): Promise<void> {
-        const exists = await this.repository.findOne(id);
-        if (!exists) {
-            throw new NotFoundException(`Data perawatan rekam medis dengan ID ${id} tidak ditemukan`);
-        }
-
-        await this.repository.softDelete(id);
-
-        // Emit event
-        this.eventEmitter.emit(
-            'medical-record-treatment.deleted',
-            new MedicalRecordTreatmentDeletedEvent(
-                id,
-                exists.medicalRecordId,
-                new Date(),
-            ),
-        );
+  async execute(id: number): Promise<void> {
+    const exists = await this.repository.findOne(id);
+    if (!exists) {
+      throw new NotFoundException(
+        `Data perawatan rekam medis dengan ID ${id} tidak ditemukan`,
+      );
     }
+
+    await this.repository.softDelete(id);
+
+    // Emit event
+    this.eventEmitter.emit(
+      'medical-record-treatment.deleted',
+      new MedicalRecordTreatmentDeletedEvent(
+        id,
+        exists.medicalRecordId,
+        new Date(),
+      ),
+    );
+  }
 }

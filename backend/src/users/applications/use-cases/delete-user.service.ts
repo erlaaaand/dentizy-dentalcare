@@ -7,46 +7,45 @@ import { UserDeletedEvent } from '../../infrastructures/events/user-deleted.even
 
 @Injectable()
 export class DeleteUserService {
-    private readonly logger = new Logger(DeleteUserService.name);
+  private readonly logger = new Logger(DeleteUserService.name);
 
-    constructor(
-        private readonly userRepository: UserRepository,
-        private readonly userValidation: UserValidationService,
-        private readonly eventEmitter: EventEmitter2
-    ) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userValidation: UserValidationService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(userId: number): Promise<{ message: string }> {
-        try {
-            // 1. Find user
-            const user = await this.userRepository.findByIdWithPassword(userId);
-            this.userValidation.validateUserExists(user, userId);
+  async execute(userId: number): Promise<{ message: string }> {
+    try {
+      // 1. Find user
+      const user = await this.userRepository.findByIdWithPassword(userId);
+      this.userValidation.validateUserExists(user, userId);
 
-            if (!user) {
-                throw new BadRequestException(`User with id ${userId} not found`);
-            }
+      if (!user) {
+        throw new BadRequestException(`User with id ${userId} not found`);
+      }
 
-            // 2. Validate can delete
-            const canDeleteCheck = this.userValidation.validateCanDelete(user);
-            if (!canDeleteCheck.canDelete) {
-                throw new BadRequestException(canDeleteCheck.reason);
-            }
+      // 2. Validate can delete
+      const canDeleteCheck = this.userValidation.validateCanDelete(user);
+      if (!canDeleteCheck.canDelete) {
+        throw new BadRequestException(canDeleteCheck.reason);
+      }
 
-            // 3. Delete user
-            await this.userRepository.delete(user);
+      // 3. Delete user
+      await this.userRepository.delete(user);
 
-            // 4. Emit event
-            this.eventEmitter.emit(
-                'user.deleted',
-                new UserDeletedEvent(userId, user.username)
-            );
+      // 4. Emit event
+      this.eventEmitter.emit(
+        'user.deleted',
+        new UserDeletedEvent(userId, user.username),
+      );
 
-            // 5. Log and return
-            this.logger.log(`🗑️ User deleted: ${user.username} (ID: ${userId})`);
-            return { message: `User ${user.username} berhasil dihapus` };
-
-        } catch (error) {
-            this.logger.error(`Error deleting user ID ${userId}:`, error.message);
-            throw error;
-        }
+      // 5. Log and return
+      this.logger.log(`🗑️ User deleted: ${user.username} (ID: ${userId})`);
+      return { message: `User ${user.username} berhasil dihapus` };
+    } catch (error) {
+      this.logger.error(`Error deleting user ID ${userId}:`, error.message);
+      throw error;
     }
+  }
 }

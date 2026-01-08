@@ -9,54 +9,49 @@ describe('MedicalRecordEventListener', () => {
   let listener: MedicalRecordEventListener;
 
   // ==================== MOCK DATA ====================
-  const mockCreatedEvent: MedicalRecordCreatedEvent = new MedicalRecordCreatedEvent(
-    1,
-    1,
-    1,
-    1,
-    1,
-    new Date(),
-    {
+  const mockCreatedEvent: MedicalRecordCreatedEvent =
+    new MedicalRecordCreatedEvent(1, 1, 1, 1, 1, new Date(), {
       hasSubjektif: true,
       hasObjektif: true,
       hasAssessment: true,
       hasPlan: true,
       isComplete: true,
-    },
-  );
+    });
 
-  const mockUpdatedEvent: MedicalRecordUpdatedEvent = new MedicalRecordUpdatedEvent(
-    1,
-    1,
-    1,
-    1,
-    1,
-    new Date(),
-    {
-      subjektif: { old: 'Old', new: 'New' },
-    },
-    {
-      fieldsUpdated: ['subjektif'],
-      isNowComplete: true,
-      wasComplete: false,
-    },
-  );
+  const mockUpdatedEvent: MedicalRecordUpdatedEvent =
+    new MedicalRecordUpdatedEvent(
+      1,
+      1,
+      1,
+      1,
+      1,
+      new Date(),
+      {
+        subjektif: { old: 'Old', new: 'New' },
+      },
+      {
+        fieldsUpdated: ['subjektif'],
+        isNowComplete: true,
+        wasComplete: false,
+      },
+    );
 
-  const mockDeletedEvent: MedicalRecordDeletedEvent = new MedicalRecordDeletedEvent(
-    1,
-    1,
-    1,
-    1,
-    1,
-    new Date(),
-    'soft',
-    'Test deletion',
-    {
-      recordAge: 10,
-      wasComplete: true,
-      appointmentStatus: 'SELESAI',
-    },
-  );
+  const mockDeletedEvent: MedicalRecordDeletedEvent =
+    new MedicalRecordDeletedEvent(
+      1,
+      1,
+      1,
+      1,
+      1,
+      new Date(),
+      'soft',
+      'Test deletion',
+      {
+        recordAge: 10,
+        wasComplete: true,
+        appointmentStatus: 'SELESAI',
+      },
+    );
 
   // ==================== SETUP AND TEARDOWN ====================
   beforeEach(async () => {
@@ -64,7 +59,9 @@ describe('MedicalRecordEventListener', () => {
       providers: [MedicalRecordEventListener],
     }).compile();
 
-    listener = module.get<MedicalRecordEventListener>(MedicalRecordEventListener);
+    listener = module.get<MedicalRecordEventListener>(
+      MedicalRecordEventListener,
+    );
   });
 
   afterEach(() => {
@@ -86,14 +83,16 @@ describe('MedicalRecordEventListener', () => {
 
       await listener.handleMedicalRecordCreated(mockCreatedEvent);
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('complete'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('complete'));
     });
 
     it('should log incomplete record warning', async () => {
       const incompleteEvent = new MedicalRecordCreatedEvent(
-        1, 1, 1, 1, 1,
+        1,
+        1,
+        1,
+        1,
+        1,
         new Date(),
         {
           hasSubjektif: true,
@@ -114,10 +113,12 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      jest.spyOn(listener as any, 'logAuditTrail').mockRejectedValue(
-        new Error('Audit failed'),
-      );
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+      jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockRejectedValue(new Error('Audit failed'));
 
       await listener.handleMedicalRecordCreated(mockCreatedEvent);
 
@@ -125,10 +126,18 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should call private methods', async () => {
-      const logAuditSpy = jest.spyOn(listener as any, 'logAuditTrail').mockResolvedValue(undefined);
-      const sendNotificationSpy = jest.spyOn(listener as any, 'sendNotification').mockResolvedValue(undefined);
-      const updateStatsSpy = jest.spyOn(listener as any, 'updateStatistics').mockResolvedValue(undefined);
-      const triggerIntegrationsSpy = jest.spyOn(listener as any, 'triggerIntegrations').mockResolvedValue(undefined);
+      const logAuditSpy = jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockResolvedValue(undefined);
+      const sendNotificationSpy = jest
+        .spyOn(listener as any, 'sendNotification')
+        .mockResolvedValue(undefined);
+      const updateStatsSpy = jest
+        .spyOn(listener as any, 'updateStatistics')
+        .mockResolvedValue(undefined);
+      const triggerIntegrationsSpy = jest
+        .spyOn(listener as any, 'triggerIntegrations')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordCreated(mockCreatedEvent);
 
@@ -161,7 +170,11 @@ describe('MedicalRecordEventListener', () => {
 
     it('should not log completion if already complete', async () => {
       const alreadyCompleteEvent = new MedicalRecordUpdatedEvent(
-        1, 1, 1, 1, 1,
+        1,
+        1,
+        1,
+        1,
+        1,
         new Date(),
         {},
         {
@@ -171,10 +184,9 @@ describe('MedicalRecordEventListener', () => {
         },
       );
 
-      const handleCompletedSpy = jest.spyOn(
-        listener as any,
-        'handleRecordCompleted',
-      ).mockResolvedValue(undefined);
+      const handleCompletedSpy = jest
+        .spyOn(listener as any, 'handleRecordCompleted')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordUpdated(alreadyCompleteEvent);
 
@@ -182,10 +194,12 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      jest.spyOn(listener as any, 'logAuditTrail').mockRejectedValue(
-        new Error('Audit failed'),
-      );
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+      jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockRejectedValue(new Error('Audit failed'));
 
       await listener.handleMedicalRecordUpdated(mockUpdatedEvent);
 
@@ -193,9 +207,15 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should call private methods', async () => {
-      const logAuditSpy = jest.spyOn(listener as any, 'logAuditTrail').mockResolvedValue(undefined);
-      const sendNotificationSpy = jest.spyOn(listener as any, 'sendUpdateNotification').mockResolvedValue(undefined);
-      const invalidateCacheSpy = jest.spyOn(listener as any, 'invalidateCache').mockResolvedValue(undefined);
+      const logAuditSpy = jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockResolvedValue(undefined);
+      const sendNotificationSpy = jest
+        .spyOn(listener as any, 'sendUpdateNotification')
+        .mockResolvedValue(undefined);
+      const invalidateCacheSpy = jest
+        .spyOn(listener as any, 'invalidateCache')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordUpdated(mockUpdatedEvent);
 
@@ -217,13 +237,19 @@ describe('MedicalRecordEventListener', () => {
 
     it('should handle hard delete event with critical logging', async () => {
       const hardDeleteEvent = new MedicalRecordDeletedEvent(
-        1, 1, 1, 1, 1,
+        1,
+        1,
+        1,
+        1,
+        1,
         new Date(),
         'hard',
         'Permanent deletion',
       );
 
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
       const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
 
       await listener.handleMedicalRecordDeleted(hardDeleteEvent);
@@ -236,15 +262,18 @@ describe('MedicalRecordEventListener', () => {
 
     it('should archive before permanent deletion', async () => {
       const hardDeleteEvent = new MedicalRecordDeletedEvent(
-        1, 1, 1, 1, 1,
+        1,
+        1,
+        1,
+        1,
+        1,
         new Date(),
         'hard',
       );
 
-      const archiveSpy = jest.spyOn(
-        listener as any,
-        'archiveBeforePermanentDeletion',
-      ).mockResolvedValue(undefined);
+      const archiveSpy = jest
+        .spyOn(listener as any, 'archiveBeforePermanentDeletion')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordDeleted(hardDeleteEvent);
 
@@ -252,10 +281,9 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should not archive for soft delete', async () => {
-      const archiveSpy = jest.spyOn(
-        listener as any,
-        'archiveBeforePermanentDeletion',
-      ).mockResolvedValue(undefined);
+      const archiveSpy = jest
+        .spyOn(listener as any, 'archiveBeforePermanentDeletion')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordDeleted(mockDeletedEvent);
 
@@ -263,10 +291,12 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle errors gracefully', async () => {
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      jest.spyOn(listener as any, 'logAuditTrail').mockRejectedValue(
-        new Error('Audit failed'),
-      );
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+      jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockRejectedValue(new Error('Audit failed'));
 
       await listener.handleMedicalRecordDeleted(mockDeletedEvent);
 
@@ -274,10 +304,18 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should call private methods', async () => {
-      const logAuditSpy = jest.spyOn(listener as any, 'logAuditTrail').mockResolvedValue(undefined);
-      const sendNotificationSpy = jest.spyOn(listener as any, 'sendDeletionNotification').mockResolvedValue(undefined);
-      const updateStatsSpy = jest.spyOn(listener as any, 'updateDeletionStatistics').mockResolvedValue(undefined);
-      const clearCacheSpy = jest.spyOn(listener as any, 'clearCacheForDeletedRecord').mockResolvedValue(undefined);
+      const logAuditSpy = jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockResolvedValue(undefined);
+      const sendNotificationSpy = jest
+        .spyOn(listener as any, 'sendDeletionNotification')
+        .mockResolvedValue(undefined);
+      const updateStatsSpy = jest
+        .spyOn(listener as any, 'updateDeletionStatistics')
+        .mockResolvedValue(undefined);
+      const clearCacheSpy = jest
+        .spyOn(listener as any, 'clearCacheForDeletedRecord')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordDeleted(mockDeletedEvent);
 
@@ -300,9 +338,7 @@ describe('MedicalRecordEventListener', () => {
 
       await listener.handleMedicalRecordRestored(restoredEvent);
 
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('restored'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('restored'));
     });
 
     it('should call private methods for restoration', async () => {
@@ -311,8 +347,12 @@ describe('MedicalRecordEventListener', () => {
         restoredBy: 1,
       };
 
-      const logAuditSpy = jest.spyOn(listener as any, 'logAuditTrail').mockResolvedValue(undefined);
-      const sendNotificationSpy = jest.spyOn(listener as any, 'sendRestorationNotification').mockResolvedValue(undefined);
+      const logAuditSpy = jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockResolvedValue(undefined);
+      const sendNotificationSpy = jest
+        .spyOn(listener as any, 'sendRestorationNotification')
+        .mockResolvedValue(undefined);
 
       await listener.handleMedicalRecordRestored(restoredEvent);
 
@@ -326,10 +366,12 @@ describe('MedicalRecordEventListener', () => {
         restoredBy: 1,
       };
 
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      jest.spyOn(listener as any, 'logAuditTrail').mockRejectedValue(
-        new Error('Audit failed'),
-      );
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+      jest
+        .spyOn(listener as any, 'logAuditTrail')
+        .mockRejectedValue(new Error('Audit failed'));
 
       await listener.handleMedicalRecordRestored(restoredEvent);
 
@@ -340,7 +382,9 @@ describe('MedicalRecordEventListener', () => {
   // ==================== PRIVATE METHODS TESTS ====================
   describe('Private Methods', () => {
     it('should log audit trail with correct severity', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await (listener as any).logAuditTrail('test', {}, 'info');
 
@@ -351,7 +395,9 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle notification sending', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await (listener as any).sendNotification(mockCreatedEvent);
 
@@ -359,7 +405,9 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle statistics update', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await (listener as any).updateStatistics(mockCreatedEvent);
 
@@ -367,7 +415,9 @@ describe('MedicalRecordEventListener', () => {
     });
 
     it('should handle cache invalidation', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await (listener as any).invalidateCache(mockUpdatedEvent);
 

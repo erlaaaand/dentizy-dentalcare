@@ -3,95 +3,100 @@ import { Injectable, Logger } from '@nestjs/common';
 
 @Injectable()
 export class CredentialValidationService {
-    private readonly logger = new Logger(CredentialValidationService.name);
+  private readonly logger = new Logger(CredentialValidationService.name);
 
-    // Business rules
-    private readonly MIN_USERNAME_LENGTH = 3;
-    private readonly MAX_USERNAME_LENGTH = 50;
-    private readonly MIN_PASSWORD_LENGTH = 8;
+  // Business rules
+  private readonly MIN_USERNAME_LENGTH = 3;
+  private readonly MAX_USERNAME_LENGTH = 50;
+  private readonly MIN_PASSWORD_LENGTH = 8;
 
-    /**
-     * Validate username format
-     */
-    validateUsername(username: string): { valid: boolean; message?: string } {
-
-        if (!username) {
-            return { valid: false, message: 'Username tidak boleh kosong' };
-        }
-
-        // 2. Lakukan trim SATU KALI dan simpan
-        const trimmedUsername = username.trim();
-
-        // 3. Gunakan 'trimmedUsername' untuk SEMUA validasi di bawah ini
-        if (trimmedUsername.length === 0) {
-            return { valid: false, message: 'Username tidak boleh kosong' };
-        }
-
-        if (trimmedUsername.length < this.MIN_USERNAME_LENGTH) {
-            return {
-                valid: false,
-                message: `Username minimal ${this.MIN_USERNAME_LENGTH} karakter`
-            };
-        }
-
-        if (trimmedUsername.length > this.MAX_USERNAME_LENGTH) {
-            return {
-                valid: false,
-                message: `Username maksimal ${this.MAX_USERNAME_LENGTH} karakter`
-            };
-        }
-
-        const usernameRegex = /^[a-zA-Z0-9_]+$/;
-        if (!usernameRegex.test(trimmedUsername)) {
-            return {
-                valid: false,
-                message: 'Username hanya boleh mengandung huruf, angka, dan underscore'
-            };
-        }
-
-        return { valid: true };
+  /**
+   * Validate username format
+   */
+  validateUsername(username: string): { valid: boolean; message?: string } {
+    if (!username) {
+      return { valid: false, message: 'Username tidak boleh kosong' };
     }
 
-    /**
-     * Validate password format (not strength, just basic format)
-     */
-    validatePasswordFormat(password: string): { valid: boolean; message?: string } {
-        if (!password || password.length === 0) {
-            return { valid: false, message: 'Password tidak boleh kosong' };
-        }
+    // 2. Lakukan trim SATU KALI dan simpan
+    const trimmedUsername = username.trim();
 
-        if (password.length < this.MIN_PASSWORD_LENGTH) {
-            return {
-                valid: false,
-                message: `Password minimal ${this.MIN_PASSWORD_LENGTH} karakter`
-            };
-        }
-
-        return { valid: true };
+    // 3. Gunakan 'trimmedUsername' untuk SEMUA validasi di bawah ini
+    if (trimmedUsername.length === 0) {
+      return { valid: false, message: 'Username tidak boleh kosong' };
     }
 
-    /**
-     * Validate credentials completely
-     */
-    validateCredentials(username: string, password: string): {
-        valid: boolean;
-        errors: string[]
-    } {
-        const errors: string[] = [];
-
-        const usernameResult = this.validateUsername(username);
-        if (!usernameResult.valid && usernameResult.message) {
-            errors.push(usernameResult.message);
-        }
-
-        const passwordResult = this.validatePasswordFormat(password);
-        if (!passwordResult.valid && passwordResult.message) {
-            errors.push(passwordResult.message);
-        }
-
-        return {
-            valid: errors.length === 0,
-            errors,
-        };
+    if (trimmedUsername.length < this.MIN_USERNAME_LENGTH) {
+      return {
+        valid: false,
+        message: `Username minimal ${this.MIN_USERNAME_LENGTH} karakter`,
+      };
     }
+
+    if (trimmedUsername.length > this.MAX_USERNAME_LENGTH) {
+      return {
+        valid: false,
+        message: `Username maksimal ${this.MAX_USERNAME_LENGTH} karakter`,
+      };
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9_]+$/;
+    if (!usernameRegex.test(trimmedUsername)) {
+      return {
+        valid: false,
+        message: 'Username hanya boleh mengandung huruf, angka, dan underscore',
+      };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Validate password format (not strength, just basic format)
+   */
+  validatePasswordFormat(password: string): {
+    valid: boolean;
+    message?: string;
+  } {
+    if (!password || password.length === 0) {
+      return { valid: false, message: 'Password tidak boleh kosong' };
+    }
+
+    if (password.length < this.MIN_PASSWORD_LENGTH) {
+      return {
+        valid: false,
+        message: `Password minimal ${this.MIN_PASSWORD_LENGTH} karakter`,
+      };
+    }
+
+    return { valid: true };
+  }
+
+  /**
+   * Validate credentials completely
+   */
+  validateCredentials(
+    username: string,
+    password: string,
+  ): {
+    valid: boolean;
+    errors: string[];
+  } {
+    const errors: string[] = [];
+
+    const usernameResult = this.validateUsername(username);
+    if (!usernameResult.valid && usernameResult.message) {
+      errors.push(usernameResult.message);
+    }
+
+    const passwordResult = this.validatePasswordFormat(password);
+    if (!passwordResult.valid && passwordResult.message) {
+      errors.push(passwordResult.message);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+    };
+  }
 }

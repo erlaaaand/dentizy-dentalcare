@@ -6,20 +6,22 @@ import { Payment } from '../../../domains/entities/payments.entity';
 
 @Injectable()
 export class GetPaymentByInvoiceQuery {
-    constructor(
-        @InjectRepository(Payment)
-        private readonly repository: Repository<Payment>,
-    ) { }
+  constructor(
+    @InjectRepository(Payment)
+    private readonly repository: Repository<Payment>,
+  ) {}
 
-    async execute(nomorInvoice: string): Promise<Payment> {
-        const payment = await this.repository.findOne({
-            where: { nomorInvoice },
-        });
+  async execute(nomorInvoice: string): Promise<Payment> {
+    const payment = await this.repository.findOne({
+      where: { nomorInvoice },
+    });
 
-        if (!payment) {
-            throw new NotFoundException(`Pembayaran dengan nomor invoice ${nomorInvoice} tidak ditemukan`);
-        }
-
-        return payment;
+    if (!payment) {
+      throw new NotFoundException(
+        `Pembayaran dengan nomor invoice ${nomorInvoice} tidak ditemukan`,
+      );
     }
+
+    return payment;
+  }
 }

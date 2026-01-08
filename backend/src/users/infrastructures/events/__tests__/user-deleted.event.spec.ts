@@ -3,4 +3,3 @@ describe('user-deleted.event.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

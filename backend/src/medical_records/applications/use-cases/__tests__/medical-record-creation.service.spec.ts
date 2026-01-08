@@ -7,7 +7,10 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { MedicalRecordCreationService } from '../medical-record-creation.service';
 import { CreateMedicalRecordDto } from '../../../applications/dto/create-medical-record.dto';
 import { MedicalRecord } from '../../../domains/entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { MedicalRecordMapper } from '../../../domains/mappers/medical-record.mappers';
 import { MedicalRecordDomainService } from '../../../domains/services/medical-record-domain.service';
@@ -18,12 +21,16 @@ import { UserRole } from '../../../../roles/entities/role.entity';
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockUser = (id: number = 2, role: UserRole = UserRole.DOKTER): User => ({
-  id,
-  nama_lengkap: 'Dr. Test',
-  username: 'dr.test',
-  roles: [{ id: 1, name: role, description: 'Test role' }],
-} as User);
+const createMockUser = (
+  id: number = 2,
+  role: UserRole = UserRole.DOKTER,
+): User =>
+  ({
+    id,
+    nama_lengkap: 'Dr. Test',
+    username: 'dr.test',
+    roles: [{ id: 1, name: role, description: 'Test role' }],
+  }) as User;
 
 const createMockDto = (): CreateMedicalRecordDto => ({
   appointment_id: 10,
@@ -34,15 +41,16 @@ const createMockDto = (): CreateMedicalRecordDto => ({
   plan: 'Istirahat cukup',
 });
 
-const createMockAppointment = (): Appointment => ({
-  id: 10,
-  patient_id: 3,
-  doctor_id: 2,
-  tanggal_janji: new Date(),
-  status: AppointmentStatus.DIJADWALKAN,
-  patient: { id: 3 } as any,
-  doctor: { id: 2 } as any,
-} as Appointment);
+const createMockAppointment = (): Appointment =>
+  ({
+    id: 10,
+    patient_id: 3,
+    doctor_id: 2,
+    tanggal_janji: new Date(),
+    status: AppointmentStatus.DIJADWALKAN,
+    patient: { id: 3 } as any,
+    doctor: { id: 2 } as any,
+  }) as Appointment;
 
 const createMockMedicalRecord = (): MedicalRecord => {
   const record = new MedicalRecord();
@@ -143,11 +151,17 @@ describe('MedicalRecordCreationService', () => {
       ],
     }).compile();
 
-    service = module.get<MedicalRecordCreationService>(MedicalRecordCreationService);
+    service = module.get<MedicalRecordCreationService>(
+      MedicalRecordCreationService,
+    );
     dataSource = module.get<DataSource>(DataSource);
     mapper = module.get<MedicalRecordMapper>(MedicalRecordMapper);
-    domainService = module.get<MedicalRecordDomainService>(MedicalRecordDomainService);
-    authService = module.get<MedicalRecordAuthorizationService>(MedicalRecordAuthorizationService);
+    domainService = module.get<MedicalRecordDomainService>(
+      MedicalRecordDomainService,
+    );
+    authService = module.get<MedicalRecordAuthorizationService>(
+      MedicalRecordAuthorizationService,
+    );
     validator = module.get<MedicalRecordValidator>(MedicalRecordValidator);
   });
 
@@ -167,23 +181,29 @@ describe('MedicalRecordCreationService', () => {
       const dto = createMockDto();
       const user = createMockUser();
       const appointment = createMockAppointment();
-      const savedRecord = Object.assign(new MedicalRecord(), createMockMedicalRecord());
+      const savedRecord = Object.assign(
+        new MedicalRecord(),
+        createMockMedicalRecord(),
+      );
 
       // Spy/loadRecordWithRelations (private method) → gunakan 'as any'
-      jest.spyOn(service as any, 'loadRecordWithRelations').mockResolvedValue(savedRecord);
+      jest
+        .spyOn(service as any, 'loadRecordWithRelations')
+        .mockResolvedValue(savedRecord);
 
       // Spy queryRunner.manager methods
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment) // fetchAppointment
-        .mockResolvedValueOnce(null)        // checkExistingRecord
+        .mockResolvedValueOnce(null) // checkExistingRecord
         .mockResolvedValueOnce(savedRecord); // jika ada call lain
 
       // Spy create → cast any agar TS tidak complain
-      jest.spyOn(queryRunner.manager, 'create' as any)
+      jest
+        .spyOn(queryRunner.manager, 'create' as any)
         .mockImplementation(() => savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'save')
-        .mockResolvedValue(savedRecord);
+      jest.spyOn(queryRunner.manager, 'save').mockResolvedValue(savedRecord);
 
       // Spy mapper
       jest.spyOn(mapper, 'toEntity').mockReturnValue({
@@ -192,7 +212,8 @@ describe('MedicalRecordCreationService', () => {
       } as any);
 
       // Spy domainService
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus')
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
         .mockReturnValue(true);
 
       // Execute
@@ -211,21 +232,20 @@ describe('MedicalRecordCreationService', () => {
       const dto = createMockDto();
       const user = createMockUser();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(null);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(null);
 
       await expect(service.execute(dto, user)).rejects.toThrow();
 
-      expect(validator.validateAppointmentId)
-        .toHaveBeenCalledWith(dto.appointment_id);
+      expect(validator.validateAppointmentId).toHaveBeenCalledWith(
+        dto.appointment_id,
+      );
     });
 
     it('should validate user ID', async () => {
       const dto = createMockDto();
       const user = createMockUser();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(null);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(null);
 
       await expect(service.execute(dto, user)).rejects.toThrow();
 
@@ -236,11 +256,11 @@ describe('MedicalRecordCreationService', () => {
       const dto = createMockDto();
       const user = createMockUser();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(null);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(null);
 
-      await expect(service.execute(dto, user))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.execute(dto, user)).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
@@ -250,18 +270,19 @@ describe('MedicalRecordCreationService', () => {
       const user = createMockUser();
       const appointment = createMockAppointment();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(appointment);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(appointment);
 
-      jest.spyOn(domainService, 'validateAppointmentEligibility')
+      jest
+        .spyOn(domainService, 'validateAppointmentEligibility')
         .mockImplementation(() => {
           throw new Error('Invalid appointment');
         });
 
       await expect(service.execute(dto, user)).rejects.toThrow();
 
-      expect(domainService.validateAppointmentEligibility)
-        .toHaveBeenCalledWith(appointment);
+      expect(domainService.validateAppointmentEligibility).toHaveBeenCalledWith(
+        appointment,
+      );
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
     });
 
@@ -270,18 +291,20 @@ describe('MedicalRecordCreationService', () => {
       const user = createMockUser();
       const appointment = createMockAppointment();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(appointment);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(appointment);
 
-      jest.spyOn(authService, 'validateCreatePermission')
+      jest
+        .spyOn(authService, 'validateCreatePermission')
         .mockImplementation(() => {
           throw new Error('No permission');
         });
 
       await expect(service.execute(dto, user)).rejects.toThrow();
 
-      expect(authService.validateCreatePermission)
-        .toHaveBeenCalledWith(user, appointment);
+      expect(authService.validateCreatePermission).toHaveBeenCalledWith(
+        user,
+        appointment,
+      );
     });
 
     it('should check for existing medical record', async () => {
@@ -290,20 +313,24 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       const existingRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(existingRecord);
 
-      jest.spyOn(domainService, 'validateNoExistingRecord')
+      jest
+        .spyOn(domainService, 'validateNoExistingRecord')
         .mockImplementation(() => {
           throw new ConflictException('Record exists');
         });
 
-      await expect(service.execute(dto, user))
-        .rejects.toThrow(ConflictException);
+      await expect(service.execute(dto, user)).rejects.toThrow(
+        ConflictException,
+      );
 
-      expect(domainService.validateNoExistingRecord)
-        .toHaveBeenCalledWith(existingRecord);
+      expect(domainService.validateNoExistingRecord).toHaveBeenCalledWith(
+        existingRecord,
+      );
     });
 
     it('should validate SOAP fields', async () => {
@@ -311,14 +338,16 @@ describe('MedicalRecordCreationService', () => {
       const user = createMockUser();
       const appointment = createMockAppointment();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(null);
 
       const entityData = { appointment_id: 10, doctor_id: 2 };
       jest.spyOn(mapper, 'toEntity').mockReturnValue(entityData as any);
 
-      jest.spyOn(domainService, 'validateAllSOAPFields')
+      jest
+        .spyOn(domainService, 'validateAllSOAPFields')
         .mockImplementation(() => {
           throw new Error('Invalid SOAP');
         });
@@ -334,29 +363,29 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       const savedRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(savedRecord);
 
-
-
-      jest.spyOn(queryRunner.manager, 'create' as any)
+      jest
+        .spyOn(queryRunner.manager, 'create' as any)
         .mockImplementation(() => savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'save')
-        .mockResolvedValue(savedRecord);
+      jest.spyOn(queryRunner.manager, 'save').mockResolvedValue(savedRecord);
 
-      jest.spyOn(mapper, 'toEntity')
-        .mockReturnValue({} as any);
+      jest.spyOn(mapper, 'toEntity').mockReturnValue({} as any);
 
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus')
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
         .mockReturnValue(true);
 
       await service.execute(dto, user);
 
-      expect(domainService.shouldUpdateAppointmentStatus)
-        .toHaveBeenCalledWith(appointment);
+      expect(domainService.shouldUpdateAppointmentStatus).toHaveBeenCalledWith(
+        appointment,
+      );
       expect(appointment.status).toBe(AppointmentStatus.SELESAI);
     });
 
@@ -367,27 +396,29 @@ describe('MedicalRecordCreationService', () => {
       appointment.status = AppointmentStatus.SELESAI;
       const savedRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'create' as any)
+      jest
+        .spyOn(queryRunner.manager, 'create' as any)
         .mockImplementation(() => savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'save')
-        .mockResolvedValue(savedRecord);
+      jest.spyOn(queryRunner.manager, 'save').mockResolvedValue(savedRecord);
 
-      jest.spyOn(mapper, 'toEntity')
-        .mockReturnValue({} as any);
+      jest.spyOn(mapper, 'toEntity').mockReturnValue({} as any);
 
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus')
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
         .mockReturnValue(false);
 
       await service.execute(dto, user);
 
-      expect(domainService.shouldUpdateAppointmentStatus)
-        .toHaveBeenCalledWith(appointment);
+      expect(domainService.shouldUpdateAppointmentStatus).toHaveBeenCalledWith(
+        appointment,
+      );
       // Status should remain SELESAI
       expect(appointment.status).toBe(AppointmentStatus.SELESAI);
     });
@@ -396,7 +427,8 @@ describe('MedicalRecordCreationService', () => {
       const dto = createMockDto();
       const user = createMockUser();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockRejectedValue(new Error('Database error'));
 
       await expect(service.execute(dto, user)).rejects.toThrow();
@@ -411,7 +443,8 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       const savedRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(savedRecord);
@@ -419,13 +452,14 @@ describe('MedicalRecordCreationService', () => {
       const entityData = { appointment_id: 10, doctor_id: 2 };
       jest.spyOn(mapper, 'toEntity').mockReturnValue(entityData as any);
 
-      jest.spyOn(queryRunner.manager, 'create' as any)
+      jest
+        .spyOn(queryRunner.manager, 'create' as any)
         .mockImplementation(() => savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'save')
-        .mockResolvedValue(savedRecord);
+      jest.spyOn(queryRunner.manager, 'save').mockResolvedValue(savedRecord);
 
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus')
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
         .mockReturnValue(false);
 
       await service.execute(dto, user);
@@ -444,16 +478,17 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       appointment.status = AppointmentStatus.DIBATALKAN;
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(appointment);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(appointment);
 
-      jest.spyOn(domainService, 'validateAppointmentEligibility')
+      jest
+        .spyOn(domainService, 'validateAppointmentEligibility')
         .mockImplementation(() => {
           throw new ConflictException('Cannot create for cancelled');
         });
 
-      await expect(service.execute(dto, user))
-        .rejects.toThrow(ConflictException);
+      await expect(service.execute(dto, user)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should handle user without permission', async () => {
@@ -461,10 +496,10 @@ describe('MedicalRecordCreationService', () => {
       const user = createMockUser(3); // Different doctor
       const appointment = createMockAppointment(); // For doctor 2
 
-      jest.spyOn(queryRunner.manager, 'findOne')
-        .mockResolvedValue(appointment);
+      jest.spyOn(queryRunner.manager, 'findOne').mockResolvedValue(appointment);
 
-      jest.spyOn(authService, 'validateCreatePermission')
+      jest
+        .spyOn(authService, 'validateCreatePermission')
         .mockImplementation(() => {
           throw new Error('No permission');
         });
@@ -478,17 +513,20 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       const existingRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(existingRecord);
 
-      jest.spyOn(domainService, 'validateNoExistingRecord')
+      jest
+        .spyOn(domainService, 'validateNoExistingRecord')
         .mockImplementation(() => {
           throw new ConflictException('Record exists');
         });
 
-      await expect(service.execute(dto, user))
-        .rejects.toThrow(ConflictException);
+      await expect(service.execute(dto, user)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -502,21 +540,22 @@ describe('MedicalRecordCreationService', () => {
       const appointment = createMockAppointment();
       const savedRecord = createMockMedicalRecord();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockResolvedValueOnce(appointment)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'create' as any)
+      jest
+        .spyOn(queryRunner.manager, 'create' as any)
         .mockImplementation(() => savedRecord);
 
-      jest.spyOn(queryRunner.manager, 'save')
-        .mockResolvedValue(savedRecord);
+      jest.spyOn(queryRunner.manager, 'save').mockResolvedValue(savedRecord);
 
-      jest.spyOn(mapper, 'toEntity')
-        .mockReturnValue({} as any);
+      jest.spyOn(mapper, 'toEntity').mockReturnValue({} as any);
 
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus')
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
         .mockReturnValue(false);
 
       await service.execute(dto, user);
@@ -528,7 +567,8 @@ describe('MedicalRecordCreationService', () => {
       const dto = createMockDto();
       const user = createMockUser();
 
-      jest.spyOn(queryRunner.manager, 'findOne')
+      jest
+        .spyOn(queryRunner.manager, 'findOne')
         .mockRejectedValue(new Error('Test error'));
 
       await expect(service.execute(dto, user)).rejects.toThrow();

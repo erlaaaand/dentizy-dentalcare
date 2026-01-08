@@ -41,9 +41,13 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const patientIdError = errors.find(error => error.property === 'patient_id');
+      const patientIdError = errors.find(
+        (error) => error.property === 'patient_id',
+      );
       expect(patientIdError?.constraints).toBeDefined();
-      expect(patientIdError?.constraints?.isNotEmpty).toContain('Patient ID harus diisi');
+      expect(patientIdError?.constraints?.isNotEmpty).toContain(
+        'Patient ID harus diisi',
+      );
     });
 
     it('should fail if patient_id is not a number', async () => {
@@ -53,7 +57,9 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const patientIdError = errors.find(error => error.property === 'patient_id');
+      const patientIdError = errors.find(
+        (error) => error.property === 'patient_id',
+      );
       expect(patientIdError?.constraints).toBeDefined();
       expect(patientIdError?.constraints?.isNumber).toBeDefined();
     });
@@ -69,9 +75,13 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const doctorIdError = errors.find(error => error.property === 'doctor_id');
+      const doctorIdError = errors.find(
+        (error) => error.property === 'doctor_id',
+      );
       expect(doctorIdError?.constraints).toBeDefined();
-      expect(doctorIdError?.constraints?.isNotEmpty).toContain('Doctor ID harus diisi');
+      expect(doctorIdError?.constraints?.isNotEmpty).toContain(
+        'Doctor ID harus diisi',
+      );
     });
 
     it('should fail if doctor_id is not a number', async () => {
@@ -81,7 +91,9 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const doctorIdError = errors.find(error => error.property === 'doctor_id');
+      const doctorIdError = errors.find(
+        (error) => error.property === 'doctor_id',
+      );
       expect(doctorIdError?.constraints).toBeDefined();
       expect(doctorIdError?.constraints?.isNumber).toBeDefined();
     });
@@ -97,7 +109,9 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const tanggalError = errors.find(error => error.property === 'tanggal_janji');
+      const tanggalError = errors.find(
+        (error) => error.property === 'tanggal_janji',
+      );
       expect(tanggalError?.constraints).toBeDefined();
       expect(tanggalError?.constraints?.isNotEmpty).toBeDefined();
     });
@@ -109,9 +123,13 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const tanggalError = errors.find(error => error.property === 'tanggal_janji');
+      const tanggalError = errors.find(
+        (error) => error.property === 'tanggal_janji',
+      );
       expect(tanggalError?.constraints).toBeDefined();
-      expect(tanggalError?.constraints?.isDateString).toContain('Format tanggal tidak valid');
+      expect(tanggalError?.constraints?.isDateString).toContain(
+        'Format tanggal tidak valid',
+      );
     });
 
     it('should fail if tanggal_janji is not a valid date', async () => {
@@ -121,7 +139,9 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const tanggalError = errors.find(error => error.property === 'tanggal_janji');
+      const tanggalError = errors.find(
+        (error) => error.property === 'tanggal_janji',
+      );
       expect(tanggalError?.constraints).toBeDefined();
       expect(tanggalError?.constraints?.isDateString).toBeDefined();
     });
@@ -137,7 +157,7 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const jamError = errors.find(error => error.property === 'jam_janji');
+      const jamError = errors.find((error) => error.property === 'jam_janji');
       expect(jamError?.constraints).toBeDefined();
       expect(jamError?.constraints?.isNotEmpty).toBeDefined();
     });
@@ -149,9 +169,11 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const jamError = errors.find(error => error.property === 'jam_janji');
+      const jamError = errors.find((error) => error.property === 'jam_janji');
       expect(jamError?.constraints).toBeDefined();
-      expect(jamError?.constraints?.matches).toContain('Format jam tidak valid');
+      expect(jamError?.constraints?.matches).toContain(
+        'Format jam tidak valid',
+      );
     });
 
     it('should fail if jam_janji has invalid time (e.g., 25:00:00)', async () => {
@@ -161,7 +183,7 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const jamError = errors.find(error => error.property === 'jam_janji');
+      const jamError = errors.find((error) => error.property === 'jam_janji');
       expect(jamError?.constraints).toBeDefined();
       expect(jamError?.constraints?.matches).toBeDefined();
     });
@@ -186,7 +208,7 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const statusError = errors.find(error => error.property === 'status');
+      const statusError = errors.find((error) => error.property === 'status');
       expect(statusError?.constraints).toBeDefined();
       expect(statusError?.constraints?.isEnum).toBeDefined();
     });
@@ -201,9 +223,11 @@ describe('CreateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const keluhanError = errors.find(error => error.property === 'keluhan');
+      const keluhanError = errors.find((error) => error.property === 'keluhan');
       expect(keluhanError?.constraints).toBeDefined();
-      expect(keluhanError?.constraints?.maxLength).toContain('maksimal 1000 karakter');
+      expect(keluhanError?.constraints?.maxLength).toContain(
+        'maksimal 1000 karakter',
+      );
     });
 
     it('should trim whitespace from keluhan (@Transform)', () => {

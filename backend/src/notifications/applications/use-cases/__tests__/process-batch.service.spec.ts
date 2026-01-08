@@ -4,7 +4,10 @@ import { Logger } from '@nestjs/common';
 import { ProcessBatchService } from '../process-batch.service';
 import { NotificationRepository } from '../../../infrastructures/repositories/notification.repository';
 import { SendNotificationService } from '../send-notification.service';
-import { NotificationStatus, NotificationType } from '../../../domains/entities/notification.entity';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '../../../domains/entities/notification.entity';
 
 // 2. MOCK DATA
 const mockPendingNotifications = [
@@ -16,7 +19,7 @@ const mockPendingNotifications = [
     send_at: new Date('2024-01-15T10:00:00.000Z'),
     sent_at: null,
     created_at: new Date('2024-01-14T09:00:00.000Z'),
-    updated_at: new Date('2024-01-14T09:00:00.000Z')
+    updated_at: new Date('2024-01-14T09:00:00.000Z'),
   },
   {
     id: 2,
@@ -26,7 +29,7 @@ const mockPendingNotifications = [
     send_at: new Date('2024-01-15T11:00:00.000Z'),
     sent_at: null,
     created_at: new Date('2024-01-14T10:00:00.000Z'),
-    updated_at: new Date('2024-01-14T10:00:00.000Z')
+    updated_at: new Date('2024-01-14T10:00:00.000Z'),
   },
   {
     id: 3,
@@ -36,8 +39,8 @@ const mockPendingNotifications = [
     send_at: new Date('2024-01-15T12:00:00.000Z'),
     sent_at: null,
     created_at: new Date('2024-01-14T11:00:00.000Z'),
-    updated_at: new Date('2024-01-14T11:00:00.000Z')
-  }
+    updated_at: new Date('2024-01-14T11:00:00.000Z'),
+  },
 ];
 
 const mockEmptyNotifications: any[] = [];
@@ -50,7 +53,7 @@ const mockLargeBatchNotifications = Array.from({ length: 50 }, (_, i) => ({
   send_at: new Date('2024-01-15T10:00:00.000Z'),
   sent_at: null,
   created_at: new Date('2024-01-14T09:00:00.000Z'),
-  updated_at: new Date('2024-01-14T09:00:00.000Z')
+  updated_at: new Date('2024-01-14T09:00:00.000Z'),
 }));
 
 const mockError = new Error('Database connection failed');
@@ -60,14 +63,14 @@ const mockBatchResult = {
   processed: 3,
   successful: 2,
   failed: 1,
-  duration: expect.any(Number)
+  duration: expect.any(Number),
 };
 
 const mockEmptyResult = {
   processed: 0,
   successful: 0,
   failed: 0,
-  duration: expect.any(Number)
+  duration: expect.any(Number),
 };
 
 // Mock Repository
@@ -111,8 +114,12 @@ describe('ProcessBatchService', () => {
     }).compile();
 
     service = module.get<ProcessBatchService>(ProcessBatchService);
-    notificationRepository = module.get<NotificationRepository>(NotificationRepository);
-    sendNotificationService = module.get<SendNotificationService>(SendNotificationService);
+    notificationRepository = module.get<NotificationRepository>(
+      NotificationRepository,
+    );
+    sendNotificationService = module.get<SendNotificationService>(
+      SendNotificationService,
+    );
 
     // Mock the logger
     Object.defineProperty(service, 'logger', {
@@ -138,7 +145,9 @@ describe('ProcessBatchService', () => {
 
     it('should return correct result structure', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -159,29 +168,43 @@ describe('ProcessBatchService', () => {
   describe('Empty Batch Scenarios', () => {
     it('should handle empty notification list', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockEmptyNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockEmptyNotifications,
+      );
 
       // Act
       const result = await service.execute();
 
       // Assert
       expect(result).toEqual(mockEmptyResult);
-      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(50);
-      expect(mockNotificationRepository.markAsProcessing).not.toHaveBeenCalled();
+      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(
+        50,
+      );
+      expect(
+        mockNotificationRepository.markAsProcessing,
+      ).not.toHaveBeenCalled();
       expect(mockSendNotificationService.execute).not.toHaveBeenCalled();
-      expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining('No notifications to process'));
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('No notifications to process'),
+      );
     });
 
     it('should log appropriate message for empty batch', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockEmptyNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockEmptyNotifications,
+      );
 
       // Act
       await service.execute();
 
       // Assert
-      expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringContaining('No notifications to process'));
-      expect(mockLogger.log).not.toHaveBeenCalledWith(expect.stringContaining('Processing'));
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringContaining('No notifications to process'),
+      );
+      expect(mockLogger.log).not.toHaveBeenCalledWith(
+        expect.stringContaining('Processing'),
+      );
       expect(mockLogger.error).not.toHaveBeenCalled();
     });
   });
@@ -189,7 +212,9 @@ describe('ProcessBatchService', () => {
   describe('Successful Batch Processing', () => {
     it('should fetch pending notifications with correct batch size', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -197,12 +222,16 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert
-      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(50);
+      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(
+        50,
+      );
     });
 
     it('should mark notifications as processing before sending', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -210,13 +239,19 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert
-      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith([1, 2, 3]);
-      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledTimes(1);
+      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith([
+        1, 2, 3,
+      ]);
+      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledTimes(
+        1,
+      );
     });
 
     it('should process all notifications in the batch', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -225,14 +260,22 @@ describe('ProcessBatchService', () => {
 
       // Assert
       expect(mockSendNotificationService.execute).toHaveBeenCalledTimes(3);
-      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(mockPendingNotifications[0]);
-      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(mockPendingNotifications[1]);
-      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(mockPendingNotifications[2]);
+      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(
+        mockPendingNotifications[0],
+      );
+      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(
+        mockPendingNotifications[1],
+      );
+      expect(mockSendNotificationService.execute).toHaveBeenCalledWith(
+        mockPendingNotifications[2],
+      );
     });
 
     it('should count successful and failed notifications correctly', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
 
       // First succeeds, second fails, third succeeds
@@ -253,7 +296,9 @@ describe('ProcessBatchService', () => {
 
     it('should mark notifications as processing to prevent duplicates', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -270,13 +315,15 @@ describe('ProcessBatchService', () => {
 
       // Assert argumen
       expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith(
-        mockPendingNotifications.map(n => n.id)
+        mockPendingNotifications.map((n) => n.id),
       );
     });
 
     it('should include batch ID in log messages', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -284,9 +331,15 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert
-      expect(mockLogger.debug).toHaveBeenCalledWith(expect.stringMatching(/\[batch_\d+\] Fetching pending notifications/));
-      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringMatching(/\[batch_\d+\] Processing/));
-      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringMatching(/\[batch_\d+\] Completed/));
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        expect.stringMatching(/\[batch_\d+\] Fetching pending notifications/),
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.stringMatching(/\[batch_\d+\] Processing/),
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.stringMatching(/\[batch_\d+\] Completed/),
+      );
     });
   });
 
@@ -301,13 +354,15 @@ describe('ProcessBatchService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('Batch processing error:'),
-        mockError.message
+        mockError.message,
       );
     });
 
     it('should handle errors when marking as processing', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockRejectedValue(mockError);
 
       // Act & Assert
@@ -316,14 +371,16 @@ describe('ProcessBatchService', () => {
       // Assert
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('Batch processing error:'),
-        mockError.message
+        mockError.message,
       );
       expect(mockSendNotificationService.execute).not.toHaveBeenCalled();
     });
 
     it('should continue processing when individual notification fails', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
 
       // All notifications fail
@@ -341,12 +398,15 @@ describe('ProcessBatchService', () => {
 
     it('should handle mixed success and failure scenarios', async () => {
       // Arrange
-      const notifications = [...mockPendingNotifications,
-      { ...mockPendingNotifications[0], id: 4 },
-      { ...mockPendingNotifications[0], id: 5 }
+      const notifications = [
+        ...mockPendingNotifications,
+        { ...mockPendingNotifications[0], id: 4 },
+        { ...mockPendingNotifications[0], id: 5 },
       ];
 
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(notifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        notifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
 
       // Pattern: success, fail, success, fail, success
@@ -368,7 +428,9 @@ describe('ProcessBatchService', () => {
 
     it('should not log individual send errors (handled in SendNotificationService)', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockRejectedValue(mockSendError);
 
@@ -378,16 +440,20 @@ describe('ProcessBatchService', () => {
       // Assert
       // Only batch completion log should be present, not individual error logs
       expect(mockLogger.error).not.toHaveBeenCalledWith(
-        expect.stringContaining('Batch processing error:')
+        expect.stringContaining('Batch processing error:'),
       );
-      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('0 sent, 3 failed'));
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.stringContaining('0 sent, 3 failed'),
+      );
     });
   });
 
   describe('Batch Size Limits', () => {
     it('should respect MAX_BATCH_SIZE when fetching notifications', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockLargeBatchNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockLargeBatchNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -395,7 +461,9 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert
-      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(50);
+      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(
+        50,
+      );
       expect(mockSendNotificationService.execute).toHaveBeenCalledTimes(50);
     });
 
@@ -403,7 +471,7 @@ describe('ProcessBatchService', () => {
       // Arrange
       const maxBatch = Array.from({ length: 50 }, (_, i) => ({
         ...mockPendingNotifications[0],
-        id: i + 1
+        id: i + 1,
       }));
 
       mockNotificationRepository.findPendingToSend.mockResolvedValue(maxBatch);
@@ -422,7 +490,9 @@ describe('ProcessBatchService', () => {
     it('should handle batches smaller than MAX_BATCH_SIZE', async () => {
       // Arrange
       const smallBatch = mockPendingNotifications.slice(0, 2);
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(smallBatch);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        smallBatch,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -431,14 +501,18 @@ describe('ProcessBatchService', () => {
 
       // Assert
       expect(result.processed).toBe(2);
-      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(50);
+      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledWith(
+        50,
+      );
     });
   });
 
   describe('Performance and Timing', () => {
     it('should measure processing duration correctly', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -452,7 +526,9 @@ describe('ProcessBatchService', () => {
 
     it('should include duration in completion log', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -461,14 +537,16 @@ describe('ProcessBatchService', () => {
 
       // Assert
       expect(mockLogger.log).toHaveBeenCalledWith(
-        expect.stringMatching(/Completed in \d+ms:/)
+        expect.stringMatching(/Completed in \d+ms:/),
       );
     });
 
     it('should handle very fast processing', async () => {
       // Arrange
       const singleNotification = [mockPendingNotifications[0]];
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(singleNotification);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        singleNotification,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -486,7 +564,9 @@ describe('ProcessBatchService', () => {
   describe('Concurrent Processing Safety', () => {
     it('should mark notifications as processing to prevent duplicates', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -503,7 +583,7 @@ describe('ProcessBatchService', () => {
       expect(markCallOrder).toBeLessThan(executeCallOrder);
 
       expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith(
-        mockPendingNotifications.map(n => n.id)
+        mockPendingNotifications.map((n) => n.id),
       );
     });
 
@@ -512,10 +592,12 @@ describe('ProcessBatchService', () => {
       const notificationsWithDifferentIds = [
         { ...mockPendingNotifications[0], id: 100 },
         { ...mockPendingNotifications[1], id: 200 },
-        { ...mockPendingNotifications[2], id: 300 }
+        { ...mockPendingNotifications[2], id: 300 },
       ];
 
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(notificationsWithDifferentIds);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        notificationsWithDifferentIds,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -523,7 +605,9 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert
-      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith([100, 200, 300]);
+      expect(mockNotificationRepository.markAsProcessing).toHaveBeenCalledWith([
+        100, 200, 300,
+      ]);
     });
   });
 
@@ -531,7 +615,9 @@ describe('ProcessBatchService', () => {
     it('should handle single notification batch', async () => {
       // Arrange
       const singleNotification = [mockPendingNotifications[0]];
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(singleNotification);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        singleNotification,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -546,7 +632,9 @@ describe('ProcessBatchService', () => {
 
     it('should handle all notifications failing', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockRejectedValue(mockSendError);
 
@@ -557,12 +645,16 @@ describe('ProcessBatchService', () => {
       expect(result.processed).toBe(3);
       expect(result.successful).toBe(0);
       expect(result.failed).toBe(3);
-      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('0 sent, 3 failed'));
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.stringContaining('0 sent, 3 failed'),
+      );
     });
 
     it('should handle all notifications succeeding', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -573,14 +665,18 @@ describe('ProcessBatchService', () => {
       expect(result.processed).toBe(3);
       expect(result.successful).toBe(3);
       expect(result.failed).toBe(0);
-      expect(mockLogger.log).toHaveBeenCalledWith(expect.stringContaining('3 sent, 0 failed'));
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        expect.stringContaining('3 sent, 0 failed'),
+      );
     });
   });
 
   describe('Integration Behavior', () => {
     it('should call dependencies in correct order', async () => {
       // Arrange
-      mockNotificationRepository.findPendingToSend.mockResolvedValue(mockPendingNotifications);
+      mockNotificationRepository.findPendingToSend.mockResolvedValue(
+        mockPendingNotifications,
+      );
       mockNotificationRepository.markAsProcessing.mockResolvedValue(undefined);
       mockSendNotificationService.execute.mockResolvedValue(undefined);
 
@@ -588,9 +684,13 @@ describe('ProcessBatchService', () => {
       await service.execute();
 
       // Assert call order
-      const findPendingCallOrder = mockNotificationRepository.findPendingToSend.mock.invocationCallOrder[0];
-      const markAsProcessingCallOrder = mockNotificationRepository.markAsProcessing.mock.invocationCallOrder[0];
-      const firstSendCallOrder = mockSendNotificationService.execute.mock.invocationCallOrder[0];
+      const findPendingCallOrder =
+        mockNotificationRepository.findPendingToSend.mock
+          .invocationCallOrder[0];
+      const markAsProcessingCallOrder =
+        mockNotificationRepository.markAsProcessing.mock.invocationCallOrder[0];
+      const firstSendCallOrder =
+        mockSendNotificationService.execute.mock.invocationCallOrder[0];
 
       expect(findPendingCallOrder).toBeLessThan(markAsProcessingCallOrder);
       expect(markAsProcessingCallOrder).toBeLessThan(firstSendCallOrder);
@@ -611,7 +711,9 @@ describe('ProcessBatchService', () => {
       // Assert
       expect(firstResult.processed).toBe(3);
       expect(secondResult.processed).toBe(0);
-      expect(mockNotificationRepository.findPendingToSend).toHaveBeenCalledTimes(2);
+      expect(
+        mockNotificationRepository.findPendingToSend,
+      ).toHaveBeenCalledTimes(2);
     });
   });
 });

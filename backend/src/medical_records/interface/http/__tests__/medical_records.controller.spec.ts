@@ -54,7 +54,7 @@ describe('MedicalRecordsController', () => {
         plan: 'Plan contoh',
         created_at: new Date(),
         updated_at: new Date(),
-      }
+      },
     ],
   } as User;
 
@@ -91,9 +91,7 @@ describe('MedicalRecordsController', () => {
       .useValue({ canActivate: jest.fn(() => true) })
       .compile();
 
-    controller = module.get<MedicalRecordsController>(
-      MedicalRecordsController,
-    );
+    controller = module.get<MedicalRecordsController>(MedicalRecordsController);
   });
 
   // Reset mocks setelah setiap tes
@@ -140,8 +138,12 @@ describe('MedicalRecordsController', () => {
           patient: { id: 3, nama_lengkap: 'Jane Doe', no_rm: 'RM123' },
         },
         doctor: { id: 2, name: 'Dr. John Doe' },
-        patient: { id: 3, nama_lengkap: 'Jane Doe', no_rm: 'RM123', tanggal_lahir: new Date('1993-01-01') },
-
+        patient: {
+          id: 3,
+          nama_lengkap: 'Jane Doe',
+          no_rm: 'RM123',
+          tanggal_lahir: new Date('1993-01-01'),
+        },
       } as MedicalRecordResponseDto;
 
       mockMedicalRecordsService.create.mockResolvedValue(expectedResult);
@@ -219,13 +221,15 @@ describe('MedicalRecordsController', () => {
         expectedResult,
       );
 
-      const result = await controller.findByAppointmentId(appointmentId, mockUser);
-
-      expect(result).toBe(expectedResult);
-      expect(mockMedicalRecordsService.findByAppointmentId).toHaveBeenCalledWith(
+      const result = await controller.findByAppointmentId(
         appointmentId,
         mockUser,
       );
+
+      expect(result).toBe(expectedResult);
+      expect(
+        mockMedicalRecordsService.findByAppointmentId,
+      ).toHaveBeenCalledWith(appointmentId, mockUser);
     });
   });
 
@@ -251,7 +255,12 @@ describe('MedicalRecordsController', () => {
           patient: { id: 4, nama_lengkap: 'Patient Name', no_rm: 'RM456' },
         },
         doctor: { id: 3, name: 'Dr. Example' },
-        patient: { id: 4, nama_lengkap: 'Patient Name', no_rm: 'RM456', tanggal_lahir: new Date('1998-05-15') }
+        patient: {
+          id: 4,
+          nama_lengkap: 'Patient Name',
+          no_rm: 'RM456',
+          tanggal_lahir: new Date('1998-05-15'),
+        },
       } as MedicalRecordResponseDto;
 
       mockMedicalRecordsService.findOne.mockResolvedValue(expectedResult);
@@ -259,7 +268,10 @@ describe('MedicalRecordsController', () => {
       const result = await controller.findOne(id, mockUser);
 
       expect(result).toBe(expectedResult);
-      expect(mockMedicalRecordsService.findOne).toHaveBeenCalledWith(id, mockUser);
+      expect(mockMedicalRecordsService.findOne).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 
@@ -291,7 +303,12 @@ describe('MedicalRecordsController', () => {
           patient: { id: 3, nama_lengkap: 'Jane Doe', no_rm: 'RM123' },
         },
         doctor: { id: 2, name: 'Dr. John Doe' },
-        patient: { id: 3, nama_lengkap: 'Jane Doe', no_rm: 'RM123', tanggal_lahir: new Date('1993-01-01') },
+        patient: {
+          id: 3,
+          nama_lengkap: 'Jane Doe',
+          no_rm: 'RM123',
+          tanggal_lahir: new Date('1993-01-01'),
+        },
       } as MedicalRecordResponseDto;
 
       mockMedicalRecordsService.update.mockResolvedValue(expectedResult);
@@ -315,7 +332,10 @@ describe('MedicalRecordsController', () => {
       const result = await controller.remove(id, mockUser);
 
       expect(result).toEqual({ message: 'Rekam medis berhasil dihapus' });
-      expect(mockMedicalRecordsService.remove).toHaveBeenCalledWith(id, mockUser);
+      expect(mockMedicalRecordsService.remove).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 
@@ -327,7 +347,10 @@ describe('MedicalRecordsController', () => {
       const result = await controller.restore(id, mockUser);
 
       expect(result).toEqual({ message: 'Rekam medis berhasil dipulihkan' });
-      expect(mockMedicalRecordsService.restore).toHaveBeenCalledWith(id, mockUser);
+      expect(mockMedicalRecordsService.restore).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 
@@ -339,7 +362,10 @@ describe('MedicalRecordsController', () => {
       // Controller return void
       await controller.hardDelete(id, mockUser);
 
-      expect(mockMedicalRecordsService.hardDelete).toHaveBeenCalledWith(id, mockUser);
+      expect(mockMedicalRecordsService.hardDelete).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
     });
   });
 });

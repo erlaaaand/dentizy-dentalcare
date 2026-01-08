@@ -1,6 +1,6 @@
 export class PatientDeletedEvent {
-    constructor(
-        public readonly patientId: number,
-        public readonly patientName: string
-    ) { }
+  constructor(
+    public readonly patientId: number,
+    public readonly patientName: string,
+  ) {}
 }

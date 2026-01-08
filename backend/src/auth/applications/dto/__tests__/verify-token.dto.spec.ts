@@ -5,7 +5,8 @@ import { VerifyTokenDto, VerifyTokenResponseDto } from '../verify-token.dto';
 // ======================
 // MOCK DATA
 // ======================
-const validToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIifQ.signature';
+const validToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIifQ.signature';
 
 const mockValidResponse: VerifyTokenResponseDto = {
   valid: true,

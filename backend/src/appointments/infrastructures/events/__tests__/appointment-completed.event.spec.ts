@@ -1,5 +1,8 @@
 import { AppointmentCompletedEvent } from '../appointment-completed.event';
-import { Appointment, AppointmentStatus } from '../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../domains/entities/appointment.entity';
 
 describe('AppointmentCompletedEvent', () => {
   let mockAppointment: Appointment;
@@ -61,7 +64,7 @@ describe('AppointmentCompletedEvent', () => {
       expect(() => {
         (event as any).completedBy = 999;
       }).not.toThrow();
-      
+
       // Property masih bisa diubah di runtime karena readonly hanya TypeScript feature
       // Tapi kita verifikasi structure-nya benar
       expect(event).toHaveProperty('appointment');

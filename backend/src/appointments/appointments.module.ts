@@ -47,52 +47,52 @@ import { PaymentsModule } from '../payments/payments.module';
 import { UsersModule } from '../users/users.module';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Appointment, Patient, User]),
-        EventEmitterModule.forRoot(),
-        NotificationsModule,
-        PatientsModule,
-        MedicalRecordsModule,
-        TreatmentsModule,
-        MedicalRecordTreatmentsModule,
-        PaymentsModule,
-        UsersModule
-    ],
-    controllers: [
-        AppointmentsController,
-        PublicAppointmentsController // REGISTER PUBLIC CONTROLLER
-    ],
-    providers: [
-        // Orchestrator
-        AppointmentsService,
+  imports: [
+    TypeOrmModule.forFeature([Appointment, Patient, User]),
+    EventEmitterModule.forRoot(),
+    NotificationsModule,
+    PatientsModule,
+    MedicalRecordsModule,
+    TreatmentsModule,
+    MedicalRecordTreatmentsModule,
+    PaymentsModule,
+    UsersModule,
+  ],
+  controllers: [
+    AppointmentsController,
+    PublicAppointmentsController, // REGISTER PUBLIC CONTROLLER
+  ],
+  providers: [
+    // Orchestrator
+    AppointmentsService,
 
-        // Use Cases
-        AppointmentCreationService,
-        AppointmentCompletionService,
-        AppointmentCancellationService,
-        AppointmentFindService,
-        AppointmentSearchService,
-        AppointmentUpdateService,
-        AppointmentDeletionService,
-        PublicBookingService,
+    // Use Cases
+    AppointmentCreationService,
+    AppointmentCompletionService,
+    AppointmentCancellationService,
+    AppointmentFindService,
+    AppointmentSearchService,
+    AppointmentUpdateService,
+    AppointmentDeletionService,
+    PublicBookingService,
 
-        // Domain Services
-        AppointmentDomainService,
-        AppointmentMapper,
+    // Domain Services
+    AppointmentDomainService,
+    AppointmentMapper,
 
-        // Validators
-        AppointmentValidator,
-        AppointmentCreateValidator,
-        AppointmentTimeValidator,
-        AppointmentConflictValidator,
-        AppointmentCancellationValidator,
+    // Validators
+    AppointmentValidator,
+    AppointmentCreateValidator,
+    AppointmentTimeValidator,
+    AppointmentConflictValidator,
+    AppointmentCancellationValidator,
 
-        // Infrastructure
-        AppointmentsRepository,
-        AppointmentQueryBuilder,
-        TransactionManager,
-        AppointmentEventListener,
-    ],
-    exports: [AppointmentsService, AppointmentsRepository],
+    // Infrastructure
+    AppointmentsRepository,
+    AppointmentQueryBuilder,
+    TransactionManager,
+    AppointmentEventListener,
+  ],
+  exports: [AppointmentsService, AppointmentsRepository],
 })
-export class AppointmentsModule { }
+export class AppointmentsModule {}

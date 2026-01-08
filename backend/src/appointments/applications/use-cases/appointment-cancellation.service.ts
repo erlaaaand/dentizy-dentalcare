@@ -14,56 +14,68 @@ import { AppointmentCancelledEvent } from '../../infrastructures/events/';
  */
 @Injectable()
 export class AppointmentCancellationService {
-    private readonly logger = new Logger(AppointmentCancellationService.name);
+  private readonly logger = new Logger(AppointmentCancellationService.name);
 
-    constructor(
-        private readonly repository: AppointmentsRepository,
-        private readonly cancellationValidator: AppointmentCancellationValidator,
-        private readonly domainService: AppointmentDomainService,
-        private readonly transactionManager: TransactionManager,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: AppointmentsRepository,
+    private readonly cancellationValidator: AppointmentCancellationValidator,
+    private readonly domainService: AppointmentDomainService,
+    private readonly transactionManager: TransactionManager,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    /**
-     * Execute: Cancel appointment
-     */
-    async execute(id: number, user: User, reason?: string): Promise<Appointment> {
-        const queryRunner = this.repository.createQueryRunner();
+  /**
+   * Execute: Cancel appointment
+   */
+  async execute(id: number, user: User, reason?: string): Promise<Appointment> {
+    const queryRunner = this.repository.createQueryRunner();
 
-        try {
-            const appointment = await this.transactionManager.executeInTransaction(
-                queryRunner,
-                async (qr) => {
-                    // 1. FIND APPOINTMENT
-                    const appointment = await this.repository.findByIdInTransaction(qr, id);
+    try {
+      const appointment = await this.transactionManager.executeInTransaction(
+        queryRunner,
+        async (qr) => {
+          // 1. FIND APPOINTMENT
+          const appointment = await this.repository.findByIdInTransaction(
+            qr,
+            id,
+          );
 
-                    if (!appointment) {
-                        throw new NotFoundException(`Janji temu dengan ID #${id} tidak ditemukan`);
-                    }
-
-                    // 2. VALIDASI: Comprehensive cancellation validation
-                    this.cancellationValidator.validateCancellation(appointment, user);
-
-                    // 3. CANCEL APPOINTMENT
-                    const cancelledAppointment = this.domainService.cancelAppointment(appointment);
-
-                    return await this.repository.updateInTransaction(qr, cancelledAppointment);
-                },
-                'cancel-appointment'
+          if (!appointment) {
+            throw new NotFoundException(
+              `Janji temu dengan ID #${id} tidak ditemukan`,
             );
+          }
 
-            // 4. EMIT EVENT (di luar transaction)
-            this.eventEmitter.emit(
-                'appointment.cancelled',
-                new AppointmentCancelledEvent(appointment, user.id, reason)
-            );
+          // 2. VALIDASI: Comprehensive cancellation validation
+          this.cancellationValidator.validateCancellation(appointment, user);
 
-            this.logger.log(`❌ Appointment #${id} cancelled by user #${user.id}`);
+          // 3. CANCEL APPOINTMENT
+          const cancelledAppointment =
+            this.domainService.cancelAppointment(appointment);
 
-            return appointment;
-        } catch (error) {
-            this.logger.error(`❌ Error cancelling appointment ID ${id}:`, error.stack);
-            throw error;
-        }
+          return await this.repository.updateInTransaction(
+            qr,
+            cancelledAppointment,
+          );
+        },
+        'cancel-appointment',
+      );
+
+      // 4. EMIT EVENT (di luar transaction)
+      this.eventEmitter.emit(
+        'appointment.cancelled',
+        new AppointmentCancelledEvent(appointment, user.id, reason),
+      );
+
+      this.logger.log(`❌ Appointment #${id} cancelled by user #${user.id}`);
+
+      return appointment;
+    } catch (error) {
+      this.logger.error(
+        `❌ Error cancelling appointment ID ${id}:`,
+        error.stack,
+      );
+      throw error;
     }
+  }
 }

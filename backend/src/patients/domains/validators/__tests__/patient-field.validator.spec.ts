@@ -49,19 +49,30 @@ describe('PatientFieldValidator', () => {
     });
 
     it('should throw BadRequestException if minAge > maxAge', () => {
-      expect(() => validator.validateAgeRange(20, 10)).toThrow(BadRequestException);
-      expect(() => validator.validateAgeRange(20, 10)).toThrow(/Umur minimal tidak boleh lebih besar/);
+      expect(() => validator.validateAgeRange(20, 10)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateAgeRange(20, 10)).toThrow(
+        /Umur minimal tidak boleh lebih besar/,
+      );
     });
 
     it('should throw BadRequestException if age is negative', () => {
-      expect(() => validator.validateAgeRange(-1, 10)).toThrow(BadRequestException);
-      expect(() => validator.validateAgeRange(10, -1))
-        .toThrow(/Umur minimal tidak boleh lebih besar dari umur maksimal/);
+      expect(() => validator.validateAgeRange(-1, 10)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateAgeRange(10, -1)).toThrow(
+        /Umur minimal tidak boleh lebih besar dari umur maksimal/,
+      );
     });
 
     it('should throw BadRequestException if age > 150', () => {
-      expect(() => validator.validateAgeRange(0, 151)).toThrow(BadRequestException);
-      expect(() => validator.validateAgeRange(151, 200)).toThrow(/maksimal 150/);
+      expect(() => validator.validateAgeRange(0, 151)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateAgeRange(151, 200)).toThrow(
+        /maksimal 150/,
+      );
     });
 
     it('should ignore validation if values are undefined', () => {
@@ -81,19 +92,29 @@ describe('PatientFieldValidator', () => {
     });
 
     it('should throw BadRequestException for invalid date string', () => {
-      expect(() => validator.validateBirthDate('invalid-date')).toThrow(BadRequestException);
+      expect(() => validator.validateBirthDate('invalid-date')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for future date', () => {
       const futureDate = getFutureDate();
-      expect(() => validator.validateBirthDate(futureDate)).toThrow(BadRequestException);
-      expect(() => validator.validateBirthDate(futureDate)).toThrow(/masa depan/);
+      expect(() => validator.validateBirthDate(futureDate)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateBirthDate(futureDate)).toThrow(
+        /masa depan/,
+      );
     });
 
     it('should throw BadRequestException for ancient date (> 150 years ago)', () => {
       const ancientDate = getAncientDate();
-      expect(() => validator.validateBirthDate(ancientDate)).toThrow(BadRequestException);
-      expect(() => validator.validateBirthDate(ancientDate)).toThrow(/lebih dari 150 tahun/);
+      expect(() => validator.validateBirthDate(ancientDate)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateBirthDate(ancientDate)).toThrow(
+        /lebih dari 150 tahun/,
+      );
     });
   });
 
@@ -101,19 +122,29 @@ describe('PatientFieldValidator', () => {
     it('should pass for valid Indonesian numbers', () => {
       expect(() => validator.validatePhoneNumber('08123456789')).not.toThrow();
       expect(() => validator.validatePhoneNumber('628123456789')).not.toThrow();
-      expect(() => validator.validatePhoneNumber('+628123456789')).not.toThrow();
+      expect(() =>
+        validator.validatePhoneNumber('+628123456789'),
+      ).not.toThrow();
     });
 
     it('should throw BadRequestException for invalid format', () => {
-      expect(() => validator.validatePhoneNumber('123')).toThrow(BadRequestException); // Too short
-      expect(() => validator.validatePhoneNumber('0812abc')).toThrow(BadRequestException); // Letters
+      expect(() => validator.validatePhoneNumber('123')).toThrow(
+        BadRequestException,
+      ); // Too short
+      expect(() => validator.validatePhoneNumber('0812abc')).toThrow(
+        BadRequestException,
+      ); // Letters
     });
 
     it('should throw BadRequestException for repeated digits (spam/fake number)', () => {
       // Pattern: (\d)\1{9,} -> 1 digit repeated 10 times or more
       const fakeNumber = '081111111111';
-      expect(() => validator.validatePhoneNumber(fakeNumber)).toThrow(BadRequestException);
-      expect(() => validator.validatePhoneNumber(fakeNumber)).toThrow(/terlalu banyak digit yang sama/);
+      expect(() => validator.validatePhoneNumber(fakeNumber)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validatePhoneNumber(fakeNumber)).toThrow(
+        /terlalu banyak digit yang sama/,
+      );
     });
   });
 
@@ -123,13 +154,19 @@ describe('PatientFieldValidator', () => {
     });
 
     it('should throw BadRequestException for invalid format', () => {
-      expect(() => validator.validateEmail('budi@')).toThrow(BadRequestException);
-      expect(() => validator.validateEmail('budi.com')).toThrow(BadRequestException);
+      expect(() => validator.validateEmail('budi@')).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateEmail('budi.com')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if length exceeds 250', () => {
       const longEmail = 'a'.repeat(240) + '@example.com'; // Total > 250
-      expect(() => validator.validateEmail(longEmail)).toThrow(BadRequestException);
+      expect(() => validator.validateEmail(longEmail)).toThrow(
+        BadRequestException,
+      );
       expect(() => validator.validateEmail(longEmail)).toThrow(/maksimal 250/);
     });
   });
@@ -141,45 +178,65 @@ describe('PatientFieldValidator', () => {
 
     it('should throw BadRequestException if length is not 16', () => {
       expect(() => validator.validateNik('123')).toThrow(BadRequestException);
-      expect(() => validator.validateNik('1'.repeat(17))).toThrow(BadRequestException);
+      expect(() => validator.validateNik('1'.repeat(17))).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if contains non-numeric', () => {
       // 16 chars but with letters
       const invalidNik = '123456789012345a';
-      expect(() => validator.validateNik(invalidNik)).toThrow(BadRequestException);
+      expect(() => validator.validateNik(invalidNik)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('validateTextLength', () => {
     it('should pass if text is within limit', () => {
-      expect(() => validator.validateTextLength('abc', 'Field', 5)).not.toThrow();
+      expect(() =>
+        validator.validateTextLength('abc', 'Field', 5),
+      ).not.toThrow();
     });
 
     it('should throw BadRequestException if text exceeds limit', () => {
-      expect(() => validator.validateTextLength('abcdef', 'Nama', 5)).toThrow(BadRequestException);
-      expect(() => validator.validateTextLength('abcdef', 'Nama', 5)).toThrow(/Nama maksimal 5 karakter/);
+      expect(() => validator.validateTextLength('abcdef', 'Nama', 5)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateTextLength('abcdef', 'Nama', 5)).toThrow(
+        /Nama maksimal 5 karakter/,
+      );
     });
   });
 
   describe('validateRequired', () => {
     it('should pass if value is present', () => {
-      expect(() => validator.validateRequired('some value', 'Field')).not.toThrow();
+      expect(() =>
+        validator.validateRequired('some value', 'Field'),
+      ).not.toThrow();
       expect(() => validator.validateRequired(123, 'Field')).not.toThrow();
       expect(() => validator.validateRequired(false, 'Field')).not.toThrow(); // false is a value
     });
 
     it('should throw BadRequestException if value is undefined', () => {
-      expect(() => validator.validateRequired(undefined, 'Alamat')).toThrow(BadRequestException);
+      expect(() => validator.validateRequired(undefined, 'Alamat')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if value is null', () => {
-      expect(() => validator.validateRequired(null, 'Alamat')).toThrow(BadRequestException);
+      expect(() => validator.validateRequired(null, 'Alamat')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException if value is empty string', () => {
-      expect(() => validator.validateRequired('', 'Alamat')).toThrow(BadRequestException);
-      expect(() => validator.validateRequired('', 'Alamat')).toThrow(/Alamat harus diisi/);
+      expect(() => validator.validateRequired('', 'Alamat')).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateRequired('', 'Alamat')).toThrow(
+        /Alamat harus diisi/,
+      );
     });
   });
 });

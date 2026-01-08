@@ -16,10 +16,10 @@ import { UserRole } from '../../../../roles/entities/role.entity';
 // MOCK DATA
 // ======================================
 const mockUser: User = {
-    id: 1,
-    nama_lengkap: 'Dr. Smith',
-    roles: [{ id: 1, name: UserRole.DOKTER, description: '' }]
-  } as User;
+  id: 1,
+  nama_lengkap: 'Dr. Smith',
+  roles: [{ id: 1, name: UserRole.DOKTER, description: '' }],
+} as User;
 
 const mockAppointment: Appointment = {
   id: 1,
@@ -72,7 +72,9 @@ describe('AppointmentDeletionService', () => {
       ],
     }).compile();
 
-    service = module.get<AppointmentDeletionService>(AppointmentDeletionService);
+    service = module.get<AppointmentDeletionService>(
+      AppointmentDeletionService,
+    );
     repository = module.get<AppointmentsRepository>(AppointmentsRepository);
     validator = module.get<AppointmentValidator>(AppointmentValidator);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
@@ -91,8 +93,10 @@ describe('AppointmentDeletionService', () => {
       const appointmentId = 1;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {});
       jest.spyOn(repository, 'remove').mockResolvedValue(undefined);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
@@ -101,12 +105,17 @@ describe('AppointmentDeletionService', () => {
 
       // Assert
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateForDeletion).toHaveBeenCalledWith(mockAppointment);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateForDeletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(repository.remove).toHaveBeenCalledWith(mockAppointment);
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'appointment.deleted',
-        expect.any(AppointmentDeletedEvent)
+        expect.any(AppointmentDeletedEvent),
       );
     });
 
@@ -115,15 +124,17 @@ describe('AppointmentDeletionService', () => {
       const appointmentId = 999;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(null);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-        if (!appointment) {
-          throw new Error(`Appointment with ID ${id} not found`);
-        }
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation((appointment, id) => {
+          if (!appointment) {
+            throw new Error(`Appointment with ID ${id} not found`);
+          }
+        });
 
       // Act & Assert
       await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
-        `Appointment with ID ${appointmentId} not found`
+        `Appointment with ID ${appointmentId} not found`,
       );
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
@@ -135,20 +146,31 @@ describe('AppointmentDeletionService', () => {
     it('should throw error when deletion validation fails', async () => {
       // Arrange
       const appointmentId = 1;
-      const deletionError = new Error('Cannot delete appointment with medical record');
+      const deletionError = new Error(
+        'Cannot delete appointment with medical record',
+      );
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
       jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {
         throw deletionError;
       });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(deletionError);
+      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+        deletionError,
+      );
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateForDeletion).toHaveBeenCalledWith(mockAppointment);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateForDeletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(repository.remove).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -159,16 +181,25 @@ describe('AppointmentDeletionService', () => {
       const databaseError = new Error('Database deletion failed');
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {});
       jest.spyOn(repository, 'remove').mockRejectedValue(databaseError);
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(databaseError);
+      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+        databaseError,
+      );
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateForDeletion).toHaveBeenCalledWith(mockAppointment);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateForDeletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(repository.remove).toHaveBeenCalledWith(mockAppointment);
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -179,13 +210,17 @@ describe('AppointmentDeletionService', () => {
       const validationError = new Error('Validation failed');
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
       jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {
         throw validationError;
       });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(validationError);
+      await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+        validationError,
+      );
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
@@ -198,8 +233,12 @@ describe('AppointmentDeletionService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateForDeletion')
+          .mockImplementation(() => {});
         jest.spyOn(repository, 'remove').mockResolvedValue(undefined);
         const emitSpy = jest.spyOn(eventEmitter, 'emit');
 
@@ -212,7 +251,7 @@ describe('AppointmentDeletionService', () => {
           expect.objectContaining({
             appointmentId: appointmentId,
             deletedBy: mockUser.id,
-          })
+          }),
         );
       });
 
@@ -223,8 +262,12 @@ describe('AppointmentDeletionService', () => {
         let eventEmitted = false;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateForDeletion')
+          .mockImplementation(() => {});
         jest.spyOn(repository, 'remove').mockImplementation(async () => {
           deletionCompleted = true;
         });
@@ -254,8 +297,12 @@ describe('AppointmentDeletionService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'log');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateForDeletion')
+          .mockImplementation(() => {});
         jest.spyOn(repository, 'remove').mockResolvedValue(undefined);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
@@ -263,7 +310,9 @@ describe('AppointmentDeletionService', () => {
         await service.execute(appointmentId, mockUser);
 
         // Assert
-        expect(loggerSpy).toHaveBeenCalledWith(`🗑️ Appointment #${appointmentId} deleted`);
+        expect(loggerSpy).toHaveBeenCalledWith(
+          `🗑️ Appointment #${appointmentId} deleted`,
+        );
       });
 
       it('should log error when deletion fails', async () => {
@@ -273,16 +322,20 @@ describe('AppointmentDeletionService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
         jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {
           throw validationError;
         });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(validationError);
+        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+          validationError,
+        );
         expect(loggerSpy).toHaveBeenCalledWith(
           `❌ Error deleting appointment ID ${appointmentId}:`,
-          expect.any(String)
+          expect.any(String),
         );
       });
     });
@@ -297,9 +350,11 @@ describe('AppointmentDeletionService', () => {
         const callOrder: string[] = [];
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => {
-          callOrder.push('validateAppointmentExists');
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {
+            callOrder.push('validateAppointmentExists');
+          });
         jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {
           callOrder.push('validateForDeletion');
         });
@@ -310,7 +365,10 @@ describe('AppointmentDeletionService', () => {
         await service.execute(appointmentId, mockUser);
 
         // Assert
-        expect(callOrder).toEqual(['validateAppointmentExists', 'validateForDeletion']);
+        expect(callOrder).toEqual([
+          'validateAppointmentExists',
+          'validateForDeletion',
+        ]);
       });
 
       it('should stop execution when appointment not found', async () => {
@@ -318,14 +376,18 @@ describe('AppointmentDeletionService', () => {
         const appointmentId = 999;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(null);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-          if (!appointment) {
-            throw new Error('Appointment not found');
-          }
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation((appointment, id) => {
+            if (!appointment) {
+              throw new Error('Appointment not found');
+            }
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow('Appointment not found');
+        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+          'Appointment not found',
+        );
         expect(validator.validateForDeletion).not.toHaveBeenCalled();
         expect(repository.remove).not.toHaveBeenCalled();
         expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -336,13 +398,17 @@ describe('AppointmentDeletionService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
         jest.spyOn(validator, 'validateForDeletion').mockImplementation(() => {
           throw new Error('Deletion validation failed');
         });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow('Deletion validation failed');
+        await expect(service.execute(appointmentId, mockUser)).rejects.toThrow(
+          'Deletion validation failed',
+        );
         expect(repository.remove).not.toHaveBeenCalled();
         expect(eventEmitter.emit).not.toHaveBeenCalled();
       });

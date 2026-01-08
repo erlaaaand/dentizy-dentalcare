@@ -48,7 +48,10 @@ describe('MedicalRecordsService', () => {
         { provide: MedicalRecordUpdateService, useValue: mockUpdate },
         { provide: MedicalRecordFindService, useValue: mockFind },
         { provide: MedicalRecordSearchService, useValue: mockSearch },
-        { provide: MedicalRecordAppointmentFinderService, useValue: mockAppointmentFinder },
+        {
+          provide: MedicalRecordAppointmentFinderService,
+          useValue: mockAppointmentFinder,
+        },
         { provide: MedicalRecordDeletionService, useValue: mockDeletion },
         { provide: MedicalRecordQueryBuilder, useValue: mockQueryBuilder },
       ],
@@ -94,7 +97,10 @@ describe('MedicalRecordsService', () => {
 
     const result = await service.findAll(mockUser, query);
 
-    expect(mockQueryBuilder.buildFindAllQuery).toHaveBeenCalledWith(mockUser, query);
+    expect(mockQueryBuilder.buildFindAllQuery).toHaveBeenCalledWith(
+      mockUser,
+      query,
+    );
     expect(result).toEqual({
       data: [{ id: 1 }],
       total: 1,

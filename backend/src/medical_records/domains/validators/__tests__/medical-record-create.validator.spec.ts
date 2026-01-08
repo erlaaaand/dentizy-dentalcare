@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { MedicalRecordCreateValidator } from '../medical-record-create.validator';
 import { CreateMedicalRecordDto } from '../../../applications/dto/create-medical-record.dto';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { UserRole } from '../../../../roles/entities/role.entity';
 
@@ -39,7 +42,9 @@ describe('MedicalRecordCreateValidator', () => {
       providers: [MedicalRecordCreateValidator],
     }).compile();
 
-    validator = module.get<MedicalRecordCreateValidator>(MedicalRecordCreateValidator);
+    validator = module.get<MedicalRecordCreateValidator>(
+      MedicalRecordCreateValidator,
+    );
   });
 
   afterEach(() => {
@@ -68,9 +73,18 @@ describe('MedicalRecordCreateValidator', () => {
 
     it('should validate all components', () => {
       const validateDtoSpy = jest.spyOn(validator as any, 'validateDto');
-      const validateAppointmentSpy = jest.spyOn(validator as any, 'validateAppointment');
-      const validateSOAPSpy = jest.spyOn(validator as any, 'validateSOAPFields');
-      const validateBusinessSpy = jest.spyOn(validator as any, 'validateBusinessRules');
+      const validateAppointmentSpy = jest.spyOn(
+        validator as any,
+        'validateAppointment',
+      );
+      const validateSOAPSpy = jest.spyOn(
+        validator as any,
+        'validateSOAPFields',
+      );
+      const validateBusinessSpy = jest.spyOn(
+        validator as any,
+        'validateBusinessRules',
+      );
 
       validator.validate(validDto, mockAppointment, mockUser);
 
@@ -88,9 +102,12 @@ describe('MedicalRecordCreateValidator', () => {
       delete invalidDto.appointment_id;
 
       expect(() => {
-        validator.validate(invalidDto as CreateMedicalRecordDto, mockAppointment, mockUser);
+        validator.validate(
+          invalidDto as CreateMedicalRecordDto,
+          mockAppointment,
+          mockUser,
+        );
       }).toThrow(BadRequestException);
-
     });
 
     it('should throw when appointment_id is zero or negative', () => {
@@ -106,7 +123,11 @@ describe('MedicalRecordCreateValidator', () => {
       delete invalidDto.user_id_staff;
 
       expect(() => {
-        validator.validate(invalidDto as CreateMedicalRecordDto, mockAppointment, mockUser);
+        validator.validate(
+          invalidDto as CreateMedicalRecordDto,
+          mockAppointment,
+          mockUser,
+        );
       }).toThrow(BadRequestException);
     });
 
@@ -254,7 +275,7 @@ describe('MedicalRecordCreateValidator', () => {
       const oldAppointmentDate = new Date(
         today.getFullYear(),
         today.getMonth(),
-        today.getDate() - 366
+        today.getDate() - 366,
       );
 
       const oldAppointment = {
@@ -262,8 +283,9 @@ describe('MedicalRecordCreateValidator', () => {
         tanggal_janji: oldAppointmentDate,
       };
 
-      expect(() => validator.validate(validDto, oldAppointment, mockUser))
-        .toThrow(BadRequestException);
+      expect(() =>
+        validator.validate(validDto, oldAppointment, mockUser),
+      ).toThrow(BadRequestException);
     });
 
     it('should pass for appointment within valid date range', () => {

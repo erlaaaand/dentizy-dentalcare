@@ -20,7 +20,7 @@ describe('AppointmentCompletionService', () => {
   const mockDoctorUser: User = {
     id: 2,
     nama_lengkap: 'Dr. Smith',
-    roles: [{ id: 1, name: UserRole.DOKTER, description: '' }]
+    roles: [{ id: 1, name: UserRole.DOKTER, description: '' }],
   } as User;
 
   const mockAppointment: Appointment = {
@@ -76,10 +76,14 @@ describe('AppointmentCompletionService', () => {
       ],
     }).compile();
 
-    service = module.get<AppointmentCompletionService>(AppointmentCompletionService);
+    service = module.get<AppointmentCompletionService>(
+      AppointmentCompletionService,
+    );
     repository = module.get<AppointmentsRepository>(AppointmentsRepository);
     validator = module.get<AppointmentValidator>(AppointmentValidator);
-    domainService = module.get<AppointmentDomainService>(AppointmentDomainService);
+    domainService = module.get<AppointmentDomainService>(
+      AppointmentDomainService,
+    );
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
@@ -93,12 +97,24 @@ describe('AppointmentCompletionService', () => {
       const appointmentId = 1;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-      jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
-      jest.spyOn(repository, 'save').mockResolvedValue(mockCompletedAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForCompletion')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateCompletionAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(domainService, 'completeAppointment')
+        .mockReturnValue(mockCompletedAppointment);
+      jest
+        .spyOn(repository, 'save')
+        .mockResolvedValue(mockCompletedAppointment);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
       // Act
@@ -106,15 +122,28 @@ describe('AppointmentCompletionService', () => {
 
       // Assert
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
-      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(mockAppointment);
-      expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
-      expect(domainService.completeAppointment).toHaveBeenCalledWith(mockAppointment);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
+      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
+      expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
+      expect(domainService.completeAppointment).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(repository.save).toHaveBeenCalledWith(mockCompletedAppointment);
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'appointment.completed',
-        expect.any(AppointmentCompletedEvent)
+        expect.any(AppointmentCompletedEvent),
       );
       expect(result).toEqual(mockCompletedAppointment);
     });
@@ -124,16 +153,18 @@ describe('AppointmentCompletionService', () => {
       const appointmentId = 999;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(null);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-        if (!appointment) {
-          throw new Error(`Appointment with ID ${id} not found`);
-        }
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation((appointment, id) => {
+          if (!appointment) {
+            throw new Error(`Appointment with ID ${id} not found`);
+          }
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(
-        `Appointment with ID ${appointmentId} not found`
-      );
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(`Appointment with ID ${appointmentId} not found`);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
       expect(validator.validateViewAuthorization).not.toHaveBeenCalled();
@@ -144,20 +175,34 @@ describe('AppointmentCompletionService', () => {
     it('should throw error when view authorization fails', async () => {
       // Arrange
       const appointmentId = 1;
-      const authorizationError = new Error('Unauthorized to view this appointment');
+      const authorizationError = new Error(
+        'Unauthorized to view this appointment',
+      );
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-        throw authorizationError;
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {
+          throw authorizationError;
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(authorizationError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(authorizationError);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
       expect(validator.validateStatusForCompletion).not.toHaveBeenCalled();
       expect(domainService.completeAppointment).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -166,22 +211,40 @@ describe('AppointmentCompletionService', () => {
     it('should throw error when status validation fails', async () => {
       // Arrange
       const appointmentId = 1;
-      const statusError = new Error('Appointment must be in DIJADWALKAN status to complete');
+      const statusError = new Error(
+        'Appointment must be in DIJADWALKAN status to complete',
+      );
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => {
-        throw statusError;
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForCompletion')
+        .mockImplementation(() => {
+          throw statusError;
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(statusError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(statusError);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
-      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(mockAppointment);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
+      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(validator.validateCompletionAuthorization).not.toHaveBeenCalled();
       expect(domainService.completeAppointment).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -190,24 +253,47 @@ describe('AppointmentCompletionService', () => {
     it('should throw error when completion authorization fails', async () => {
       // Arrange
       const appointmentId = 1;
-      const completionAuthError = new Error('Only assigned doctor can complete this appointment');
+      const completionAuthError = new Error(
+        'Only assigned doctor can complete this appointment',
+      );
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => {
-        throw completionAuthError;
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForCompletion')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateCompletionAuthorization')
+        .mockImplementation(() => {
+          throw completionAuthError;
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(completionAuthError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(completionAuthError);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
-      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(mockAppointment);
-      expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
+      expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(
+        mockAppointment,
+      );
+      expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
       expect(domainService.completeAppointment).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -218,18 +304,32 @@ describe('AppointmentCompletionService', () => {
       const databaseError = new Error('Database connection failed');
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-      jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForCompletion')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateCompletionAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(domainService, 'completeAppointment')
+        .mockReturnValue(mockCompletedAppointment);
       jest.spyOn(repository, 'save').mockRejectedValue(databaseError);
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(databaseError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(databaseError);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(domainService.completeAppointment).toHaveBeenCalledWith(mockAppointment);
+      expect(domainService.completeAppointment).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(repository.save).toHaveBeenCalledWith(mockCompletedAppointment);
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -240,15 +340,27 @@ describe('AppointmentCompletionService', () => {
       const databaseError = new Error('Save failed');
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-      jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForCompletion')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateCompletionAuthorization')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(domainService, 'completeAppointment')
+        .mockReturnValue(mockCompletedAppointment);
       jest.spyOn(repository, 'save').mockRejectedValue(databaseError);
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(databaseError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(databaseError);
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
@@ -259,19 +371,33 @@ describe('AppointmentCompletionService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'log');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-        jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
-        jest.spyOn(repository, 'save').mockResolvedValue(mockCompletedAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(domainService, 'completeAppointment')
+          .mockReturnValue(mockCompletedAppointment);
+        jest
+          .spyOn(repository, 'save')
+          .mockResolvedValue(mockCompletedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act
         await service.execute(appointmentId, mockDoctorUser);
 
         // Assert
-        expect(loggerSpy).toHaveBeenCalledWith(`✅ Appointment #${appointmentId} completed by user #${mockDoctorUser.id}`);
+        expect(loggerSpy).toHaveBeenCalledWith(
+          `✅ Appointment #${appointmentId} completed by user #${mockDoctorUser.id}`,
+        );
       });
 
       it('should log error when completion fails', async () => {
@@ -281,16 +407,22 @@ describe('AppointmentCompletionService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-          throw validationError;
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {
+            throw validationError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(validationError);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(validationError);
         expect(loggerSpy).toHaveBeenCalledWith(
           `❌ Error completing appointment ID ${appointmentId}:`,
-          expect.any(String)
+          expect.any(String),
         );
       });
     });
@@ -301,12 +433,24 @@ describe('AppointmentCompletionService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-        jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
-        jest.spyOn(repository, 'save').mockResolvedValue(mockCompletedAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(domainService, 'completeAppointment')
+          .mockReturnValue(mockCompletedAppointment);
+        jest
+          .spyOn(repository, 'save')
+          .mockResolvedValue(mockCompletedAppointment);
         const emitSpy = jest.spyOn(eventEmitter, 'emit');
 
         // Act
@@ -318,7 +462,7 @@ describe('AppointmentCompletionService', () => {
           expect.objectContaining({
             appointment: mockCompletedAppointment,
             completedBy: mockDoctorUser.id,
-          })
+          }),
         );
       });
 
@@ -329,11 +473,21 @@ describe('AppointmentCompletionService', () => {
         let eventEmitted = false;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-        jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(domainService, 'completeAppointment')
+          .mockReturnValue(mockCompletedAppointment);
         jest.spyOn(repository, 'save').mockImplementation(async () => {
           saveCompleted = true;
           return mockCompletedAppointment;
@@ -360,19 +514,36 @@ describe('AppointmentCompletionService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-        jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
-        jest.spyOn(repository, 'save').mockResolvedValue(mockCompletedAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(domainService, 'completeAppointment')
+          .mockReturnValue(mockCompletedAppointment);
+        jest
+          .spyOn(repository, 'save')
+          .mockResolvedValue(mockCompletedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).resolves.toEqual(mockCompletedAppointment);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).resolves.toEqual(mockCompletedAppointment);
 
         // Verify completion authorization was called with doctor user
-        expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
+        expect(validator.validateCompletionAuthorization).toHaveBeenCalledWith(
+          mockAppointment,
+          mockDoctorUser,
+        );
       });
 
       it('should prevent patient from completing appointment', async () => {
@@ -381,15 +552,25 @@ describe('AppointmentCompletionService', () => {
         const authError = new Error('Only doctor can complete appointment');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => {
-          throw authError;
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {
+            throw authError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(authError);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(authError);
       });
     });
 
@@ -399,19 +580,33 @@ describe('AppointmentCompletionService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForCompletion').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateCompletionAuthorization').mockImplementation(() => { });
-        jest.spyOn(domainService, 'completeAppointment').mockReturnValue(mockCompletedAppointment);
-        jest.spyOn(repository, 'save').mockResolvedValue(mockCompletedAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForCompletion')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateCompletionAuthorization')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(domainService, 'completeAppointment')
+          .mockReturnValue(mockCompletedAppointment);
+        jest
+          .spyOn(repository, 'save')
+          .mockResolvedValue(mockCompletedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act
         await service.execute(appointmentId, mockDoctorUser);
 
         // Assert
-        expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(mockAppointment);
+        expect(validator.validateStatusForCompletion).toHaveBeenCalledWith(
+          mockAppointment,
+        );
       });
     });
   });

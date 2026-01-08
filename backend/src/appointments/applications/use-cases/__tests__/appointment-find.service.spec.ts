@@ -8,7 +8,10 @@ import { AppointmentValidator } from '../../../domains/validators/appointment.va
 import { User } from '../../../../users/domains/entities/user.entity';
 import { Appointment } from '../../../domains/entities/appointment.entity';
 import { AppointmentStatus } from '../../../domains/entities/appointment.entity';
-import { Gender, Patient } from '../../../../patients/domains/entities/patient.entity';
+import {
+  Gender,
+  Patient,
+} from '../../../../patients/domains/entities/patient.entity';
 import { UserRole } from '../../../../roles/entities/role.entity';
 
 // ======================================
@@ -135,16 +138,26 @@ describe('AppointmentFindService', () => {
       const appointmentId = 1;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
 
       // Act
       const result = await service.execute(appointmentId, mockDoctorUser);
 
       // Assert
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
       expect(result).toEqual(mockAppointment);
     });
 
@@ -154,16 +167,26 @@ describe('AppointmentFindService', () => {
       const appointmentId = 1;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
 
       // Act
       const result = await service.execute(appointmentId, mockAdminUser);
 
       // Assert
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockAdminUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockAdminUser,
+      );
       expect(result).toEqual(mockAppointment);
     });
 
@@ -172,16 +195,26 @@ describe('AppointmentFindService', () => {
       const appointmentId = 1;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {});
 
       // Act
       const result = await service.execute(appointmentId, mockStaffUser);
 
       // Assert
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockStaffUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockStaffUser,
+      );
       expect(result).toEqual(mockAppointment);
     });
 
@@ -190,39 +223,58 @@ describe('AppointmentFindService', () => {
       const appointmentId = 999;
 
       jest.spyOn(repository, 'findById').mockResolvedValue(null);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-        if (!appointment) {
-          throw new Error(`Appointment with ID ${id} not found`);
-        }
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation((appointment, id) => {
+          if (!appointment) {
+            throw new Error(`Appointment with ID ${id} not found`);
+          }
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(
-        `Appointment with ID ${appointmentId} not found`
-      );
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(`Appointment with ID ${appointmentId} not found`);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(null, appointmentId);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        null,
+        appointmentId,
+      );
       expect(validator.validateViewAuthorization).not.toHaveBeenCalled();
     });
 
     it('should throw error when view authorization fails for doctor', async () => {
       // Arrange
       const appointmentId = 1;
-      const authorizationError = new Error('Doctor can only view their own appointments');
+      const authorizationError = new Error(
+        'Doctor can only view their own appointments',
+      );
 
       jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-        throw authorizationError;
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateViewAuthorization')
+        .mockImplementation(() => {
+          throw authorizationError;
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(authorizationError);
+      await expect(
+        service.execute(appointmentId, mockDoctorUser),
+      ).rejects.toThrow(authorizationError);
 
       expect(repository.findById).toHaveBeenCalledWith(appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockDoctorUser);
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+        mockAppointment,
+        mockDoctorUser,
+      );
     });
 
     // ======================================
@@ -237,15 +289,24 @@ describe('AppointmentFindService', () => {
           doctor_id: mockDoctorUser.id,
         };
 
-        jest.spyOn(repository, 'findById').mockResolvedValue(doctorOwnAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'findById')
+          .mockResolvedValue(doctorOwnAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
 
         // Act
         const result = await service.execute(appointmentId, mockDoctorUser);
 
         // Assert
-        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(doctorOwnAppointment, mockDoctorUser);
+        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+          doctorOwnAppointment,
+          mockDoctorUser,
+        );
         expect(result).toEqual(doctorOwnAppointment);
       });
 
@@ -257,15 +318,25 @@ describe('AppointmentFindService', () => {
           doctor_id: 999, // ❌ Different doctor
         };
 
-        jest.spyOn(repository, 'findById').mockResolvedValue(otherDoctorAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-          throw new Error('Unauthorized: Doctor can only view their own appointments');
-        });
+        jest
+          .spyOn(repository, 'findById')
+          .mockResolvedValue(otherDoctorAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {
+            throw new Error(
+              'Unauthorized: Doctor can only view their own appointments',
+            );
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(
-          'Unauthorized: Doctor can only view their own appointments'
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(
+          'Unauthorized: Doctor can only view their own appointments',
         );
       });
 
@@ -274,14 +345,21 @@ describe('AppointmentFindService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
 
         // Act
         const result = await service.execute(appointmentId, mockAdminUser);
 
         // Assert
-        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockAdminUser);
+        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+          mockAppointment,
+          mockAdminUser,
+        );
         expect(result).toEqual(mockAppointment);
       });
 
@@ -290,14 +368,21 @@ describe('AppointmentFindService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
 
         // Act
         const result = await service.execute(appointmentId, mockStaffUser);
 
         // Assert
-        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(mockAppointment, mockStaffUser);
+        expect(validator.validateViewAuthorization).toHaveBeenCalledWith(
+          mockAppointment,
+          mockStaffUser,
+        );
         expect(result).toEqual(mockAppointment);
       });
     });
@@ -312,14 +397,20 @@ describe('AppointmentFindService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'debug');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => { });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {});
 
         // Act
         await service.execute(appointmentId, mockDoctorUser);
 
         // Assert
-        expect(loggerSpy).toHaveBeenCalledWith(`📋 Found appointment #${appointmentId}`);
+        expect(loggerSpy).toHaveBeenCalledWith(
+          `📋 Found appointment #${appointmentId}`,
+        );
       });
 
       it('should log error when finding appointment fails', async () => {
@@ -329,15 +420,19 @@ describe('AppointmentFindService', () => {
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(null);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => {
-          throw notFoundError;
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {
+            throw notFoundError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(notFoundError);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(notFoundError);
         expect(loggerSpy).toHaveBeenCalledWith(
           `❌ Error finding appointment ID ${appointmentId}:`,
-          expect.any(String)
+          expect.any(String),
         );
       });
     });
@@ -352,18 +447,25 @@ describe('AppointmentFindService', () => {
         const callOrder: string[] = [];
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => {
-          callOrder.push('validateAppointmentExists');
-        });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-          callOrder.push('validateViewAuthorization');
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {
+            callOrder.push('validateAppointmentExists');
+          });
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {
+            callOrder.push('validateViewAuthorization');
+          });
 
         // Act
         await service.execute(appointmentId, mockDoctorUser);
 
         // Assert
-        expect(callOrder).toEqual(['validateAppointmentExists', 'validateViewAuthorization']);
+        expect(callOrder).toEqual([
+          'validateAppointmentExists',
+          'validateViewAuthorization',
+        ]);
       });
 
       it('should stop execution when appointment not found', async () => {
@@ -371,14 +473,18 @@ describe('AppointmentFindService', () => {
         const appointmentId = 999;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(null);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-          if (!appointment) {
-            throw new Error('Appointment not found');
-          }
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation((appointment, id) => {
+            if (!appointment) {
+              throw new Error('Appointment not found');
+            }
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow('Appointment not found');
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow('Appointment not found');
         expect(validator.validateViewAuthorization).not.toHaveBeenCalled();
       });
 
@@ -387,13 +493,19 @@ describe('AppointmentFindService', () => {
         const appointmentId = 1;
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateViewAuthorization').mockImplementation(() => {
-          throw new Error('Authorization failed');
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateViewAuthorization')
+          .mockImplementation(() => {
+            throw new Error('Authorization failed');
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow('Authorization failed');
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow('Authorization failed');
       });
     });
 
@@ -409,7 +521,9 @@ describe('AppointmentFindService', () => {
         jest.spyOn(repository, 'findById').mockRejectedValue(databaseError);
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(databaseError);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(databaseError);
       });
 
       it('should re-throw validation errors', async () => {
@@ -418,12 +532,16 @@ describe('AppointmentFindService', () => {
         const validationError = new Error('Custom validation error');
 
         jest.spyOn(repository, 'findById').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => {
-          throw validationError;
-        });
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {
+            throw validationError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockDoctorUser)).rejects.toThrow(validationError);
+        await expect(
+          service.execute(appointmentId, mockDoctorUser),
+        ).rejects.toThrow(validationError);
       });
     });
   });

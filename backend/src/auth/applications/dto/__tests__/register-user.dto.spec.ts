@@ -45,7 +45,7 @@ describe('RegisterUserDto', () => {
 
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'nama_lengkap')).toBe(true);
+      expect(errors.some((e) => e.property === 'nama_lengkap')).toBe(true);
     });
 
     it('should fail when nama_lengkap is not provided', async () => {
@@ -54,18 +54,21 @@ describe('RegisterUserDto', () => {
       dto.roles = validRegisterData.roles;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'nama_lengkap')).toBe(true);
+      expect(errors.some((e) => e.property === 'nama_lengkap')).toBe(true);
     });
 
     it('should fail when nama_lengkap is not a string', async () => {
       Object.assign(dto, { ...validRegisterData, nama_lengkap: 12345 });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'nama_lengkap')).toBe(true);
+      expect(errors.some((e) => e.property === 'nama_lengkap')).toBe(true);
     });
 
     it('should accept nama_lengkap with spaces', async () => {
-      Object.assign(dto, { ...validRegisterData, nama_lengkap: 'John Michael Doe' });
+      Object.assign(dto, {
+        ...validRegisterData,
+        nama_lengkap: 'John Michael Doe',
+      });
 
       const errors = await validate(dto);
       expect(errors.length).toBe(0);
@@ -77,7 +80,7 @@ describe('RegisterUserDto', () => {
       Object.assign(dto, { ...validRegisterData, username: '' });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'username')).toBe(true);
+      expect(errors.some((e) => e.property === 'username')).toBe(true);
     });
 
     it('should fail when username is not provided', async () => {
@@ -86,14 +89,14 @@ describe('RegisterUserDto', () => {
       dto.roles = validRegisterData.roles;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'username')).toBe(true);
+      expect(errors.some((e) => e.property === 'username')).toBe(true);
     });
 
     it('should fail when username is not a string', async () => {
       Object.assign(dto, { ...validRegisterData, username: 12345 });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'username')).toBe(true);
+      expect(errors.some((e) => e.property === 'username')).toBe(true);
     });
   });
 
@@ -102,7 +105,7 @@ describe('RegisterUserDto', () => {
       Object.assign(dto, { ...validRegisterData, password: '' });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'password')).toBe(true);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
     it('should fail when password is not provided', async () => {
@@ -111,21 +114,21 @@ describe('RegisterUserDto', () => {
       dto.roles = validRegisterData.roles;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'password')).toBe(true);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
     it('should fail when password is too short', async () => {
       Object.assign(dto, { ...validRegisterData, password: 'Short1!' });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'password')).toBe(true);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
     it('should fail when password does not meet strength requirements', async () => {
       Object.assign(dto, { ...validRegisterData, password: 'weakpassword' });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'password')).toBe(true);
+      expect(errors.some((e) => e.property === 'password')).toBe(true);
     });
 
     it('should accept strong password with mixed characters', async () => {
@@ -141,7 +144,7 @@ describe('RegisterUserDto', () => {
       Object.assign(dto, { ...validRegisterData, roles: [] });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'roles')).toBe(true);
+      expect(errors.some((e) => e.property === 'roles')).toBe(true);
     });
 
     it('should fail when roles is not provided', async () => {
@@ -150,21 +153,21 @@ describe('RegisterUserDto', () => {
       dto.password = validRegisterData.password;
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'roles')).toBe(true);
+      expect(errors.some((e) => e.property === 'roles')).toBe(true);
     });
 
     it('should fail when roles is not an array', async () => {
       Object.assign(dto, { ...validRegisterData, roles: 'not-array' });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'roles')).toBe(true);
+      expect(errors.some((e) => e.property === 'roles')).toBe(true);
     });
 
     it('should fail when roles contains non-number values', async () => {
       Object.assign(dto, { ...validRegisterData, roles: [1, 'two', 3] });
 
       const errors = await validate(dto);
-      expect(errors.some(e => e.property === 'roles')).toBe(true);
+      expect(errors.some((e) => e.property === 'roles')).toBe(true);
     });
 
     it('should accept array of role IDs', async () => {
@@ -180,7 +183,7 @@ describe('RegisterUserDto', () => {
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
 
-      const properties = errors.map(e => e.property);
+      const properties = errors.map((e) => e.property);
       expect(properties).toContain('nama_lengkap');
       expect(properties).toContain('username');
       expect(properties).toContain('password');

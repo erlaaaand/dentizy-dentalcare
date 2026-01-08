@@ -6,41 +6,50 @@ import { ForbiddenException } from '@nestjs/common';
 import { MedicalRecordAuthorizationService } from '../medical-record-authorization.service';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { MedicalRecord } from '../../entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { Role, UserRole } from '../../../../roles/entities/role.entity';
 
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockUser = (roleNames: UserRole[]): User => ({
-  id: 1,
-  nama_lengkap: 'Test User',
-  username: 'test.user',
-  roles: roleNames.map(name => ({ id: 1, name, description: 'Test role' })),
-} as User);
+const createMockUser = (roleNames: UserRole[]): User =>
+  ({
+    id: 1,
+    nama_lengkap: 'Test User',
+    username: 'test.user',
+    roles: roleNames.map((name) => ({ id: 1, name, description: 'Test role' })),
+  }) as User;
 
-const createMockMedicalRecord = (doctorId: number, appointmentDoctorId: number): MedicalRecord => ({
-  id: 1,
-  appointment_id: 10,
-  doctor_id: doctorId,
-  patient_id: 3,
-  subjektif: 'Test',
-  objektif: 'Test',
-  assessment: 'Test',
-  plan: 'Test',
-  appointment: {
+const createMockMedicalRecord = (
+  doctorId: number,
+  appointmentDoctorId: number,
+): MedicalRecord =>
+  ({
+    id: 1,
+    appointment_id: 10,
+    doctor_id: doctorId,
+    patient_id: 3,
+    subjektif: 'Test',
+    objektif: 'Test',
+    assessment: 'Test',
+    plan: 'Test',
+    appointment: {
+      id: 10,
+      doctor_id: appointmentDoctorId,
+      status: AppointmentStatus.DIJADWALKAN,
+    } as Appointment,
+  }) as MedicalRecord;
+
+const createMockAppointment = (doctorId: number): Appointment =>
+  ({
     id: 10,
-    doctor_id: appointmentDoctorId,
+    doctor_id: doctorId,
+    patient_id: 3,
     status: AppointmentStatus.DIJADWALKAN,
-  } as Appointment,
-} as MedicalRecord);
-
-const createMockAppointment = (doctorId: number): Appointment => ({
-  id: 10,
-  doctor_id: doctorId,
-  patient_id: 3,
-  status: AppointmentStatus.DIJADWALKAN,
-} as Appointment);
+  }) as Appointment;
 
 // ============================================================================
 // TEST SUITE
@@ -57,7 +66,7 @@ describe('MedicalRecordAuthorizationService', () => {
     }).compile();
 
     service = module.get<MedicalRecordAuthorizationService>(
-      MedicalRecordAuthorizationService
+      MedicalRecordAuthorizationService,
     );
   });
 
@@ -171,8 +180,9 @@ describe('MedicalRecordAuthorizationService', () => {
       const user = createMockUser([UserRole.KEPALA_KLINIK]);
       const appointment = createMockAppointment(999);
 
-      expect(() => service.validateCreatePermission(user, appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateCreatePermission(user, appointment),
+      ).not.toThrow();
     });
 
     it('should not throw for Dokter with own appointment', () => {
@@ -180,8 +190,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const appointment = createMockAppointment(2);
 
-      expect(() => service.validateCreatePermission(user, appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateCreatePermission(user, appointment),
+      ).not.toThrow();
     });
 
     it('should throw for Dokter with other appointment', () => {
@@ -189,16 +200,18 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const appointment = createMockAppointment(3);
 
-      expect(() => service.validateCreatePermission(user, appointment))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateCreatePermission(user, appointment)).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should not throw for Staf', () => {
       const user = createMockUser([UserRole.STAF]);
       const appointment = createMockAppointment(999);
 
-      expect(() => service.validateCreatePermission(user, appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateCreatePermission(user, appointment),
+      ).not.toThrow();
     });
   });
 
@@ -253,8 +266,7 @@ describe('MedicalRecordAuthorizationService', () => {
       const user = createMockUser([UserRole.KEPALA_KLINIK]);
       const record = createMockMedicalRecord(999, 888);
 
-      expect(() => service.validateViewPermission(user, record))
-        .not.toThrow();
+      expect(() => service.validateViewPermission(user, record)).not.toThrow();
     });
 
     it('should not throw for Dokter viewing own record', () => {
@@ -262,8 +274,7 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const record = createMockMedicalRecord(2, 999);
 
-      expect(() => service.validateViewPermission(user, record))
-        .not.toThrow();
+      expect(() => service.validateViewPermission(user, record)).not.toThrow();
     });
 
     it('should throw for Dokter viewing unrelated record', () => {
@@ -271,8 +282,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const record = createMockMedicalRecord(3, 4);
 
-      expect(() => service.validateViewPermission(user, record))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateViewPermission(user, record)).toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -336,8 +348,9 @@ describe('MedicalRecordAuthorizationService', () => {
       const user = createMockUser([UserRole.KEPALA_KLINIK]);
       const record = createMockMedicalRecord(999, 888);
 
-      expect(() => service.validateUpdatePermission(user, record))
-        .not.toThrow();
+      expect(() =>
+        service.validateUpdatePermission(user, record),
+      ).not.toThrow();
     });
 
     it('should not throw for Dokter updating own record', () => {
@@ -345,8 +358,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const record = createMockMedicalRecord(2, 999);
 
-      expect(() => service.validateUpdatePermission(user, record))
-        .not.toThrow();
+      expect(() =>
+        service.validateUpdatePermission(user, record),
+      ).not.toThrow();
     });
 
     it('should throw for Dokter updating unrelated record', () => {
@@ -354,8 +368,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 2;
       const record = createMockMedicalRecord(3, 4);
 
-      expect(() => service.validateUpdatePermission(user, record))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateUpdatePermission(user, record)).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should not throw for Staf updating own record', () => {
@@ -363,8 +378,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 5;
       const record = createMockMedicalRecord(5, 999);
 
-      expect(() => service.validateUpdatePermission(user, record))
-        .not.toThrow();
+      expect(() =>
+        service.validateUpdatePermission(user, record),
+      ).not.toThrow();
     });
 
     it('should throw for Staf updating others record', () => {
@@ -372,8 +388,9 @@ describe('MedicalRecordAuthorizationService', () => {
       user.id = 5;
       const record = createMockMedicalRecord(6, 999);
 
-      expect(() => service.validateUpdatePermission(user, record))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateUpdatePermission(user, record)).toThrow(
+        ForbiddenException,
+      );
     });
   });
 
@@ -404,29 +421,31 @@ describe('MedicalRecordAuthorizationService', () => {
     it('should not throw for Kepala Klinik', () => {
       const user = createMockUser([UserRole.KEPALA_KLINIK]);
 
-      expect(() => service.validateDeletePermission(user))
-        .not.toThrow();
+      expect(() => service.validateDeletePermission(user)).not.toThrow();
     });
 
     it('should throw for Dokter', () => {
       const user = createMockUser([UserRole.DOKTER]);
 
-      expect(() => service.validateDeletePermission(user))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateDeletePermission(user)).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw for Staf', () => {
       const user = createMockUser([UserRole.STAF]);
 
-      expect(() => service.validateDeletePermission(user))
-        .toThrow(ForbiddenException);
+      expect(() => service.validateDeletePermission(user)).toThrow(
+        ForbiddenException,
+      );
     });
 
     it('should throw with correct message', () => {
       const user = createMockUser([UserRole.DOKTER]);
 
-      expect(() => service.validateDeletePermission(user))
-        .toThrow('Hanya Kepala Klinik yang dapat menghapus rekam medis');
+      expect(() => service.validateDeletePermission(user)).toThrow(
+        'Hanya Kepala Klinik yang dapat menghapus rekam medis',
+      );
     });
   });
 
@@ -449,7 +468,8 @@ describe('MedicalRecordAuthorizationService', () => {
       const filter = service.getAccessFilter(user);
 
       expect(filter).toBeDefined();
-      if (filter) { // ✅ null-check
+      if (filter) {
+        // ✅ null-check
         expect(filter.field).toBe('doctor_or_creator');
         expect(filter.value).toBe(2);
       }
@@ -489,7 +509,6 @@ describe('MedicalRecordAuthorizationService', () => {
     });
 
     it('should return multiple roles separated by comma', () => {
-
       const createMockRole = (id: number, name: UserRole): Role => ({
         id,
         name,
@@ -528,7 +547,12 @@ describe('MedicalRecordAuthorizationService', () => {
       const user: User = {
         ...createMockUser([UserRole.DOKTER]),
         roles: [
-          { id: 1, name: UserRole.KEPALA_KLINIK, description: 'Head', users: [] },
+          {
+            id: 1,
+            name: UserRole.KEPALA_KLINIK,
+            description: 'Head',
+            users: [],
+          },
           { id: 2, name: UserRole.DOKTER, description: 'Doctor', users: [] },
         ],
       };
@@ -548,12 +572,16 @@ describe('MedicalRecordAuthorizationService', () => {
       expect(service.canView(user, record)).toBe(true);
     });
 
-
     it('should prioritize Kepala Klinik permissions', () => {
       const user: User = {
         ...createMockUser([UserRole.DOKTER]),
         roles: [
-          { id: 1, name: UserRole.KEPALA_KLINIK, description: 'Head', users: [] },
+          {
+            id: 1,
+            name: UserRole.KEPALA_KLINIK,
+            description: 'Head',
+            users: [],
+          },
           { id: 2, name: UserRole.DOKTER, description: 'Doctor', users: [] },
         ],
       };

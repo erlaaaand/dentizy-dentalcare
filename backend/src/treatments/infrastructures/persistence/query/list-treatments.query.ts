@@ -2,5 +2,5 @@
 import { QueryTreatmentDto } from '../../../applications/dto/query-treatment.dto';
 
 export class ListTreatmentsQuery {
-    constructor(public readonly filters: QueryTreatmentDto) { }
+  constructor(public readonly filters: QueryTreatmentDto) {}
 }

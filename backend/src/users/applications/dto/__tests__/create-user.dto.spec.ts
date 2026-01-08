@@ -15,7 +15,6 @@ const validDtoData = {
 
 // 3. TEST SUITE
 describe('CreateUserDto', () => {
-
   // 4. SETUP AND TEARDOWN
   // DTO testing is mostly stateless.
 
@@ -32,7 +31,10 @@ describe('CreateUserDto', () => {
 
   describe('nama_lengkap', () => {
     it('should fail if nama_lengkap is empty', async () => {
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, nama_lengkap: '' });
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        nama_lengkap: '',
+      });
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
@@ -41,7 +43,10 @@ describe('CreateUserDto', () => {
     });
 
     it('should fail if nama_lengkap is not a string', async () => {
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, nama_lengkap: 123 });
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        nama_lengkap: 123,
+      });
       const errors = await validate(dto);
 
       expect(errors[0].property).toBe('nama_lengkap');
@@ -51,7 +56,10 @@ describe('CreateUserDto', () => {
 
   describe('username', () => {
     it('should fail if username is empty', async () => {
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, username: '' });
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        username: '',
+      });
       const errors = await validate(dto);
 
       expect(errors[0].property).toBe('username');
@@ -61,31 +69,42 @@ describe('CreateUserDto', () => {
 
   describe('password', () => {
     it('should fail if password is empty', async () => {
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, password: '' });
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        password: '',
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'password');
+      const error = errors.find((e) => e.property === 'password');
       expect(error).toBeDefined();
       expect(error?.constraints).toHaveProperty('isNotEmpty');
     });
 
     it(`should fail if password is shorter than ${PASSWORD_MIN_LENGTH} characters`, async () => {
-      const shortPass = 'Str1!'; 
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, password: shortPass });
+      const shortPass = 'Str1!';
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        password: shortPass,
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'password');
+      const error = errors.find((e) => e.property === 'password');
       expect(error?.constraints).toHaveProperty('minLength');
-      expect(error?.constraints?.minLength).toContain(`minimal ${PASSWORD_MIN_LENGTH} karakter`);
+      expect(error?.constraints?.minLength).toContain(
+        `minimal ${PASSWORD_MIN_LENGTH} karakter`,
+      );
     });
 
     it('should fail if password is NOT strong (Integration with IsStrongPassword)', async () => {
       // Password panjang tapi lemah (hanya huruf kecil)
-      const weakPass = 'passwordlemahsekali'; 
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, password: weakPass });
+      const weakPass = 'passwordlemahsekali';
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        password: weakPass,
+      });
       const errors = await validate(dto);
 
-      const error = errors.find(e => e.property === 'password');
+      const error = errors.find((e) => e.property === 'password');
       expect(error).toBeDefined();
       // Asumsi nama constraint default dari custom validator adalah camelCase dari nama decorator
       // atau nama spesifik yang Anda define di validator tersebut.
@@ -97,18 +116,24 @@ describe('CreateUserDto', () => {
   describe('roles', () => {
     it('should fail if roles is missing/empty', async () => {
       // Case: null/undefined
-      let dto = plainToInstance(CreateUserDto, { ...validDtoData, roles: null });
+      let dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        roles: null,
+      });
       let errors = await validate(dto);
       expect(errors[0].property).toBe('roles');
       expect(errors[0].constraints).toHaveProperty('isNotEmpty');
 
-      // Case: Empty array (jika IsNotEmpty mengecek array length > 0, tergantung config, 
-      // tapi biasanya IsNotEmpty pada array mengecek keberadaan properti, bukan length. 
+      // Case: Empty array (jika IsNotEmpty mengecek array length > 0, tergantung config,
+      // tapi biasanya IsNotEmpty pada array mengecek keberadaan properti, bukan length.
       // Untuk length biasanya pakai ArrayNotEmpty)
     });
 
     it('should fail if roles is not an array', async () => {
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, roles: 'admin' }); // String instead of Array
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        roles: 'admin',
+      }); // String instead of Array
       const errors = await validate(dto);
 
       expect(errors[0].property).toBe('roles');
@@ -117,7 +142,10 @@ describe('CreateUserDto', () => {
 
     it('should fail if roles contains non-number elements', async () => {
       // Decorator: @IsNumber({}, { each: true })
-      const dto = plainToInstance(CreateUserDto, { ...validDtoData, roles: [1, '2', 3] }); // Ada string '2'
+      const dto = plainToInstance(CreateUserDto, {
+        ...validDtoData,
+        roles: [1, '2', 3],
+      }); // Ada string '2'
       const errors = await validate(dto);
 
       expect(errors[0].property).toBe('roles');

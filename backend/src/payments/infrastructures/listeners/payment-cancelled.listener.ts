@@ -5,15 +5,15 @@ import { PaymentCancelledEvent } from '../events/payment-cancelled.event';
 
 @Injectable()
 export class PaymentCancelledListener {
-    private readonly logger = new Logger(PaymentCancelledListener.name);
+  private readonly logger = new Logger(PaymentCancelledListener.name);
 
-    @OnEvent('payment.cancelled')
-    async handlePaymentCancelled(event: PaymentCancelledEvent) {
-        this.logger.log(`Payment cancelled: ${event.nomorInvoice}`);
+  @OnEvent('payment.cancelled')
+  async handlePaymentCancelled(event: PaymentCancelledEvent) {
+    this.logger.log(`Payment cancelled: ${event.nomorInvoice}`);
 
-        // TODO: Send cancellation notification
-        // TODO: Revert medical record status if needed
-        // TODO: Log audit trail
-        // TODO: Trigger refund process if applicable
-    }
+    // TODO: Send cancellation notification
+    // TODO: Revert medical record status if needed
+    // TODO: Log audit trail
+    // TODO: Trigger refund process if applicable
+  }
 }

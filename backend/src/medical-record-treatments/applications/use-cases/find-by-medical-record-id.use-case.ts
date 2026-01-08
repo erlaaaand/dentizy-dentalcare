@@ -6,13 +6,16 @@ import { MedicalRecordTreatmentResponseDto } from '../dto/medical-record-treatme
 
 @Injectable()
 export class FindByMedicalRecordIdUseCase {
-    constructor(
-        private readonly repository: MedicalRecordTreatmentRepository,
-        private readonly mapper: MedicalRecordTreatmentMapper,
-    ) { }
+  constructor(
+    private readonly repository: MedicalRecordTreatmentRepository,
+    private readonly mapper: MedicalRecordTreatmentMapper,
+  ) {}
 
-    async execute(medicalRecordId: number): Promise<MedicalRecordTreatmentResponseDto[]> {
-        const results = await this.repository.findByMedicalRecordId(medicalRecordId);
-        return this.mapper.toResponseDtoList(results);
-    }
+  async execute(
+    medicalRecordId: number,
+  ): Promise<MedicalRecordTreatmentResponseDto[]> {
+    const results =
+      await this.repository.findByMedicalRecordId(medicalRecordId);
+    return this.mapper.toResponseDtoList(results);
+  }
 }

@@ -4,55 +4,55 @@ import { TreatmentCategoryRepository } from '../../infrastructures/persistence/r
 
 @Injectable()
 export class TreatmentCategoryDomainService {
-    constructor(private readonly repository: TreatmentCategoryRepository) { }
+  constructor(private readonly repository: TreatmentCategoryRepository) {}
 
-    async isNameDuplicate(name: string, excludeId?: number): Promise<boolean> {
-        const existing = await this.repository.findByName(name);
+  async isNameDuplicate(name: string, excludeId?: number): Promise<boolean> {
+    const existing = await this.repository.findByName(name);
 
-        if (!existing) {
-            return false;
-        }
-
-        // If excludeId is provided, check if the found category is different
-        if (excludeId !== undefined) {
-            return existing.id !== excludeId;
-        }
-
-        return true;
+    if (!existing) {
+      return false;
     }
 
-    isValidName(name: string): boolean {
-        // Check for minimum length
-        if (name.length < 3) {
-            return false;
-        }
-
-        // Check for excessive special characters
-        const specialCharCount = (name.match(/[^a-zA-Z0-9\s-]/g) || []).length;
-        if (specialCharCount > 3) {
-            return false;
-        }
-
-        // Check for consecutive spaces
-        if (/\s{2,}/.test(name)) {
-            return false;
-        }
-
-        return true;
+    // If excludeId is provided, check if the found category is different
+    if (excludeId !== undefined) {
+      return existing.id !== excludeId;
     }
 
-    async hasActiveTreatments(categoryId: number): Promise<boolean> {
-        return await this.repository.hasActiveTreatments(categoryId);
+    return true;
+  }
+
+  isValidName(name: string): boolean {
+    // Check for minimum length
+    if (name.length < 3) {
+      return false;
     }
 
-    async canBeDeleted(categoryId: number): Promise<boolean> {
-        const hasActive = await this.hasActiveTreatments(categoryId);
-        return !hasActive;
+    // Check for excessive special characters
+    const specialCharCount = (name.match(/[^a-zA-Z0-9\s-]/g) || []).length;
+    if (specialCharCount > 3) {
+      return false;
     }
 
-    async canBeDeactivated(categoryId: number): Promise<boolean> {
-        // Business rule: Can deactivate even if has treatments
-        // Treatments will remain but new ones cannot be assigned
-        return true;
+    // Check for consecutive spaces
+    if (/\s{2,}/.test(name)) {
+      return false;
     }
+
+    return true;
+  }
+
+  async hasActiveTreatments(categoryId: number): Promise<boolean> {
+    return await this.repository.hasActiveTreatments(categoryId);
+  }
+
+  async canBeDeleted(categoryId: number): Promise<boolean> {
+    const hasActive = await this.hasActiveTreatments(categoryId);
+    return !hasActive;
+  }
+
+  async canBeDeactivated(categoryId: number): Promise<boolean> {
+    // Business rule: Can deactivate even if has treatments
+    // Treatments will remain but new ones cannot be assigned
+    return true;
+  }
 }

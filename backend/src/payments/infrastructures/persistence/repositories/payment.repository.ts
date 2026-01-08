@@ -1,6 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, FindOptionsWhere, Like, DataSource, Brackets } from 'typeorm';
+import {
+  Repository,
+  Between,
+  FindOptionsWhere,
+  Like,
+  DataSource,
+  Brackets,
+  EntityManager,
+} from 'typeorm';
 import { Payment } from '../../../domains/entities/payments.entity';
 import { CreatePaymentDto } from '../../../applications/dto/create-payment.dto';
 import { UpdatePaymentDto } from '../../../applications/dto/update-payment.dto';
@@ -9,202 +17,232 @@ import { InvoiceGeneratorService } from '../../../domains/services/invoice-gener
 
 @Injectable()
 export class PaymentRepository {
-    constructor(
-        @InjectRepository(Payment)
-        private readonly repository: Repository<Payment>,
-        private readonly invoiceGenerator: InvoiceGeneratorService,
-        private readonly dataSource: DataSource,
-    ) { }
+  constructor(
+    @InjectRepository(Payment)
+    private readonly repository: Repository<Payment>,
+    private readonly invoiceGenerator: InvoiceGeneratorService,
+    private readonly dataSource: DataSource,
+  ) {}
 
-    async create(dto: CreatePaymentDto): Promise<Payment> {
-        return await this.dataSource.transaction(async (manager) => {
-            const paymentRepo = manager.getRepository(Payment);
+  async create(dto: CreatePaymentDto): Promise<Payment> {
+    return await this.dataSource.transaction(async (manager) => {
+      const paymentRepo = manager.getRepository(Payment);
 
-            const { totalBiaya, diskonTotal = 0, jumlahBayar } = dto;
+      const { totalBiaya, diskonTotal = 0, jumlahBayar } = dto;
 
-            const totalAkhir = totalBiaya - diskonTotal;
-            const kembalian = jumlahBayar - totalAkhir;
+      const totalAkhir = totalBiaya - diskonTotal;
+      const kembalian = jumlahBayar - totalAkhir;
 
-            const lastPayment = await this.getLastPaymentToday(manager);
-            const nomorInvoice = this.invoiceGenerator.generate(lastPayment?.nomorInvoice);
+      const lastPayment = await this.getLastPaymentToday(manager);
+      const nomorInvoice = this.invoiceGenerator.generate(
+        lastPayment?.nomorInvoice,
+      );
 
-            const payment = paymentRepo.create({
-                ...dto,
-                nomorInvoice,
-                totalAkhir,
-                kembalian: kembalian > 0 ? kembalian : 0,
-                tanggalPembayaran: new Date(dto.tanggalPembayaran),
+      const payment = paymentRepo.create({
+        ...dto,
+        nomorInvoice,
+        totalAkhir,
+        kembalian: kembalian > 0 ? kembalian : 0,
+        tanggalPembayaran: new Date(dto.tanggalPembayaran),
+      });
+
+      return await paymentRepo.save(payment);
+    });
+  }
+
+  // [FIX UTAMA] Mengubah findAll menggunakan QueryBuilder dengan Join
+  async findAll(
+    query: QueryPaymentDto,
+  ): Promise<{ data: Payment[]; total: number }> {
+    const {
+      medicalRecordId,
+      patientId,
+      statusPembayaran,
+      metodePembayaran,
+      startDate,
+      endDate,
+      search,
+      page = 1,
+      limit = 10,
+    } = query;
+    const skip = (page - 1) * limit;
+
+    const qb = this.repository.createQueryBuilder('payment');
+
+    // 1. JOIN RELASI (Agar nama pasien & detail rekam medis muncul)
+    qb.leftJoinAndSelect('payment.patient', 'patient');
+    qb.leftJoinAndSelect('payment.medicalRecord', 'medicalRecord');
+
+    // 2. FILTERING
+    if (medicalRecordId) {
+      qb.andWhere('payment.medicalRecordId = :medicalRecordId', {
+        medicalRecordId,
+      });
+    }
+
+    if (patientId) {
+      qb.andWhere('payment.patientId = :patientId', { patientId });
+    }
+
+    if (statusPembayaran) {
+      qb.andWhere('payment.statusPembayaran = :statusPembayaran', {
+        statusPembayaran,
+      });
+    }
+
+    if (metodePembayaran) {
+      qb.andWhere('payment.metodePembayaran = :metodePembayaran', {
+        metodePembayaran,
+      });
+    }
+
+    if (startDate && endDate) {
+      qb.andWhere('payment.tanggalPembayaran BETWEEN :startDate AND :endDate', {
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+      });
+    }
+
+    // Search: Bisa cari by Nomor Invoice ATAU Nama Pasien
+    if (search) {
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub
+            .where('payment.nomorInvoice LIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('patient.nama_lengkap LIKE :search', {
+              search: `%${search}%`,
             });
-
-            return await paymentRepo.save(payment);
-        });
+        }),
+      );
     }
 
-    // [FIX UTAMA] Mengubah findAll menggunakan QueryBuilder dengan Join
-    async findAll(query: QueryPaymentDto): Promise<{ data: Payment[]; total: number }> {
-        const {
-            medicalRecordId,
-            patientId,
-            statusPembayaran,
-            metodePembayaran,
-            startDate,
-            endDate,
-            search,
-            page = 1,
-            limit = 10,
-        } = query;
-        const skip = (page - 1) * limit;
+    // 3. SORTING & PAGINATION
+    qb.orderBy('payment.createdAt', 'DESC');
+    qb.skip(skip).take(limit);
 
-        const qb = this.repository.createQueryBuilder('payment');
+    const [data, total] = await qb.getManyAndCount();
 
-        // 1. JOIN RELASI (Agar nama pasien & detail rekam medis muncul)
-        qb.leftJoinAndSelect('payment.patient', 'patient');
-        qb.leftJoinAndSelect('payment.medicalRecord', 'medicalRecord');
+    return { data, total };
+  }
 
-        // 2. FILTERING
-        if (medicalRecordId) {
-            qb.andWhere('payment.medicalRecordId = :medicalRecordId', { medicalRecordId });
-        }
+  async findOne(id: number): Promise<Payment> {
+    const payment = await this.repository.findOne({
+      where: { id },
+      // [FIX] Jangan lupa join di findOne juga agar detail modal lengkap
+      relations: ['patient', 'medicalRecord'],
+    });
 
-        if (patientId) {
-            qb.andWhere('payment.patientId = :patientId', { patientId });
-        }
-
-        if (statusPembayaran) {
-            qb.andWhere('payment.statusPembayaran = :statusPembayaran', { statusPembayaran });
-        }
-
-        if (metodePembayaran) {
-            qb.andWhere('payment.metodePembayaran = :metodePembayaran', { metodePembayaran });
-        }
-
-        if (startDate && endDate) {
-            qb.andWhere('payment.tanggalPembayaran BETWEEN :startDate AND :endDate', {
-                startDate: new Date(startDate),
-                endDate: new Date(endDate)
-            });
-        }
-
-        // Search: Bisa cari by Nomor Invoice ATAU Nama Pasien
-        if (search) {
-            qb.andWhere(new Brackets(sub => {
-                sub.where('payment.nomorInvoice LIKE :search', { search: `%${search}%` })
-                    .orWhere('patient.nama_lengkap LIKE :search', { search: `%${search}%` });
-            }));
-        }
-
-        // 3. SORTING & PAGINATION
-        qb.orderBy('payment.createdAt', 'DESC');
-        qb.skip(skip).take(limit);
-
-        const [data, total] = await qb.getManyAndCount();
-
-        return { data, total };
+    if (!payment) {
+      throw new NotFoundException(`Payment with ID ${id} not found`);
     }
 
-    async findOne(id: number): Promise<Payment> {
-        const payment = await this.repository.findOne({
-            where: { id },
-            // [FIX] Jangan lupa join di findOne juga agar detail modal lengkap
-            relations: ['patient', 'medicalRecord']
-        });
+    return payment;
+  }
 
-        if (!payment) {
-            throw new NotFoundException(`Payment with ID ${id} not found`);
-        }
+  async findByNomorInvoice(nomorInvoice: string): Promise<Payment | null> {
+    return await this.repository.findOne({
+      where: { nomorInvoice },
+      relations: ['patient', 'medicalRecord'],
+    });
+  }
 
-        return payment;
+  async findByMedicalRecordId(
+    medicalRecordId: number,
+  ): Promise<Payment | null> {
+    return await this.repository.findOne({
+      where: { medicalRecordId },
+      order: { createdAt: 'DESC' },
+      relations: ['patient'],
+    });
+  }
+
+  async update(
+    id: number,
+    dto: UpdatePaymentDto,
+    updatedBy?: number,
+  ): Promise<Payment> {
+    return await this.dataSource.transaction(async (manager) => {
+      const paymentRepo = manager.getRepository(Payment);
+      const existing = await paymentRepo.findOne({ where: { id } });
+
+      if (!existing) {
+        throw new NotFoundException(`Payment with ID ${id} not found`);
+      }
+
+      const totalBiaya = dto.totalBiaya ?? existing.totalBiaya;
+      const diskonTotal = dto.diskonTotal ?? existing.diskonTotal;
+      const jumlahBayar = dto.jumlahBayar ?? existing.jumlahBayar;
+
+      const totalAkhir = Number(totalBiaya) - Number(diskonTotal);
+      const kembalian = Math.max(0, Number(jumlahBayar) - totalAkhir);
+
+      await paymentRepo.update(id, {
+        ...dto,
+        totalAkhir,
+        kembalian,
+        updatedBy,
+        tanggalPembayaran: dto.tanggalPembayaran
+          ? new Date(dto.tanggalPembayaran)
+          : undefined,
+      });
+
+      // Return updated data dengan relasi
+      return (await paymentRepo.findOne({
+        where: { id },
+        relations: ['patient'],
+      })) as Payment;
+    });
+  }
+
+  async softDelete(id: number): Promise<void> {
+    await this.repository.softDelete(id);
+  }
+
+  async restore(id: number): Promise<void> {
+    await this.repository.restore(id);
+  }
+
+  async getTotalRevenue(startDate?: Date, endDate?: Date): Promise<number> {
+    const query = this.repository
+      .createQueryBuilder('payment')
+      .select('SUM(payment.totalAkhir)', 'total')
+      .where('payment.statusPembayaran = :status', { status: 'lunas' })
+      .andWhere('payment.deletedAt IS NULL');
+
+    if (startDate && endDate) {
+      query.andWhere(
+        'payment.tanggalPembayaran BETWEEN :startDate AND :endDate',
+        {
+          startDate,
+          endDate,
+        },
+      );
     }
 
-    async findByNomorInvoice(nomorInvoice: string): Promise<Payment | null> {
-        return await this.repository.findOne({
-            where: { nomorInvoice },
-            relations: ['patient', 'medicalRecord']
-        });
-    }
+    const result = await query.getRawOne();
+    return parseFloat(result?.total || 0);
+  }
 
-    async findByMedicalRecordId(medicalRecordId: number): Promise<Payment | null> {
-        return await this.repository.findOne({
-            where: { medicalRecordId },
-            order: { createdAt: 'DESC' },
-            relations: ['patient']
-        });
-    }
+  async count(where?: FindOptionsWhere<Payment>): Promise<number> {
+    return await this.repository.count({ where });
+  }
 
-    async update(id: number, dto: UpdatePaymentDto, updatedBy?: number): Promise<Payment> {
-        return await this.dataSource.transaction(async (manager) => {
-            const paymentRepo = manager.getRepository(Payment);
-            const existing = await paymentRepo.findOne({ where: { id } });
+  private async getLastPaymentToday(
+    manager: EntityManager,
+  ): Promise<Payment | null> {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const prefix = `INV/${year}${month}${day}`;
 
-            if (!existing) {
-                throw new NotFoundException(`Payment with ID ${id} not found`);
-            }
-
-            const totalBiaya = dto.totalBiaya ?? existing.totalBiaya;
-            const diskonTotal = dto.diskonTotal ?? existing.diskonTotal;
-            const jumlahBayar = dto.jumlahBayar ?? existing.jumlahBayar;
-
-            const totalAkhir = Number(totalBiaya) - Number(diskonTotal);
-            const kembalian = Math.max(0, Number(jumlahBayar) - totalAkhir);
-
-            await paymentRepo.update(id, {
-                ...dto,
-                totalAkhir,
-                kembalian,
-                updatedBy,
-                tanggalPembayaran: dto.tanggalPembayaran ? new Date(dto.tanggalPembayaran) : undefined,
-            });
-
-            // Return updated data dengan relasi
-            return await paymentRepo.findOne({
-                where: { id },
-                relations: ['patient']
-            }) as Payment;
-        });
-    }
-
-    async softDelete(id: number): Promise<void> {
-        await this.repository.softDelete(id);
-    }
-
-    async restore(id: number): Promise<void> {
-        await this.repository.restore(id);
-    }
-
-    async getTotalRevenue(startDate?: Date, endDate?: Date): Promise<number> {
-        const query = this.repository
-            .createQueryBuilder('payment')
-            .select('SUM(payment.totalAkhir)', 'total')
-            .where('payment.statusPembayaran = :status', { status: 'lunas' })
-            .andWhere('payment.deletedAt IS NULL');
-
-        if (startDate && endDate) {
-            query.andWhere('payment.tanggalPembayaran BETWEEN :startDate AND :endDate', {
-                startDate,
-                endDate,
-            });
-        }
-
-        const result = await query.getRawOne();
-        return parseFloat(result?.total || 0);
-    }
-
-    async count(where?: FindOptionsWhere<Payment>): Promise<number> {
-        return await this.repository.count({ where });
-    }
-
-    private async getLastPaymentToday(manager: any): Promise<Payment | null> {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const prefix = `INV/${year}${month}${day}`;
-
-        return await manager
-            .getRepository(Payment)
-            .createQueryBuilder('payment')
-            .where('payment.nomorInvoice LIKE :prefix', { prefix: `${prefix}%` })
-            .orderBy('payment.nomorInvoice', 'DESC')
-            .getOne();
-    }
+    return await manager
+      .getRepository(Payment)
+      .createQueryBuilder('payment')
+      .where('payment.nomorInvoice LIKE :prefix', { prefix: `${prefix}%` })
+      .orderBy('payment.nomorInvoice', 'DESC')
+      .getOne();
+  }
 }

@@ -81,12 +81,7 @@ describe('UserLoggedInEvent', () => {
     });
 
     it('should store ipAddress when provided', () => {
-      const event = new UserLoggedInEvent(
-        1,
-        'user',
-        new Date(),
-        '192.168.1.1',
-      );
+      const event = new UserLoggedInEvent(1, 'user', new Date(), '192.168.1.1');
 
       expect(event.ipAddress).toBe('192.168.1.1');
     });

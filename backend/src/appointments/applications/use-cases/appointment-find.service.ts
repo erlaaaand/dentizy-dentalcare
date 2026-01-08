@@ -10,33 +10,33 @@ import { AppointmentValidator } from '../../domains/validators/appointment.valid
  */
 @Injectable()
 export class AppointmentFindService {
-    private readonly logger = new Logger(AppointmentFindService.name);
+  private readonly logger = new Logger(AppointmentFindService.name);
 
-    constructor(
-        private readonly repository: AppointmentsRepository,
-        private readonly validator: AppointmentValidator,
-    ) { }
+  constructor(
+    private readonly repository: AppointmentsRepository,
+    private readonly validator: AppointmentValidator,
+  ) {}
 
-    /**
-     * Execute: Find appointment by ID
-     */
-    async execute(id: number, user: User): Promise<Appointment> {
-        try {
-            // 1. FIND APPOINTMENT
-            const appointment = await this.repository.findById(id);
+  /**
+   * Execute: Find appointment by ID
+   */
+  async execute(id: number, user: User): Promise<Appointment> {
+    try {
+      // 1. FIND APPOINTMENT
+      const appointment = await this.repository.findById(id);
 
-            // 2. VALIDASI: Appointment exists
-            this.validator.validateAppointmentExists(appointment, id);
+      // 2. VALIDASI: Appointment exists
+      this.validator.validateAppointmentExists(appointment, id);
 
-            // 3. VALIDASI: Authorization (dokter hanya bisa lihat milik sendiri)
-            this.validator.validateViewAuthorization(appointment!, user);
+      // 3. VALIDASI: Authorization (dokter hanya bisa lihat milik sendiri)
+      this.validator.validateViewAuthorization(appointment!, user);
 
-            this.logger.debug(`📋 Found appointment #${id}`);
+      this.logger.debug(`📋 Found appointment #${id}`);
 
-            return appointment!;
-        } catch (error) {
-            this.logger.error(`❌ Error finding appointment ID ${id}:`, error.stack);
-            throw error;
-        }
+      return appointment!;
+    } catch (error) {
+      this.logger.error(`❌ Error finding appointment ID ${id}:`, error.stack);
+      throw error;
     }
+  }
 }

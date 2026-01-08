@@ -58,10 +58,10 @@ describe('RolesGuard', () => {
 
         guard.canActivate(mockContext);
 
-        expect(reflector.getAllAndOverride).toHaveBeenCalledWith(
-          ROLES_KEY,
-          [mockContext.getHandler(), mockContext.getClass()],
-        );
+        expect(reflector.getAllAndOverride).toHaveBeenCalledWith(ROLES_KEY, [
+          mockContext.getHandler(),
+          mockContext.getClass(),
+        ]);
       });
     });
 

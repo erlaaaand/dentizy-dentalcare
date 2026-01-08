@@ -4,11 +4,11 @@ import { CreatePatientDto } from './create-patient.dto';
 import { IsOptional, IsBoolean } from 'class-validator';
 
 export class UpdatePatientDto extends PartialType(CreatePatientDto) {
-    @ApiPropertyOptional({
-        description: 'Status aktif pasien',
-        example: true
-    })
-    @IsOptional()
-    @IsBoolean({ message: 'Status aktif harus berupa boolean' })
-    is_active?: boolean;
+  @ApiPropertyOptional({
+    description: 'Status aktif pasien',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Status aktif harus berupa boolean' })
+  is_active?: boolean;
 }

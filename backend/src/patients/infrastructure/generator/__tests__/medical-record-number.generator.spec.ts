@@ -72,7 +72,9 @@ describe('MedicalRecordNumberGenerator', () => {
       ],
     }).compile();
 
-    generator = module.get<MedicalRecordNumberGenerator>(MedicalRecordNumberGenerator);
+    generator = module.get<MedicalRecordNumberGenerator>(
+      MedicalRecordNumberGenerator,
+    );
     dataSource = module.get<DataSource>(DataSource);
 
     // E. MOCK SLEEP (CRITICAL FIX)
@@ -102,7 +104,9 @@ describe('MedicalRecordNumberGenerator', () => {
 
       // Assert
       expect(mockQueryRunner.startTransaction).toHaveBeenCalled();
-      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith(
+        'pessimistic_write',
+      );
       expect(result).toBe(`${mockPrefix}-001`);
       expect(mockQueryRunner.commitTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
@@ -129,10 +133,14 @@ describe('MedicalRecordNumberGenerator', () => {
       });
 
       // Act & Assert
-      // Karena logic calculateNextSequence sudah diperbaiki, 
+      // Karena logic calculateNextSequence sudah diperbaiki,
       // dia akan return 1000, lalu throw error di generate()
-      await expect(generator.generate()).rejects.toThrow(InternalServerErrorException);
-      await expect(generator.generate()).rejects.toThrow('Gagal generate nomor rekam medis. Silakan coba lagi.');
+      await expect(generator.generate()).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      await expect(generator.generate()).rejects.toThrow(
+        'Gagal generate nomor rekam medis. Silakan coba lagi.',
+      );
 
       // Verify rollback
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
@@ -144,16 +152,18 @@ describe('MedicalRecordNumberGenerator', () => {
       // Arrange
       mockQueryBuilder.getRawOne
         .mockRejectedValueOnce(mockDeadlockError) // Gagal
-        .mockResolvedValueOnce(null);             // Sukses
+        .mockResolvedValueOnce(null); // Sukses
 
       // Act
-      // Langsung await saja. Karena 'sleep' sudah di-mock resolve instan, 
+      // Langsung await saja. Karena 'sleep' sudah di-mock resolve instan,
       // dia tidak akan timeout lagi.
       const result = await generator.generate();
 
       // Assert
       expect(result).toBe(`${mockPrefix}-001`);
-      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(2);
+      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(
+        2,
+      );
     });
 
     it('should give up after MAX_RETRIES', async () => {
@@ -161,10 +171,14 @@ describe('MedicalRecordNumberGenerator', () => {
       mockQueryBuilder.getRawOne.mockRejectedValue(mockDeadlockError);
 
       // Act & Assert
-      await expect(generator.generate()).rejects.toThrow(InternalServerErrorException);
+      await expect(generator.generate()).rejects.toThrow(
+        InternalServerErrorException,
+      );
 
       // Verifikasi loop berjalan 5 kali
-      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(5);
+      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(
+        5,
+      );
     });
 
     it('should fail immediately on non-retryable error', async () => {
@@ -173,10 +187,14 @@ describe('MedicalRecordNumberGenerator', () => {
       mockQueryBuilder.getRawOne.mockRejectedValue(genericError);
 
       // Act & Assert
-      await expect(generator.generate()).rejects.toThrow(InternalServerErrorException);
+      await expect(generator.generate()).rejects.toThrow(
+        InternalServerErrorException,
+      );
 
       // Tidak boleh retry, cukup 1 kali panggil
-      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(1);
+      expect(mockQueryRunner.manager.createQueryBuilder).toHaveBeenCalledTimes(
+        1,
+      );
     });
   });
 
@@ -185,13 +203,21 @@ describe('MedicalRecordNumberGenerator', () => {
   describe('Static Methods (Validation & Parsing)', () => {
     describe('isValidFormat', () => {
       it('should return true for valid format', () => {
-        expect(MedicalRecordNumberGenerator.isValidFormat('20231119-001')).toBe(true);
+        expect(MedicalRecordNumberGenerator.isValidFormat('20231119-001')).toBe(
+          true,
+        );
       });
 
       it('should return false for invalid formats', () => {
-        expect(MedicalRecordNumberGenerator.isValidFormat('2023-001')).toBe(false);
-        expect(MedicalRecordNumberGenerator.isValidFormat('ABC-123')).toBe(false);
-        expect(MedicalRecordNumberGenerator.isValidFormat('20231119-1')).toBe(false);
+        expect(MedicalRecordNumberGenerator.isValidFormat('2023-001')).toBe(
+          false,
+        );
+        expect(MedicalRecordNumberGenerator.isValidFormat('ABC-123')).toBe(
+          false,
+        );
+        expect(MedicalRecordNumberGenerator.isValidFormat('20231119-1')).toBe(
+          false,
+        );
       });
     });
 
@@ -225,14 +251,15 @@ describe('MedicalRecordNumberGenerator', () => {
       expect(dataSource.getRepository).toHaveBeenCalledWith(Patient);
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         expect.stringContaining('LIKE :pattern'),
-        { pattern: `${mockPrefix}-%` }
+        { pattern: `${mockPrefix}-%` },
       );
 
       expect(stats.total).toBe(currentCount);
       expect(stats.remaining).toBe(maxDaily - currentCount); // 499
 
       // Hitung persentase: (500 / 999) * 100 = 50.05...
-      const expectedPercent = Math.round((currentCount / maxDaily) * 100 * 100) / 100;
+      const expectedPercent =
+        Math.round((currentCount / maxDaily) * 100 * 100) / 100;
       expect(stats.percentage).toBe(expectedPercent);
     });
   });

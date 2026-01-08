@@ -7,14 +7,17 @@ import { NotificationMapper } from '../../../domains/mappers/notification.mapper
 import { QueryNotificationsDto } from '../../dto/query-notifications.dto';
 import { NotificationResponseDto } from '../../dto/notification-response.dto';
 import { NotificationStatsDto } from '../../dto/notification-stats.dto';
-import { NotificationStatus, NotificationType } from '../../../domains/entities/notification.entity';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '../../../domains/entities/notification.entity';
 
 // 2. MOCK DATA
 const mockQuery: QueryNotificationsDto = {
   page: 1,
   limit: 10,
   status: NotificationStatus.PENDING,
-  type: NotificationType.EMAIL_REMINDER
+  type: NotificationType.EMAIL_REMINDER,
 };
 
 const mockNotificationEntity = {
@@ -33,13 +36,13 @@ const mockNotificationEntity = {
     patient: {
       id: 500,
       nama_lengkap: 'John Doe',
-      email: 'john.doe@example.com'
+      email: 'john.doe@example.com',
     },
     doctor: {
       id: 300,
-      nama_lengkap: 'Dr. Smith'
-    }
-  }
+      nama_lengkap: 'Dr. Smith',
+    },
+  },
 };
 
 const mockNotificationResponse: NotificationResponseDto = {
@@ -58,13 +61,13 @@ const mockNotificationResponse: NotificationResponseDto = {
     patient: {
       id: 500,
       nama_lengkap: 'John Doe',
-      email: 'john.doe@example.com'
+      email: 'john.doe@example.com',
     },
     doctor: {
       id: 300,
-      nama_lengkap: 'Dr. Smith'
-    }
-  }
+      nama_lengkap: 'Dr. Smith',
+    },
+  },
 };
 
 const mockRepositoryFindAllResult = {
@@ -73,8 +76,8 @@ const mockRepositoryFindAllResult = {
     page: 1,
     limit: 10,
     total: 2,
-    totalPages: 1
-  }
+    totalPages: 1,
+  },
 };
 
 const mockStats: NotificationStatsDto = {
@@ -82,18 +85,18 @@ const mockStats: NotificationStatsDto = {
   pending: 20,
   sent: 75,
   failed: 5,
-  scheduled_today: 10,       // <-- Field Baru
+  scheduled_today: 10, // <-- Field Baru
   scheduled_this_week: 30,
   by_type: [
     { type: NotificationType.EMAIL_REMINDER, count: 40 },
     { type: NotificationType.EMAIL_REMINDER, count: 35 },
-    { type: NotificationType.EMAIL_REMINDER, count: 25 }
-  ]
+    { type: NotificationType.EMAIL_REMINDER, count: 25 },
+  ],
 };
 
 const mockFailedNotifications = [
   { ...mockNotificationEntity, id: 1, status: NotificationStatus.FAILED },
-  { ...mockNotificationEntity, id: 2, status: NotificationStatus.FAILED }
+  { ...mockNotificationEntity, id: 2, status: NotificationStatus.FAILED },
 ];
 
 const mockError = new Error('Database connection failed');
@@ -137,7 +140,9 @@ describe('GetNotificationsService', () => {
     }).compile();
 
     service = module.get<GetNotificationsService>(GetNotificationsService);
-    notificationRepository = module.get<NotificationRepository>(NotificationRepository);
+    notificationRepository = module.get<NotificationRepository>(
+      NotificationRepository,
+    );
 
     // Mock the logger
     Object.defineProperty(service, 'logger', {
@@ -146,8 +151,12 @@ describe('GetNotificationsService', () => {
     });
 
     // Mock the mapper
-    jest.spyOn(NotificationMapper, 'toResponseDto').mockImplementation(mockNotificationMapper.toResponseDto);
-    jest.spyOn(NotificationMapper, 'toResponseDtoArray').mockImplementation(mockNotificationMapper.toResponseDtoArray);
+    jest
+      .spyOn(NotificationMapper, 'toResponseDto')
+      .mockImplementation(mockNotificationMapper.toResponseDto);
+    jest
+      .spyOn(NotificationMapper, 'toResponseDtoArray')
+      .mockImplementation(mockNotificationMapper.toResponseDtoArray);
   });
 
   afterEach(() => {
@@ -173,48 +182,68 @@ describe('GetNotificationsService', () => {
   describe('findAll() Method', () => {
     it('should call repository findAll with correct query', async () => {
       // Arrange
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act
       await service.findAll(mockQuery);
 
       // Assert
-      expect(mockNotificationRepository.findAll).toHaveBeenCalledWith(mockQuery);
+      expect(mockNotificationRepository.findAll).toHaveBeenCalledWith(
+        mockQuery,
+      );
       expect(mockNotificationRepository.findAll).toHaveBeenCalledTimes(1);
     });
 
     it('should log debug message with query', async () => {
       // Arrange
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act
       await service.findAll(mockQuery);
 
       // Assert
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        `Finding notifications with query: ${JSON.stringify(mockQuery)}`
+        `Finding notifications with query: ${JSON.stringify(mockQuery)}`,
       );
     });
 
     it('should transform entities to response DTOs', async () => {
       // Arrange
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act
       const result = await service.findAll(mockQuery);
 
       // Assert
-      expect(NotificationMapper.toResponseDtoArray).toHaveBeenCalledWith(mockRepositoryFindAllResult.data);
+      expect(NotificationMapper.toResponseDtoArray).toHaveBeenCalledWith(
+        mockRepositoryFindAllResult.data,
+      );
       expect(result.data).toEqual([mockNotificationResponse]);
     });
 
     it('should return correct pagination metadata', async () => {
       // Arrange
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act
       const result = await service.findAll(mockQuery);
@@ -235,8 +264,8 @@ describe('GetNotificationsService', () => {
           page: 1,
           limit: 10,
           total: 0,
-          totalPages: 0
-        }
+          totalPages: 0,
+        },
       };
       mockNotificationRepository.findAll.mockResolvedValue(emptyResult);
       mockNotificationMapper.toResponseDtoArray.mockReturnValue([]);
@@ -256,11 +285,20 @@ describe('GetNotificationsService', () => {
         { page: 1, limit: 10 },
         { status: NotificationStatus.SENT },
         { type: NotificationType.EMAIL_REMINDER },
-        { page: 2, limit: 20, status: NotificationStatus.PENDING, type: NotificationType.EMAIL_REMINDER }
+        {
+          page: 2,
+          limit: 20,
+          status: NotificationStatus.PENDING,
+          type: NotificationType.EMAIL_REMINDER,
+        },
       ];
 
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act & Assert
       for (const query of queries) {
@@ -280,7 +318,7 @@ describe('GetNotificationsService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error fetching notifications:',
-        mockError.message
+        mockError.message,
       );
     });
   });
@@ -289,28 +327,40 @@ describe('GetNotificationsService', () => {
     it('should call repository findById with correct ID', async () => {
       // Arrange
       const notificationId = 1;
-      mockNotificationRepository.findById.mockResolvedValue(mockNotificationEntity);
-      mockNotificationMapper.toResponseDto.mockReturnValue(mockNotificationResponse);
+      mockNotificationRepository.findById.mockResolvedValue(
+        mockNotificationEntity,
+      );
+      mockNotificationMapper.toResponseDto.mockReturnValue(
+        mockNotificationResponse,
+      );
 
       // Act
       await service.findOne(notificationId);
 
       // Assert
-      expect(mockNotificationRepository.findById).toHaveBeenCalledWith(notificationId);
+      expect(mockNotificationRepository.findById).toHaveBeenCalledWith(
+        notificationId,
+      );
       expect(mockNotificationRepository.findById).toHaveBeenCalledTimes(1);
     });
 
     it('should transform entity to response DTO', async () => {
       // Arrange
       const notificationId = 1;
-      mockNotificationRepository.findById.mockResolvedValue(mockNotificationEntity);
-      mockNotificationMapper.toResponseDto.mockReturnValue(mockNotificationResponse);
+      mockNotificationRepository.findById.mockResolvedValue(
+        mockNotificationEntity,
+      );
+      mockNotificationMapper.toResponseDto.mockReturnValue(
+        mockNotificationResponse,
+      );
 
       // Act
       const result = await service.findOne(notificationId);
 
       // Assert
-      expect(NotificationMapper.toResponseDto).toHaveBeenCalledWith(mockNotificationEntity);
+      expect(NotificationMapper.toResponseDto).toHaveBeenCalledWith(
+        mockNotificationEntity,
+      );
       expect(result).toEqual(mockNotificationResponse);
     });
 
@@ -320,9 +370,11 @@ describe('GetNotificationsService', () => {
       mockNotificationRepository.findById.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findOne(notificationId)).rejects.toThrow(NotFoundException);
       await expect(service.findOne(notificationId)).rejects.toThrow(
-        `Notification #${notificationId} not found`
+        NotFoundException,
+      );
+      await expect(service.findOne(notificationId)).rejects.toThrow(
+        `Notification #${notificationId} not found`,
       );
     });
 
@@ -337,15 +389,19 @@ describe('GetNotificationsService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         `Error fetching notification #${notificationId}:`,
-        mockError.message
+        mockError.message,
       );
     });
 
     it('should handle different notification IDs', async () => {
       // Arrange
       const notificationIds = [1, 999, 0, -1, 12345];
-      mockNotificationRepository.findById.mockResolvedValue(mockNotificationEntity);
-      mockNotificationMapper.toResponseDto.mockReturnValue(mockNotificationResponse);
+      mockNotificationRepository.findById.mockResolvedValue(
+        mockNotificationEntity,
+      );
+      mockNotificationMapper.toResponseDto.mockReturnValue(
+        mockNotificationResponse,
+      );
 
       // Act & Assert
       for (const id of notificationIds) {
@@ -377,8 +433,12 @@ describe('GetNotificationsService', () => {
       await service.getStatistics();
 
       // Assert
-      expect(mockLogger.debug).toHaveBeenCalledWith('Getting notification statistics');
-      expect(mockLogger.log).toHaveBeenCalledWith('📊 Notification statistics retrieved');
+      expect(mockLogger.debug).toHaveBeenCalledWith(
+        'Getting notification statistics',
+      );
+      expect(mockLogger.log).toHaveBeenCalledWith(
+        '📊 Notification statistics retrieved',
+      );
     });
 
     it('should return statistics data', async () => {
@@ -404,9 +464,9 @@ describe('GetNotificationsService', () => {
         pending: 0,
         sent: 0,
         failed: 0,
-        scheduled_today: 0,      // <-- Field Baru
+        scheduled_today: 0, // <-- Field Baru
         scheduled_this_week: 0,
-        by_type: []
+        by_type: [],
       };
       mockNotificationRepository.getStatistics.mockResolvedValue(emptyStats);
 
@@ -428,7 +488,7 @@ describe('GetNotificationsService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error getting notification statistics:',
-        mockError.message
+        mockError.message,
       );
     });
   });
@@ -436,8 +496,12 @@ describe('GetNotificationsService', () => {
   describe('getFailedNotifications() Method', () => {
     it('should call repository findFailed with default limit', async () => {
       // Arrange
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue(mockFailedNotifications.map(n => ({ ...n })));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue(
+        mockFailedNotifications.map((n) => ({ ...n })),
+      );
 
       // Act
       await service.getFailedNotifications();
@@ -450,27 +514,37 @@ describe('GetNotificationsService', () => {
     it('should call repository findFailed with custom limit', async () => {
       // Arrange
       const customLimit = 100;
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue(mockFailedNotifications.map(n => ({ ...n })));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue(
+        mockFailedNotifications.map((n) => ({ ...n })),
+      );
 
       // Act
       await service.getFailedNotifications(customLimit);
 
       // Assert
-      expect(mockNotificationRepository.findFailed).toHaveBeenCalledWith(customLimit);
+      expect(mockNotificationRepository.findFailed).toHaveBeenCalledWith(
+        customLimit,
+      );
     });
 
     it('should transform entities to response DTOs', async () => {
       // Arrange
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      const responseDtos = mockFailedNotifications.map(n => ({ ...n }));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      const responseDtos = mockFailedNotifications.map((n) => ({ ...n }));
       mockNotificationMapper.toResponseDtoArray.mockReturnValue(responseDtos);
 
       // Act
       const result = await service.getFailedNotifications();
 
       // Assert
-      expect(NotificationMapper.toResponseDtoArray).toHaveBeenCalledWith(mockFailedNotifications);
+      expect(NotificationMapper.toResponseDtoArray).toHaveBeenCalledWith(
+        mockFailedNotifications,
+      );
       expect(result).toEqual(responseDtos);
       expect(result).toHaveLength(2);
     });
@@ -490,13 +564,19 @@ describe('GetNotificationsService', () => {
     it('should handle different limit values', async () => {
       // Arrange
       const limits = [10, 25, 50, 100, 500];
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue(mockFailedNotifications.map(n => ({ ...n })));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue(
+        mockFailedNotifications.map((n) => ({ ...n })),
+      );
 
       // Act & Assert
       for (const limit of limits) {
         await service.getFailedNotifications(limit);
-        expect(mockNotificationRepository.findFailed).toHaveBeenCalledWith(limit);
+        expect(mockNotificationRepository.findFailed).toHaveBeenCalledWith(
+          limit,
+        );
         jest.clearAllMocks();
       }
     });
@@ -511,7 +591,7 @@ describe('GetNotificationsService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         'Error getting failed notifications:',
-        mockError.message
+        mockError.message,
       );
     });
   });
@@ -560,16 +640,22 @@ describe('GetNotificationsService', () => {
         page: null,
         limit: null,
         status: null,
-        type: null
+        type: null,
       };
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
 
       // Act
       await service.findAll(queryWithNulls as any);
 
       // Assert
-      expect(mockNotificationRepository.findAll).toHaveBeenCalledWith(queryWithNulls);
+      expect(mockNotificationRepository.findAll).toHaveBeenCalledWith(
+        queryWithNulls,
+      );
     });
 
     it('should handle zero ID in findOne', async () => {
@@ -582,8 +668,12 @@ describe('GetNotificationsService', () => {
 
     it('should handle negative limit in getFailedNotifications', async () => {
       // Arrange
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue(mockFailedNotifications.map(n => ({ ...n })));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue(
+        mockFailedNotifications.map((n) => ({ ...n })),
+      );
 
       // Act
       await service.getFailedNotifications(-10);
@@ -596,20 +686,32 @@ describe('GetNotificationsService', () => {
   describe('Performance and Reliability', () => {
     it('should handle multiple concurrent requests', async () => {
       // Arrange
-      mockNotificationRepository.findAll.mockResolvedValue(mockRepositoryFindAllResult);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue([mockNotificationResponse]);
-      mockNotificationRepository.findById.mockResolvedValue(mockNotificationEntity);
-      mockNotificationMapper.toResponseDto.mockReturnValue(mockNotificationResponse);
+      mockNotificationRepository.findAll.mockResolvedValue(
+        mockRepositoryFindAllResult,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue([
+        mockNotificationResponse,
+      ]);
+      mockNotificationRepository.findById.mockResolvedValue(
+        mockNotificationEntity,
+      );
+      mockNotificationMapper.toResponseDto.mockReturnValue(
+        mockNotificationResponse,
+      );
       mockNotificationRepository.getStatistics.mockResolvedValue(mockStats);
-      mockNotificationRepository.findFailed.mockResolvedValue(mockFailedNotifications);
-      mockNotificationMapper.toResponseDtoArray.mockReturnValue(mockFailedNotifications.map(n => ({ ...n })));
+      mockNotificationRepository.findFailed.mockResolvedValue(
+        mockFailedNotifications,
+      );
+      mockNotificationMapper.toResponseDtoArray.mockReturnValue(
+        mockFailedNotifications.map((n) => ({ ...n })),
+      );
 
       // Act
       const promises = [
         service.findAll(mockQuery),
         service.findOne(1),
         service.getStatistics(),
-        service.getFailedNotifications()
+        service.getFailedNotifications(),
       ];
 
       const results = await Promise.all(promises);

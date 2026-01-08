@@ -58,7 +58,9 @@ describe('PatientSearchValidator', () => {
     it('should throw BadRequestException if minAge > maxAge', () => {
       const query = { ...validBaseQuery, umur_min: 30, umur_max: 20 };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/Umur minimal tidak boleh lebih besar/);
+      expect(() => validator.validate(query)).toThrow(
+        /Umur minimal tidak boleh lebih besar/,
+      );
     });
 
     it('should throw BadRequestException if age is negative', () => {
@@ -78,28 +80,34 @@ describe('PatientSearchValidator', () => {
     it('should throw BadRequestException if date format is invalid', () => {
       const query = { ...validBaseQuery, tanggal_daftar_dari: 'invalid-date' };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/Format tanggal tidak valid/);
+      expect(() => validator.validate(query)).toThrow(
+        /Format tanggal tidak valid/,
+      );
     });
 
     it('should throw BadRequestException if From Date > To Date', () => {
-      const query = { 
-        ...validBaseQuery, 
-        tanggal_daftar_dari: '2023-12-31', 
-        tanggal_daftar_sampai: '2023-01-01' 
+      const query = {
+        ...validBaseQuery,
+        tanggal_daftar_dari: '2023-12-31',
+        tanggal_daftar_sampai: '2023-01-01',
       };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/Tanggal dari tidak boleh lebih besar/);
+      expect(() => validator.validate(query)).toThrow(
+        /Tanggal dari tidak boleh lebih besar/,
+      );
     });
 
     it('should throw BadRequestException if date is older than 10 years', () => {
       const ancientDate = getPastDate(11); // 11 years ago
-      const query = { 
-        ...validBaseQuery, 
+      const query = {
+        ...validBaseQuery,
         tanggal_daftar_dari: ancientDate,
-        tanggal_daftar_sampai: getPastDate(1)
+        tanggal_daftar_sampai: getPastDate(1),
       };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/maksimal 10 tahun ke belakang/);
+      expect(() => validator.validate(query)).toThrow(
+        /maksimal 10 tahun ke belakang/,
+      );
     });
   });
 
@@ -122,14 +130,16 @@ describe('PatientSearchValidator', () => {
         'SELECT * FROM users',
         'DROP TABLE patients',
         'UNION SELECT 1',
-        'admin" --' // Usually caught by special char checks in other validators, but checking the keyword logic here
+        'admin" --', // Usually caught by special char checks in other validators, but checking the keyword logic here
       ];
 
       // Note: The regex in your code is /(\bSELECT\b...)/gi, requiring word boundaries
       const sqlQuery = { ...validBaseQuery, search: 'SELECT * FROM' };
-      
+
       expect(() => validator.validate(sqlQuery)).toThrow(BadRequestException);
-      expect(() => validator.validate(sqlQuery)).toThrow(/mengandung karakter tidak valid/);
+      expect(() => validator.validate(sqlQuery)).toThrow(
+        /mengandung karakter tidak valid/,
+      );
     });
 
     it('should allow normal names that contain SQL keywords as part of the word', () => {
@@ -143,13 +153,17 @@ describe('PatientSearchValidator', () => {
     it('should throw BadRequestException if page < 1', () => {
       const query = { ...validBaseQuery, page: 0 };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/Page harus lebih besar dari 0/);
+      expect(() => validator.validate(query)).toThrow(
+        /Page harus lebih besar dari 0/,
+      );
     });
 
     it('should throw BadRequestException if limit < 1', () => {
       const query = { ...validBaseQuery, limit: 0 };
       expect(() => validator.validate(query)).toThrow(BadRequestException);
-      expect(() => validator.validate(query)).toThrow(/Limit harus lebih besar dari 0/);
+      expect(() => validator.validate(query)).toThrow(
+        /Limit harus lebih besar dari 0/,
+      );
     });
 
     it('should throw BadRequestException if limit > 100', () => {

@@ -1,5 +1,8 @@
 import { AppointmentCancelledEvent } from '../appointment-cancelled.event';
-import { Appointment, AppointmentStatus } from '../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../domains/entities/appointment.entity';
 
 describe('AppointmentCancelledEvent', () => {
   let mockAppointment: Appointment;
@@ -21,7 +24,7 @@ describe('AppointmentCancelledEvent', () => {
       const event = new AppointmentCancelledEvent(
         mockAppointment,
         5,
-        'Pasien berhalangan hadir'
+        'Pasien berhalangan hadir',
       );
 
       expect(event.appointment).toBe(mockAppointment);
@@ -64,9 +67,12 @@ describe('AppointmentCancelledEvent', () => {
       const eventWithReason = new AppointmentCancelledEvent(
         mockAppointment,
         5,
-        'Test reason'
+        'Test reason',
       );
-      const eventWithoutReason = new AppointmentCancelledEvent(mockAppointment, 5);
+      const eventWithoutReason = new AppointmentCancelledEvent(
+        mockAppointment,
+        5,
+      );
 
       expect(eventWithReason.reason).toBe('Test reason');
       expect(eventWithoutReason.reason).toBeUndefined();

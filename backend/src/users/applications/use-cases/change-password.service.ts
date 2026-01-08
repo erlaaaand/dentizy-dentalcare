@@ -11,74 +11,75 @@ import { TimingDefenseService } from '../../../auth/infrastructures/security/tim
 
 @Injectable()
 export class ChangePasswordService {
-    private readonly logger = new Logger(ChangePasswordService.name);
+  private readonly logger = new Logger(ChangePasswordService.name);
 
-    constructor(
-        private readonly userRepository: UserRepository,
-        private readonly userValidation: UserValidationService,
-        private readonly passwordHasher: PasswordHasherService,
-        private readonly passwordPolicy: PasswordPolicyService,
-        private readonly timingDefense: TimingDefenseService,
-        private readonly eventEmitter: EventEmitter2
-    ) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userValidation: UserValidationService,
+    private readonly passwordHasher: PasswordHasherService,
+    private readonly passwordPolicy: PasswordPolicyService,
+    private readonly timingDefense: TimingDefenseService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(
-        userId: number,
-        oldPassword: string,
-        newPassword: string
-    ): Promise<PasswordChangeResponseDto> {
-        return this.timingDefense.executeWithProtection(async () => {
-            try {
-                // 1. Find user with password
-                const user = await this.userRepository.findByIdWithPassword(userId);
-                this.userValidation.validateUserExists(user, userId);
+  async execute(
+    userId: number,
+    oldPassword: string,
+    newPassword: string,
+  ): Promise<PasswordChangeResponseDto> {
+    return this.timingDefense.executeWithProtection(async () => {
+      try {
+        // 1. Find user with password
+        const user = await this.userRepository.findByIdWithPassword(userId);
+        this.userValidation.validateUserExists(user, userId);
 
-                // 2. Verify old password
-                if (!user) {
-                    throw new BadRequestException(`User with id ${userId} not found`);
-                }
+        // 2. Verify old password
+        if (!user) {
+          throw new BadRequestException(`User with id ${userId} not found`);
+        }
 
-                const isOldPasswordValid = await this.passwordHasher.compare(
-                    oldPassword,
-                    user.password
-                );
+        const isOldPasswordValid = await this.passwordHasher.compare(
+          oldPassword,
+          user.password,
+        );
 
-                if (!isOldPasswordValid) {
-                    throw new BadRequestException('Password lama tidak sesuai');
-                }
+        if (!isOldPasswordValid) {
+          throw new BadRequestException('Password lama tidak sesuai');
+        }
 
-                // 3. Validate new password policy
-                this.passwordPolicy.validatePasswordChange(oldPassword, newPassword);
+        // 3. Validate new password policy
+        this.passwordPolicy.validatePasswordChange(oldPassword, newPassword);
 
-                // 4. Hash new password
-                const hashedPassword = await this.passwordHasher.hash(newPassword);
-                user.password = hashedPassword;
+        // 4. Hash new password
+        const hashedPassword = await this.passwordHasher.hash(newPassword);
+        user.password = hashedPassword;
 
-                // 5. Save changes
-                await this.userRepository.update(user);
+        // 5. Save changes
+        await this.userRepository.update(user);
 
-                // 6. Emit event
-                this.eventEmitter.emit(
-                    'password.changed',
-                    new PasswordChangedEvent(user.id, user.username, 'self')
-                );
+        // 6. Emit event
+        this.eventEmitter.emit(
+          'password.changed',
+          new PasswordChangedEvent(user.id, user.username, 'self'),
+        );
 
-                // 7. Log and return
-                this.logger.log(`✅ Password changed for user: ${user.username} (ID: ${userId})`);
+        // 7. Log and return
+        this.logger.log(
+          `✅ Password changed for user: ${user.username} (ID: ${userId})`,
+        );
 
-                return {
-                    message: 'Password berhasil diubah',
-                    timestamp: new Date().toISOString(),
-                    user: {
-                        id: user.id,
-                        username: user.username
-                    }
-                };
-
-            } catch (error) {
-                this.logger.error('Error changing password:', error.message);
-                throw error;
-            }
-        });
-    }
+        return {
+          message: 'Password berhasil diubah',
+          timestamp: new Date().toISOString(),
+          user: {
+            id: user.id,
+            username: user.username,
+          },
+        };
+      } catch (error) {
+        this.logger.error('Error changing password:', error.message);
+        throw error;
+      }
+    });
+  }
 }

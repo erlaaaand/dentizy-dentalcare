@@ -177,7 +177,9 @@ describe('TokenVerificationService', () => {
     describe('User Not Found', () => {
       beforeEach(() => {
         tokenService.verifyToken.mockReturnValue(mockTokenPayload);
-        usersService.findOne.mockRejectedValue(new NotFoundException('user not found'));
+        usersService.findOne.mockRejectedValue(
+          new NotFoundException('user not found'),
+        );
       });
 
       it('should return valid false when user not found', async () => {

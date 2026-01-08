@@ -6,18 +6,18 @@ import { TreatmentMapper } from '../../domains/mappers/treatment.mapper';
 
 @Injectable()
 export class GetTreatmentUseCase {
-    constructor(
-        private readonly treatmentRepository: TreatmentRepository,
-        private readonly treatmentMapper: TreatmentMapper,
-    ) {}
+  constructor(
+    private readonly treatmentRepository: TreatmentRepository,
+    private readonly treatmentMapper: TreatmentMapper,
+  ) {}
 
-    async execute(id: number): Promise<TreatmentResponseDto> {
-        const treatment = await this.treatmentRepository.findOne(id);
+  async execute(id: number): Promise<TreatmentResponseDto> {
+    const treatment = await this.treatmentRepository.findOne(id);
 
-        if (!treatment) {
-            throw new NotFoundException(`Perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        return this.treatmentMapper.toResponseDto(treatment);
+    if (!treatment) {
+      throw new NotFoundException(`Perawatan dengan ID ${id} tidak ditemukan`);
     }
+
+    return this.treatmentMapper.toResponseDto(treatment);
+  }
 }

@@ -200,7 +200,10 @@ describe('AppointmentsService', () => {
       const result = await service.cancel(id, mockUser);
 
       // Assert
-      expect(mockCancellationService.execute).toHaveBeenCalledWith(id, mockUser);
+      expect(mockCancellationService.execute).toHaveBeenCalledWith(
+        id,
+        mockUser,
+      );
       expect(mockMapper.toResponseDto).toHaveBeenCalledWith(cancelledEntity);
       expect(result).toBe(cancelledDto);
     });
@@ -231,7 +234,10 @@ describe('AppointmentsService', () => {
       const result = await service.findAll(mockUser, queryDto);
 
       // Assert
-      expect(mockSearchService.execute).toHaveBeenCalledWith(mockUser, queryDto);
+      expect(mockSearchService.execute).toHaveBeenCalledWith(
+        mockUser,
+        queryDto,
+      );
       expect(mockMapper.toPaginatedResponse).toHaveBeenCalledWith(
         searchResult.data,
         searchResult.count,

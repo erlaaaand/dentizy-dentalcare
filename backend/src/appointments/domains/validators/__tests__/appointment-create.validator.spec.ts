@@ -26,7 +26,9 @@ describe('AppointmentCreateValidator', () => {
     id: 3,
     username: 'dr.chief',
     nama_lengkap: 'Dr. Chief',
-    roles: [{ id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' }],
+    roles: [
+      { id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' },
+    ],
   } as User;
 
   const mockStaffUser: User = {
@@ -42,7 +44,7 @@ describe('AppointmentCreateValidator', () => {
     }).compile();
 
     validator = module.get<AppointmentCreateValidator>(
-      AppointmentCreateValidator
+      AppointmentCreateValidator,
     );
   });
 
@@ -53,13 +55,13 @@ describe('AppointmentCreateValidator', () => {
   describe('validatePatientExists', () => {
     it('should pass when patient exists', () => {
       expect(() =>
-        validator.validatePatientExists(mockPatient, 1)
+        validator.validatePatientExists(mockPatient, 1),
       ).not.toThrow();
     });
 
     it('should throw NotFoundException when patient is null', () => {
       expect(() => validator.validatePatientExists(null, 999)).toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
 
@@ -69,7 +71,7 @@ describe('AppointmentCreateValidator', () => {
         validator.validatePatientExists(null, patientId);
       } catch (error) {
         expect(error.message).toBe(
-          `Pasien dengan ID #${patientId} tidak ditemukan`
+          `Pasien dengan ID #${patientId} tidak ditemukan`,
         );
       }
     });
@@ -78,13 +80,13 @@ describe('AppointmentCreateValidator', () => {
   describe('validateDoctorExists', () => {
     it('should pass when doctor exists', () => {
       expect(() =>
-        validator.validateDoctorExists(mockDoctorUser, 2)
+        validator.validateDoctorExists(mockDoctorUser, 2),
       ).not.toThrow();
     });
 
     it('should throw NotFoundException when doctor is null', () => {
       expect(() => validator.validateDoctorExists(null, 999)).toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
 
@@ -94,7 +96,7 @@ describe('AppointmentCreateValidator', () => {
         validator.validateDoctorExists(null, doctorId);
       } catch (error) {
         expect(error.message).toBe(
-          `Dokter dengan ID #${doctorId} tidak ditemukan`
+          `Dokter dengan ID #${doctorId} tidak ditemukan`,
         );
       }
     });
@@ -103,13 +105,13 @@ describe('AppointmentCreateValidator', () => {
   describe('validateDoctorRole', () => {
     it('should pass for user with DOKTER role', () => {
       expect(() =>
-        validator.validateDoctorRole(mockDoctorUser, 2)
+        validator.validateDoctorRole(mockDoctorUser, 2),
       ).not.toThrow();
     });
 
     it('should pass for user with KEPALA_KLINIK role', () => {
       expect(() =>
-        validator.validateDoctorRole(mockKepalaKlinikUser, 3)
+        validator.validateDoctorRole(mockKepalaKlinikUser, 3),
       ).not.toThrow();
     });
 
@@ -124,14 +126,12 @@ describe('AppointmentCreateValidator', () => {
         ],
       } as User;
 
-      expect(() =>
-        validator.validateDoctorRole(dualRoleUser, 5)
-      ).not.toThrow();
+      expect(() => validator.validateDoctorRole(dualRoleUser, 5)).not.toThrow();
     });
 
     it('should throw ForbiddenException for user with STAF role only', () => {
       expect(() => validator.validateDoctorRole(mockStaffUser, 4)).toThrow(
-        ForbiddenException
+        ForbiddenException,
       );
     });
 
@@ -141,7 +141,7 @@ describe('AppointmentCreateValidator', () => {
         validator.validateDoctorRole(mockStaffUser, userId);
       } catch (error) {
         expect(error.message).toBe(
-          `User dengan ID #${userId} bukan dokter atau kepala klinik`
+          `User dengan ID #${userId} bukan dokter atau kepala klinik`,
         );
       }
     });
@@ -155,7 +155,7 @@ describe('AppointmentCreateValidator', () => {
       } as unknown as User;
 
       expect(() => validator.validateDoctorRole(noRoleUser, 6)).toThrow(
-        ForbiddenException
+        ForbiddenException,
       );
     });
   });
@@ -163,7 +163,7 @@ describe('AppointmentCreateValidator', () => {
   describe('validateCreateAppointment', () => {
     it('should pass with valid patient and doctor', () => {
       expect(() =>
-        validator.validateCreateAppointment(mockPatient, 1, mockDoctorUser, 2)
+        validator.validateCreateAppointment(mockPatient, 1, mockDoctorUser, 2),
       ).not.toThrow();
     });
 
@@ -173,26 +173,26 @@ describe('AppointmentCreateValidator', () => {
           mockPatient,
           1,
           mockKepalaKlinikUser,
-          3
-        )
+          3,
+        ),
       ).not.toThrow();
     });
 
     it('should throw NotFoundException when patient is null', () => {
       expect(() =>
-        validator.validateCreateAppointment(null, 999, mockDoctorUser, 2)
+        validator.validateCreateAppointment(null, 999, mockDoctorUser, 2),
       ).toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException when doctor is null', () => {
       expect(() =>
-        validator.validateCreateAppointment(mockPatient, 1, null, 999)
+        validator.validateCreateAppointment(mockPatient, 1, null, 999),
       ).toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when user is not doctor/kepala klinik', () => {
       expect(() =>
-        validator.validateCreateAppointment(mockPatient, 1, mockStaffUser, 4)
+        validator.validateCreateAppointment(mockPatient, 1, mockStaffUser, 4),
       ).toThrow(ForbiddenException);
     });
 
@@ -222,7 +222,12 @@ describe('AppointmentCreateValidator', () => {
       const doctor = mockDoctorUser;
 
       expect(() =>
-        validator.validateCreateAppointment(patient, patient.id, doctor, doctor.id)
+        validator.validateCreateAppointment(
+          patient,
+          patient.id,
+          doctor,
+          doctor.id,
+        ),
       ).not.toThrow();
     });
 
@@ -267,7 +272,7 @@ describe('AppointmentCreateValidator', () => {
       } as unknown as User;
 
       expect(() =>
-        validator.validateDoctorRole(userWithUndefinedRoles, 7)
+        validator.validateDoctorRole(userWithUndefinedRoles, 7),
       ).toThrow(ForbiddenException);
     });
 
@@ -277,7 +282,7 @@ describe('AppointmentCreateValidator', () => {
       } as Patient;
 
       expect(() =>
-        validator.validatePatientExists(minimalPatient, 100)
+        validator.validatePatientExists(minimalPatient, 100),
       ).not.toThrow();
     });
 
@@ -287,8 +292,8 @@ describe('AppointmentCreateValidator', () => {
           mockPatient,
           10,
           { ...mockDoctorUser, id: 20 },
-          20
-        )
+          20,
+        ),
       ).not.toThrow();
     });
   });

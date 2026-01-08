@@ -303,7 +303,7 @@ describe('SecurityGuardService', () => {
 
       const time1 = service.getRemainingLockoutTime('testuser');
 
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       const time2 = service.getRemainingLockoutTime('testuser');
 
@@ -336,13 +336,13 @@ describe('SecurityGuardService', () => {
     it('should handle multiple concurrent users', () => {
       const users = ['user1', 'user2', 'user3'];
 
-      users.forEach(user => {
+      users.forEach((user) => {
         for (let i = 0; i < 5; i++) {
           service.recordFailedAttempt(user);
         }
       });
 
-      users.forEach(user => {
+      users.forEach((user) => {
         expect(service.isAccountLocked(user)).toBe(true);
       });
 

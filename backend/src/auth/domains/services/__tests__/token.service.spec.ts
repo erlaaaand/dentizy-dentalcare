@@ -13,7 +13,8 @@ const mockTokenPayload: TokenPayloadDto = {
   roles: ['staf', 'dokter'],
 };
 
-const mockJwtToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwic3ViIjoxLCJyb2xlcyI6WyJzdGFmIiwiZG9rdGVyIl0sImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MzI1NDIyfQ.signature';
+const mockJwtToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3R1c2VyIiwic3ViIjoxLCJyb2xlcyI6WyJzdGFmIiwiZG9rdGVyIl0sImlhdCI6MTYxNjIzOTAyMiwiZXhwIjoxNjE2MzI1NDIyfQ.signature';
 
 const mockDecodedToken = {
   username: 'testuser',

@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DataSource, QueryRunner, EntityManager } from 'typeorm';
 import { AppointmentsRepository } from '../appointments.repository';
-import { Appointment, AppointmentStatus } from '../../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../domains/entities/appointment.entity';
 import { Patient } from '../../../../../patients/domains/entities/patient.entity';
 import { User } from '../../../../../users/domains/entities/user.entity';
 
@@ -161,7 +164,10 @@ describe('AppointmentsRepository', () => {
       const mockPatient = { id: 10 } as Patient;
       entityManager.findOne.mockResolvedValue(mockPatient);
 
-      const result = await repository.findPatientByIdInTransaction(queryRunner, 10);
+      const result = await repository.findPatientByIdInTransaction(
+        queryRunner,
+        10,
+      );
 
       expect(entityManager.findOne).toHaveBeenCalledWith(Patient, {
         where: { id: 10 },
@@ -198,7 +204,10 @@ describe('AppointmentsRepository', () => {
       const mockDoctor = { id: 5 } as User;
       entityManager.findOne.mockResolvedValue(mockDoctor);
 
-      const result = await repository.findDoctorByIdInTransaction(queryRunner, 5);
+      const result = await repository.findDoctorByIdInTransaction(
+        queryRunner,
+        5,
+      );
 
       expect(entityManager.findOne).toHaveBeenCalledWith(User, {
         where: { id: 5 },
@@ -228,8 +237,14 @@ describe('AppointmentsRepository', () => {
         tanggal_janji: new Date(),
       };
 
-      const createdEntity: Appointment = { id: 1, ...appointmentData } as Appointment;
-      const savedEntity: Appointment = { id: 1, ...appointmentData } as Appointment;
+      const createdEntity: Appointment = {
+        id: 1,
+        ...appointmentData,
+      } as Appointment;
+      const savedEntity: Appointment = {
+        id: 1,
+        ...appointmentData,
+      } as Appointment;
 
       // Mock queryRunner.manager
       const queryRunner = {
@@ -239,9 +254,15 @@ describe('AppointmentsRepository', () => {
         },
       } as unknown as QueryRunner;
 
-      const result = await repository.saveInTransaction(queryRunner, appointmentData);
+      const result = await repository.saveInTransaction(
+        queryRunner,
+        appointmentData,
+      );
 
-      expect(queryRunner.manager.create).toHaveBeenCalledWith(Appointment, appointmentData);
+      expect(queryRunner.manager.create).toHaveBeenCalledWith(
+        Appointment,
+        appointmentData,
+      );
       expect(queryRunner.manager.save).toHaveBeenCalledWith(createdEntity);
       expect(result).toBe(savedEntity);
     });
@@ -255,7 +276,10 @@ describe('AppointmentsRepository', () => {
       } as Appointment;
       entityManager.save.mockResolvedValue(mockAppointment);
 
-      const result = await repository.updateInTransaction(queryRunner, mockAppointment);
+      const result = await repository.updateInTransaction(
+        queryRunner,
+        mockAppointment,
+      );
 
       expect(entityManager.save).toHaveBeenCalledWith(mockAppointment);
       expect(result).toBe(mockAppointment);
@@ -280,7 +304,9 @@ describe('AppointmentsRepository', () => {
 
       const result = repository.createQueryBuilder();
 
-      expect(appointmentRepo.createQueryBuilder).toHaveBeenCalledWith('appointment');
+      expect(appointmentRepo.createQueryBuilder).toHaveBeenCalledWith(
+        'appointment',
+      );
       expect(result).toBe(mockQueryBuilder);
     });
 
@@ -310,12 +336,19 @@ describe('AppointmentsRepository', () => {
       const result = await repository.saveInTransaction(qr, appointmentData);
 
       expect(result).toBe(savedAppointment);
-      expect(qr.manager.create).toHaveBeenCalledWith(Appointment, appointmentData);
+      expect(qr.manager.create).toHaveBeenCalledWith(
+        Appointment,
+        appointmentData,
+      );
       expect(qr.manager.save).toHaveBeenCalledWith(savedAppointment);
     });
 
     it('should handle finding related entities', async () => {
-      const mockAppointment = { id: 1, patient_id: 10, doctor_id: 5 } as Appointment;
+      const mockAppointment = {
+        id: 1,
+        patient_id: 10,
+        doctor_id: 5,
+      } as Appointment;
       const mockPatient = { id: 10 } as Patient;
       const mockDoctor = { id: 5 } as User;
 

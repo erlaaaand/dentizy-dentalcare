@@ -1,5 +1,8 @@
 import { AppointmentUpdatedEvent } from '../appointment-updated.event';
-import { Appointment, AppointmentStatus } from '../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../domains/entities/appointment.entity';
 
 describe('AppointmentUpdatedEvent', () => {
   let mockAppointment: Appointment;
@@ -34,8 +37,14 @@ describe('AppointmentUpdatedEvent', () => {
     });
 
     it('should handle time update flag correctly', () => {
-      const eventTimeUpdated = new AppointmentUpdatedEvent(mockAppointment, true);
-      const eventTimeNotUpdated = new AppointmentUpdatedEvent(mockAppointment, false);
+      const eventTimeUpdated = new AppointmentUpdatedEvent(
+        mockAppointment,
+        true,
+      );
+      const eventTimeNotUpdated = new AppointmentUpdatedEvent(
+        mockAppointment,
+        false,
+      );
 
       expect(eventTimeUpdated.isTimeUpdated).toBe(true);
       expect(eventTimeNotUpdated.isTimeUpdated).toBe(false);
@@ -65,8 +74,15 @@ describe('AppointmentUpdatedEvent', () => {
     });
 
     it('should have optional updatedBy property', () => {
-      const eventWithUpdatedBy = new AppointmentUpdatedEvent(mockAppointment, true, 5);
-      const eventWithoutUpdatedBy = new AppointmentUpdatedEvent(mockAppointment, false);
+      const eventWithUpdatedBy = new AppointmentUpdatedEvent(
+        mockAppointment,
+        true,
+        5,
+      );
+      const eventWithoutUpdatedBy = new AppointmentUpdatedEvent(
+        mockAppointment,
+        false,
+      );
 
       expect(eventWithUpdatedBy.updatedBy).toBe(5);
       expect(eventWithoutUpdatedBy.updatedBy).toBeUndefined();

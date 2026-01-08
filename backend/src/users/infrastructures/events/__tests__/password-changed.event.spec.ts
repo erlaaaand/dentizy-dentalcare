@@ -3,4 +3,3 @@ describe('password-changed.event.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

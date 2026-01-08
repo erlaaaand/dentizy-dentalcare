@@ -7,27 +7,33 @@ import { TreatmentCategoryDeletedEvent } from '../../infrastructures/events/trea
 
 @Injectable()
 export class DeleteTreatmentCategoryUseCase {
-    constructor(
-        private readonly repository: TreatmentCategoryRepository,
-        private readonly validator: TreatmentCategoryValidator,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentCategoryRepository,
+    private readonly validator: TreatmentCategoryValidator,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number): Promise<void> {
-        // Check existence
-        const category = await this.repository.findOne(id);
-        if (!category) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        // Validate deletion
-        await this.validator.validateDelete(id);
-
-        // Soft delete
-        await this.repository.softDelete(id);
-
-        // Emit event
-        const event = new TreatmentCategoryDeletedEvent(id, category.namaKategori, new Date());
-        this.eventEmitter.emit('treatment-category.deleted', event);
+  async execute(id: number): Promise<void> {
+    // Check existence
+    const category = await this.repository.findOne(id);
+    if (!category) {
+      throw new NotFoundException(
+        `Kategori perawatan dengan ID ${id} tidak ditemukan`,
+      );
     }
+
+    // Validate deletion
+    await this.validator.validateDelete(id);
+
+    // Soft delete
+    await this.repository.softDelete(id);
+
+    // Emit event
+    const event = new TreatmentCategoryDeletedEvent(
+      id,
+      category.namaKategori,
+      new Date(),
+    );
+    this.eventEmitter.emit('treatment-category.deleted', event);
+  }
 }

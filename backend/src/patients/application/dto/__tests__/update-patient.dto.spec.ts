@@ -16,7 +16,6 @@ const validStatusUpdate = {
 
 // 3. TEST SUITE
 describe('UpdatePatientDto', () => {
-
   // 4. SETUP AND TEARDOWN
   // Stateless DTO test
 
@@ -40,7 +39,9 @@ describe('UpdatePatientDto', () => {
 
   it('should still validate inherited rules if field is provided', async () => {
     // Testing inherited validation (e.g. Email format from CreatePatientDto)
-    const dto = plainToInstance(UpdatePatientDto, { email: 'invalid-email-format' });
+    const dto = plainToInstance(UpdatePatientDto, {
+      email: 'invalid-email-format',
+    });
     const errors = await validate(dto);
 
     expect(errors.length).toBeGreaterThan(0);

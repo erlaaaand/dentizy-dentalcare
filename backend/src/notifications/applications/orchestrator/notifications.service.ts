@@ -15,76 +15,78 @@ import { NotificationStatsDto } from '../dto/notification-stats.dto';
  */
 @Injectable()
 export class NotificationsService {
-    private readonly logger = new Logger(NotificationsService.name);
+  private readonly logger = new Logger(NotificationsService.name);
 
-    constructor(
-        private readonly scheduleReminderService: ScheduleReminderService,
-        private readonly cancelRemindersService: CancelRemindersService,
-        private readonly getNotificationsService: GetNotificationsService,
-        private readonly retryFailedService: RetryFailedService,
-    ) { }
+  constructor(
+    private readonly scheduleReminderService: ScheduleReminderService,
+    private readonly cancelRemindersService: CancelRemindersService,
+    private readonly getNotificationsService: GetNotificationsService,
+    private readonly retryFailedService: RetryFailedService,
+  ) {}
 
-    /**
-     * Schedule reminder for appointment
-     */
-    async scheduleAppointmentReminder(appointment: Appointment): Promise<void> {
-        return this.scheduleReminderService.execute(appointment);
-    }
+  /**
+   * Schedule reminder for appointment
+   */
+  async scheduleAppointmentReminder(appointment: Appointment): Promise<void> {
+    return this.scheduleReminderService.execute(appointment);
+  }
 
-    /**
-     * Cancel reminders for appointment
-     */
-    async cancelRemindersFor(appointmentId: number): Promise<number> {
-        return this.cancelRemindersService.execute(appointmentId);
-    }
+  /**
+   * Cancel reminders for appointment
+   */
+  async cancelRemindersFor(appointmentId: number): Promise<number> {
+    return this.cancelRemindersService.execute(appointmentId);
+  }
 
-    /**
-     * Get all notifications with pagination and filters
-     */
-    async findAll(query: QueryNotificationsDto): Promise<{
-        data: NotificationResponseDto[];
-        meta: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-        };
-    }> {
-        return this.getNotificationsService.findAll(query);
-    }
+  /**
+   * Get all notifications with pagination and filters
+   */
+  async findAll(query: QueryNotificationsDto): Promise<{
+    data: NotificationResponseDto[];
+    meta: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  }> {
+    return this.getNotificationsService.findAll(query);
+  }
 
-    /**
-     * Get notification by ID
-     */
-    async findOne(id: number): Promise<NotificationResponseDto> {
-        return this.getNotificationsService.findOne(id);
-    }
+  /**
+   * Get notification by ID
+   */
+  async findOne(id: number): Promise<NotificationResponseDto> {
+    return this.getNotificationsService.findOne(id);
+  }
 
-    /**
-     * Get notification statistics
-     */
-    async getStatistics(): Promise<NotificationStatsDto> {
-        return this.getNotificationsService.getStatistics();
-    }
+  /**
+   * Get notification statistics
+   */
+  async getStatistics(): Promise<NotificationStatsDto> {
+    return this.getNotificationsService.getStatistics();
+  }
 
-    /**
-     * Get failed notifications
-     */
-    async getFailedNotifications(limit: number = 50): Promise<NotificationResponseDto[]> {
-        return this.getNotificationsService.getFailedNotifications(limit);
-    }
+  /**
+   * Get failed notifications
+   */
+  async getFailedNotifications(
+    limit: number = 50,
+  ): Promise<NotificationResponseDto[]> {
+    return this.getNotificationsService.getFailedNotifications(limit);
+  }
 
-    /**
-     * Retry single failed notification
-     */
-    async retryNotification(notificationId: number): Promise<void> {
-        return this.retryFailedService.execute(notificationId);
-    }
+  /**
+   * Retry single failed notification
+   */
+  async retryNotification(notificationId: number): Promise<void> {
+    return this.retryFailedService.execute(notificationId);
+  }
 
-    /**
-     * Retry all failed notifications
-     */
-    async retryAllFailed(limit: number = 50): Promise<number> {
-        return this.retryFailedService.executeBatch(limit);
-    }
+  /**
+   * Retry all failed notifications
+   */
+  async retryAllFailed(limit: number = 50): Promise<number> {
+    return this.retryFailedService.executeBatch(limit);
+  }
 }

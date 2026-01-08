@@ -5,34 +5,38 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { MedicalRecordValidator } from '../medical-record.validator';
 import { MedicalRecord } from '../../entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { Patient } from '../../../../patients/domains/entities/patient.entity';
 
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockMedicalRecord = (): MedicalRecord => ({
-  id: 1,
-  appointment_id: 10,
-  doctor_id: 2,
-  patient_id: 3,
-  subjektif: 'Test',
-  objektif: 'Test',
-  assessment: 'Test',
-  plan: 'Test',
-  created_at: new Date(),
-  updated_at: new Date(),
-  appointment: {
-    id: 10,
-    tanggal_janji: new Date(),
-    status: AppointmentStatus.DIJADWALKAN, // atau enum AppointmentStatus.DIJADWALKAN
-    patient: { id: 3, nama_lengkap: 'Jane Doe' } as any,
-    doctor: { id: 2, nama_lengkap: 'Dr. John' } as any,
-  } as Appointment,
-  doctor: { id: 2, nama_lengkap: 'Dr. John' } as User,
-  patient: { id: 3, nama_lengkap: 'Jane Doe' } as Patient,
-} as MedicalRecord);
+const createMockMedicalRecord = (): MedicalRecord =>
+  ({
+    id: 1,
+    appointment_id: 10,
+    doctor_id: 2,
+    patient_id: 3,
+    subjektif: 'Test',
+    objektif: 'Test',
+    assessment: 'Test',
+    plan: 'Test',
+    created_at: new Date(),
+    updated_at: new Date(),
+    appointment: {
+      id: 10,
+      tanggal_janji: new Date(),
+      status: AppointmentStatus.DIJADWALKAN, // atau enum AppointmentStatus.DIJADWALKAN
+      patient: { id: 3, nama_lengkap: 'Jane Doe' } as any,
+      doctor: { id: 2, nama_lengkap: 'Dr. John' } as any,
+    } as Appointment,
+    doctor: { id: 2, nama_lengkap: 'Dr. John' } as User,
+    patient: { id: 3, nama_lengkap: 'Jane Doe' } as Patient,
+  }) as MedicalRecord;
 
 // ============================================================================
 // TEST SUITE
@@ -66,28 +70,27 @@ describe('MedicalRecordValidator', () => {
     });
 
     it('should throw error for ID 0', () => {
-      expect(() => validator.validateId(0))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateId(0)).toThrow(BadRequestException);
     });
 
     it('should throw error for negative ID', () => {
-      expect(() => validator.validateId(-1))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateId(-1)).toThrow(BadRequestException);
     });
 
     it('should throw error for null ID', () => {
-      expect(() => validator.validateId(null))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateId(null)).toThrow(BadRequestException);
     });
 
     it('should throw error for undefined ID', () => {
-      expect(() => validator.validateId(undefined))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateId(undefined)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw with correct message', () => {
-      expect(() => validator.validateId(0))
-        .toThrow('ID rekam medis tidak valid');
+      expect(() => validator.validateId(0)).toThrow(
+        'ID rekam medis tidak valid',
+      );
     });
   });
 
@@ -101,28 +104,33 @@ describe('MedicalRecordValidator', () => {
     });
 
     it('should throw error for ID 0', () => {
-      expect(() => validator.validateAppointmentId(0))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateAppointmentId(0)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for negative ID', () => {
-      expect(() => validator.validateAppointmentId(-5))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateAppointmentId(-5)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for null', () => {
-      expect(() => validator.validateAppointmentId(null))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateAppointmentId(null)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for undefined', () => {
-      expect(() => validator.validateAppointmentId(undefined))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateAppointmentId(undefined)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw with correct message', () => {
-      expect(() => validator.validateAppointmentId(-1))
-        .toThrow('ID janji temu tidak valid');
+      expect(() => validator.validateAppointmentId(-1)).toThrow(
+        'ID janji temu tidak valid',
+      );
     });
   });
 
@@ -136,28 +144,25 @@ describe('MedicalRecordValidator', () => {
     });
 
     it('should throw error for ID 0', () => {
-      expect(() => validator.validateUserId(0))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateUserId(0)).toThrow(BadRequestException);
     });
 
     it('should throw error for negative ID', () => {
-      expect(() => validator.validateUserId(-10))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateUserId(-10)).toThrow(BadRequestException);
     });
 
     it('should throw error for null', () => {
-      expect(() => validator.validateUserId(null))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateUserId(null)).toThrow(BadRequestException);
     });
 
     it('should throw error for undefined', () => {
-      expect(() => validator.validateUserId(undefined))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateUserId(undefined)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw with correct message', () => {
-      expect(() => validator.validateUserId(0))
-        .toThrow('ID user tidak valid');
+      expect(() => validator.validateUserId(0)).toThrow('ID user tidak valid');
     });
   });
 
@@ -171,18 +176,19 @@ describe('MedicalRecordValidator', () => {
     });
 
     it('should throw error when medical record is null', () => {
-      expect(() => validator.validateExists(null))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateExists(null)).toThrow(BadRequestException);
     });
 
     it('should throw error when medical record is undefined', () => {
-      expect(() => validator.validateExists(undefined))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateExists(undefined)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw with correct message', () => {
-      expect(() => validator.validateExists(null))
-        .toThrow('Rekam medis tidak ditemukan');
+      expect(() => validator.validateExists(null)).toThrow(
+        'Rekam medis tidak ditemukan',
+      );
     });
   });
 
@@ -192,47 +198,55 @@ describe('MedicalRecordValidator', () => {
   describe('validateFieldLength', () => {
     it('should pass for valid field length', () => {
       const shortText = 'A'.repeat(100);
-      expect(() => validator.validateFieldLength('Subjektif', shortText))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Subjektif', shortText),
+      ).not.toThrow();
     });
 
     it('should pass for text at max length', () => {
       const maxText = 'A'.repeat(5000);
-      expect(() => validator.validateFieldLength('Subjektif', maxText))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Subjektif', maxText),
+      ).not.toThrow();
     });
 
     it('should throw error for text exceeding max length', () => {
       const tooLong = 'A'.repeat(5001);
-      expect(() => validator.validateFieldLength('Subjektif', tooLong))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateFieldLength('Subjektif', tooLong)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error with correct message', () => {
       const tooLong = 'A'.repeat(5001);
-      expect(() => validator.validateFieldLength('Subjektif', tooLong))
-        .toThrow('Subjektif tidak boleh lebih dari 5000 karakter');
+      expect(() => validator.validateFieldLength('Subjektif', tooLong)).toThrow(
+        'Subjektif tidak boleh lebih dari 5000 karakter',
+      );
     });
 
     it('should use custom max length', () => {
       const text = 'A'.repeat(101);
-      expect(() => validator.validateFieldLength('Test', text, 100))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateFieldLength('Test', text, 100)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass for empty string', () => {
-      expect(() => validator.validateFieldLength('Subjektif', ''))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Subjektif', ''),
+      ).not.toThrow();
     });
 
     it('should pass for null value', () => {
-      expect(() => validator.validateFieldLength('Subjektif', null))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Subjektif', null),
+      ).not.toThrow();
     });
 
     it('should pass for undefined value', () => {
-      expect(() => validator.validateFieldLength('Subjektif', undefined))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Subjektif', undefined),
+      ).not.toThrow();
     });
   });
 
@@ -256,8 +270,9 @@ describe('MedicalRecordValidator', () => {
         subjektif: 'A'.repeat(5001),
       };
 
-      expect(() => validator.validateSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for too long objektif', () => {
@@ -265,8 +280,9 @@ describe('MedicalRecordValidator', () => {
         objektif: 'B'.repeat(5001),
       };
 
-      expect(() => validator.validateSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for too long assessment', () => {
@@ -274,8 +290,9 @@ describe('MedicalRecordValidator', () => {
         assessment: 'C'.repeat(5001),
       };
 
-      expect(() => validator.validateSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw error for too long plan', () => {
@@ -283,8 +300,9 @@ describe('MedicalRecordValidator', () => {
         plan: 'D'.repeat(5001),
       };
 
-      expect(() => validator.validateSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass when no SOAP fields provided', () => {
@@ -312,8 +330,9 @@ describe('MedicalRecordValidator', () => {
         plan: 'D'.repeat(4999),
       };
 
-      expect(() => validator.validateSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -325,8 +344,9 @@ describe('MedicalRecordValidator', () => {
       const record = createMockMedicalRecord();
       const relations = ['appointment', 'doctor', 'patient'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .not.toThrow();
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).not.toThrow();
     });
 
     it('should throw error when relation is missing', () => {
@@ -334,8 +354,9 @@ describe('MedicalRecordValidator', () => {
       (record as any).appointment = null; // bypass TS
       const relations = ['appointment'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .toThrow(BadRequestException);
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).toThrow(BadRequestException);
     });
 
     it('should throw error with correct relation name', () => {
@@ -343,34 +364,38 @@ describe('MedicalRecordValidator', () => {
       (record as any).doctor = null; // bypass TS
       const relations = ['doctor'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .toThrow("Relation 'doctor' harus dimuat terlebih dahulu");
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).toThrow("Relation 'doctor' harus dimuat terlebih dahulu");
     });
 
     it('should validate multiple relations', () => {
       const record = createMockMedicalRecord();
       const relations = ['appointment', 'doctor', 'patient'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .not.toThrow();
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).not.toThrow();
     });
 
     it('should throw error for first missing relation', () => {
       const record = createMockMedicalRecord();
       (record as any).appointment = null; // bypass TS
-      (record as any).doctor = null;       // bypass TS
+      (record as any).doctor = null; // bypass TS
       const relations = ['appointment', 'doctor'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .toThrow("Relation 'appointment' harus dimuat terlebih dahulu");
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).toThrow("Relation 'appointment' harus dimuat terlebih dahulu");
     });
 
     it('should pass when no relations are required', () => {
       const record = createMockMedicalRecord();
       const relations = [];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .not.toThrow();
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).not.toThrow();
     });
 
     it('should throw error when relation is undefined', () => {
@@ -378,8 +403,9 @@ describe('MedicalRecordValidator', () => {
       (record as any).patient = undefined; // bypass TS
       const relations = ['patient'];
 
-      expect(() => validator.validateRelationsLoaded(record, relations))
-        .toThrow(BadRequestException);
+      expect(() =>
+        validator.validateRelationsLoaded(record, relations),
+      ).toThrow(BadRequestException);
     });
   });
 
@@ -388,38 +414,42 @@ describe('MedicalRecordValidator', () => {
   // ==========================================================================
   describe('Edge Cases', () => {
     it('should handle very large valid IDs', () => {
-      expect(() => validator.validateId(Number.MAX_SAFE_INTEGER))
-        .not.toThrow();
+      expect(() => validator.validateId(Number.MAX_SAFE_INTEGER)).not.toThrow();
     });
 
     it('should handle exactly 5000 character field', () => {
       const exactLength = 'A'.repeat(5000);
-      expect(() => validator.validateFieldLength('Test', exactLength))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Test', exactLength),
+      ).not.toThrow();
     });
 
     it('should handle exactly 5001 character field', () => {
       const overLength = 'A'.repeat(5001);
-      expect(() => validator.validateFieldLength('Test', overLength))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateFieldLength('Test', overLength)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle special characters in field content', () => {
       const special = 'Test with "quotes" and \'apostrophes\' & symbols!';
-      expect(() => validator.validateFieldLength('Test', special))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Test', special),
+      ).not.toThrow();
     });
 
     it('should handle unicode characters', () => {
       const unicode = '测试 тест 테스트 🎉';
-      expect(() => validator.validateFieldLength('Test', unicode))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Test', unicode),
+      ).not.toThrow();
     });
 
     it('should handle newlines and tabs in fields', () => {
       const withNewlines = 'Line 1\nLine 2\tTabbed';
-      expect(() => validator.validateFieldLength('Test', withNewlines))
-        .not.toThrow();
+      expect(() =>
+        validator.validateFieldLength('Test', withNewlines),
+      ).not.toThrow();
     });
   });
 
@@ -444,7 +474,11 @@ describe('MedicalRecordValidator', () => {
 
       expect(() => {
         validator.validateExists(record);
-        validator.validateRelationsLoaded(record, ['appointment', 'doctor', 'patient']);
+        validator.validateRelationsLoaded(record, [
+          'appointment',
+          'doctor',
+          'patient',
+        ]);
       }).not.toThrow();
     });
 
@@ -452,8 +486,9 @@ describe('MedicalRecordValidator', () => {
       const record = createMockMedicalRecord();
       record.id = 0; // Invalid
 
-      expect(() => validator.validateId(record.id))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateId(record.id)).toThrow(
+        BadRequestException,
+      );
     });
   });
 });

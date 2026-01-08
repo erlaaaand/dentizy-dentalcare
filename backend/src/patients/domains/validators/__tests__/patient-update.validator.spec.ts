@@ -44,7 +44,7 @@ describe('PatientUpdateValidator', () => {
     // Mock Repository
     const mockRepository = {
       findOneBy: jest.fn(), // Untuk mencari pasien yg mau diupdate
-      findOne: jest.fn(),   // Untuk cek duplikat NIK/Email
+      findOne: jest.fn(), // Untuk cek duplikat NIK/Email
     };
 
     // Mock Field Validator
@@ -78,7 +78,9 @@ describe('PatientUpdateValidator', () => {
   describe('validate', () => {
     it('should pass validation for valid update request', async () => {
       // Arrange
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
       (repository.findOne as jest.Mock).mockResolvedValue(null); // Tidak ada duplikat email baru
 
       // Act
@@ -86,9 +88,11 @@ describe('PatientUpdateValidator', () => {
 
       // Assert
       expect(repository.findOneBy).toHaveBeenCalledWith({ id: mockPatientId });
-      
+
       // Verifikasi Field Validator dipanggil
-      expect(fieldValidator.validateEmail).toHaveBeenCalledWith(validUpdateDto.email);
+      expect(fieldValidator.validateEmail).toHaveBeenCalledWith(
+        validUpdateDto.email,
+      );
     });
   });
 
@@ -100,16 +104,25 @@ describe('PatientUpdateValidator', () => {
       (repository.findOneBy as jest.Mock).mockResolvedValue(null);
 
       // Act & Assert
-      await expect(validator.validate(999, validUpdateDto)).rejects.toThrow(BadRequestException);
-      await expect(validator.validate(999, validUpdateDto)).rejects.toThrow(/tidak ditemukan/);
+      await expect(validator.validate(999, validUpdateDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(validator.validate(999, validUpdateDto)).rejects.toThrow(
+        /tidak ditemukan/,
+      );
     });
   });
 
   describe('Uniqueness Checks (NIK & Email)', () => {
     it('should SKIP uniqueness check if NIK/Email is unchanged', async () => {
       // Arrange
-      const unchangedDto: UpdatePatientDto = { nik: '1111', email: 'budi@test.com' };
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
+      const unchangedDto: UpdatePatientDto = {
+        nik: '1111',
+        email: 'budi@test.com',
+      };
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
 
       // Act
       await validator.validate(mockPatientId, unchangedDto);
@@ -122,63 +135,91 @@ describe('PatientUpdateValidator', () => {
     it('should throw ConflictException if new NIK is taken by another patient', async () => {
       // Arrange
       const dto: UpdatePatientDto = { nik: '2222' }; // NIK baru
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
-      
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
+
       // Mock findOne menemukan user LAIN (mockOtherPatient id: 99)
       (repository.findOne as jest.Mock).mockResolvedValue(mockOtherPatient);
 
       // Act & Assert
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(ConflictException);
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(/NIK .* sudah terdaftar/);
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        ConflictException,
+      );
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        /NIK .* sudah terdaftar/,
+      );
     });
 
     it('should throw ConflictException if new Email is taken by another patient', async () => {
       // Arrange
       const dto: UpdatePatientDto = { email: 'other@test.com' };
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
       (repository.findOne as jest.Mock).mockResolvedValue(mockOtherPatient);
 
       // Act & Assert
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(ConflictException);
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it('should ALLOW if NIK/Email found belongs to SAME patient (edge case)', async () => {
       // Skenario: NIK diubah, tapi ternyata "duplikat" yg ditemukan adalah dirinya sendiri
       // (Mungkin jarang terjadi via API update, tapi safeguard logic di kode menangani ini)
       const dto: UpdatePatientDto = { email: 'budi@test.com' }; // Anggap berubah logic-nya
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
-      
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
+
       // findOne menemukan existing patient (ID sama)
       (repository.findOne as jest.Mock).mockResolvedValue(mockExistingPatient);
 
       // Act
-      await expect(validator.validate(mockPatientId, dto)).resolves.not.toThrow();
+      await expect(
+        validator.validate(mockPatientId, dto),
+      ).resolves.not.toThrow();
     });
   });
 
   describe('Contact Update Logic (Business Rule)', () => {
     // Pasien awal: Ada HP, Ada Email
-    
+
     it('should ALLOW removing Email if Phone remains', async () => {
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient); // Punya HP & Email
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      ); // Punya HP & Email
       const dto: UpdatePatientDto = { email: null as any }; // Hapus email
 
-      await expect(validator.validate(mockPatientId, dto)).resolves.not.toThrow();
+      await expect(
+        validator.validate(mockPatientId, dto),
+      ).resolves.not.toThrow();
     });
 
     it('should ALLOW removing Phone if Email remains', async () => {
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
       const dto: UpdatePatientDto = { no_hp: null as any }; // Hapus HP
 
-      await expect(validator.validate(mockPatientId, dto)).resolves.not.toThrow();
+      await expect(
+        validator.validate(mockPatientId, dto),
+      ).resolves.not.toThrow();
     });
 
     it('should throw BadRequestException if trying to remove BOTH', async () => {
-      (repository.findOneBy as jest.Mock).mockResolvedValue(mockExistingPatient);
+      (repository.findOneBy as jest.Mock).mockResolvedValue(
+        mockExistingPatient,
+      );
       const dto: UpdatePatientDto = { email: null as any, no_hp: null as any };
 
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(BadRequestException);
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(/harus memiliki minimal satu kontak/);
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        /harus memiliki minimal satu kontak/,
+      );
     });
 
     it('should throw BadRequestException if removing the ONLY remaining contact', async () => {
@@ -190,7 +231,9 @@ describe('PatientUpdateValidator', () => {
       const dto: UpdatePatientDto = { no_hp: null as any };
 
       // Assert: Error karena sisa Email (null) dan HP (baru dihapus) -> kosong
-      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(BadRequestException);
+      await expect(validator.validate(mockPatientId, dto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

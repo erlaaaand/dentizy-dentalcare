@@ -75,7 +75,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       expect(event.medicalRecordId).toBe(mockSoftDeleteData.medicalRecordId);
@@ -96,12 +96,16 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.appointmentId,
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
-        mockSoftDeleteData.deletedBy
+        mockSoftDeleteData.deletedBy,
       );
       const afterCreate = new Date();
 
-      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
-      expect(event.timestamp.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(
+        beforeCreate.getTime(),
+      );
+      expect(event.timestamp.getTime()).toBeLessThanOrEqual(
+        afterCreate.getTime(),
+      );
     });
 
     it('should default to soft deletion type', () => {
@@ -110,7 +114,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.appointmentId,
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
-        mockSoftDeleteData.deletedBy
+        mockSoftDeleteData.deletedBy,
       );
 
       expect(event.deletionType).toBe('soft');
@@ -126,7 +130,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.timestamp,
         mockHardDeleteData.deletionType,
         mockHardDeleteData.reason,
-        mockHardDeleteData.metadata
+        mockHardDeleteData.metadata,
       );
 
       expect(event.deletionType).toBe('hard');
@@ -139,7 +143,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
-        mockSoftDeleteData.timestamp
+        mockSoftDeleteData.timestamp,
       );
 
       expect(event.reason).toBeUndefined();
@@ -152,7 +156,9 @@ describe('MedicalRecordDeletedEvent', () => {
   // ============================================================================
   describe('Static Properties', () => {
     it('should have correct event name', () => {
-      expect(MedicalRecordDeletedEvent.eventName).toBe('medical_record.deleted');
+      expect(MedicalRecordDeletedEvent.eventName).toBe(
+        'medical_record.deleted',
+      );
     });
 
     it('should have correct event version', () => {
@@ -174,7 +180,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       const json = event.toJSON();
@@ -197,7 +203,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.timestamp,
         mockHardDeleteData.deletionType,
         mockHardDeleteData.reason,
-        mockHardDeleteData.metadata
+        mockHardDeleteData.metadata,
       );
 
       const json = event.toJSON();
@@ -212,7 +218,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
-        mockSoftDeleteData.timestamp
+        mockSoftDeleteData.timestamp,
       );
 
       const json = event.toJSON();
@@ -228,7 +234,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
-        mockSoftDeleteData.timestamp
+        mockSoftDeleteData.timestamp,
       );
 
       const json = event.toJSON();
@@ -315,7 +321,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       const description = event.getDescription();
@@ -337,7 +343,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.timestamp,
         mockHardDeleteData.deletionType,
         mockHardDeleteData.reason,
-        mockHardDeleteData.metadata
+        mockHardDeleteData.metadata,
       );
 
       const description = event.getDescription();
@@ -353,7 +359,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
         mockSoftDeleteData.timestamp,
-        mockSoftDeleteData.deletionType
+        mockSoftDeleteData.deletionType,
       );
 
       const description = event.getDescription();
@@ -374,7 +380,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.doctorId,
         mockHardDeleteData.deletedBy,
         mockHardDeleteData.timestamp,
-        'hard'
+        'hard',
       );
 
       expect(event.isPermanent()).toBe(true);
@@ -388,7 +394,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
         mockSoftDeleteData.timestamp,
-        'soft'
+        'soft',
       );
 
       expect(event.isPermanent()).toBe(false);
@@ -400,7 +406,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.appointmentId,
         mockSoftDeleteData.patientId,
         mockSoftDeleteData.doctorId,
-        mockSoftDeleteData.deletedBy
+        mockSoftDeleteData.deletedBy,
       );
 
       expect(event.isPermanent()).toBe(false);
@@ -419,7 +425,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
         mockSoftDeleteData.timestamp,
-        'soft'
+        'soft',
       );
 
       expect(event.isRestorable()).toBe(true);
@@ -433,7 +439,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.doctorId,
         mockHardDeleteData.deletedBy,
         mockHardDeleteData.timestamp,
-        'hard'
+        'hard',
       );
 
       expect(event.isRestorable()).toBe(false);
@@ -454,7 +460,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.timestamp,
         'hard',
         mockHardDeleteData.reason,
-        mockHardDeleteData.metadata
+        mockHardDeleteData.metadata,
       );
 
       expect(event.getSeverity()).toBe('critical');
@@ -470,7 +476,11 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         'soft',
         mockSoftDeleteData.reason,
-        { recordAge: 5, wasComplete: true, appointmentStatus: AppointmentStatus.SELESAI }
+        {
+          recordAge: 5,
+          wasComplete: true,
+          appointmentStatus: AppointmentStatus.SELESAI,
+        },
       );
 
       expect(event.getSeverity()).toBe('warning');
@@ -486,7 +496,11 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         'soft',
         mockSoftDeleteData.reason,
-        { recordAge: 5, wasComplete: false, appointmentStatus: AppointmentStatus.SELESAI }
+        {
+          recordAge: 5,
+          wasComplete: false,
+          appointmentStatus: AppointmentStatus.SELESAI,
+        },
       );
 
       expect(event.getSeverity()).toBe('info');
@@ -500,7 +514,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.doctorId,
         mockSoftDeleteData.deletedBy,
         mockSoftDeleteData.timestamp,
-        'soft'
+        'soft',
       );
 
       expect(event.getSeverity()).toBe('info');
@@ -521,13 +535,15 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       const json = originalEvent.toJSON();
       const reconstructedEvent = MedicalRecordDeletedEvent.fromJSON(json);
 
-      expect(reconstructedEvent.medicalRecordId).toBe(originalEvent.medicalRecordId);
+      expect(reconstructedEvent.medicalRecordId).toBe(
+        originalEvent.medicalRecordId,
+      );
       expect(reconstructedEvent.deletionType).toBe(originalEvent.deletionType);
       expect(reconstructedEvent.reason).toBe(originalEvent.reason);
       expect(reconstructedEvent.metadata).toEqual(originalEvent.metadata);
@@ -543,7 +559,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockHardDeleteData.timestamp,
         mockHardDeleteData.deletionType,
         mockHardDeleteData.reason,
-        mockHardDeleteData.metadata
+        mockHardDeleteData.metadata,
       );
 
       const json = originalEvent.toJSON();
@@ -569,7 +585,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       expect(event.metadata?.recordAge).toBe(5);
@@ -585,7 +601,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       expect(event.metadata?.wasComplete).toBe(true);
@@ -601,7 +617,7 @@ describe('MedicalRecordDeletedEvent', () => {
         mockSoftDeleteData.timestamp,
         mockSoftDeleteData.deletionType,
         mockSoftDeleteData.reason,
-        mockSoftDeleteData.metadata
+        mockSoftDeleteData.metadata,
       );
 
       expect(event.metadata?.appointmentStatus).toBe(AppointmentStatus.SELESAI);
@@ -628,7 +644,7 @@ describe('MedicalRecordDeletedEvent', () => {
         400,
         new Date(),
         'soft',
-        ''
+        '',
       );
 
       expect(event.reason).toBe('');
@@ -646,7 +662,11 @@ describe('MedicalRecordDeletedEvent', () => {
         new Date(),
         'soft',
         'Too old',
-        { recordAge: 365, wasComplete: true, appointmentStatus: AppointmentStatus.SELESAI }
+        {
+          recordAge: 365,
+          wasComplete: true,
+          appointmentStatus: AppointmentStatus.SELESAI,
+        },
       );
 
       expect(event.metadata?.recordAge).toBe(365);
@@ -662,10 +682,16 @@ describe('MedicalRecordDeletedEvent', () => {
         new Date(),
         'soft',
         'Cancelled appointment',
-        { recordAge: 1, wasComplete: false, appointmentStatus: AppointmentStatus.DIBATALKAN }
+        {
+          recordAge: 1,
+          wasComplete: false,
+          appointmentStatus: AppointmentStatus.DIBATALKAN,
+        },
       );
 
-      expect(event.metadata?.appointmentStatus).toBe(AppointmentStatus.DIBATALKAN);
+      expect(event.metadata?.appointmentStatus).toBe(
+        AppointmentStatus.DIBATALKAN,
+      );
     });
   });
 });

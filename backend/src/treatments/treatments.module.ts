@@ -92,14 +92,9 @@ const EventListeners = [
   TreatmentStatusChangedListener,
 ];
 
-const Mappers = [
-  TreatmentMapper,
-  TreatmentCategoryMapper,
-];
+const Mappers = [TreatmentMapper, TreatmentCategoryMapper];
 
-const Generator = [
-  TreatmentsIdGenerator
-]
+const Generator = [TreatmentsIdGenerator];
 
 const Validators = [
   IsTreatmentCodeUniqueConstraint,
@@ -155,4 +150,4 @@ const Validators = [
     ...UseCases,
   ],
 })
-export class TreatmentsModule { }
+export class TreatmentsModule {}

@@ -23,7 +23,6 @@ const rawResponseData = {
 
 // 3. TEST SUITE
 describe('PasswordChangeResponseDto', () => {
-
   // 4. SETUP AND TEARDOWN
   // Stateless
 

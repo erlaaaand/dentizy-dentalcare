@@ -72,7 +72,7 @@ describe('CreateMedicalRecordDto', () => {
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'subjektif')).toBe(true);
+      expect(errors.some((e) => e.property === 'subjektif')).toBe(true);
     });
 
     it('should fail when objektif exceeds 5000 characters', async () => {
@@ -83,7 +83,7 @@ describe('CreateMedicalRecordDto', () => {
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'objektif')).toBe(true);
+      expect(errors.some((e) => e.property === 'objektif')).toBe(true);
     });
 
     it('should fail when assessment exceeds 5000 characters', async () => {
@@ -94,7 +94,7 @@ describe('CreateMedicalRecordDto', () => {
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'assessment')).toBe(true);
+      expect(errors.some((e) => e.property === 'assessment')).toBe(true);
     });
 
     it('should fail when plan exceeds 5000 characters', async () => {
@@ -105,7 +105,7 @@ describe('CreateMedicalRecordDto', () => {
       const dto = plainToClass(CreateMedicalRecordDto, invalidDto);
       const errors = await validate(dto);
       expect(errors.length).toBeGreaterThan(0);
-      expect(errors.some(e => e.property === 'plan')).toBe(true);
+      expect(errors.some((e) => e.property === 'plan')).toBe(true);
     });
   });
 

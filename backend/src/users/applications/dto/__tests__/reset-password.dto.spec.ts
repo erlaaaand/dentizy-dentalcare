@@ -3,4 +3,3 @@ describe('reset-password.dto.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

@@ -1,6 +1,11 @@
 // http-exception-filter.spec.ts
 import { HttpExceptionFilter } from '../http-exception.filter';
-import { ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 
@@ -43,7 +48,10 @@ describe('HttpExceptionFilter', () => {
 
   describe('HTTP Exceptions', () => {
     it('should handle HttpException with string response', () => {
-      const exception = new HttpException('Custom error message', HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        'Custom error message',
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
 
@@ -56,14 +64,14 @@ describe('HttpExceptionFilter', () => {
           error: 'HttpException',
           path: '/test-endpoint',
           method: 'GET',
-        })
+        }),
       );
     });
 
     it('should handle HttpException with default message when object response has no message', () => {
       const exception = new HttpException(
         { error: 'Some error' },
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
 
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
@@ -71,7 +79,7 @@ describe('HttpExceptionFilter', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Http Exception', // Diperbaiki: Bukan 'Bad Request'
-        })
+        }),
       );
     });
 
@@ -79,7 +87,7 @@ describe('HttpExceptionFilter', () => {
     it('should use exception message when object response has message property', () => {
       const exception = new HttpException(
         { message: 'Custom message', error: 'Some error' },
-        HttpStatus.BAD_REQUEST
+        HttpStatus.BAD_REQUEST,
       );
 
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
@@ -87,7 +95,7 @@ describe('HttpExceptionFilter', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Custom message',
-        })
+        }),
       );
     });
   });
@@ -112,14 +120,15 @@ describe('HttpExceptionFilter', () => {
           message: 'Data sudah ada (duplikat)',
           error: 'DatabaseError',
           details: "Field 'users.username' sudah digunakan",
-        })
+        }),
       );
     });
 
     it('should handle foreign key constraint database error', () => {
       const dbError = {
         code: 'ER_NO_REFERENCED_ROW_2',
-        message: 'Cannot add or update a child row: a foreign key constraint fails',
+        message:
+          'Cannot add or update a child row: a foreign key constraint fails',
         name: 'QueryFailedError',
       } as any;
 
@@ -135,7 +144,7 @@ describe('HttpExceptionFilter', () => {
           message: 'Referensi data tidak valid',
           error: 'DatabaseError',
           details: 'Foreign key constraint failed',
-        })
+        }),
       );
     });
 
@@ -157,7 +166,7 @@ describe('HttpExceptionFilter', () => {
         expect.objectContaining({
           message: 'Kesalahan database',
           details: 'Some database error message',
-        })
+        }),
       );
 
       process.env.NODE_ENV = 'test';
@@ -181,7 +190,7 @@ describe('HttpExceptionFilter', () => {
         expect.objectContaining({
           message: 'Kesalahan database',
           details: 'Database operation failed',
-        })
+        }),
       );
 
       process.env.NODE_ENV = 'test';
@@ -201,7 +210,7 @@ describe('HttpExceptionFilter', () => {
           statusCode: 500,
           message: 'Terjadi kesalahan pada server',
           error: 'InternalServerError',
-        })
+        }),
       );
     });
 
@@ -215,7 +224,7 @@ describe('HttpExceptionFilter', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           details: 'Some unexpected error',
-        })
+        }),
       );
 
       process.env.NODE_ENV = 'test';
@@ -231,7 +240,7 @@ describe('HttpExceptionFilter', () => {
         expect.objectContaining({
           message: 'Terjadi kesalahan pada server',
           error: 'InternalServerError',
-        })
+        }),
       );
     });
   });
@@ -249,7 +258,7 @@ describe('HttpExceptionFilter', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(
         expect.objectContaining({
           user: { id: '123', username: 'testuser' },
-        })
+        }),
       );
 
       process.env.NODE_ENV = 'test';
@@ -263,7 +272,7 @@ describe('HttpExceptionFilter', () => {
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('User: Guest (Anonymous)')
+        expect.stringContaining('User: Guest (Anonymous)'),
       );
     });
   });
@@ -275,7 +284,7 @@ describe('HttpExceptionFilter', () => {
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('❌ [GET] /test-endpoint | Status: 400')
+        expect.stringContaining('❌ [GET] /test-endpoint | Status: 400'),
       );
     });
 
@@ -293,17 +302,18 @@ describe('HttpExceptionFilter', () => {
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
 
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Database Error:')
+        expect.stringContaining('Database Error:'),
       );
       expect(loggerErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('User: testuser')
+        expect.stringContaining('User: testuser'),
       );
     });
   });
 
   describe('extractDuplicateField', () => {
     it('should extract field name from duplicate entry message', () => {
-      const errorMessage = "Duplicate entry 'username123' for key 'users.username'";
+      const errorMessage =
+        "Duplicate entry 'username123' for key 'users.username'";
 
       // Since the method is private, we need to access it differently for testing
       const result = (filter as any).extractDuplicateField(errorMessage);
@@ -312,7 +322,7 @@ describe('HttpExceptionFilter', () => {
     });
 
     it('should return default message when no field name found', () => {
-      const errorMessage = "Some other error message";
+      const errorMessage = 'Some other error message';
 
       const result = (filter as any).extractDuplicateField(errorMessage);
 
@@ -338,7 +348,10 @@ describe('HttpExceptionFilter', () => {
     });
 
     it('should not include details property when no error details', () => {
-      const exception = new HttpException('Simple error', HttpStatus.BAD_REQUEST);
+      const exception = new HttpException(
+        'Simple error',
+        HttpStatus.BAD_REQUEST,
+      );
 
       filter.catch(exception, mockArgumentsHost as ArgumentsHost);
 

@@ -3,7 +3,6 @@ import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class RetryNotificationDto {
-
   @ApiProperty({
     description: 'ID notifikasi yang akan dicoba ulang pengirimannya',
     example: 12345,

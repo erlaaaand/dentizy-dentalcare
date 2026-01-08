@@ -66,7 +66,9 @@ describe('PatientRepository', () => {
 
     // Mocking repository methods inherited from TypeORM Repository class
     // We need to spy/mock these because 'super()' calls them or we use 'this.findOne'
-    jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockQueryBuilder as any);
+    jest
+      .spyOn(repository, 'createQueryBuilder')
+      .mockReturnValue(mockQueryBuilder as any);
     jest.spyOn(repository, 'findOne').mockResolvedValue(mockPatient);
     jest.spyOn(repository, 'count').mockResolvedValue(100);
   });
@@ -84,12 +86,17 @@ describe('PatientRepository', () => {
   describe('createSearchQuery', () => {
     it('should build query builder with basic selection', () => {
       const dto: SearchPatientDto = { is_active: true };
-      
+
       const qb = repository.createSearchQuery(dto);
 
       expect(repository.createQueryBuilder).toHaveBeenCalledWith('patient');
-      expect(mockQueryBuilder.select).toHaveBeenCalledWith(expect.arrayContaining(['patient.id', 'patient.nama_lengkap']));
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('patient.is_active = :is_active', { is_active: true });
+      expect(mockQueryBuilder.select).toHaveBeenCalledWith(
+        expect.arrayContaining(['patient.id', 'patient.nama_lengkap']),
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'patient.is_active = :is_active',
+        { is_active: true },
+      );
       expect(qb).toBe(mockQueryBuilder);
     });
 
@@ -99,9 +106,9 @@ describe('PatientRepository', () => {
       // Let's assume that based on your code snippet.
       const dto: SearchPatientDto = { is_active: false };
       repository.createSearchQuery(dto);
-      
+
       // Should NOT call andWhere with is_active=true
-      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalled(); 
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalled();
     });
   });
 
@@ -110,8 +117,14 @@ describe('PatientRepository', () => {
       const mrn = 'RM-001';
       const result = await repository.findByMedicalRecordNumber(mrn);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('patient.nomor_rekam_medis = :number', { number: mrn });
-      expect(mockQueryBuilder.cache).toHaveBeenCalledWith(`patient_mrn_${mrn}`, 60000);
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'patient.nomor_rekam_medis = :number',
+        { number: mrn },
+      );
+      expect(mockQueryBuilder.cache).toHaveBeenCalledWith(
+        `patient_mrn_${mrn}`,
+        60000,
+      );
       expect(mockQueryBuilder.getOne).toHaveBeenCalled();
       expect(result).toEqual(mockPatient);
     });
@@ -122,8 +135,14 @@ describe('PatientRepository', () => {
       const nik = '1234567890';
       const result = await repository.findByNik(nik);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('patient.nik = :nik', { nik });
-      expect(mockQueryBuilder.cache).toHaveBeenCalledWith(`patient_nik_${nik}`, 60000);
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'patient.nik = :nik',
+        { nik },
+      );
+      expect(mockQueryBuilder.cache).toHaveBeenCalledWith(
+        `patient_nik_${nik}`,
+        60000,
+      );
       expect(result).toEqual(mockPatient);
     });
   });
@@ -133,13 +152,22 @@ describe('PatientRepository', () => {
       const days = 3;
       await repository.findWithUpcomingAppointments(days);
 
-      expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith('patient.appointments', 'appointment');
+      expect(mockQueryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
+        'patient.appointments',
+        'appointment',
+      );
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         expect.stringContaining('BETWEEN :now AND :future'),
-        expect.any(Object)
+        expect.any(Object),
       );
-      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('appointment.status = :status', { status: 'dijadwalkan' });
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('appointment.tanggal', 'ASC');
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'appointment.status = :status',
+        { status: 'dijadwalkan' },
+      );
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'appointment.tanggal',
+        'ASC',
+      );
       expect(mockQueryBuilder.getMany).toHaveBeenCalled();
     });
   });
@@ -152,10 +180,16 @@ describe('PatientRepository', () => {
 
       await repository.findByDoctorId(doctorId, page, limit);
 
-      expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith('patient.appointments', 'appointment');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('appointment.doctor_id = :doctorId', { doctorId });
+      expect(mockQueryBuilder.innerJoin).toHaveBeenCalledWith(
+        'patient.appointments',
+        'appointment',
+      );
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'appointment.doctor_id = :doctorId',
+        { doctorId },
+      );
       expect(mockQueryBuilder.distinct).toHaveBeenCalledWith(true);
-      
+
       // Pagination Check: Page 2, Limit 5 -> Skip 5
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(5);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(5);
@@ -169,12 +203,12 @@ describe('PatientRepository', () => {
       // Promise.all([count(), count(new), count(active)])
       // We need to mock 'count' implementation to return different values based on args?
       // Or simpler: just verify it's called 3 times.
-      
+
       // Mock return values for Promise.all calls
       (repository.count as jest.Mock)
-        .mockResolvedValueOnce(100)  // Total
-        .mockResolvedValueOnce(10)   // New
-        .mockResolvedValueOnce(80);  // Active
+        .mockResolvedValueOnce(100) // Total
+        .mockResolvedValueOnce(10) // New
+        .mockResolvedValueOnce(80); // Active
 
       // Act
       const stats = await repository.getStatistics();
@@ -206,7 +240,9 @@ describe('PatientRepository', () => {
 
       expect(repository.createQueryBuilder).toHaveBeenCalled();
       expect(mockQueryBuilder.restore).toHaveBeenCalled();
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('id = :id', { id: 1 });
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('id = :id', {
+        id: 1,
+      });
       expect(mockQueryBuilder.execute).toHaveBeenCalled();
     });
   });
@@ -216,7 +252,10 @@ describe('PatientRepository', () => {
       mockQueryBuilder.getCount.mockResolvedValue(1);
       const exists = await repository.existsByField('email', 'test@test.com');
       expect(exists).toBe(true);
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('patient.email = :value', { value: 'test@test.com' });
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'patient.email = :value',
+        { value: 'test@test.com' },
+      );
     });
 
     it('should return false if count is 0', async () => {
@@ -233,7 +272,9 @@ describe('PatientRepository', () => {
 
       expect(mockQueryBuilder.update).toHaveBeenCalledWith(Patient);
       expect(mockQueryBuilder.set).toHaveBeenCalledWith({ is_active: false });
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('id IN (:...ids)', { ids });
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith('id IN (:...ids)', {
+        ids,
+      });
       expect(mockQueryBuilder.execute).toHaveBeenCalled();
     });
   });

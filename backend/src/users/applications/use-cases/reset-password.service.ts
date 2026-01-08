@@ -10,116 +10,117 @@ import { PasswordChangedEvent } from '../../infrastructures/events/password-chan
 
 @Injectable()
 export class ResetPasswordService {
-    private readonly logger = new Logger(ResetPasswordService.name);
+  private readonly logger = new Logger(ResetPasswordService.name);
 
-    constructor(
-        private readonly userRepository: UserRepository,
-        private readonly userValidation: UserValidationService,
-        private readonly passwordHasher: PasswordHasherService,
-        private readonly passwordPolicy: PasswordPolicyService,
-        private readonly eventEmitter: EventEmitter2
-    ) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userValidation: UserValidationService,
+    private readonly passwordHasher: PasswordHasherService,
+    private readonly passwordPolicy: PasswordPolicyService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(
-        userId: number,
-        newPassword: string,
-        resetByAdmin: boolean = true
-    ): Promise<PasswordChangeResponseDto> {
-        try {
-            // 1. Find user
-            const user = await this.userRepository.findByIdWithPassword(userId);
-            this.userValidation.validateUserExists(user, userId);
+  async execute(
+    userId: number,
+    newPassword: string,
+    resetByAdmin: boolean = true,
+  ): Promise<PasswordChangeResponseDto> {
+    try {
+      // 1. Find user
+      const user = await this.userRepository.findByIdWithPassword(userId);
+      this.userValidation.validateUserExists(user, userId);
 
-            if (!user) {
-                throw new BadRequestException(`User with id ${userId} not found`);
-            }
+      if (!user) {
+        throw new BadRequestException(`User with id ${userId} not found`);
+      }
 
-            // 2. Validate password strength
-            const strengthCheck = this.passwordPolicy.validatePasswordStrength(newPassword);
-            if (!strengthCheck.valid) {
-                throw new Error(
-                    `Password tidak memenuhi kriteria: ${strengthCheck.errors.join(', ')}`
-                );
-            }
+      // 2. Validate password strength
+      const strengthCheck =
+        this.passwordPolicy.validatePasswordStrength(newPassword);
+      if (!strengthCheck.valid) {
+        throw new Error(
+          `Password tidak memenuhi kriteria: ${strengthCheck.errors.join(', ')}`,
+        );
+      }
 
-            // 3. Hash new password
-            const hashedPassword = await this.passwordHasher.hash(newPassword);
-            user.password = hashedPassword;
+      // 3. Hash new password
+      const hashedPassword = await this.passwordHasher.hash(newPassword);
+      user.password = hashedPassword;
 
-            // 4. Save changes
-            await this.userRepository.update(user);
+      // 4. Save changes
+      await this.userRepository.update(user);
 
-            // 5. Emit event
-            this.eventEmitter.emit(
-                'password.changed',
-                new PasswordChangedEvent(
-                    user.id,
-                    user.username,
-                    resetByAdmin ? 'admin' : 'self'
-                )
-            );
+      // 5. Emit event
+      this.eventEmitter.emit(
+        'password.changed',
+        new PasswordChangedEvent(
+          user.id,
+          user.username,
+          resetByAdmin ? 'admin' : 'self',
+        ),
+      );
 
-            // 6. Log and return
-            this.logger.log(
-                `✅ Password reset for user: ${user.username} (ID: ${userId}) by ${resetByAdmin ? 'admin' : 'self'}`
-            );
+      // 6. Log and return
+      this.logger.log(
+        `✅ Password reset for user: ${user.username} (ID: ${userId}) by ${resetByAdmin ? 'admin' : 'self'}`,
+      );
 
-            return {
-                message: `Password berhasil direset untuk user ${user.username}`,
-                timestamp: new Date().toISOString(),
-                user: {
-                    id: user.id,
-                    username: user.username
-                }
-            };
-
-        } catch (error) {
-            this.logger.error('Error resetting password:', error.message);
-            throw error;
-        }
+      return {
+        message: `Password berhasil direset untuk user ${user.username}`,
+        timestamp: new Date().toISOString(),
+        user: {
+          id: user.id,
+          username: user.username,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Error resetting password:', error.message);
+      throw error;
     }
+  }
 
-    /**
-     * Generate and set temporary password
-     */
-    async generateTemporaryPassword(userId: number): Promise<{
-        temporaryPassword: string;
-        message: string;
-    }> {
-        try {
-            // 1. Find user
-            const user = await this.userRepository.findByIdWithPassword(userId);
-            this.userValidation.validateUserExists(user, userId);
-            
-            if (!user) {
-                throw new BadRequestException(`User with id ${userId} not found`);
-            }
+  /**
+   * Generate and set temporary password
+   */
+  async generateTemporaryPassword(userId: number): Promise<{
+    temporaryPassword: string;
+    message: string;
+  }> {
+    try {
+      // 1. Find user
+      const user = await this.userRepository.findByIdWithPassword(userId);
+      this.userValidation.validateUserExists(user, userId);
 
-            // 2. Generate temporary password
-            const temporaryPassword = this.passwordPolicy.generateTemporaryPassword();
+      if (!user) {
+        throw new BadRequestException(`User with id ${userId} not found`);
+      }
 
-            // 3. Hash and save
-            const hashedPassword = await this.passwordHasher.hash(temporaryPassword);
-            user.password = hashedPassword;
-            await this.userRepository.update(user);
+      // 2. Generate temporary password
+      const temporaryPassword = this.passwordPolicy.generateTemporaryPassword();
 
-            // 4. Emit event
-            this.eventEmitter.emit(
-                'password.changed',
-                new PasswordChangedEvent(user.id, user.username, 'admin')
-            );
+      // 3. Hash and save
+      const hashedPassword = await this.passwordHasher.hash(temporaryPassword);
+      user.password = hashedPassword;
+      await this.userRepository.update(user);
 
-            // 5. Log and return
-            this.logger.log(`✅ Temporary password generated for user: ${user.username}`);
+      // 4. Emit event
+      this.eventEmitter.emit(
+        'password.changed',
+        new PasswordChangedEvent(user.id, user.username, 'admin'),
+      );
 
-            return {
-                temporaryPassword,
-                message: `Password sementara berhasil dibuat untuk ${user.username}`
-            };
+      // 5. Log and return
+      this.logger.log(
+        `✅ Temporary password generated for user: ${user.username}`,
+      );
 
-        } catch (error) {
-            this.logger.error('Error generating temporary password:', error.message);
-            throw error;
-        }
+      return {
+        temporaryPassword,
+        message: `Password sementara berhasil dibuat untuk ${user.username}`,
+      };
+    } catch (error) {
+      this.logger.error('Error generating temporary password:', error.message);
+      throw error;
     }
+  }
 }

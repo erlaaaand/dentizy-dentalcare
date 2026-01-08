@@ -13,35 +13,42 @@ import { RestoreTreatmentCategoryUseCase } from '../use-cases/restore-treatment-
 
 @Injectable()
 export class TreatmentCategoriesService {
-    constructor(
-        private readonly createUseCase: CreateTreatmentCategoryUseCase,
-        private readonly updateUseCase: UpdateTreatmentCategoryUseCase,
-        private readonly deleteUseCase: DeleteTreatmentCategoryUseCase,
-        private readonly findUseCase: FindTreatmentCategoriesUseCase,
-        private readonly restoreUseCase: RestoreTreatmentCategoryUseCase,
-    ) { }
+  constructor(
+    private readonly createUseCase: CreateTreatmentCategoryUseCase,
+    private readonly updateUseCase: UpdateTreatmentCategoryUseCase,
+    private readonly deleteUseCase: DeleteTreatmentCategoryUseCase,
+    private readonly findUseCase: FindTreatmentCategoriesUseCase,
+    private readonly restoreUseCase: RestoreTreatmentCategoryUseCase,
+  ) {}
 
-    async create(dto: CreateTreatmentCategoryDto): Promise<TreatmentCategoryResponseDto> {
-        return await this.createUseCase.execute(dto);
-    }
+  async create(
+    dto: CreateTreatmentCategoryDto,
+  ): Promise<TreatmentCategoryResponseDto> {
+    return await this.createUseCase.execute(dto);
+  }
 
-    async findAll(query: QueryTreatmentCategoryDto): Promise<PaginatedResponseDto<TreatmentCategoryResponseDto>> {
-        return await this.findUseCase.findAll(query);
-    }
+  async findAll(
+    query: QueryTreatmentCategoryDto,
+  ): Promise<PaginatedResponseDto<TreatmentCategoryResponseDto>> {
+    return await this.findUseCase.findAll(query);
+  }
 
-    async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
-        return await this.findUseCase.findOne(id);
-    }
+  async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
+    return await this.findUseCase.findOne(id);
+  }
 
-    async update(id: number, dto: UpdateTreatmentCategoryDto): Promise<TreatmentCategoryResponseDto> {
-        return await this.updateUseCase.execute(id, dto);
-    }
+  async update(
+    id: number,
+    dto: UpdateTreatmentCategoryDto,
+  ): Promise<TreatmentCategoryResponseDto> {
+    return await this.updateUseCase.execute(id, dto);
+  }
 
-    async remove(id: number): Promise<void> {
-        return await this.deleteUseCase.execute(id);
-    }
+  async remove(id: number): Promise<void> {
+    return await this.deleteUseCase.execute(id);
+  }
 
-    async restore(id: number): Promise<TreatmentCategoryResponseDto> {
-        return await this.restoreUseCase.execute(id);
-    }
+  async restore(id: number): Promise<TreatmentCategoryResponseDto> {
+    return await this.restoreUseCase.execute(id);
+  }
 }

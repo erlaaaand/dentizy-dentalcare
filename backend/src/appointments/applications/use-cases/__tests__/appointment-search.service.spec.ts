@@ -142,8 +142,12 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
       const result = await service.execute(mockAdminUser, mockQueryDto);
@@ -153,7 +157,7 @@ describe('AppointmentSearchService', () => {
       expect(queryBuilder.buildFindAllQuery).toHaveBeenCalledWith(
         mockBaseQuery,
         mockAdminUser,
-        mockQueryDto
+        mockQueryDto,
       );
       expect(mockQuery.getManyAndCount).toHaveBeenCalled();
       expect(result).toEqual({
@@ -177,8 +181,12 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
       const result = await service.execute(mockAdminUser, customQueryDto);
@@ -200,8 +208,12 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
       const result = await service.execute(mockDoctorUser, mockQueryDto);
@@ -210,7 +222,7 @@ describe('AppointmentSearchService', () => {
       expect(queryBuilder.buildFindAllQuery).toHaveBeenCalledWith(
         mockBaseQuery,
         mockDoctorUser,
-        mockQueryDto
+        mockQueryDto,
       );
       expect(result.data).toHaveLength(1);
     });
@@ -222,8 +234,12 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
       const result = await service.execute(mockStaffUser, mockQueryDto);
@@ -232,7 +248,7 @@ describe('AppointmentSearchService', () => {
       expect(queryBuilder.buildFindAllQuery).toHaveBeenCalledWith(
         mockBaseQuery,
         mockStaffUser,
-        mockQueryDto
+        mockQueryDto,
       );
       expect(result.data).toHaveLength(1);
     });
@@ -244,8 +260,12 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
       const result = await service.execute(mockAdminUser, mockQueryDto);
@@ -268,11 +288,18 @@ describe('AppointmentSearchService', () => {
       };
       const mockBaseQuery = {};
 
-      jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-      jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+      jest
+        .spyOn(repository, 'createQueryBuilder')
+        .mockReturnValue(mockBaseQuery as any);
+      jest
+        .spyOn(queryBuilder, 'buildFindAllQuery')
+        .mockReturnValue(mockQuery as any);
 
       // Act
-      const result = await service.execute(mockAdminUser, queryDtoWithoutPagination as FindAppointmentsQueryDto);
+      const result = await service.execute(
+        mockAdminUser,
+        queryDtoWithoutPagination as FindAppointmentsQueryDto,
+      );
 
       // Assert
       expect(result).toEqual({
@@ -296,25 +323,37 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act & Assert
-        await expect(service.execute(mockAdminUser, mockQueryDto)).rejects.toThrow(BadRequestException);
-        await expect(service.execute(mockAdminUser, mockQueryDto)).rejects.toThrow('Gagal mengambil daftar janji temu');
+        await expect(
+          service.execute(mockAdminUser, mockQueryDto),
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          service.execute(mockAdminUser, mockQueryDto),
+        ).rejects.toThrow('Gagal mengambil daftar janji temu');
       });
 
       it('should throw BadRequestException when query builder fails', async () => {
         // Arrange
         const queryBuilderError = new Error('Query builder error');
-        
+
         jest.spyOn(repository, 'createQueryBuilder').mockImplementation(() => {
           throw queryBuilderError;
         });
 
         // Act & Assert
-        await expect(service.execute(mockAdminUser, mockQueryDto)).rejects.toThrow(BadRequestException);
-        await expect(service.execute(mockAdminUser, mockQueryDto)).rejects.toThrow('Gagal mengambil daftar janji temu');
+        await expect(
+          service.execute(mockAdminUser, mockQueryDto),
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          service.execute(mockAdminUser, mockQueryDto),
+        ).rejects.toThrow('Gagal mengambil daftar janji temu');
       });
     });
 
@@ -334,8 +373,12 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        const buildQuerySpy = jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        const buildQuerySpy = jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
         await service.execute(mockAdminUser, filteredQueryDto);
@@ -344,7 +387,7 @@ describe('AppointmentSearchService', () => {
         expect(buildQuerySpy).toHaveBeenCalledWith(
           mockBaseQuery,
           mockAdminUser,
-          filteredQueryDto
+          filteredQueryDto,
         );
       });
 
@@ -360,8 +403,12 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        const buildQuerySpy = jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        const buildQuerySpy = jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
         await service.execute(mockAdminUser, filteredQueryDto);
@@ -370,7 +417,7 @@ describe('AppointmentSearchService', () => {
         expect(buildQuerySpy).toHaveBeenCalledWith(
           mockBaseQuery,
           mockAdminUser,
-          filteredQueryDto
+          filteredQueryDto,
         );
       });
 
@@ -386,8 +433,12 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        const buildQuerySpy = jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        const buildQuerySpy = jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
         await service.execute(mockAdminUser, filteredQueryDto);
@@ -396,7 +447,7 @@ describe('AppointmentSearchService', () => {
         expect(buildQuerySpy).toHaveBeenCalledWith(
           mockBaseQuery,
           mockAdminUser,
-          filteredQueryDto
+          filteredQueryDto,
         );
       });
 
@@ -414,8 +465,12 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        const buildQuerySpy = jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        const buildQuerySpy = jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
         await service.execute(mockAdminUser, filteredQueryDto);
@@ -424,7 +479,7 @@ describe('AppointmentSearchService', () => {
         expect(buildQuerySpy).toHaveBeenCalledWith(
           mockBaseQuery,
           mockAdminUser,
-          filteredQueryDto
+          filteredQueryDto,
         );
       });
     });
@@ -440,11 +495,18 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
-        const result = await service.execute(mockAdminUser, { page: 1, limit: 10 });
+        const result = await service.execute(mockAdminUser, {
+          page: 1,
+          limit: 10,
+        });
 
         // Assert
         expect(result.totalPages).toBe(2); // 20 / 10 = 2
@@ -457,11 +519,18 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
-        const result = await service.execute(mockAdminUser, { page: 1, limit: 10 });
+        const result = await service.execute(mockAdminUser, {
+          page: 1,
+          limit: 10,
+        });
 
         // Assert
         expect(result.totalPages).toBe(2); // 15 / 10 = 1.5 → ceil to 2
@@ -474,11 +543,18 @@ describe('AppointmentSearchService', () => {
         };
         const mockBaseQuery = {};
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
-        const result = await service.execute(mockAdminUser, { page: 1, limit: 10 });
+        const result = await service.execute(mockAdminUser, {
+          page: 1,
+          limit: 10,
+        });
 
         // Assert
         expect(result.totalPages).toBe(0);
@@ -492,13 +568,19 @@ describe('AppointmentSearchService', () => {
       it('should log successful search with count', async () => {
         // Arrange
         const mockQuery = {
-          getManyAndCount: jest.fn().mockResolvedValue([[mockAppointment, mockAppointment], 2]),
+          getManyAndCount: jest
+            .fn()
+            .mockResolvedValue([[mockAppointment, mockAppointment], 2]),
         };
         const mockBaseQuery = {};
         const loggerSpy = jest.spyOn(service['logger'], 'log');
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act
         await service.execute(mockAdminUser, mockQueryDto);
@@ -516,14 +598,20 @@ describe('AppointmentSearchService', () => {
         const mockBaseQuery = {};
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
-        jest.spyOn(repository, 'createQueryBuilder').mockReturnValue(mockBaseQuery as any);
-        jest.spyOn(queryBuilder, 'buildFindAllQuery').mockReturnValue(mockQuery as any);
+        jest
+          .spyOn(repository, 'createQueryBuilder')
+          .mockReturnValue(mockBaseQuery as any);
+        jest
+          .spyOn(queryBuilder, 'buildFindAllQuery')
+          .mockReturnValue(mockQuery as any);
 
         // Act & Assert
-        await expect(service.execute(mockAdminUser, mockQueryDto)).rejects.toThrow(BadRequestException);
+        await expect(
+          service.execute(mockAdminUser, mockQueryDto),
+        ).rejects.toThrow(BadRequestException);
         expect(loggerSpy).toHaveBeenCalledWith(
           '❌ Error fetching appointments:',
-          expect.any(String)
+          expect.any(String),
         );
       });
     });

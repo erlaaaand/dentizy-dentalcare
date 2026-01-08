@@ -28,7 +28,7 @@ const mockPatientEntity = {
   password: 'supersecrethash',
   deleted_at: null,
   internal_notes: 'Pasien VIP',
-  version: 1
+  version: 1,
 } as unknown as Patient; // Casting as unknown as Patient untuk simulasi field ekstra
 
 // 3. TEST SUITE
@@ -59,7 +59,9 @@ describe('PatientMapper', () => {
       expect(result).toBeInstanceOf(PatientResponseDto);
       expect(result.id).toBe(mockPatientEntity.id);
       expect(result.nama_lengkap).toBe(mockPatientEntity.nama_lengkap);
-      expect(result.nomor_rekam_medis).toBe(mockPatientEntity.nomor_rekam_medis);
+      expect(result.nomor_rekam_medis).toBe(
+        mockPatientEntity.nomor_rekam_medis,
+      );
 
       // Check Date preservation
       expect(result.created_at.getTime()).toBe(mockDate.getTime());
@@ -69,7 +71,10 @@ describe('PatientMapper', () => {
   describe('toResponseDtoList', () => {
     it('should map an array of Patient entities to array of DTOs', () => {
       // Arrange
-      const patients = [mockPatientEntity, { ...mockPatientEntity, id: 2 }] as any;
+      const patients = [
+        mockPatientEntity,
+        { ...mockPatientEntity, id: 2 },
+      ] as any;
 
       // Act
       const result = mapper.toResponseDtoList(patients);

@@ -6,46 +6,53 @@ import { CreateMedicalRecordTreatmentDto } from '../../applications/dto/create-m
 
 @Injectable()
 export class MedicalRecordTreatmentMapper {
-    toResponseDto(entity: MedicalRecordTreatment): MedicalRecordTreatmentResponseDto {
-        return new MedicalRecordTreatmentResponseDto({
-            id: entity.id,
-            medicalRecordId: entity.medicalRecordId,
-            treatmentId: entity.treatmentId,
-            jumlah: entity.jumlah,
-            hargaSatuan: Number(entity.hargaSatuan),
-            subtotal: Number(entity.subtotal),
-            diskon: Number(entity.diskon),
-            total: Number(entity.total),
-            keterangan: entity.keterangan,
-            createdAt: entity.createdAt,
-            updatedAt: entity.updatedAt,
-            treatment: entity.treatment
-                ? {
-                    id: entity.treatment.id,
-                    kodePerawatan: entity.treatment.kodePerawatan,
-                    namaPerawatan: entity.treatment.namaPerawatan,
-                    harga: Number(entity.treatment.harga),
-                }
-                : undefined,
-        });
-    }
+  toResponseDto(
+    entity: MedicalRecordTreatment,
+  ): MedicalRecordTreatmentResponseDto {
+    return new MedicalRecordTreatmentResponseDto({
+      id: entity.id,
+      medicalRecordId: entity.medicalRecordId,
+      treatmentId: entity.treatmentId,
+      jumlah: entity.jumlah,
+      hargaSatuan: Number(entity.hargaSatuan),
+      subtotal: Number(entity.subtotal),
+      diskon: Number(entity.diskon),
+      total: Number(entity.total),
+      keterangan: entity.keterangan,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      treatment: entity.treatment
+        ? {
+            id: entity.treatment.id,
+            kodePerawatan: entity.treatment.kodePerawatan,
+            namaPerawatan: entity.treatment.namaPerawatan,
+            harga: Number(entity.treatment.harga),
+          }
+        : undefined,
+    });
+  }
 
-    toResponseDtoList(entities: MedicalRecordTreatment[]): MedicalRecordTreatmentResponseDto[] {
-        return entities.map((entity) => this.toResponseDto(entity));
-    }
+  toResponseDtoList(
+    entities: MedicalRecordTreatment[],
+  ): MedicalRecordTreatmentResponseDto[] {
+    return entities.map((entity) => this.toResponseDto(entity));
+  }
 
-    toEntity(dto: CreateMedicalRecordTreatmentDto, calculation: { subtotal: number; total: number }): Partial<MedicalRecordTreatment> {
-        return {
-            medicalRecordId: dto.medicalRecordId,
-            treatmentId: dto.treatmentId,
-            jumlah: dto.jumlah,
-            hargaSatuan: dto.hargaSatuan,
-            diskon: dto.diskon || 0,
-            subtotal: calculation.subtotal,
-            total: calculation.total,
-            keterangan: dto.keterangan,
-        };
-    }
+  toEntity(
+    dto: CreateMedicalRecordTreatmentDto,
+    calculation: { subtotal: number; total: number },
+  ): Partial<MedicalRecordTreatment> {
+    return {
+      medicalRecordId: dto.medicalRecordId,
+      treatmentId: dto.treatmentId,
+      jumlah: dto.jumlah,
+      hargaSatuan: dto.hargaSatuan,
+      diskon: dto.diskon || 0,
+      subtotal: calculation.subtotal,
+      total: calculation.total,
+      keterangan: dto.keterangan,
+    };
+  }
 }
 
 // backend/src/medical-record-treatments/applications/mappers/index.ts

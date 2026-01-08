@@ -4,7 +4,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PatientDomainService } from '../../../domains/services/patient-domain.service';
 import { Patient } from '../../../domains/entities/patient.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { Gender } from '../../entities/patient.entity'; // Asumsi path enum
 
 // 2. MOCK DATA
@@ -55,7 +58,11 @@ describe('PatientDomainService', () => {
 
   describe('isEligibleForAppointment', () => {
     it('should return true if patient is active and has contact info', () => {
-      const patient = { ...basePatient, is_active: true, email: 'a@b.com' } as Patient;
+      const patient = {
+        ...basePatient,
+        is_active: true,
+        email: 'a@b.com',
+      } as Patient;
       expect(service.isEligibleForAppointment(patient)).toBe(true);
     });
 
@@ -65,11 +72,11 @@ describe('PatientDomainService', () => {
     });
 
     it('should return false if patient has NO email AND NO phone', () => {
-      const patient = { 
-        ...basePatient, 
-        is_active: true, 
-        email: null, 
-        no_hp: null 
+      const patient = {
+        ...basePatient,
+        is_active: true,
+        email: null,
+        no_hp: null,
       } as Patient;
       expect(service.isEligibleForAppointment(patient)).toBe(false);
     });
@@ -83,34 +90,36 @@ describe('PatientDomainService', () => {
     });
 
     it('should allow deletion if appointments are finished or cancelled', () => {
-      const patient = { 
-        ...basePatient, 
+      const patient = {
+        ...basePatient,
         appointments: [
-          { status: 'selesai' }, 
-          { status: 'dibatalkan' }
-        ] as Appointment[] 
+          { status: 'selesai' },
+          { status: 'dibatalkan' },
+        ] as Appointment[],
       } as Patient;
       const result = service.canBeDeleted(patient);
       expect(result.allowed).toBe(true);
     });
 
     it('should NOT allow deletion if there is a scheduled appointment', () => {
-      const patient = { 
-        ...basePatient, 
-        appointments: [{ status: 'dijadwalkan' } as Appointment] 
+      const patient = {
+        ...basePatient,
+        appointments: [{ status: 'dijadwalkan' } as Appointment],
       } as Patient;
-      
+
       const result = service.canBeDeleted(patient);
       expect(result.allowed).toBe(false);
       expect(result.reason).toContain('janji temu aktif');
     });
 
     it('should NOT allow deletion if there is an ongoing appointment', () => {
-      const patient = { 
-        ...basePatient, 
-        appointments: [{ status: AppointmentStatus.DIJADWALKAN } as Appointment]
+      const patient = {
+        ...basePatient,
+        appointments: [
+          { status: AppointmentStatus.DIJADWALKAN } as Appointment,
+        ],
       } as Patient;
-      
+
       const result = service.canBeDeleted(patient);
       expect(result.allowed).toBe(false);
     });
@@ -127,8 +136,12 @@ describe('PatientDomainService', () => {
       // Logika: Tahun ini 2024. Lahir 2000.
       // Jika ulang tahun besok, umur harusnya masih 23, bukan 24.
       const today = new Date();
-      const birthDate = new Date(today.getFullYear() - 20, today.getMonth(), today.getDate() + 1); 
-      
+      const birthDate = new Date(
+        today.getFullYear() - 20,
+        today.getMonth(),
+        today.getDate() + 1,
+      );
+
       expect(service.calculateAge(birthDate)).toBe(19);
     });
 
@@ -139,22 +152,34 @@ describe('PatientDomainService', () => {
 
   describe('Age Checks (isMinor / isSenior)', () => {
     it('should identify minor (< 18)', () => {
-      const patient = { ...basePatient, tanggal_lahir: getDateYearsAgo(17) } as Patient;
+      const patient = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(17),
+      } as Patient;
       expect(service.isMinor(patient)).toBe(true);
       expect(service.isSenior(patient)).toBe(false);
     });
 
     it('should identify adult (18)', () => {
-      const patient = { ...basePatient, tanggal_lahir: getDateYearsAgo(18) } as Patient;
+      const patient = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(18),
+      } as Patient;
       expect(service.isMinor(patient)).toBe(false);
       expect(service.isSenior(patient)).toBe(false);
     });
 
     it('should identify senior (>= 65)', () => {
-      const patient65 = { ...basePatient, tanggal_lahir: getDateYearsAgo(65) } as Patient;
+      const patient65 = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(65),
+      } as Patient;
       expect(service.isSenior(patient65)).toBe(true);
 
-      const patient80 = { ...basePatient, tanggal_lahir: getDateYearsAgo(80) } as Patient;
+      const patient80 = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(80),
+      } as Patient;
       expect(service.isSenior(patient80)).toBe(true);
     });
   });
@@ -177,11 +202,11 @@ describe('PatientDomainService', () => {
 
   describe('getFullDisplayName', () => {
     it('should format name with record number', () => {
-      const patient = { 
-        nama_lengkap: 'John Doe', 
-        nomor_rekam_medis: 'RM-123' 
+      const patient = {
+        nama_lengkap: 'John Doe',
+        nomor_rekam_medis: 'RM-123',
       } as Patient;
-      
+
       expect(service.getFullDisplayName(patient)).toBe('John Doe (RM-123)');
     });
   });
@@ -217,7 +242,7 @@ describe('PatientDomainService', () => {
         tanggal_lahir: null, // Missing
         jenis_kelamin: Gender.FEMALE,
         alamat: null, // Missing
-        email: 'a@b.com' // Contact exists (email)
+        email: 'a@b.com', // Contact exists (email)
       } as Patient;
 
       const result = service.isDataCompleteForProcedure(patient);
@@ -230,22 +255,34 @@ describe('PatientDomainService', () => {
 
   describe('getAgeCategory', () => {
     it('should return "child" for age < 13', () => {
-      const p = { ...basePatient, tanggal_lahir: getDateYearsAgo(10) } as Patient;
+      const p = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(10),
+      } as Patient;
       expect(service.getAgeCategory(p)).toBe('child');
     });
 
     it('should return "teen" for age 13-17', () => {
-      const p = { ...basePatient, tanggal_lahir: getDateYearsAgo(15) } as Patient;
+      const p = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(15),
+      } as Patient;
       expect(service.getAgeCategory(p)).toBe('teen');
     });
 
     it('should return "adult" for age 18-64', () => {
-      const p = { ...basePatient, tanggal_lahir: getDateYearsAgo(30) } as Patient;
+      const p = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(30),
+      } as Patient;
       expect(service.getAgeCategory(p)).toBe('adult');
     });
 
     it('should return "senior" for age >= 65', () => {
-      const p = { ...basePatient, tanggal_lahir: getDateYearsAgo(70) } as Patient;
+      const p = {
+        ...basePatient,
+        tanggal_lahir: getDateYearsAgo(70),
+      } as Patient;
       expect(service.getAgeCategory(p)).toBe('senior');
     });
 

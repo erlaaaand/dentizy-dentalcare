@@ -33,8 +33,8 @@ const rawPatientData = {
   is_active: true,
   is_new_patient: false,
   created_at: mockDateString, // String ISO
-  updated_at: mockDateObj,    // Date object
-  
+  updated_at: mockDateObj, // Date object
+
   // Field sensitif/internal yang TIDAK boleh ada di DTO
   password: 'supersecretpassword',
   deleted_at: null,
@@ -43,7 +43,6 @@ const rawPatientData = {
 
 // 3. TEST SUITE
 describe('PatientResponseDto', () => {
-  
   // 4. SETUP AND TEARDOWN
   // DTO bersifat stateless, tidak butuh setup kompleks.
   beforeEach(() => {
@@ -106,7 +105,7 @@ describe('PatientResponseDto', () => {
       // Assert
       // 1. Pastikan field yang di-expose ADA
       expect(dto.nama_lengkap).toBeDefined();
-      
+
       // 2. Pastikan field rahasia TIDAK ADA (undefined)
       expect((dto as any).password).toBeUndefined();
       expect((dto as any).internal_version).toBeUndefined();
@@ -116,12 +115,12 @@ describe('PatientResponseDto', () => {
     it('should keep fields even if values are null/undefined', () => {
       const incompleteData = { ...rawPatientData, riwayat_alergi: null };
       const dto = plainToInstance(PatientResponseDto, incompleteData, {
-        excludeExtraneousValues: true, 
+        excludeExtraneousValues: true,
       });
 
       // Expose tetap bekerja meskipun nilainya null, kuncinya adalah property-nya ada di source
       // atau class-transformer setting
-      expect(dto.riwayat_alergi).toBeNull(); 
+      expect(dto.riwayat_alergi).toBeNull();
     });
   });
 

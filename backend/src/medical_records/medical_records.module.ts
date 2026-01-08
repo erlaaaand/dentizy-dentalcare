@@ -37,51 +37,47 @@ import { TransactionManager } from './infrastructure/transactions/transaction.ma
 import { MedicalRecordEventListener } from './infrastructure/listeners/medical-record.event-listener';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([MedicalRecord, Appointment])
-    ],
-    controllers: [
-        MedicalRecordsController
-    ],
-    providers: [
-        // Orchestrator
-        MedicalRecordsService,
+  imports: [TypeOrmModule.forFeature([MedicalRecord, Appointment])],
+  controllers: [MedicalRecordsController],
+  providers: [
+    // Orchestrator
+    MedicalRecordsService,
 
-        // Use Cases
-        MedicalRecordCreationService,
-        MedicalRecordUpdateService,
-        MedicalRecordFindService,
-        MedicalRecordSearchService,
-        MedicalRecordAppointmentFinderService,
-        MedicalRecordDeletionService,
+    // Use Cases
+    MedicalRecordCreationService,
+    MedicalRecordUpdateService,
+    MedicalRecordFindService,
+    MedicalRecordSearchService,
+    MedicalRecordAppointmentFinderService,
+    MedicalRecordDeletionService,
 
-        // Domain Layer
-        MedicalRecordMapper,
-        MedicalRecordDomainService,
-        MedicalRecordAuthorizationService,
+    // Domain Layer
+    MedicalRecordMapper,
+    MedicalRecordDomainService,
+    MedicalRecordAuthorizationService,
 
-        // Validators
-        MedicalRecordValidator,
-        MedicalRecordCreateValidator,
-        MedicalRecordUpdateValidator,
-        MedicalRecordAuthorizationValidator,
+    // Validators
+    MedicalRecordValidator,
+    MedicalRecordCreateValidator,
+    MedicalRecordUpdateValidator,
+    MedicalRecordAuthorizationValidator,
 
-        // Infrastructure
-        MedicalRecordsRepository,
-        MedicalRecordQueryBuilder,
-        TransactionManager,
+    // Infrastructure
+    MedicalRecordsRepository,
+    MedicalRecordQueryBuilder,
+    TransactionManager,
 
-        // Event Listeners
-        MedicalRecordEventListener,
-    ],
-    exports: [
-        // Export orchestrator for other modules
-        MedicalRecordsService,
+    // Event Listeners
+    MedicalRecordEventListener,
+  ],
+  exports: [
+    // Export orchestrator for other modules
+    MedicalRecordsService,
 
-        // Export repository for direct access if needed
-        MedicalRecordsRepository,
+    // Export repository for direct access if needed
+    MedicalRecordsRepository,
 
-        TransactionManager
-    ],
+    TransactionManager,
+  ],
 })
-export class MedicalRecordsModule { }
+export class MedicalRecordsModule {}

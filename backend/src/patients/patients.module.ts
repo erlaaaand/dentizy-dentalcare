@@ -63,10 +63,12 @@ import { PatientMapper } from './domains/mappers/patient.mapper';
     }),
 
     // Rate limiting untuk search endpoint
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // 1 minute
-      limit: 30, // max 30 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // 1 minute
+        limit: 30, // max 30 requests per minute
+      },
+    ]),
   ],
   controllers: [PatientsController],
   providers: [
@@ -102,6 +104,11 @@ import { PatientMapper } from './domains/mappers/patient.mapper';
     PatientSearchValidator,
     PatientValidator,
   ],
-  exports: [PatientsService, PatientRepository, PatientValidator, PatientCreationService],
+  exports: [
+    PatientsService,
+    PatientRepository,
+    PatientValidator,
+    PatientCreationService,
+  ],
 })
-export class PatientsModule { }
+export class PatientsModule {}

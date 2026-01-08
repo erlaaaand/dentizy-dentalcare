@@ -18,7 +18,7 @@ const mockPatient = {
 const mockCreatedEvent = new PatientCreatedEvent(mockPatient);
 
 const mockUpdatedEvent = new PatientUpdatedEvent(1, {
-  nama_lengkap: 'Budi Updated'
+  nama_lengkap: 'Budi Updated',
 });
 
 const mockDeletedEvent = new PatientDeletedEvent(1, 'Budi Santoso');
@@ -32,11 +32,15 @@ describe('PatientEventListener', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [PatientEventListener],
-    }).setLogger({ log: jest.fn(), error: jest.fn(), warn: jest.fn() }).compile();
+    })
+      .setLogger({ log: jest.fn(), error: jest.fn(), warn: jest.fn() })
+      .compile();
 
     listener = module.get<PatientEventListener>(PatientEventListener);
 
-    loggerSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => { });
+    loggerSpy = jest
+      .spyOn(Logger.prototype, 'log')
+      .mockImplementation(() => {});
 
     // Mock Logger.log agar tidak mengotori console saat test
     // dan agar kita bisa memverifikasi panggilannya
@@ -63,7 +67,7 @@ describe('PatientEventListener', () => {
       // Assert
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Patient created: ${mockPatient.nama_lengkap}`
+        `Patient created: ${mockPatient.nama_lengkap}`,
       );
     });
   });
@@ -77,7 +81,7 @@ describe('PatientEventListener', () => {
       // Sekarang hitungannya pasti 1 karena log inisialisasi sudah di-clear
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Patient created: ${mockPatient.nama_lengkap}`
+        `Patient created: ${mockPatient.nama_lengkap}`,
       );
     });
   });
@@ -90,7 +94,7 @@ describe('PatientEventListener', () => {
       // Assert
       expect(loggerSpy).toHaveBeenCalledTimes(1);
       expect(loggerSpy).toHaveBeenCalledWith(
-        `Patient deleted: ID ${mockDeletedEvent.patientId} (${mockDeletedEvent.patientName})`
+        `Patient deleted: ID ${mockDeletedEvent.patientId} (${mockDeletedEvent.patientName})`,
       );
     });
   });
@@ -102,9 +106,15 @@ describe('PatientEventListener', () => {
   describe('Event Payload Integrity', () => {
     it('should handle event payload correctly', () => {
       // Verify logic didn't crash accessing properties
-      expect(() => listener.handlePatientCreated(mockCreatedEvent)).not.toThrow();
-      expect(() => listener.handlePatientUpdated(mockUpdatedEvent)).not.toThrow();
-      expect(() => listener.handlePatientDeleted(mockDeletedEvent)).not.toThrow();
+      expect(() =>
+        listener.handlePatientCreated(mockCreatedEvent),
+      ).not.toThrow();
+      expect(() =>
+        listener.handlePatientUpdated(mockUpdatedEvent),
+      ).not.toThrow();
+      expect(() =>
+        listener.handlePatientDeleted(mockDeletedEvent),
+      ).not.toThrow();
     });
   });
 });

@@ -6,16 +6,16 @@ import { Payment } from '../../../domains/entities/payments.entity';
 
 @Injectable()
 export class GetPaymentsByPatientQuery {
-    constructor(
-        @InjectRepository(Payment)
-        private readonly repository: Repository<Payment>,
-    ) { }
+  constructor(
+    @InjectRepository(Payment)
+    private readonly repository: Repository<Payment>,
+  ) {}
 
-    async execute(patientId: number, limit: number = 10): Promise<Payment[]> {
-        return await this.repository.find({
-            where: { patientId },
-            order: { tanggalPembayaran: 'DESC' },
-            take: limit,
-        });
-    }
+  async execute(patientId: number, limit: number = 10): Promise<Payment[]> {
+    return await this.repository.find({
+      where: { patientId },
+      order: { tanggalPembayaran: 'DESC' },
+      take: limit,
+    });
+  }
 }

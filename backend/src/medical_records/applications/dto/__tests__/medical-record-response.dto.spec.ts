@@ -39,7 +39,7 @@ describe('MedicalRecordResponseDto', () => {
         no_rm: 'RM001',
         tanggal_lahir: new Date('1990-01-01'),
       },
-    })
+    });
   };
 
   // ==================== SETUP AND TEARDOWN ====================
@@ -335,7 +335,7 @@ describe('MedicalRecordResponseDto', () => {
     it('should create complete response with all relations', () => {
       const dto = Object.assign(
         new MedicalRecordResponseDto(),
-        mockResponseDto() // ← harus dipanggil
+        mockResponseDto(), // ← harus dipanggil
       );
 
       expect(dto.id).toBe(1);
@@ -349,7 +349,10 @@ describe('MedicalRecordResponseDto', () => {
     });
 
     it('should include all required fields', () => {
-      const dto = Object.assign(new MedicalRecordResponseDto(), mockResponseDto);
+      const dto = Object.assign(
+        new MedicalRecordResponseDto(),
+        mockResponseDto,
+      );
 
       expect(dto).toHaveProperty('id');
       expect(dto).toHaveProperty('appointment_id');
@@ -438,7 +441,10 @@ describe('MedicalRecordResponseDto', () => {
   // ==================== SERIALIZATION TESTS ====================
   describe('Serialization', () => {
     it('should be JSON serializable', () => {
-      const dto = Object.assign(new MedicalRecordResponseDto(), mockResponseDto);
+      const dto = Object.assign(
+        new MedicalRecordResponseDto(),
+        mockResponseDto,
+      );
 
       expect(() => JSON.stringify(dto)).not.toThrow();
     });

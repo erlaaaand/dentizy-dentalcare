@@ -12,82 +12,97 @@ import { PasswordHasherService } from '../../../auth/infrastructures/security/pa
 
 @Injectable()
 export class UpdateUserService {
-    private readonly logger = new Logger(UpdateUserService.name);
+  private readonly logger = new Logger(UpdateUserService.name);
 
-    constructor(
-        private readonly userRepository: UserRepository,
-        private readonly userValidation: UserValidationService,
-        private readonly passwordHasher: PasswordHasherService,
-        private readonly eventEmitter: EventEmitter2
-    ) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly userValidation: UserValidationService,
+    private readonly passwordHasher: PasswordHasherService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(userId: number, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
-        // [FIX] Hapus specialization dari destructuring
-        const { roles: roleIds, username, nama_lengkap, email, password } = updateUserDto;
+  async execute(
+    userId: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    // [FIX] Hapus specialization dari destructuring
+    const {
+      roles: roleIds,
+      username,
+      nama_lengkap,
+      email,
+      password,
+    } = updateUserDto;
 
-        try {
-            const user = await this.userRepository.findByIdWithPassword(userId);
-            this.userValidation.validateUserExists(user, userId);
+    try {
+      const user = await this.userRepository.findByIdWithPassword(userId);
+      this.userValidation.validateUserExists(user, userId);
 
-            if (!user) {
-                throw new BadRequestException(`User with id ${userId} not found`);
-            }
+      if (!user) {
+        throw new BadRequestException(`User with id ${userId} not found`);
+      }
 
-            const changes: Record<string, any> = {};
+      const changes: Record<string, any> = {};
 
-            if (username && username !== user.username) {
-                UsernameValidator.validate(username);
-                const existingUser = await this.userRepository.findByUsernameWithoutPassword(username);
-                this.userValidation.validateUsernameUniqueness(existingUser, username, user.username);
-                user.username = username;
-                changes.username = username;
-            }
+      if (username && username !== user.username) {
+        UsernameValidator.validate(username);
+        const existingUser =
+          await this.userRepository.findByUsernameWithoutPassword(username);
+        this.userValidation.validateUsernameUniqueness(
+          existingUser,
+          username,
+          user.username,
+        );
+        user.username = username;
+        changes.username = username;
+      }
 
-            if (nama_lengkap && nama_lengkap !== user.nama_lengkap) {
-                UserDataValidator.validateNamaLengkap(nama_lengkap);
-                user.nama_lengkap = nama_lengkap;
-                changes.nama_lengkap = nama_lengkap;
-            }
+      if (nama_lengkap && nama_lengkap !== user.nama_lengkap) {
+        UserDataValidator.validateNamaLengkap(nama_lengkap);
+        user.nama_lengkap = nama_lengkap;
+        changes.nama_lengkap = nama_lengkap;
+      }
 
-            if (email !== undefined && email !== user.email) {
-                if (email === '') {
-                    user.email = null;
-                } else {
-                    await this.userValidation.validateUniqueEmail(email, userId);
-                    user.email = email;
-                }
-                changes.email = email;
-            }
-
-            if (password) {
-                const hashedPassword = await this.passwordHasher.hash(password);
-                user.password = hashedPassword;
-                changes.password = '***CHANGED***';
-            }
-
-            if (roleIds && roleIds.length > 0) {
-                UserDataValidator.validateRoles(roleIds);
-                const roles = await this.userRepository.findRolesByIds(roleIds);
-                this.userValidation.validateRolesExist(roleIds, roles);
-                user.roles = roles;
-                changes.roles = roleIds;
-            }
-            
-            // [FIX] Hapus blok logika update specialization di sini
-
-            const updatedUser = await this.userRepository.update(user);
-
-            this.eventEmitter.emit(
-                'user.updated',
-                new UserUpdatedEvent(updatedUser.id, updatedUser.username, changes)
-            );
-
-            this.logger.log(`✅ User updated: ${updatedUser.username} (ID: ${updatedUser.id})`);
-            return UserMapper.toResponseDto(updatedUser);
-
-        } catch (error) {
-            this.logger.error(`Error updating user ID ${userId}:`, error.message);
-            throw error;
+      if (email !== undefined && email !== user.email) {
+        if (email === '') {
+          user.email = null;
+        } else {
+          await this.userValidation.validateUniqueEmail(email, userId);
+          user.email = email;
         }
+        changes.email = email;
+      }
+
+      if (password) {
+        const hashedPassword = await this.passwordHasher.hash(password);
+        user.password = hashedPassword;
+        changes.password = '***CHANGED***';
+      }
+
+      if (roleIds && roleIds.length > 0) {
+        UserDataValidator.validateRoles(roleIds);
+        const roles = await this.userRepository.findRolesByIds(roleIds);
+        this.userValidation.validateRolesExist(roleIds, roles);
+        user.roles = roles;
+        changes.roles = roleIds;
+      }
+
+      // [FIX] Hapus blok logika update specialization di sini
+
+      const updatedUser = await this.userRepository.update(user);
+
+      this.eventEmitter.emit(
+        'user.updated',
+        new UserUpdatedEvent(updatedUser.id, updatedUser.username, changes),
+      );
+
+      this.logger.log(
+        `✅ User updated: ${updatedUser.username} (ID: ${updatedUser.id})`,
+      );
+      return UserMapper.toResponseDto(updatedUser);
+    } catch (error) {
+      this.logger.error(`Error updating user ID ${userId}:`, error.message);
+      throw error;
     }
+  }
 }

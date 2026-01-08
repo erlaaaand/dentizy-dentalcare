@@ -75,12 +75,6 @@ import { UsersModule } from '../users/users.module';
     RolesGuard,
     JwtAuthGuard,
   ],
-  exports: [
-    AuthService,
-    JwtStrategy,
-    PassportModule,
-    JwtAuthGuard,
-    RolesGuard,
-  ],
+  exports: [AuthService, JwtStrategy, PassportModule, JwtAuthGuard, RolesGuard],
 })
-export class AuthModule { }
+export class AuthModule {}

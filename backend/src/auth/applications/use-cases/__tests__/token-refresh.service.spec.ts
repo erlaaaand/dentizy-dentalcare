@@ -19,7 +19,8 @@ const mockUser: User = {
   roles: [{ id: 1, name: UserRole.STAF, description: 'Staf' }],
 } as User;
 
-const mockAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
+const mockAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
 
 // ======================
 // TEST SUITE
@@ -192,7 +193,9 @@ describe('TokenRefreshService', () => {
           ],
         } as User;
 
-        usersService.findOneForAuth.mockResolvedValue(userWithMultipleRoles as any);
+        usersService.findOneForAuth.mockResolvedValue(
+          userWithMultipleRoles as any,
+        );
         tokenService.generateToken.mockReturnValue(mockAccessToken);
 
         await service.execute(userWithMultipleRoles.id);

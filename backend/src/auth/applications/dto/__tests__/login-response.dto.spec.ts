@@ -5,7 +5,8 @@ import { LoginResponseDto } from '../login-response.dto';
 // MOCK DATA
 // ======================
 const mockLoginResponse: LoginResponseDto = {
-  access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIifQ.xyz',
+  access_token:
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEsInVzZXJuYW1lIjoidGVzdHVzZXIifQ.xyz',
   user: {
     id: 1,
     username: 'testuser',
@@ -119,7 +120,8 @@ describe('LoginResponseDto', () => {
 
   describe('Token Format Tests', () => {
     it('should accept JWT-like token format', () => {
-      const jwtToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjF9.signature';
+      const jwtToken =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjF9.signature';
       dto.access_token = jwtToken;
 
       expect(dto.access_token).toBe(jwtToken);

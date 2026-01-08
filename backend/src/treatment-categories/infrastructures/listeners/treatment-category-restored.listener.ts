@@ -5,14 +5,14 @@ import { TreatmentCategoryRestoredEvent } from '../../infrastructures/events/tre
 
 @Injectable()
 export class TreatmentCategoryRestoredListener {
-    private readonly logger = new Logger(TreatmentCategoryRestoredListener.name);
+  private readonly logger = new Logger(TreatmentCategoryRestoredListener.name);
 
-    @OnEvent('treatment-category.restored')
-    handleRestoredEvent(event: TreatmentCategoryRestoredEvent) {
-        this.logger.log(
-            `Treatment category restored: ID=${event.categoryId}, Name=${event.categoryName}`,
-        );
+  @OnEvent('treatment-category.restored')
+  handleRestoredEvent(event: TreatmentCategoryRestoredEvent) {
+    this.logger.log(
+      `Treatment category restored: ID=${event.categoryId}, Name=${event.categoryName}`,
+    );
 
-        // Additional actions: restore related data, notification, etc.
-    }
+    // Additional actions: restore related data, notification, etc.
+  }
 }

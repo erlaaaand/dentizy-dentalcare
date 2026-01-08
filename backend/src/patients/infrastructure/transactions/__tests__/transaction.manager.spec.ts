@@ -96,7 +96,9 @@ describe('TransactionManager', () => {
       const conflictError = new ConflictException('Duplicate entry');
       const mockOperation = jest.fn().mockRejectedValue(conflictError);
 
-      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(ConflictException);
+      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(
+        ConflictException,
+      );
 
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(mockQueryRunner.release).toHaveBeenCalled();
@@ -106,8 +108,12 @@ describe('TransactionManager', () => {
     it('should wrap generic errors into BadRequestException and stop', async () => {
       const mockOperation = jest.fn().mockRejectedValue(mockGenericError);
 
-      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(BadRequestException);
-      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow('Operasi gagal dilakukan');
+      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(
+        'Operasi gagal dilakukan',
+      );
 
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
     });
@@ -118,7 +124,8 @@ describe('TransactionManager', () => {
   describe('executeWithRetry - Retry Mechanism', () => {
     it('should retry on DEADLOCK error and eventually succeed', async () => {
       // Arrange
-      const mockOperation = jest.fn()
+      const mockOperation = jest
+        .fn()
         .mockRejectedValueOnce(mockDeadlockError) // Percobaan 1: Gagal
         .mockResolvedValueOnce(mockSuccessResult); // Percobaan 2: Sukses
 
@@ -140,7 +147,8 @@ describe('TransactionManager', () => {
 
     it('should retry on LOCK TIMEOUT error', async () => {
       // Arrange
-      const mockOperation = jest.fn()
+      const mockOperation = jest
+        .fn()
         .mockRejectedValueOnce(mockTimeoutError)
         .mockResolvedValueOnce(mockSuccessResult);
 
@@ -154,7 +162,9 @@ describe('TransactionManager', () => {
 
     it('should throw BadRequestException after MAX_RETRY_ATTEMPTS exceeded', async () => {
       const mockOperation = jest.fn().mockRejectedValue(mockDeadlockError);
-      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow('Operasi gagal setelah beberapa percobaan');
+      await expect(manager.executeWithRetry(mockOperation)).rejects.toThrow(
+        'Operasi gagal setelah beberapa percobaan',
+      );
       expect(dataSource.createQueryRunner).toHaveBeenCalledTimes(5);
     });
   });

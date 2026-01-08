@@ -8,8 +8,10 @@ import { Appointment } from '../appointments/domains/entities/appointment.entity
 import { MedicalRecord } from 'src/medical_records/domains/entities/medical-record.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role, User, Patient, Appointment, MedicalRecord])],
+  imports: [
+    TypeOrmModule.forFeature([Role, User, Patient, Appointment, MedicalRecord]),
+  ],
   providers: [SeederService],
   exports: [SeederService],
 })
-export class SeederModule { }
+export class SeederModule {}

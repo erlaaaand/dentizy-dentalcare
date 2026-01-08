@@ -131,7 +131,9 @@ describe('Match Validator', () => {
 
       // Assert
       expect(errors).toHaveLength(1);
-      expect(errors[0].constraints?.match).toBe('confirmEmail must match email');
+      expect(errors[0].constraints?.match).toBe(
+        'confirmEmail must match email',
+      );
     });
   });
 
@@ -349,8 +351,8 @@ describe('Match Validator', () => {
 
       // Assert
       expect(errors).toHaveLength(2);
-      expect(errors.map(e => e.property)).toContain('confirmPassword');
-      expect(errors.map(e => e.property)).toContain('confirmEmail');
+      expect(errors.map((e) => e.property)).toContain('confirmPassword');
+      expect(errors.map((e) => e.property)).toContain('confirmEmail');
     });
   });
 });

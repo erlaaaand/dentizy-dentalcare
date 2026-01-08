@@ -1,9 +1,11 @@
-import { AppointmentResponseDto, PaginatedAppointmentResponseDto } from './../appointment-response.dto';
+import {
+  AppointmentResponseDto,
+  PaginatedAppointmentResponseDto,
+} from './../appointment-response.dto';
 // Kita perlu mock enum AppointmentStatus karena kita tidak mengimpor file entity aslinya
 import { AppointmentStatus } from '../../../domains/entities/appointment.entity';
 
 describe('Appointment DTOs', () => {
-
   // --- Mock Data ---
   const mockDate = new Date('2025-11-16T10:00:00.000Z');
 
@@ -108,7 +110,7 @@ describe('Appointment DTOs', () => {
       const dto = new PaginatedAppointmentResponseDto();
 
       // Saat data di-map, 'data' akan menjadi array dari instance
-      dto.data = mockPaginatedResponse.data.map(item => {
+      dto.data = mockPaginatedResponse.data.map((item) => {
         const appDto = new AppointmentResponseDto();
         Object.assign(appDto, item);
         return appDto;

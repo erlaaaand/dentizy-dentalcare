@@ -5,8 +5,14 @@ import { ScheduleReminderService } from '../schedule-reminder.service';
 import { NotificationRepository } from '../../../infrastructures/repositories/notification.repository';
 import { NotificationSchedulerService } from '../../../domains/services/notification-scheduler.service';
 import { NotificationValidatorService } from '../../../domains/services/notification-validator.service';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
-import { NotificationType, NotificationStatus } from '../../../domains/entities/notification.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  NotificationType,
+  NotificationStatus,
+} from '../../../domains/entities/notification.entity';
 
 // 2. MOCK DATA
 const mockAppointment: Appointment = {
@@ -39,23 +45,22 @@ const mockAppointment: Appointment = {
   updated_at: new Date('2024-01-14T09:00:00.000Z'),
 };
 
-
 const mockFutureReminderTime = new Date('2024-01-15T10:00:00.000Z'); // 24 hours before
 const mockPastReminderTime = null; // Would be in the past
 
 const mockInvalidAppointment = {
   ...mockAppointment,
-  tanggal_janji: new Date('2023-01-01T10:00:00.000Z') // Past appointment
+  tanggal_janji: new Date('2023-01-01T10:00:00.000Z'), // Past appointment
 };
 
 const mockAppointmentWithoutPatient = {
   ...mockAppointment,
-  patient: null
+  patient: null,
 };
 
 const mockAppointmentWithoutDoctor = {
   ...mockAppointment,
-  doctor: null
+  doctor: null,
 };
 
 const mockError = new Error('Validation failed');
@@ -112,9 +117,15 @@ describe('ScheduleReminderService', () => {
     }).compile();
 
     service = module.get<ScheduleReminderService>(ScheduleReminderService);
-    notificationRepository = module.get<NotificationRepository>(NotificationRepository);
-    scheduler = module.get<NotificationSchedulerService>(NotificationSchedulerService);
-    validator = module.get<NotificationValidatorService>(NotificationValidatorService);
+    notificationRepository = module.get<NotificationRepository>(
+      NotificationRepository,
+    );
+    scheduler = module.get<NotificationSchedulerService>(
+      NotificationSchedulerService,
+    );
+    validator = module.get<NotificationValidatorService>(
+      NotificationValidatorService,
+    );
 
     // Mock the logger
     Object.defineProperty(service, 'logger', {
@@ -137,7 +148,9 @@ describe('ScheduleReminderService', () => {
     it('should return void promise', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -153,35 +166,49 @@ describe('ScheduleReminderService', () => {
     it('should validate appointment first', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
       await service.execute(mockAppointment);
 
       // Assert
-      expect(mockNotificationValidator.validateAppointment).toHaveBeenCalledWith(mockAppointment);
-      expect(mockNotificationValidator.validateAppointment).toHaveBeenCalledTimes(1);
+      expect(
+        mockNotificationValidator.validateAppointment,
+      ).toHaveBeenCalledWith(mockAppointment);
+      expect(
+        mockNotificationValidator.validateAppointment,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('should calculate reminder time using scheduler', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
       await service.execute(mockAppointment);
 
       // Assert
-      expect(mockNotificationScheduler.calculateReminderTime).toHaveBeenCalledWith(mockAppointment);
-      expect(mockNotificationScheduler.calculateReminderTime).toHaveBeenCalledTimes(1);
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).toHaveBeenCalledWith(mockAppointment);
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it('should create notification with correct parameters', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -199,7 +226,9 @@ describe('ScheduleReminderService', () => {
     it('should log success message with appointment ID and reminder time', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -207,7 +236,7 @@ describe('ScheduleReminderService', () => {
 
       // Assert
       expect(mockLogger.log).toHaveBeenCalledWith(
-        `📅 Reminder scheduled for appointment #${mockAppointment.id} at ${mockFutureReminderTime.toISOString()}`
+        `📅 Reminder scheduled for appointment #${mockAppointment.id} at ${mockFutureReminderTime.toISOString()}`,
       );
       expect(mockLogger.warn).not.toHaveBeenCalled();
       expect(mockLogger.error).not.toHaveBeenCalled();
@@ -216,16 +245,23 @@ describe('ScheduleReminderService', () => {
     it('should call dependencies in correct order', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
       await service.execute(mockAppointment);
 
       // Assert call order
-      const validateCallOrder = mockNotificationValidator.validateAppointment.mock.invocationCallOrder[0];
-      const schedulerCallOrder = mockNotificationScheduler.calculateReminderTime.mock.invocationCallOrder[0];
-      const createCallOrder = mockNotificationRepository.create.mock.invocationCallOrder[0];
+      const validateCallOrder =
+        mockNotificationValidator.validateAppointment.mock
+          .invocationCallOrder[0];
+      const schedulerCallOrder =
+        mockNotificationScheduler.calculateReminderTime.mock
+          .invocationCallOrder[0];
+      const createCallOrder =
+        mockNotificationRepository.create.mock.invocationCallOrder[0];
 
       expect(validateCallOrder).toBeLessThan(schedulerCallOrder);
       expect(schedulerCallOrder).toBeLessThan(createCallOrder);
@@ -236,7 +272,9 @@ describe('ScheduleReminderService', () => {
     it('should not create notification when reminder time is in the past', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockPastReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockPastReminderTime,
+      );
 
       // Act
       await service.execute(mockAppointment);
@@ -248,14 +286,16 @@ describe('ScheduleReminderService', () => {
     it('should log warning when reminder time would be in the past', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockPastReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockPastReminderTime,
+      );
 
       // Act
       await service.execute(mockAppointment);
 
       // Assert
       expect(mockLogger.warn).toHaveBeenCalledWith(
-        `⚠️ Cannot schedule reminder for appointment #${mockAppointment.id}: Reminder time would be in the past`
+        `⚠️ Cannot schedule reminder for appointment #${mockAppointment.id}: Reminder time would be in the past`,
       );
       expect(mockLogger.log).not.toHaveBeenCalled();
       expect(mockLogger.error).not.toHaveBeenCalled();
@@ -264,7 +304,9 @@ describe('ScheduleReminderService', () => {
     it('should return early without throwing error when reminder time is past', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockPastReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockPastReminderTime,
+      );
 
       // Act & Assert
       await expect(service.execute(mockAppointment)).resolves.toBeUndefined();
@@ -282,7 +324,9 @@ describe('ScheduleReminderService', () => {
       await expect(service.execute(mockAppointment)).rejects.toThrow(mockError);
 
       // Assert
-      expect(mockNotificationScheduler.calculateReminderTime).not.toHaveBeenCalled();
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).not.toHaveBeenCalled();
       expect(mockNotificationRepository.create).not.toHaveBeenCalled();
     });
 
@@ -301,7 +345,9 @@ describe('ScheduleReminderService', () => {
 
         // Act & Assert
         await expect(service.execute(mockAppointment)).rejects.toThrow(error);
-        expect(mockNotificationScheduler.calculateReminderTime).not.toHaveBeenCalled();
+        expect(
+          mockNotificationScheduler.calculateReminderTime,
+        ).not.toHaveBeenCalled();
         expect(mockNotificationRepository.create).not.toHaveBeenCalled();
 
         jest.clearAllMocks();
@@ -320,7 +366,7 @@ describe('ScheduleReminderService', () => {
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Error scheduling reminder for appointment #${mockAppointment.id}:`,
-        mockError.message
+        mockError.message,
       );
     });
   });
@@ -330,7 +376,9 @@ describe('ScheduleReminderService', () => {
       // Arrange
       const differentReminderTime = new Date('2024-01-15T14:00:00.000Z');
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(differentReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        differentReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -339,8 +387,8 @@ describe('ScheduleReminderService', () => {
       // Assert
       expect(mockNotificationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          send_at: differentReminderTime
-        })
+          send_at: differentReminderTime,
+        }),
       );
     });
 
@@ -356,7 +404,9 @@ describe('ScheduleReminderService', () => {
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       for (const reminderTime of reminderTimeScenarios) {
-        mockNotificationScheduler.calculateReminderTime.mockReturnValue(reminderTime);
+        mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+          reminderTime,
+        );
 
         // Act
         await service.execute(mockAppointment);
@@ -364,8 +414,8 @@ describe('ScheduleReminderService', () => {
         // Assert
         expect(mockNotificationRepository.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            send_at: reminderTime
-          })
+            send_at: reminderTime,
+          }),
         );
 
         jest.clearAllMocks();
@@ -377,7 +427,9 @@ describe('ScheduleReminderService', () => {
     it('should handle repository creation success', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue({
         id: 1,
         appointment_id: mockAppointment.id,
@@ -385,7 +437,7 @@ describe('ScheduleReminderService', () => {
         status: NotificationStatus.PENDING,
         send_at: mockFutureReminderTime,
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       });
 
       // Act & Assert
@@ -398,16 +450,20 @@ describe('ScheduleReminderService', () => {
     it('should handle repository creation failure', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockRejectedValue(mockRepositoryError);
 
       // Act & Assert
-      await expect(service.execute(mockAppointment)).rejects.toThrow(mockRepositoryError);
+      await expect(service.execute(mockAppointment)).rejects.toThrow(
+        mockRepositoryError,
+      );
 
       // Assert error logging
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Error scheduling reminder for appointment #${mockAppointment.id}:`,
-        mockRepositoryError.message
+        mockRepositoryError.message,
       );
     });
   });
@@ -425,7 +481,7 @@ describe('ScheduleReminderService', () => {
       // Assert
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Error scheduling reminder for appointment #${mockAppointment.id}:`,
-        mockError.message
+        mockError.message,
       );
     });
 
@@ -438,11 +494,13 @@ describe('ScheduleReminderService', () => {
       });
 
       // Act & Assert
-      await expect(service.execute(mockAppointment)).rejects.toThrow(originalError);
+      await expect(service.execute(mockAppointment)).rejects.toThrow(
+        originalError,
+      );
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         `❌ Error scheduling reminder for appointment #${mockAppointment.id}:`,
-        originalError.message
+        originalError.message,
       );
     });
   });
@@ -452,7 +510,9 @@ describe('ScheduleReminderService', () => {
       // Arrange
       const appointmentIds = [1, 999, 0, -1, 12345];
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act & Assert
@@ -462,8 +522,8 @@ describe('ScheduleReminderService', () => {
 
         expect(mockNotificationRepository.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            appointment_id: id
-          })
+            appointment_id: id,
+          }),
         );
 
         jest.clearAllMocks();
@@ -476,30 +536,38 @@ describe('ScheduleReminderService', () => {
         id: 123,
         tanggal_janji: new Date('2024-01-16T10:00:00.000Z'),
         jam_janji: '10:00',
-        status: AppointmentStatus.DIJADWALKAN
+        status: AppointmentStatus.DIJADWALKAN,
       } as Appointment;
 
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
       await service.execute(minimalAppointment);
 
       // Assert
-      expect(mockNotificationValidator.validateAppointment).toHaveBeenCalledWith(minimalAppointment);
-      expect(mockNotificationScheduler.calculateReminderTime).toHaveBeenCalledWith(minimalAppointment);
+      expect(
+        mockNotificationValidator.validateAppointment,
+      ).toHaveBeenCalledWith(minimalAppointment);
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).toHaveBeenCalledWith(minimalAppointment);
     });
 
     it('should handle very future appointment dates', async () => {
       // Arrange
       const futureAppointment = {
         ...mockAppointment,
-        tanggal_janji: new Date('2030-01-01T10:00:00.000Z') // Far future
+        tanggal_janji: new Date('2030-01-01T10:00:00.000Z'), // Far future
       };
 
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(new Date('2029-12-31T10:00:00.000Z'));
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        new Date('2029-12-31T10:00:00.000Z'),
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -513,7 +581,7 @@ describe('ScheduleReminderService', () => {
       // Arrange
       const recentAppointment = {
         ...mockAppointment,
-        tanggal_janji: new Date(Date.now() + 30 * 60 * 1000) // 30 minutes from now
+        tanggal_janji: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes from now
       };
 
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
@@ -532,7 +600,9 @@ describe('ScheduleReminderService', () => {
     it('should always use EMAIL_REMINDER type', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -541,15 +611,17 @@ describe('ScheduleReminderService', () => {
       // Assert
       expect(mockNotificationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          type: NotificationType.EMAIL_REMINDER
-        })
+          type: NotificationType.EMAIL_REMINDER,
+        }),
       );
     });
 
     it('should always use PENDING status', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -558,15 +630,17 @@ describe('ScheduleReminderService', () => {
       // Assert
       expect(mockNotificationRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          status: NotificationStatus.PENDING
-        })
+          status: NotificationStatus.PENDING,
+        }),
       );
     });
 
     it('should not include unnecessary fields in create payload', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act
@@ -577,7 +651,12 @@ describe('ScheduleReminderService', () => {
       const payloadKeys = Object.keys(createPayload);
 
       expect(payloadKeys).toHaveLength(4);
-      expect(payloadKeys).toEqual(['appointment_id', 'type', 'status', 'send_at']);
+      expect(payloadKeys).toEqual([
+        'appointment_id',
+        'type',
+        'status',
+        'send_at',
+      ]);
     });
   });
 
@@ -592,7 +671,9 @@ describe('ScheduleReminderService', () => {
       await expect(service.execute(mockAppointment)).rejects.toThrow(mockError);
 
       // Assert
-      expect(mockNotificationScheduler.calculateReminderTime).not.toHaveBeenCalled();
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).not.toHaveBeenCalled();
       expect(mockNotificationRepository.create).not.toHaveBeenCalled();
     });
 
@@ -611,7 +692,9 @@ describe('ScheduleReminderService', () => {
     it('should complete entire flow successfully when all conditions are met', async () => {
       // Arrange
       mockNotificationValidator.validateAppointment.mockReturnValue(undefined);
-      mockNotificationScheduler.calculateReminderTime.mockReturnValue(mockFutureReminderTime);
+      mockNotificationScheduler.calculateReminderTime.mockReturnValue(
+        mockFutureReminderTime,
+      );
       mockNotificationRepository.create.mockResolvedValue(undefined);
 
       // Act & Assert
@@ -619,7 +702,9 @@ describe('ScheduleReminderService', () => {
 
       // Assert all dependencies were called
       expect(mockNotificationValidator.validateAppointment).toHaveBeenCalled();
-      expect(mockNotificationScheduler.calculateReminderTime).toHaveBeenCalled();
+      expect(
+        mockNotificationScheduler.calculateReminderTime,
+      ).toHaveBeenCalled();
       expect(mockNotificationRepository.create).toHaveBeenCalled();
       expect(mockLogger.log).toHaveBeenCalled();
     });

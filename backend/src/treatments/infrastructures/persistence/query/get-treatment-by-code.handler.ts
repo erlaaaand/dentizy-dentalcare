@@ -9,20 +9,20 @@ import { TreatmentResponseDto } from '../../../applications/dto/treatment-respon
 @Injectable()
 @QueryHandler(GetTreatmentByCodeQuery)
 export class GetTreatmentByCodeHandler implements IQueryHandler<GetTreatmentByCodeQuery> {
-    constructor(
-        private readonly repository: TreatmentRepository,
-        private readonly mapper: TreatmentMapper,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentRepository,
+    private readonly mapper: TreatmentMapper,
+  ) {}
 
-    async execute(query: GetTreatmentByCodeQuery): Promise<TreatmentResponseDto> {
-        const treatment = await this.repository.findByKode(query.kodePerawatan);
+  async execute(query: GetTreatmentByCodeQuery): Promise<TreatmentResponseDto> {
+    const treatment = await this.repository.findByKode(query.kodePerawatan);
 
-        if (!treatment) {
-            throw new NotFoundException(
-                `Perawatan dengan kode ${query.kodePerawatan} tidak ditemukan`,
-            );
-        }
-
-        return this.mapper.toResponseDto(treatment);
+    if (!treatment) {
+      throw new NotFoundException(
+        `Perawatan dengan kode ${query.kodePerawatan} tidak ditemukan`,
+      );
     }
+
+    return this.mapper.toResponseDto(treatment);
+  }
 }

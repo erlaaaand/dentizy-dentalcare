@@ -35,7 +35,11 @@ describe('TransactionManager', () => {
     it('should connect, start, commit, and release transaction', async () => {
       const operation = jest.fn().mockResolvedValue('success');
 
-      await transactionManager.executeInTransaction(queryRunner, operation, 'test-op');
+      await transactionManager.executeInTransaction(
+        queryRunner,
+        operation,
+        'test-op',
+      );
 
       expect(queryRunner.connect).toHaveBeenCalled();
       expect(queryRunner.startTransaction).toHaveBeenCalled();
@@ -50,7 +54,7 @@ describe('TransactionManager', () => {
       const result = await transactionManager.executeInTransaction(
         queryRunner,
         operation,
-        'test-op'
+        'test-op',
       );
 
       expect(result).toBe('test-result');
@@ -60,10 +64,16 @@ describe('TransactionManager', () => {
       const operation = jest.fn().mockResolvedValue('success');
       const debugSpy = jest.spyOn(Logger.prototype, 'debug');
 
-      await transactionManager.executeInTransaction(queryRunner, operation, 'test-op');
+      await transactionManager.executeInTransaction(
+        queryRunner,
+        operation,
+        'test-op',
+      );
 
       expect(debugSpy).toHaveBeenCalledWith('🔄 Starting transaction: test-op');
-      expect(debugSpy).toHaveBeenCalledWith('✅ Transaction committed: test-op');
+      expect(debugSpy).toHaveBeenCalledWith(
+        '✅ Transaction committed: test-op',
+      );
       expect(debugSpy).toHaveBeenCalledWith('🔌 Connection released: test-op');
     });
 
@@ -72,7 +82,11 @@ describe('TransactionManager', () => {
       const operation = jest.fn().mockRejectedValue(error);
 
       await expect(
-        transactionManager.executeInTransaction(queryRunner, operation, 'test-op')
+        transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        ),
       ).rejects.toThrow('Operation failed');
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
@@ -86,23 +100,33 @@ describe('TransactionManager', () => {
       const errorSpy = jest.spyOn(Logger.prototype, 'error');
 
       try {
-        await transactionManager.executeInTransaction(queryRunner, operation, 'test-op');
+        await transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        );
       } catch (e) {
         // Expected error
       }
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Transaction rolled back: test-op',
-        error.stack
+        error.stack,
       );
     });
 
     it('should release connection even if commit fails', async () => {
       const operation = jest.fn().mockResolvedValue('success');
-      queryRunner.commitTransaction.mockRejectedValue(new Error('Commit failed'));
+      queryRunner.commitTransaction.mockRejectedValue(
+        new Error('Commit failed'),
+      );
 
       try {
-        await transactionManager.executeInTransaction(queryRunner, operation, 'test-op');
+        await transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        );
       } catch (e) {
         // Expected error
       }
@@ -120,7 +144,7 @@ describe('TransactionManager', () => {
       const results = await transactionManager.executeMultiple(
         queryRunner,
         [op1, op2, op3],
-        'multi-op'
+        'multi-op',
       );
 
       expect(queryRunner.connect).toHaveBeenCalled();
@@ -138,7 +162,11 @@ describe('TransactionManager', () => {
       const op3 = jest.fn().mockResolvedValue('result3');
 
       await expect(
-        transactionManager.executeMultiple(queryRunner, [op1, op2, op3], 'multi-op')
+        transactionManager.executeMultiple(
+          queryRunner,
+          [op1, op2, op3],
+          'multi-op',
+        ),
       ).rejects.toThrow('Op2 failed');
 
       expect(queryRunner.rollbackTransaction).toHaveBeenCalled();
@@ -152,16 +180,28 @@ describe('TransactionManager', () => {
       ];
       const debugSpy = jest.spyOn(Logger.prototype, 'debug');
 
-      await transactionManager.executeMultiple(queryRunner, operations, 'multi-op');
+      await transactionManager.executeMultiple(
+        queryRunner,
+        operations,
+        'multi-op',
+      );
 
-      expect(debugSpy).toHaveBeenCalledWith('🔄 Starting multiple operations: multi-op');
-      expect(debugSpy).toHaveBeenCalledWith('✅ All operations committed: multi-op');
+      expect(debugSpy).toHaveBeenCalledWith(
+        '🔄 Starting multiple operations: multi-op',
+      );
+      expect(debugSpy).toHaveBeenCalledWith(
+        '✅ All operations committed: multi-op',
+      );
     });
 
     it('should release connection after multiple operations', async () => {
       const operations = [jest.fn().mockResolvedValue('result')];
 
-      await transactionManager.executeMultiple(queryRunner, operations, 'multi-op');
+      await transactionManager.executeMultiple(
+        queryRunner,
+        operations,
+        'multi-op',
+      );
 
       expect(queryRunner.release).toHaveBeenCalled();
     });
@@ -175,7 +215,7 @@ describe('TransactionManager', () => {
         queryRunner,
         operation,
         3,
-        'retry-op'
+        'retry-op',
       );
 
       expect(result).toBe('success');
@@ -195,7 +235,7 @@ describe('TransactionManager', () => {
         queryRunner,
         operation,
         3,
-        'retry-op'
+        'retry-op',
       );
 
       expect(result).toBe('success');
@@ -213,9 +253,16 @@ describe('TransactionManager', () => {
 
       const warnSpy = jest.spyOn(Logger.prototype, 'warn');
 
-      await transactionManager.executeWithRetry(queryRunner, operation, 3, 'retry-op');
+      await transactionManager.executeWithRetry(
+        queryRunner,
+        operation,
+        3,
+        'retry-op',
+      );
 
-      expect(warnSpy).toHaveBeenCalledWith('⚠️ Deadlock detected, retrying... (1/3)');
+      expect(warnSpy).toHaveBeenCalledWith(
+        '⚠️ Deadlock detected, retrying... (1/3)',
+      );
     });
 
     it('should fail after max retries', async () => {
@@ -225,7 +272,12 @@ describe('TransactionManager', () => {
       const operation = jest.fn().mockRejectedValue(deadlockError);
 
       await expect(
-        transactionManager.executeWithRetry(queryRunner, operation, 3, 'retry-op')
+        transactionManager.executeWithRetry(
+          queryRunner,
+          operation,
+          3,
+          'retry-op',
+        ),
       ).rejects.toThrow('Deadlock detected');
 
       expect(operation).toHaveBeenCalledTimes(3);
@@ -236,7 +288,12 @@ describe('TransactionManager', () => {
       const operation = jest.fn().mockRejectedValue(normalError);
 
       await expect(
-        transactionManager.executeWithRetry(queryRunner, operation, 3, 'retry-op')
+        transactionManager.executeWithRetry(
+          queryRunner,
+          operation,
+          3,
+          'retry-op',
+        ),
       ).rejects.toThrow('Normal error');
 
       expect(operation).toHaveBeenCalledTimes(1); // No retry
@@ -251,7 +308,12 @@ describe('TransactionManager', () => {
         .mockResolvedValueOnce('success');
 
       const startTime = Date.now();
-      await transactionManager.executeWithRetry(queryRunner, operation, 3, 'retry-op');
+      await transactionManager.executeWithRetry(
+        queryRunner,
+        operation,
+        3,
+        'retry-op',
+      );
       const duration = Date.now() - startTime;
 
       // Should wait ~200ms (2^1 * 100) + ~400ms (2^2 * 100) = ~600ms minimum
@@ -270,7 +332,7 @@ describe('TransactionManager', () => {
         queryRunner,
         operation,
         3,
-        'retry-op'
+        'retry-op',
       );
 
       expect(result).toBe('success');
@@ -286,14 +348,18 @@ describe('TransactionManager', () => {
       const errorSpy = jest.spyOn(Logger.prototype, 'error');
 
       try {
-        await transactionManager.executeInTransaction(queryRunner, operation, 'test-op');
+        await transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        );
       } catch (e) {
         // Expected
       }
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Transaction rolled back: test-op',
-        undefined
+        undefined,
       );
     });
 
@@ -302,7 +368,11 @@ describe('TransactionManager', () => {
       const operation = jest.fn();
 
       await expect(
-        transactionManager.executeInTransaction(queryRunner, operation, 'test-op')
+        transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        ),
       ).rejects.toThrow('Connection failed');
 
       expect(operation).not.toHaveBeenCalled();
@@ -311,10 +381,16 @@ describe('TransactionManager', () => {
 
     it('should handle rollback failure', async () => {
       const operation = jest.fn().mockRejectedValue(new Error('Op failed'));
-      queryRunner.rollbackTransaction.mockRejectedValue(new Error('Rollback failed')); // simulate rollback failure
+      queryRunner.rollbackTransaction.mockRejectedValue(
+        new Error('Rollback failed'),
+      ); // simulate rollback failure
 
       await expect(
-        transactionManager.executeInTransaction(queryRunner, operation, 'test-op')
+        transactionManager.executeInTransaction(
+          queryRunner,
+          operation,
+          'test-op',
+        ),
       ).rejects.toThrow('Op failed'); // original error tetap dilempar
 
       expect(queryRunner.release).toHaveBeenCalled();
@@ -326,11 +402,11 @@ describe('TransactionManager', () => {
       const executionOrder: number[] = [];
       const op1 = jest.fn(async () => {
         executionOrder.push(1);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       });
       const op2 = jest.fn(async () => {
         executionOrder.push(2);
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       });
       const op3 = jest.fn(async () => {
         executionOrder.push(3);
@@ -339,7 +415,7 @@ describe('TransactionManager', () => {
       await transactionManager.executeMultiple(
         queryRunner,
         [op1, op2, op3],
-        'sequential-test'
+        'sequential-test',
       );
 
       expect(executionOrder).toEqual([1, 2, 3]);

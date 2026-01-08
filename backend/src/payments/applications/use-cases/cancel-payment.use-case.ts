@@ -10,44 +10,44 @@ import { StatusPembayaran } from '../../domains/entities/payments.entity';
 
 @Injectable()
 export class CancelPaymentUseCase {
-    constructor(
-        private readonly paymentRepository: PaymentRepository,
-        private readonly paymentMapper: PaymentMapper,
-        private readonly validatorService: PaymentValidatorService,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly paymentMapper: PaymentMapper,
+    private readonly validatorService: PaymentValidatorService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number, cancelledBy?: number): Promise<PaymentResponseDto> {
-        const payment = await this.paymentRepository.findOne(id);
+  async execute(id: number, cancelledBy?: number): Promise<PaymentResponseDto> {
+    const payment = await this.paymentRepository.findOne(id);
 
-        if (!payment) {
-            throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
-        }
-
-        // Validate for cancellation
-        this.validatorService.validateForCancellation(payment);
-
-        // Cancel payment
-        const cancelledPayment = await this.paymentRepository.update(
-            id,
-            { statusPembayaran: StatusPembayaran.DIBATALKAN },
-            cancelledBy,
-        );
-
-        const response = this.paymentMapper.toResponseDto(cancelledPayment);
-
-        // Emit cancelled event
-        this.eventEmitter.emit(
-            'payment.cancelled',
-            new PaymentCancelledEvent(
-                cancelledPayment.id,
-                cancelledPayment.medicalRecordId,
-                cancelledPayment.nomorInvoice,
-                Number(cancelledPayment.totalAkhir),
-                cancelledBy,
-            ),
-        );
-
-        return response;
+    if (!payment) {
+      throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
     }
+
+    // Validate for cancellation
+    this.validatorService.validateForCancellation(payment);
+
+    // Cancel payment
+    const cancelledPayment = await this.paymentRepository.update(
+      id,
+      { statusPembayaran: StatusPembayaran.DIBATALKAN },
+      cancelledBy,
+    );
+
+    const response = this.paymentMapper.toResponseDto(cancelledPayment);
+
+    // Emit cancelled event
+    this.eventEmitter.emit(
+      'payment.cancelled',
+      new PaymentCancelledEvent(
+        cancelledPayment.id,
+        cancelledPayment.medicalRecordId,
+        cancelledPayment.nomorInvoice,
+        Number(cancelledPayment.totalAkhir),
+        cancelledBy,
+      ),
+    );
+
+    return response;
+  }
 }

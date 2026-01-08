@@ -3,4 +3,3 @@ describe('role.entity.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

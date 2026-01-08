@@ -10,65 +10,73 @@ import { TreatmentCategoryQueries } from '../query/treatment-category.queries';
 
 @Injectable()
 export class TreatmentCategoryRepository {
-    constructor(
-        @InjectRepository(TreatmentCategory)
-        private readonly repository: Repository<TreatmentCategory>,
-        private readonly queries: TreatmentCategoryQueries,
-    ) { }
+  constructor(
+    @InjectRepository(TreatmentCategory)
+    private readonly repository: Repository<TreatmentCategory>,
+    private readonly queries: TreatmentCategoryQueries,
+  ) {}
 
-    async create(dto: CreateTreatmentCategoryDto): Promise<TreatmentCategory> {
-        const category = this.repository.create(dto);
-        return await this.repository.save(category);
-    }
+  async create(dto: CreateTreatmentCategoryDto): Promise<TreatmentCategory> {
+    const category = this.repository.create(dto);
+    return await this.repository.save(category);
+  }
 
-    async findAll(query: QueryTreatmentCategoryDto): Promise<{ data: TreatmentCategory[]; total: number }> {
-        return await this.queries.findAllWithFilters(query);
-    }
+  async findAll(
+    query: QueryTreatmentCategoryDto,
+  ): Promise<{ data: TreatmentCategory[]; total: number }> {
+    return await this.queries.findAllWithFilters(query);
+  }
 
-    async findOne(id: number): Promise<TreatmentCategory | null> {
-        return await this.queries.findById(id);
-    }
+  async findOne(id: number): Promise<TreatmentCategory | null> {
+    return await this.queries.findById(id);
+  }
 
-    async findByName(name: string): Promise<TreatmentCategory | null> {
-        return await this.queries.findByName(name);
-    }
+  async findByName(name: string): Promise<TreatmentCategory | null> {
+    return await this.queries.findByName(name);
+  }
 
-    async findActiveCategories(): Promise<TreatmentCategory[]> {
-        return await this.queries.findActiveCategories();
-    }
+  async findActiveCategories(): Promise<TreatmentCategory[]> {
+    return await this.queries.findActiveCategories();
+  }
 
-    async update(id: number, dto: UpdateTreatmentCategoryDto): Promise<TreatmentCategory | null> {
-        await this.repository.update(id, dto);
-        return await this.findOne(id);
-    }
+  async update(
+    id: number,
+    dto: UpdateTreatmentCategoryDto,
+  ): Promise<TreatmentCategory | null> {
+    await this.repository.update(id, dto);
+    return await this.findOne(id);
+  }
 
-    async softDelete(id: number): Promise<void> {
-        await this.repository.softDelete(id);
-    }
+  async softDelete(id: number): Promise<void> {
+    await this.repository.softDelete(id);
+  }
 
-    async restore(id: number): Promise<void> {
-        await this.repository.restore(id);
-    }
+  async restore(id: number): Promise<void> {
+    await this.repository.restore(id);
+  }
 
-    async exists(id: number): Promise<boolean> {
-        const count = await this.repository.count({ where: { id } });
-        return count > 0;
-    }
+  async exists(id: number): Promise<boolean> {
+    const count = await this.repository.count({ where: { id } });
+    return count > 0;
+  }
 
-    async hasActiveTreatments(categoryId: number): Promise<boolean> {
-        const count = await this.queries.countTreatmentsByCategory(categoryId);
-        return count > 0;
-    }
+  async hasActiveTreatments(categoryId: number): Promise<boolean> {
+    const count = await this.queries.countTreatmentsByCategory(categoryId);
+    return count > 0;
+  }
 
-    async countTreatments(categoryId: number): Promise<number> {
-        return await this.queries.countTreatmentsByCategory(categoryId);
-    }
+  async countTreatments(categoryId: number): Promise<number> {
+    return await this.queries.countTreatmentsByCategory(categoryId);
+  }
 
-    async getCategoriesWithCount(): Promise<any[]> {
-        return await this.queries.getCategoriesWithTreatmentCount();
-    }
+  async getCategoriesWithCount(): Promise<any[]> {
+    return await this.queries.getCategoriesWithTreatmentCount();
+  }
 
-    async searchByKeyword(keyword: string, limit?: number): Promise<TreatmentCategory[]> {
-        return await this.queries.searchByKeyword(keyword, limit);
-    }
+  async searchByKeyword(
+    keyword: string,
+    limit?: number,
+  ): Promise<TreatmentCategory[]> {
+    return await this.queries.searchByKeyword(keyword, limit);
+  }
 }

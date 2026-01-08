@@ -7,7 +7,10 @@ import { DataSource } from 'typeorm';
 import { MedicalRecordUpdateService } from '../medical-record-update.service';
 import { UpdateMedicalRecordDto } from '../../../applications/dto/update-medical-record.dto';
 import { MedicalRecord } from '../../../domains/entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { MedicalRecordMapper } from '../../../domains/mappers/medical-record.mappers';
 import { MedicalRecordDomainService } from '../../../domains/services/medical-record-domain.service';
@@ -18,12 +21,13 @@ import { UserRole } from '../../../../roles/entities/role.entity';
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockUser = (id: number = 2): User => ({
-  id,
-  nama_lengkap: 'Dr. Test',
-  username: 'dr.test',
-  roles: [{ id: 1, name: UserRole.DOKTER, description: 'Doctor' }],
-} as User);
+const createMockUser = (id: number = 2): User =>
+  ({
+    id,
+    nama_lengkap: 'Dr. Test',
+    username: 'dr.test',
+    roles: [{ id: 1, name: UserRole.DOKTER, description: 'Doctor' }],
+  }) as User;
 
 const createMockUpdateDto = (): UpdateMedicalRecordDto => ({
   subjektif: 'Updated subjektif',
@@ -32,23 +36,24 @@ const createMockUpdateDto = (): UpdateMedicalRecordDto => ({
   plan: 'Updated plan',
 });
 
-const createMockMedicalRecord = (): MedicalRecord => ({
-  id: 1,
-  appointment_id: 10,
-  doctor_id: 2,
-  patient_id: 3,
-  subjektif: 'Old subjektif',
-  objektif: 'Old objektif',
-  assessment: 'Old assessment',
-  plan: 'Old plan',
-  created_at: new Date(),
-  updated_at: new Date(),
-  appointment: {
-    id: 10,
+const createMockMedicalRecord = (): MedicalRecord =>
+  ({
+    id: 1,
+    appointment_id: 10,
     doctor_id: 2,
-    status: AppointmentStatus.DIJADWALKAN,
-  } as Appointment,
-} as MedicalRecord);
+    patient_id: 3,
+    subjektif: 'Old subjektif',
+    objektif: 'Old objektif',
+    assessment: 'Old assessment',
+    plan: 'Old plan',
+    created_at: new Date(),
+    updated_at: new Date(),
+    appointment: {
+      id: 10,
+      doctor_id: 2,
+      status: AppointmentStatus.DIJADWALKAN,
+    } as Appointment,
+  }) as MedicalRecord;
 
 // ============================================================================
 // TEST SUITE
@@ -115,11 +120,17 @@ describe('MedicalRecordUpdateService', () => {
       ],
     }).compile();
 
-    service = module.get<MedicalRecordUpdateService>(MedicalRecordUpdateService);
+    service = module.get<MedicalRecordUpdateService>(
+      MedicalRecordUpdateService,
+    );
     dataSource = module.get<DataSource>(DataSource);
     mapper = module.get<MedicalRecordMapper>(MedicalRecordMapper);
-    domainService = module.get<MedicalRecordDomainService>(MedicalRecordDomainService);
-    authService = module.get<MedicalRecordAuthorizationService>(MedicalRecordAuthorizationService);
+    domainService = module.get<MedicalRecordDomainService>(
+      MedicalRecordDomainService,
+    );
+    authService = module.get<MedicalRecordAuthorizationService>(
+      MedicalRecordAuthorizationService,
+    );
     validator = module.get<MedicalRecordValidator>(MedicalRecordValidator);
 
     // Reset mocks
@@ -146,7 +157,11 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated' };
-      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
+      const mergedRecord = Object.assign(
+        new MedicalRecord(),
+        existingRecord,
+        updateData,
+      );
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -155,8 +170,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       const result = await service.execute(id, dto, user);
 
@@ -173,8 +192,9 @@ describe('MedicalRecordUpdateService', () => {
 
       mockManager.findOne.mockResolvedValue(null);
 
-      await expect(service.execute(id, dto, user))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.execute(id, dto, user)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should validate ID', async () => {
@@ -209,15 +229,18 @@ describe('MedicalRecordUpdateService', () => {
 
       mockManager.findOne.mockResolvedValue(existingRecord);
 
-      jest.spyOn(authService, 'validateUpdatePermission')
+      jest
+        .spyOn(authService, 'validateUpdatePermission')
         .mockImplementation(() => {
           throw new Error('No permission');
         });
 
       await expect(service.execute(id, dto, user)).rejects.toThrow();
 
-      expect(authService.validateUpdatePermission)
-        .toHaveBeenCalledWith(user, existingRecord);
+      expect(authService.validateUpdatePermission).toHaveBeenCalledWith(
+        user,
+        existingRecord,
+      );
     });
 
     it('should validate appointment for update', async () => {
@@ -228,15 +251,17 @@ describe('MedicalRecordUpdateService', () => {
 
       mockManager.findOne.mockResolvedValue(existingRecord);
 
-      jest.spyOn(domainService, 'validateAppointmentForUpdate')
+      jest
+        .spyOn(domainService, 'validateAppointmentForUpdate')
         .mockImplementation(() => {
           throw new Error('Invalid appointment');
         });
 
       await expect(service.execute(id, dto, user)).rejects.toThrow();
 
-      expect(domainService.validateAppointmentForUpdate)
-        .toHaveBeenCalledWith(existingRecord.appointment);
+      expect(domainService.validateAppointmentForUpdate).toHaveBeenCalledWith(
+        existingRecord.appointment,
+      );
     });
 
     it('should map update DTO to entity', async () => {
@@ -253,8 +278,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(existingRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(existingRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(existingRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       await service.execute(id, dto, user);
 
@@ -271,15 +300,17 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.findOne.mockResolvedValue(existingRecord);
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
 
-      jest.spyOn(domainService, 'validateUpdateHasChanges')
+      jest
+        .spyOn(domainService, 'validateUpdateHasChanges')
         .mockImplementation(() => {
           throw new Error('No changes');
         });
 
       await expect(service.execute(id, dto, user)).rejects.toThrow();
 
-      expect(domainService.validateUpdateHasChanges)
-        .toHaveBeenCalledWith(updateData);
+      expect(domainService.validateUpdateHasChanges).toHaveBeenCalledWith(
+        updateData,
+      );
     });
 
     it('should validate SOAP fields', async () => {
@@ -292,15 +323,17 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.findOne.mockResolvedValue(existingRecord);
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
 
-      jest.spyOn(domainService, 'validateAllSOAPFields')
+      jest
+        .spyOn(domainService, 'validateAllSOAPFields')
         .mockImplementation(() => {
           throw new Error('Invalid SOAP');
         });
 
       await expect(service.execute(id, dto, user)).rejects.toThrow();
 
-      expect(domainService.validateAllSOAPFields)
-        .toHaveBeenCalledWith(updateData);
+      expect(domainService.validateAllSOAPFields).toHaveBeenCalledWith(
+        updateData,
+      );
     });
 
     it('should merge update data with existing record', async () => {
@@ -309,8 +342,11 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated' };
-      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
-
+      const mergedRecord = Object.assign(
+        new MedicalRecord(),
+        existingRecord,
+        updateData,
+      );
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -319,13 +355,19 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       await service.execute(id, dto, user);
 
-      expect(domainService.mergeUpdateData)
-        .toHaveBeenCalledWith(existingRecord, updateData);
+      expect(domainService.mergeUpdateData).toHaveBeenCalledWith(
+        existingRecord,
+        updateData,
+      );
     });
 
     it('should save updated record', async () => {
@@ -342,12 +384,19 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       await service.execute(id, dto, user);
 
-      expect(mockManager.save).toHaveBeenCalledWith(MedicalRecord, mergedRecord);
+      expect(mockManager.save).toHaveBeenCalledWith(
+        MedicalRecord,
+        mergedRecord,
+      );
     });
 
     it('should update appointment status to SELESAI', async () => {
@@ -364,13 +413,20 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(true);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(true);
 
       await service.execute(id, dto, user);
 
       expect(existingRecord.appointment.status).toBe(AppointmentStatus.SELESAI);
-      expect(mockManager.save).toHaveBeenCalledWith(Appointment, existingRecord.appointment);
+      expect(mockManager.save).toHaveBeenCalledWith(
+        Appointment,
+        existingRecord.appointment,
+      );
     });
 
     it('should not update appointment status if already SELESAI', async () => {
@@ -388,8 +444,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       await service.execute(id, dto, user);
 
@@ -411,8 +471,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(savedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(existingRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(existingRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       const result = await service.execute(id, dto, user);
 
@@ -434,11 +498,16 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(savedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(existingRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(existingRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
-      await expect(service.execute(id, dto, user))
-        .rejects.toThrow(NotFoundException);
+      await expect(service.execute(id, dto, user)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -454,7 +523,11 @@ describe('MedicalRecordUpdateService', () => {
       const user = createMockUser();
       const existingRecord = createMockMedicalRecord();
       const updateData = { subjektif: 'Updated subjektif only' };
-      const mergedRecord = Object.assign(new MedicalRecord(), existingRecord, updateData);
+      const mergedRecord = Object.assign(
+        new MedicalRecord(),
+        existingRecord,
+        updateData,
+      );
 
       mockManager.findOne
         .mockResolvedValueOnce(existingRecord)
@@ -463,8 +536,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(mergedRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue(updateData as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(mergedRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(mergedRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       const result = await service.execute(id, dto, user);
 
@@ -479,7 +556,8 @@ describe('MedicalRecordUpdateService', () => {
 
       mockManager.findOne.mockResolvedValue(existingRecord);
 
-      jest.spyOn(authService, 'validateUpdatePermission')
+      jest
+        .spyOn(authService, 'validateUpdatePermission')
         .mockImplementation(() => {
           throw new Error('No permission');
         });
@@ -496,7 +574,8 @@ describe('MedicalRecordUpdateService', () => {
 
       mockManager.findOne.mockResolvedValue(existingRecord);
 
-      jest.spyOn(domainService, 'validateAppointmentForUpdate')
+      jest
+        .spyOn(domainService, 'validateAppointmentForUpdate')
         .mockImplementation(() => {
           throw new Error('Cannot update cancelled');
         });
@@ -522,8 +601,12 @@ describe('MedicalRecordUpdateService', () => {
       mockManager.save.mockResolvedValue(existingRecord);
 
       jest.spyOn(mapper, 'toUpdateEntity').mockReturnValue({} as any);
-      jest.spyOn(domainService, 'mergeUpdateData').mockReturnValue(existingRecord);
-      jest.spyOn(domainService, 'shouldUpdateAppointmentStatus').mockReturnValue(false);
+      jest
+        .spyOn(domainService, 'mergeUpdateData')
+        .mockReturnValue(existingRecord);
+      jest
+        .spyOn(domainService, 'shouldUpdateAppointmentStatus')
+        .mockReturnValue(false);
 
       await service.execute(id, dto, user);
 

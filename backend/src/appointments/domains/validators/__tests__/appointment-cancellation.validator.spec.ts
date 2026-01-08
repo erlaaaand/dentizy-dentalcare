@@ -1,7 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { AppointmentCancellationValidator } from '../appointment-cancellation.validator';
-import { Appointment, AppointmentStatus } from '../../entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { UserRole } from '../../../../roles/entities/role.entity';
 
@@ -20,7 +23,13 @@ describe('AppointmentCancellationValidator', () => {
     id: 2,
     username: 'dr.chief',
     nama_lengkap: 'Dr. Chief',
-    roles: [{ id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' } as any],
+    roles: [
+      {
+        id: 2,
+        name: UserRole.KEPALA_KLINIK,
+        description: 'Clinic Head',
+      } as any,
+    ],
   } as User;
 
   const mockDoctorOther: User = {
@@ -36,7 +45,7 @@ describe('AppointmentCancellationValidator', () => {
     }).compile();
 
     validator = module.get<AppointmentCancellationValidator>(
-      AppointmentCancellationValidator
+      AppointmentCancellationValidator,
     );
   });
 
@@ -52,7 +61,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateStatusForCancellation(appointment)
+        validator.validateStatusForCancellation(appointment),
       ).not.toThrow();
     });
 
@@ -63,11 +72,11 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateStatusForCancellation(appointment)
+        validator.validateStatusForCancellation(appointment),
       ).toThrow(ConflictException);
 
       expect(() =>
-        validator.validateStatusForCancellation(appointment)
+        validator.validateStatusForCancellation(appointment),
       ).toThrow('Janji temu yang sudah selesai tidak bisa dibatalkan');
     });
 
@@ -78,11 +87,11 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateStatusForCancellation(appointment)
+        validator.validateStatusForCancellation(appointment),
       ).toThrow(ConflictException);
 
       expect(() =>
-        validator.validateStatusForCancellation(appointment)
+        validator.validateStatusForCancellation(appointment),
       ).toThrow('Janji temu ini sudah dibatalkan sebelumnya');
     });
   });
@@ -99,7 +108,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockDoctor)
+        validator.validateCancellationTiming(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -115,7 +124,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockKepalaKlinik)
+        validator.validateCancellationTiming(appointment, mockKepalaKlinik),
       ).not.toThrow();
     });
 
@@ -130,11 +139,11 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockDoctor)
+        validator.validateCancellationTiming(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockDoctor)
+        validator.validateCancellationTiming(appointment, mockDoctor),
       ).toThrow(/Pembatalan janji temu kurang dari 24 jam/);
     });
 
@@ -166,7 +175,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockDoctor)
+        validator.validateCancellationTiming(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
     });
 
@@ -181,7 +190,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationTiming(appointment, mockDoctor)
+        validator.validateCancellationTiming(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
     });
   });
@@ -194,7 +203,10 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationAuthorization(appointment, mockKepalaKlinik)
+        validator.validateCancellationAuthorization(
+          appointment,
+          mockKepalaKlinik,
+        ),
       ).not.toThrow();
     });
 
@@ -205,7 +217,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationAuthorization(appointment, mockDoctor)
+        validator.validateCancellationAuthorization(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -216,11 +228,11 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationAuthorization(appointment, mockDoctor)
+        validator.validateCancellationAuthorization(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
 
       expect(() =>
-        validator.validateCancellationAuthorization(appointment, mockDoctor)
+        validator.validateCancellationAuthorization(appointment, mockDoctor),
       ).toThrow('Anda tidak memiliki akses ke janji temu ini');
     });
 
@@ -231,7 +243,11 @@ describe('AppointmentCancellationValidator', () => {
         nama_lengkap: 'Dr. Dual',
         roles: [
           { id: 1, name: UserRole.DOKTER, description: 'Doctor' } as any,
-          { id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' } as any,
+          {
+            id: 2,
+            name: UserRole.KEPALA_KLINIK,
+            description: 'Clinic Head',
+          } as any,
         ],
       } as User;
 
@@ -241,7 +257,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellationAuthorization(appointment, dualRoleUser)
+        validator.validateCancellationAuthorization(appointment, dualRoleUser),
       ).not.toThrow();
     });
   });
@@ -260,7 +276,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellation(appointment, mockDoctor)
+        validator.validateCancellation(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -337,7 +353,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellation(appointment, mockKepalaKlinik)
+        validator.validateCancellation(appointment, mockKepalaKlinik),
       ).not.toThrow();
     });
   });
@@ -357,7 +373,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellation(appointment, mockDoctor)
+        validator.validateCancellation(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -374,7 +390,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellation(appointment, mockDoctor)
+        validator.validateCancellation(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -409,7 +425,7 @@ describe('AppointmentCancellationValidator', () => {
       };
 
       expect(() =>
-        validator.validateCancellationTiming(soonAppointment, noRoleUser)
+        validator.validateCancellationTiming(soonAppointment, noRoleUser),
       ).toThrow(ForbiddenException);
     });
   });
@@ -436,7 +452,7 @@ describe('AppointmentCancellationValidator', () => {
 
       // Or use the comprehensive method
       expect(() =>
-        validator.validateCancellation(appointment, mockDoctor)
+        validator.validateCancellation(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -453,7 +469,7 @@ describe('AppointmentCancellationValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCancellation(appointment, mockKepalaKlinik)
+        validator.validateCancellation(appointment, mockKepalaKlinik),
       ).not.toThrow();
     });
   });

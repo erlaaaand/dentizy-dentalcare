@@ -3,23 +3,23 @@ import { ApiProperty } from '@nestjs/swagger';
 import { TreatmentResponseDto } from './treatment-response.dto';
 
 class PaginationMetaDto {
-    @ApiProperty({ example: 1 })
-    page: number;
+  @ApiProperty({ example: 1 })
+  page: number;
 
-    @ApiProperty({ example: 10 })
-    limit: number;
+  @ApiProperty({ example: 10 })
+  limit: number;
 
-    @ApiProperty({ example: 100 })
-    total: number;
+  @ApiProperty({ example: 100 })
+  total: number;
 
-    @ApiProperty({ example: 10 })
-    totalPages: number;
+  @ApiProperty({ example: 10 })
+  totalPages: number;
 }
 
 export class PaginatedTreatmentResponseDto {
-    @ApiProperty({ type: [TreatmentResponseDto] })
-    data: TreatmentResponseDto[];
+  @ApiProperty({ type: [TreatmentResponseDto] })
+  data: TreatmentResponseDto[];
 
-    @ApiProperty({ type: PaginationMetaDto })
-    meta: PaginationMetaDto;
+  @ApiProperty({ type: PaginationMetaDto })
+  meta: PaginationMetaDto;
 }

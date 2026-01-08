@@ -135,9 +135,15 @@ describe('AppointmentUpdateService', () => {
     service = module.get<AppointmentUpdateService>(AppointmentUpdateService);
     repository = module.get<AppointmentsRepository>(AppointmentsRepository);
     validator = module.get<AppointmentValidator>(AppointmentValidator);
-    timeValidator = module.get<AppointmentTimeValidator>(AppointmentTimeValidator);
-    conflictValidator = module.get<AppointmentConflictValidator>(AppointmentConflictValidator);
-    domainService = module.get<AppointmentDomainService>(AppointmentDomainService);
+    timeValidator = module.get<AppointmentTimeValidator>(
+      AppointmentTimeValidator,
+    );
+    conflictValidator = module.get<AppointmentConflictValidator>(
+      AppointmentConflictValidator,
+    );
+    domainService = module.get<AppointmentDomainService>(
+      AppointmentDomainService,
+    );
     transactionManager = module.get<TransactionManager>(TransactionManager);
     eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
@@ -155,42 +161,75 @@ describe('AppointmentUpdateService', () => {
       const appointmentId = 1;
       const mockQueryRunner: any = {};
 
-      jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-      jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-        async (queryRunner, callback, operationName) => {
+      jest
+        .spyOn(repository, 'createQueryRunner')
+        .mockReturnValue(mockQueryRunner);
+      jest
+        .spyOn(transactionManager, 'executeInTransaction')
+        .mockImplementation(async (queryRunner, callback, operationName) => {
           return await callback(queryRunner);
-        }
-      );
-      jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        });
+      jest
+        .spyOn(repository, 'findByIdInTransaction')
+        .mockResolvedValue(mockAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForUpdate')
+        .mockImplementation(() => {});
       jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(false);
-      jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-      jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+      jest
+        .spyOn(domainService, 'updateAppointmentEntity')
+        .mockReturnValue(mockUpdatedAppointment);
+      jest
+        .spyOn(repository, 'updateInTransaction')
+        .mockResolvedValue(mockUpdatedAppointment);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
       // Act
-      const result = await service.execute(appointmentId, mockUpdateAppointmentDto);
+      const result = await service.execute(
+        appointmentId,
+        mockUpdateAppointmentDto,
+      );
 
       // Assert
       expect(repository.createQueryRunner).toHaveBeenCalled();
       expect(transactionManager.executeInTransaction).toHaveBeenCalledWith(
         mockQueryRunner,
         expect.any(Function),
-        'update-appointment'
+        'update-appointment',
       );
-      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(mockQueryRunner, appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateStatusForUpdate).toHaveBeenCalledWith(mockAppointment);
-      expect(domainService.isTimeUpdated).toHaveBeenCalledWith(mockUpdateAppointmentDto);
+      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(
+        mockQueryRunner,
+        appointmentId,
+      );
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateStatusForUpdate).toHaveBeenCalledWith(
+        mockAppointment,
+      );
+      expect(domainService.isTimeUpdated).toHaveBeenCalledWith(
+        mockUpdateAppointmentDto,
+      );
       expect(timeValidator.validateDateNotInPast).not.toHaveBeenCalled();
       expect(timeValidator.validateWorkingHours).not.toHaveBeenCalled();
-      expect(conflictValidator.validateNoConflictForUpdate).not.toHaveBeenCalled();
-      expect(domainService.updateAppointmentEntity).toHaveBeenCalledWith(mockAppointment, mockUpdateAppointmentDto);
-      expect(repository.updateInTransaction).toHaveBeenCalledWith(mockQueryRunner, mockUpdatedAppointment);
+      expect(
+        conflictValidator.validateNoConflictForUpdate,
+      ).not.toHaveBeenCalled();
+      expect(domainService.updateAppointmentEntity).toHaveBeenCalledWith(
+        mockAppointment,
+        mockUpdateAppointmentDto,
+      );
+      expect(repository.updateInTransaction).toHaveBeenCalledWith(
+        mockQueryRunner,
+        mockUpdatedAppointment,
+      );
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'appointment.updated',
-        expect.any(AppointmentUpdatedEvent)
+        expect.any(AppointmentUpdatedEvent),
       );
       expect(result).toEqual(mockUpdatedAppointment);
     });
@@ -202,52 +241,78 @@ describe('AppointmentUpdateService', () => {
       const appointmentDate = new Date('2024-12-26');
       appointmentDate.setHours(0, 0, 0, 0);
 
-      jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-      jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-        async (queryRunner, callback) => await callback(queryRunner)
-      );
-      jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+      jest
+        .spyOn(repository, 'createQueryRunner')
+        .mockReturnValue(mockQueryRunner);
+      jest
+        .spyOn(transactionManager, 'executeInTransaction')
+        .mockImplementation(
+          async (queryRunner, callback) => await callback(queryRunner),
+        );
+      jest
+        .spyOn(repository, 'findByIdInTransaction')
+        .mockResolvedValue(mockAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForUpdate')
+        .mockImplementation(() => {});
       jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-      jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-      jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => { });
+      jest
+        .spyOn(timeValidator, 'validateDateNotInPast')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(timeValidator, 'validateWorkingHours')
+        .mockImplementation(() => {});
       jest.spyOn(timeValidator, 'calculateBufferWindow').mockReturnValue({
         bufferStart: mockBufferStart,
         bufferEnd: mockBufferEnd,
         appointmentDateTime: mockAppointmentDate,
       });
-      jest.spyOn(conflictValidator, 'validateNoConflictForUpdate').mockResolvedValue(undefined);
-      jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedTimeAppointment);
-      jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedTimeAppointment);
+      jest
+        .spyOn(conflictValidator, 'validateNoConflictForUpdate')
+        .mockResolvedValue(undefined);
+      jest
+        .spyOn(domainService, 'updateAppointmentEntity')
+        .mockReturnValue(mockUpdatedTimeAppointment);
+      jest
+        .spyOn(repository, 'updateInTransaction')
+        .mockResolvedValue(mockUpdatedTimeAppointment);
       jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
       // Act
       const result = await service.execute(appointmentId, mockUpdateTimeDto);
 
       // Assert
-      expect(domainService.isTimeUpdated).toHaveBeenCalledWith(mockUpdateTimeDto);
+      expect(domainService.isTimeUpdated).toHaveBeenCalledWith(
+        mockUpdateTimeDto,
+      );
 
       expect(timeValidator.validateDateNotInPast).toHaveBeenCalled();
-      expect(timeValidator.validateWorkingHours).toHaveBeenCalledWith(mockUpdateTimeDto.jam_janji);
+      expect(timeValidator.validateWorkingHours).toHaveBeenCalledWith(
+        mockUpdateTimeDto.jam_janji,
+      );
       expect(timeValidator.calculateBufferWindow).toHaveBeenCalledWith(
         expect.any(Date),
-        mockUpdateTimeDto.jam_janji
+        mockUpdateTimeDto.jam_janji,
       );
-      expect(conflictValidator.validateNoConflictForUpdate).toHaveBeenCalledWith(
+      expect(
+        conflictValidator.validateNoConflictForUpdate,
+      ).toHaveBeenCalledWith(
         mockQueryRunner,
         appointmentId,
         mockAppointment.doctor_id,
         expect.any(Date), // ✅ Gunakan expect.any(Date)
         mockUpdateTimeDto.jam_janji,
         mockBufferStart,
-        mockBufferEnd
+        mockBufferEnd,
       );
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'appointment.updated',
         expect.objectContaining({
           isTimeUpdated: true,
-        })
+        }),
       );
       expect(result).toEqual(mockUpdatedTimeAppointment);
     });
@@ -257,23 +322,32 @@ describe('AppointmentUpdateService', () => {
       const appointmentId = 999;
       const mockQueryRunner: any = {};
 
-      jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-      jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-        async (queryRunner, callback) => await callback(queryRunner)
-      );
+      jest
+        .spyOn(repository, 'createQueryRunner')
+        .mockReturnValue(mockQueryRunner);
+      jest
+        .spyOn(transactionManager, 'executeInTransaction')
+        .mockImplementation(
+          async (queryRunner, callback) => await callback(queryRunner),
+        );
       jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(null);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation((appointment, id) => {
-        if (!appointment) {
-          throw new Error(`Appointment with ID ${id} not found`);
-        }
-      });
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation((appointment, id) => {
+          if (!appointment) {
+            throw new Error(`Appointment with ID ${id} not found`);
+          }
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockUpdateAppointmentDto)).rejects.toThrow(
-        `Appointment with ID ${appointmentId} not found`
-      );
+      await expect(
+        service.execute(appointmentId, mockUpdateAppointmentDto),
+      ).rejects.toThrow(`Appointment with ID ${appointmentId} not found`);
 
-      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(mockQueryRunner, appointmentId);
+      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(
+        mockQueryRunner,
+        appointmentId,
+      );
       expect(validator.validateStatusForUpdate).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -284,22 +358,42 @@ describe('AppointmentUpdateService', () => {
       const mockQueryRunner: any = {};
       const statusError = new Error('Cannot update completed appointment');
 
-      jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-      jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-        async (queryRunner, callback) => await callback(queryRunner)
-      );
-      jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-      jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-      jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => {
-        throw statusError;
-      });
+      jest
+        .spyOn(repository, 'createQueryRunner')
+        .mockReturnValue(mockQueryRunner);
+      jest
+        .spyOn(transactionManager, 'executeInTransaction')
+        .mockImplementation(
+          async (queryRunner, callback) => await callback(queryRunner),
+        );
+      jest
+        .spyOn(repository, 'findByIdInTransaction')
+        .mockResolvedValue(mockAppointment);
+      jest
+        .spyOn(validator, 'validateAppointmentExists')
+        .mockImplementation(() => {});
+      jest
+        .spyOn(validator, 'validateStatusForUpdate')
+        .mockImplementation(() => {
+          throw statusError;
+        });
 
       // Act & Assert
-      await expect(service.execute(appointmentId, mockUpdateAppointmentDto)).rejects.toThrow(statusError);
+      await expect(
+        service.execute(appointmentId, mockUpdateAppointmentDto),
+      ).rejects.toThrow(statusError);
 
-      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(mockQueryRunner, appointmentId);
-      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(mockAppointment, appointmentId);
-      expect(validator.validateStatusForUpdate).toHaveBeenCalledWith(mockAppointment);
+      expect(repository.findByIdInTransaction).toHaveBeenCalledWith(
+        mockQueryRunner,
+        appointmentId,
+      );
+      expect(validator.validateAppointmentExists).toHaveBeenCalledWith(
+        mockAppointment,
+        appointmentId,
+      );
+      expect(validator.validateStatusForUpdate).toHaveBeenCalledWith(
+        mockAppointment,
+      );
       expect(domainService.isTimeUpdated).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
@@ -316,24 +410,44 @@ describe('AppointmentUpdateService', () => {
           tanggal_janji: '2024-12-26',
         };
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-        jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => { });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(timeValidator, 'validateWorkingHours')
+          .mockImplementation(() => {});
         jest.spyOn(timeValidator, 'calculateBufferWindow').mockReturnValue({
           bufferStart: mockBufferStart,
           bufferEnd: mockBufferEnd,
           appointmentDateTime: mockAppointmentDate,
         });
-        jest.spyOn(conflictValidator, 'validateNoConflictForUpdate').mockResolvedValue(undefined);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(conflictValidator, 'validateNoConflictForUpdate')
+          .mockResolvedValue(undefined);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act
@@ -344,12 +458,14 @@ describe('AppointmentUpdateService', () => {
 
         // ✅ PERBAIKAN: Kemungkinan service menggunakan jam dari DTO atau appointment existing
         // Jangan assume jam_janji dari mockAppointment, tapi cek yang actual dipanggil
-        const validateWorkingHoursCalls = (timeValidator.validateWorkingHours as jest.Mock).mock.calls;
+        const validateWorkingHoursCalls = (
+          timeValidator.validateWorkingHours as jest.Mock
+        ).mock.calls;
 
         // Jika dipanggil, cek apakah dengan jam dari DTO atau existing appointment
         if (validateWorkingHoursCalls.length > 0) {
           expect(timeValidator.validateWorkingHours).toHaveBeenCalledWith(
-            dtoWithDateOnly.jam_janji || mockAppointment.jam_janji
+            dtoWithDateOnly.jam_janji || mockAppointment.jam_janji,
           );
         }
       });
@@ -367,46 +483,70 @@ describe('AppointmentUpdateService', () => {
           release: jest.fn(),
         };
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner as QueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner as QueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-        jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => { });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(timeValidator, 'validateWorkingHours')
+          .mockImplementation(() => {});
         jest.spyOn(timeValidator, 'calculateBufferWindow').mockReturnValue({
           bufferStart: mockBufferStart,
           bufferEnd: mockBufferEnd,
           appointmentDateTime: mockAppointmentDate,
         });
-        jest.spyOn(conflictValidator, 'validateNoConflictForUpdate').mockResolvedValue(undefined);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(conflictValidator, 'validateNoConflictForUpdate')
+          .mockResolvedValue(undefined);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act
         await service.execute(appointmentId, dtoWithTimeOnly);
 
         // Assert
-        expect(timeValidator.validateWorkingHours).toHaveBeenCalledWith(dtoWithTimeOnly.jam_janji);
+        expect(timeValidator.validateWorkingHours).toHaveBeenCalledWith(
+          dtoWithTimeOnly.jam_janji,
+        );
         expect(timeValidator.calculateBufferWindow).toHaveBeenCalled();
-        expect(conflictValidator.validateNoConflictForUpdate).toHaveBeenCalled();
+        expect(
+          conflictValidator.validateNoConflictForUpdate,
+        ).toHaveBeenCalled();
 
         expect(domainService.updateAppointmentEntity).toHaveBeenCalledWith(
           mockAppointment,
-          dtoWithTimeOnly
+          dtoWithTimeOnly,
         );
         expect(repository.updateInTransaction).toHaveBeenCalledWith(
           mockQueryRunner,
-          mockUpdatedAppointment
+          mockUpdatedAppointment,
         );
 
         expect(eventEmitter.emit).toHaveBeenCalledWith(
           'appointment.updated',
-          expect.objectContaining({ appointment: mockUpdatedAppointment })
+          expect.objectContaining({ appointment: mockUpdatedAppointment }),
         );
 
         // ❌ HAPUS INI - TransactionManager yang handle, bukan service
@@ -421,24 +561,40 @@ describe('AppointmentUpdateService', () => {
         const mockQueryRunner: any = {};
         const dateError = new Error('Date cannot be in the past');
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => {
-          throw dateError;
-        });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {
+            throw dateError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUpdateTimeDto)).rejects.toThrow(dateError);
+        await expect(
+          service.execute(appointmentId, mockUpdateTimeDto),
+        ).rejects.toThrow(dateError);
 
         expect(timeValidator.validateDateNotInPast).toHaveBeenCalled();
         expect(timeValidator.validateWorkingHours).not.toHaveBeenCalled();
-        expect(conflictValidator.validateNoConflictForUpdate).not.toHaveBeenCalled();
+        expect(
+          conflictValidator.validateNoConflictForUpdate,
+        ).not.toHaveBeenCalled();
         expect(eventEmitter.emit).not.toHaveBeenCalled();
       });
 
@@ -448,25 +604,43 @@ describe('AppointmentUpdateService', () => {
         const mockQueryRunner: any = {};
         const timeError = new Error('Outside working hours');
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-        jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => {
-          throw timeError;
-        });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(timeValidator, 'validateWorkingHours')
+          .mockImplementation(() => {
+            throw timeError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUpdateTimeDto)).rejects.toThrow(timeError);
+        await expect(
+          service.execute(appointmentId, mockUpdateTimeDto),
+        ).rejects.toThrow(timeError);
 
         expect(timeValidator.validateDateNotInPast).toHaveBeenCalled();
         expect(timeValidator.validateWorkingHours).toHaveBeenCalled();
-        expect(conflictValidator.validateNoConflictForUpdate).not.toHaveBeenCalled();
+        expect(
+          conflictValidator.validateNoConflictForUpdate,
+        ).not.toHaveBeenCalled();
         expect(eventEmitter.emit).not.toHaveBeenCalled();
       });
     });
@@ -481,30 +655,50 @@ describe('AppointmentUpdateService', () => {
         const mockQueryRunner: any = {};
         const conflictError = new Error('Appointment conflict detected');
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-        jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => { });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(timeValidator, 'validateWorkingHours')
+          .mockImplementation(() => {});
         jest.spyOn(timeValidator, 'calculateBufferWindow').mockReturnValue({
           bufferStart: mockBufferStart,
           bufferEnd: mockBufferEnd,
           appointmentDateTime: mockAppointmentDate,
         });
-        jest.spyOn(conflictValidator, 'validateNoConflictForUpdate').mockRejectedValue(conflictError);
+        jest
+          .spyOn(conflictValidator, 'validateNoConflictForUpdate')
+          .mockRejectedValue(conflictError);
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUpdateTimeDto)).rejects.toThrow(conflictError);
+        await expect(
+          service.execute(appointmentId, mockUpdateTimeDto),
+        ).rejects.toThrow(conflictError);
 
         expect(timeValidator.validateDateNotInPast).toHaveBeenCalled();
         expect(timeValidator.validateWorkingHours).toHaveBeenCalled();
         expect(timeValidator.calculateBufferWindow).toHaveBeenCalled();
-        expect(conflictValidator.validateNoConflictForUpdate).toHaveBeenCalled();
+        expect(
+          conflictValidator.validateNoConflictForUpdate,
+        ).toHaveBeenCalled();
         expect(domainService.updateAppointmentEntity).not.toHaveBeenCalled();
         expect(eventEmitter.emit).not.toHaveBeenCalled();
       });
@@ -519,16 +713,30 @@ describe('AppointmentUpdateService', () => {
         const appointmentId = 1;
         const mockQueryRunner: any = {};
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(false);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
         const emitSpy = jest.spyOn(eventEmitter, 'emit');
 
         // Act
@@ -539,7 +747,7 @@ describe('AppointmentUpdateService', () => {
           'appointment.updated',
           expect.objectContaining({
             isTimeUpdated: false,
-          })
+          }),
         );
       });
 
@@ -548,24 +756,44 @@ describe('AppointmentUpdateService', () => {
         const appointmentId = 1;
         const mockQueryRunner: any = {};
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(true);
-        jest.spyOn(timeValidator, 'validateDateNotInPast').mockImplementation(() => { });
-        jest.spyOn(timeValidator, 'validateWorkingHours').mockImplementation(() => { });
+        jest
+          .spyOn(timeValidator, 'validateDateNotInPast')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(timeValidator, 'validateWorkingHours')
+          .mockImplementation(() => {});
         jest.spyOn(timeValidator, 'calculateBufferWindow').mockReturnValue({
           bufferStart: mockBufferStart,
           bufferEnd: mockBufferEnd,
           appointmentDateTime: mockAppointmentDate,
         });
-        jest.spyOn(conflictValidator, 'validateNoConflictForUpdate').mockResolvedValue(undefined);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedTimeAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedTimeAppointment);
+        jest
+          .spyOn(conflictValidator, 'validateNoConflictForUpdate')
+          .mockResolvedValue(undefined);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedTimeAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedTimeAppointment);
         const emitSpy = jest.spyOn(eventEmitter, 'emit');
 
         // Act
@@ -576,7 +804,7 @@ describe('AppointmentUpdateService', () => {
           'appointment.updated',
           expect.objectContaining({
             isTimeUpdated: true,
-          })
+          }),
         );
       });
 
@@ -586,20 +814,32 @@ describe('AppointmentUpdateService', () => {
         const mockQueryRunner: any = {};
         let transactionCompleted = false;
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => {
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(async (queryRunner, callback) => {
             const result = await callback(queryRunner);
             transactionCompleted = true;
             return result;
-          }
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+          });
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(false);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockImplementation(() => {
           expect(transactionCompleted).toBe(true);
           return true;
@@ -623,23 +863,39 @@ describe('AppointmentUpdateService', () => {
         const mockQueryRunner: any = {};
         const loggerSpy = jest.spyOn(service['logger'], 'log');
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => { });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {});
         jest.spyOn(domainService, 'isTimeUpdated').mockReturnValue(false);
-        jest.spyOn(domainService, 'updateAppointmentEntity').mockReturnValue(mockUpdatedAppointment);
-        jest.spyOn(repository, 'updateInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(domainService, 'updateAppointmentEntity')
+          .mockReturnValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'updateInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
         jest.spyOn(eventEmitter, 'emit').mockReturnValue(true);
 
         // Act
         await service.execute(appointmentId, mockUpdateAppointmentDto);
 
         // Assert
-        expect(loggerSpy).toHaveBeenCalledWith(`🔄 Appointment #${appointmentId} updated`);
+        expect(loggerSpy).toHaveBeenCalledWith(
+          `🔄 Appointment #${appointmentId} updated`,
+        );
       });
 
       it('should log error when update fails', async () => {
@@ -649,21 +905,33 @@ describe('AppointmentUpdateService', () => {
         const validationError = new Error('Validation failed');
         const loggerSpy = jest.spyOn(service['logger'], 'error');
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockImplementation(
-          async (queryRunner, callback) => await callback(queryRunner)
-        );
-        jest.spyOn(repository, 'findByIdInTransaction').mockResolvedValue(mockAppointment);
-        jest.spyOn(validator, 'validateAppointmentExists').mockImplementation(() => { });
-        jest.spyOn(validator, 'validateStatusForUpdate').mockImplementation(() => {
-          throw validationError;
-        });
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockImplementation(
+            async (queryRunner, callback) => await callback(queryRunner),
+          );
+        jest
+          .spyOn(repository, 'findByIdInTransaction')
+          .mockResolvedValue(mockAppointment);
+        jest
+          .spyOn(validator, 'validateAppointmentExists')
+          .mockImplementation(() => {});
+        jest
+          .spyOn(validator, 'validateStatusForUpdate')
+          .mockImplementation(() => {
+            throw validationError;
+          });
 
         // Act & Assert
-        await expect(service.execute(appointmentId, mockUpdateAppointmentDto)).rejects.toThrow(validationError);
+        await expect(
+          service.execute(appointmentId, mockUpdateAppointmentDto),
+        ).rejects.toThrow(validationError);
         expect(loggerSpy).toHaveBeenCalledWith(
           `❌ Error updating appointment ID ${appointmentId}:`,
-          expect.any(String)
+          expect.any(String),
         );
       });
     });
@@ -677,8 +945,12 @@ describe('AppointmentUpdateService', () => {
         const appointmentId = 1;
         const mockQueryRunner: any = {};
 
-        jest.spyOn(repository, 'createQueryRunner').mockReturnValue(mockQueryRunner);
-        jest.spyOn(transactionManager, 'executeInTransaction').mockResolvedValue(mockUpdatedAppointment);
+        jest
+          .spyOn(repository, 'createQueryRunner')
+          .mockReturnValue(mockQueryRunner);
+        jest
+          .spyOn(transactionManager, 'executeInTransaction')
+          .mockResolvedValue(mockUpdatedAppointment);
 
         // Act
         await service.execute(appointmentId, mockUpdateAppointmentDto);
@@ -688,7 +960,7 @@ describe('AppointmentUpdateService', () => {
         expect(transactionManager.executeInTransaction).toHaveBeenCalledWith(
           mockQueryRunner,
           expect.any(Function),
-          'update-appointment'
+          'update-appointment',
         );
       });
     });

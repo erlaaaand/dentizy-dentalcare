@@ -4,11 +4,9 @@ import { MedicalRecordTreatmentRepository } from '../../infrastructures/persiste
 
 @Injectable()
 export class GetTotalByMedicalRecordIdUseCase {
-    constructor(
-        private readonly repository: MedicalRecordTreatmentRepository,
-    ) { }
+  constructor(private readonly repository: MedicalRecordTreatmentRepository) {}
 
-    async execute(medicalRecordId: number): Promise<number> {
-        return await this.repository.getTotalByMedicalRecordId(medicalRecordId);
-    }
+  async execute(medicalRecordId: number): Promise<number> {
+    return await this.repository.getTotalByMedicalRecordId(medicalRecordId);
+  }
 }

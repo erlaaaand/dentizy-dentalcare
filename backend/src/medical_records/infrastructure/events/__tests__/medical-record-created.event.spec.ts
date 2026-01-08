@@ -72,7 +72,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.doctorId,
         mockEventData.createdBy,
         mockEventData.timestamp,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       expect(event.medicalRecordId).toBe(mockEventData.medicalRecordId);
@@ -91,12 +91,16 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.appointmentId,
         mockEventData.patientId,
         mockEventData.doctorId,
-        mockEventData.createdBy
+        mockEventData.createdBy,
       );
       const afterCreate = new Date();
 
-      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(beforeCreate.getTime());
-      expect(event.timestamp.getTime()).toBeLessThanOrEqual(afterCreate.getTime());
+      expect(event.timestamp.getTime()).toBeGreaterThanOrEqual(
+        beforeCreate.getTime(),
+      );
+      expect(event.timestamp.getTime()).toBeLessThanOrEqual(
+        afterCreate.getTime(),
+      );
     });
 
     it('should create event without metadata', () => {
@@ -106,7 +110,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.createdBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       expect(event.metadata).toBeUndefined();
@@ -120,7 +124,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockIncompleteEventData.doctorId,
         mockIncompleteEventData.createdBy,
         mockIncompleteEventData.timestamp,
-        mockIncompleteEventData.metadata
+        mockIncompleteEventData.metadata,
       );
 
       expect(event.metadata?.isComplete).toBe(false);
@@ -134,7 +138,9 @@ describe('MedicalRecordCreatedEvent', () => {
   // ============================================================================
   describe('Static Properties', () => {
     it('should have correct event name', () => {
-      expect(MedicalRecordCreatedEvent.eventName).toBe('medical_record.created');
+      expect(MedicalRecordCreatedEvent.eventName).toBe(
+        'medical_record.created',
+      );
     });
 
     it('should have correct event version', () => {
@@ -154,7 +160,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.doctorId,
         mockEventData.createdBy,
         mockEventData.timestamp,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const json = event.toJSON();
@@ -177,7 +183,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.createdBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       const json = event.toJSON();
@@ -193,7 +199,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.patientId,
         mockEventData.doctorId,
         mockEventData.createdBy,
-        mockEventData.timestamp
+        mockEventData.timestamp,
       );
 
       const json = event.toJSON();
@@ -276,7 +282,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.doctorId,
         mockEventData.createdBy,
         mockEventData.timestamp,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const description = event.getDescription();
@@ -288,13 +294,7 @@ describe('MedicalRecordCreatedEvent', () => {
     });
 
     it('should include all relevant IDs in description', () => {
-      const event = new MedicalRecordCreatedEvent(
-        5,
-        10,
-        20,
-        30,
-        30
-      );
+      const event = new MedicalRecordCreatedEvent(5, 10, 20, 30, 30);
 
       const description = event.getDescription();
 
@@ -316,19 +316,23 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.doctorId,
         mockEventData.createdBy,
         mockEventData.timestamp,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const json = originalEvent.toJSON();
       const reconstructedEvent = MedicalRecordCreatedEvent.fromJSON(json);
 
-      expect(reconstructedEvent.medicalRecordId).toBe(originalEvent.medicalRecordId);
-      expect(reconstructedEvent.appointmentId).toBe(originalEvent.appointmentId);
+      expect(reconstructedEvent.medicalRecordId).toBe(
+        originalEvent.medicalRecordId,
+      );
+      expect(reconstructedEvent.appointmentId).toBe(
+        originalEvent.appointmentId,
+      );
       expect(reconstructedEvent.patientId).toBe(originalEvent.patientId);
       expect(reconstructedEvent.doctorId).toBe(originalEvent.doctorId);
       expect(reconstructedEvent.createdBy).toBe(originalEvent.createdBy);
       expect(reconstructedEvent.timestamp.toISOString()).toBe(
-        originalEvent.timestamp.toISOString()
+        originalEvent.timestamp.toISOString(),
       );
       expect(reconstructedEvent.metadata).toEqual(originalEvent.metadata);
     });
@@ -341,7 +345,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockEventData.doctorId,
         mockEventData.createdBy,
         mockEventData.timestamp,
-        mockEventData.metadata
+        mockEventData.metadata,
       );
 
       const json = originalEvent.toJSON();
@@ -362,7 +366,7 @@ describe('MedicalRecordCreatedEvent', () => {
         mockIncompleteEventData.doctorId,
         mockIncompleteEventData.createdBy,
         mockIncompleteEventData.timestamp,
-        mockIncompleteEventData.metadata
+        mockIncompleteEventData.metadata,
       );
 
       const json = originalEvent.toJSON();
@@ -392,7 +396,7 @@ describe('MedicalRecordCreatedEvent', () => {
           hasAssessment: true,
           hasPlan: true,
           isComplete: true,
-        }
+        },
       );
 
       expect(event.metadata?.isComplete).toBe(true);
@@ -416,7 +420,7 @@ describe('MedicalRecordCreatedEvent', () => {
           hasAssessment: false,
           hasPlan: false,
           isComplete: false,
-        }
+        },
       );
 
       expect(event.metadata?.isComplete).toBe(false);
@@ -436,7 +440,7 @@ describe('MedicalRecordCreatedEvent', () => {
           hasAssessment: false,
           hasPlan: false,
           isComplete: false,
-        }
+        },
       );
 
       expect(event.metadata?.hasSubjektif).toBe(true);
@@ -467,7 +471,7 @@ describe('MedicalRecordCreatedEvent', () => {
         largeId,
         largeId,
         largeId,
-        largeId
+        largeId,
       );
 
       expect(event.medicalRecordId).toBe(largeId);
@@ -476,12 +480,21 @@ describe('MedicalRecordCreatedEvent', () => {
 
     it('should handle different timestamp formats', () => {
       const timestamp = new Date('2024-12-31T23:59:59.999Z');
-      const event = new MedicalRecordCreatedEvent(1, 100, 200, 300, 300, timestamp);
+      const event = new MedicalRecordCreatedEvent(
+        1,
+        100,
+        200,
+        300,
+        300,
+        timestamp,
+      );
 
       const json = event.toJSON();
       const reconstructed = MedicalRecordCreatedEvent.fromJSON(json);
 
-      expect(reconstructed.timestamp.toISOString()).toBe(timestamp.toISOString());
+      expect(reconstructed.timestamp.toISOString()).toBe(
+        timestamp.toISOString(),
+      );
     });
   });
 });

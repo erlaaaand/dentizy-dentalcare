@@ -5,18 +5,18 @@ import { TreatmentPriceChangedEvent } from '../../infrastructures/events/treatme
 
 @Injectable()
 export class TreatmentPriceChangedListener {
-    private readonly logger = new Logger(TreatmentPriceChangedListener.name);
+  private readonly logger = new Logger(TreatmentPriceChangedListener.name);
 
-    @OnEvent('treatment.price.changed')
-    async handlePriceChanged(event: TreatmentPriceChangedEvent): Promise<void> {
-        this.logger.log(
-            `Treatment price changed: ID ${event.treatmentId}, Old: ${event.oldPrice}, New: ${event.newPrice}`,
-        );
+  @OnEvent('treatment.price.changed')
+  async handlePriceChanged(event: TreatmentPriceChangedEvent): Promise<void> {
+    this.logger.log(
+      `Treatment price changed: ID ${event.treatmentId}, Old: ${event.oldPrice}, New: ${event.newPrice}`,
+    );
 
-        // Additional actions:
-        // - Notify finance department
-        // - Update pricing reports
-        // - Recalculate package prices
-        // - Send notification to admins
-    }
+    // Additional actions:
+    // - Notify finance department
+    // - Update pricing reports
+    // - Recalculate package prices
+    // - Send notification to admins
+  }
 }

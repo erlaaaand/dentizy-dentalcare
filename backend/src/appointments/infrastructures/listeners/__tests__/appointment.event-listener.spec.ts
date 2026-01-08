@@ -9,7 +9,10 @@ import {
   AppointmentUpdatedEvent,
   AppointmentDeletedEvent,
 } from '../../events';
-import { Appointment, AppointmentStatus } from '../../../domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../domains/entities/appointment.entity';
 
 describe('AppointmentEventListener', () => {
   let listener: AppointmentEventListener;
@@ -74,9 +77,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentCreated(event);
 
-      expect(notificationsService.scheduleAppointmentReminder).toHaveBeenCalledWith(
-        mockAppointment
-      );
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).toHaveBeenCalledWith(mockAppointment);
     });
 
     it('should not schedule reminder when shouldScheduleReminder is false', async () => {
@@ -84,7 +87,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentCreated(event);
 
-      expect(notificationsService.scheduleAppointmentReminder).not.toHaveBeenCalled();
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).not.toHaveBeenCalled();
     });
 
     it('should log success when reminder is scheduled', async () => {
@@ -93,7 +98,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentCreated(event);
 
-      expect(logSpy).toHaveBeenCalledWith('📧 Reminder scheduled for appointment #1');
+      expect(logSpy).toHaveBeenCalledWith(
+        '📧 Reminder scheduled for appointment #1',
+      );
     });
 
     it('should handle error when scheduling reminder fails', async () => {
@@ -106,20 +113,24 @@ describe('AppointmentEventListener', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Failed to schedule reminder: Scheduling failed',
-        error.stack
+        error.stack,
       );
     });
   });
 
   describe('handleAppointmentCancelled', () => {
     it('should log appointment cancellation', async () => {
-      const event = new AppointmentCancelledEvent(mockAppointment, 5, 'Test reason');
+      const event = new AppointmentCancelledEvent(
+        mockAppointment,
+        5,
+        'Test reason',
+      );
       const logSpy = jest.spyOn(Logger.prototype, 'log');
 
       await listener.handleAppointmentCancelled(event);
 
       expect(logSpy).toHaveBeenCalledWith(
-        '❌ Appointment cancelled: #1 by user #5'
+        '❌ Appointment cancelled: #1 by user #5',
       );
     });
 
@@ -137,7 +148,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentCancelled(event);
 
-      expect(logSpy).toHaveBeenCalledWith('📧 Reminders cancelled for appointment #1');
+      expect(logSpy).toHaveBeenCalledWith(
+        '📧 Reminders cancelled for appointment #1',
+      );
     });
 
     it('should handle error when cancelling reminders fails', async () => {
@@ -150,7 +163,7 @@ describe('AppointmentEventListener', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Failed to cancel reminders: Cancellation failed',
-        error.stack
+        error.stack,
       );
     });
   });
@@ -163,7 +176,7 @@ describe('AppointmentEventListener', () => {
       await listener.handleAppointmentCompleted(event);
 
       expect(logSpy).toHaveBeenCalledWith(
-        '✅ Appointment completed: #1 by user #5'
+        '✅ Appointment completed: #1 by user #5',
       );
     });
 
@@ -172,7 +185,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentCompleted(event);
 
-      expect(notificationsService.scheduleAppointmentReminder).not.toHaveBeenCalled();
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).not.toHaveBeenCalled();
       expect(notificationsService.cancelRemindersFor).not.toHaveBeenCalled();
     });
   });
@@ -193,7 +208,9 @@ describe('AppointmentEventListener', () => {
       await listener.handleAppointmentUpdated(event);
 
       expect(notificationsService.cancelRemindersFor).not.toHaveBeenCalled();
-      expect(notificationsService.scheduleAppointmentReminder).not.toHaveBeenCalled();
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).not.toHaveBeenCalled();
     });
 
     it('should reschedule reminder when time is updated and patient is registered', async () => {
@@ -202,32 +219,45 @@ describe('AppointmentEventListener', () => {
       await listener.handleAppointmentUpdated(event);
 
       expect(notificationsService.cancelRemindersFor).toHaveBeenCalledWith(1);
-      expect(notificationsService.scheduleAppointmentReminder).toHaveBeenCalledWith(
-        mockAppointment
-      );
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).toHaveBeenCalledWith(mockAppointment);
     });
 
     it('should not schedule new reminder when patient has no email', async () => {
-      const appointmentNoEmail = { ...mockAppointment, patient: { ...mockAppointment.patient, email: null } };
-      const event = new AppointmentUpdatedEvent(appointmentNoEmail as any, true);
+      const appointmentNoEmail = {
+        ...mockAppointment,
+        patient: { ...mockAppointment.patient, email: null },
+      };
+      const event = new AppointmentUpdatedEvent(
+        appointmentNoEmail as any,
+        true,
+      );
 
       await listener.handleAppointmentUpdated(event);
 
       expect(notificationsService.cancelRemindersFor).toHaveBeenCalledWith(1);
-      expect(notificationsService.scheduleAppointmentReminder).not.toHaveBeenCalled();
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).not.toHaveBeenCalled();
     });
 
     it('should not schedule new reminder when patient is not registered online', async () => {
-      const appointmentOffline = { 
-        ...mockAppointment, 
-        patient: { ...mockAppointment.patient, is_registered_online: false } 
+      const appointmentOffline = {
+        ...mockAppointment,
+        patient: { ...mockAppointment.patient, is_registered_online: false },
       };
-      const event = new AppointmentUpdatedEvent(appointmentOffline as any, true);
+      const event = new AppointmentUpdatedEvent(
+        appointmentOffline as any,
+        true,
+      );
 
       await listener.handleAppointmentUpdated(event);
 
       expect(notificationsService.cancelRemindersFor).toHaveBeenCalledWith(1);
-      expect(notificationsService.scheduleAppointmentReminder).not.toHaveBeenCalled();
+      expect(
+        notificationsService.scheduleAppointmentReminder,
+      ).not.toHaveBeenCalled();
     });
 
     it('should log success when reminder is rescheduled', async () => {
@@ -236,7 +266,9 @@ describe('AppointmentEventListener', () => {
 
       await listener.handleAppointmentUpdated(event);
 
-      expect(logSpy).toHaveBeenCalledWith('📧 Reminder rescheduled for appointment #1');
+      expect(logSpy).toHaveBeenCalledWith(
+        '📧 Reminder rescheduled for appointment #1',
+      );
     });
 
     it('should handle error when rescheduling fails', async () => {
@@ -249,7 +281,7 @@ describe('AppointmentEventListener', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Failed to reschedule reminder: Rescheduling failed',
-        error.stack
+        error.stack,
       );
     });
   });
@@ -262,7 +294,7 @@ describe('AppointmentEventListener', () => {
       await listener.handleAppointmentDeleted(event);
 
       expect(logSpy).toHaveBeenCalledWith(
-        '🗑️ Appointment deleted: #1 by user #5'
+        '🗑️ Appointment deleted: #1 by user #5',
       );
     });
 
@@ -281,7 +313,7 @@ describe('AppointmentEventListener', () => {
       await listener.handleAppointmentDeleted(event);
 
       expect(logSpy).toHaveBeenCalledWith(
-        '📧 Reminders cancelled for deleted appointment #1'
+        '📧 Reminders cancelled for deleted appointment #1',
       );
     });
 
@@ -295,7 +327,7 @@ describe('AppointmentEventListener', () => {
 
       expect(errorSpy).toHaveBeenCalledWith(
         '❌ Failed to cancel reminders: Cancellation failed',
-        error.stack
+        error.stack,
       );
     });
   });

@@ -1,9 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Expose, Type } from 'class-transformer';
 import { AppointmentStatus } from '../../../appointments/domains/entities/appointment.entity';
-
-// ... (PatientSubsetDto, DoctorSubsetDto, AppointmentSubsetDto biarkan tetap sama)
-
 export class PatientSubsetDto {
   @ApiProperty({ example: 1 })
   @Expose()
@@ -73,7 +70,10 @@ export class AppointmentSubsetDto {
   @Type(() => Date)
   appointment_date: Date;
 
-  @ApiProperty({ enum: AppointmentStatus, example: AppointmentStatus.DIJADWALKAN })
+  @ApiProperty({
+    enum: AppointmentStatus,
+    example: AppointmentStatus.DIJADWALKAN,
+  })
   @Expose()
   status: AppointmentStatus;
 

@@ -8,45 +8,45 @@ import { TokenRefreshedEvent } from '../../infrastructures/events/token-refreshe
 
 @Injectable()
 export class TokenRefreshService {
-    private readonly logger = new Logger(TokenRefreshService.name);
+  private readonly logger = new Logger(TokenRefreshService.name);
 
-    constructor(
-        private readonly usersService: UsersService,
-        private readonly tokenService: TokenService,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly tokenService: TokenService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    /**
-     * Refresh user token
-     */
-    async execute(userId: number): Promise<{ access_token: string }> {
-        try {
-            // 1. Find user
-            const user = await this.usersService.findOneForAuth(userId) as any;
-            
-            if (!user) {
-                throw new UnauthorizedException('User tidak ditemukan');
-            }
+  /**
+   * Refresh user token
+   */
+  async execute(userId: number): Promise<{ access_token: string }> {
+    try {
+      // 1. Find user
+      const user = (await this.usersService.findOneForAuth(userId)) as any;
 
-            // 2. Generate new token
-            const tokenPayload = AuthMapper.toTokenPayload(user);
-            const accessToken = this.tokenService.generateToken(tokenPayload);
+      if (!user) {
+        throw new UnauthorizedException('User tidak ditemukan');
+      }
 
-            // 3. Emit event
-            this.eventEmitter.emit(
-                'token.refreshed',
-                new TokenRefreshedEvent(user.id, user.username),
-            );
+      // 2. Generate new token
+      const tokenPayload = AuthMapper.toTokenPayload(user);
+      const accessToken = this.tokenService.generateToken(tokenPayload);
 
-            // 4. Return new token
-            this.logger.log(`✅ Token refreshed for user: ${user.username}`);
-            return { access_token: accessToken };
-        } catch (error) {
-            if (error instanceof UnauthorizedException) {
-                throw error;
-            }
-            this.logger.error('Error refreshing token', error);
-            throw new UnauthorizedException('Gagal refresh token');
-        }
+      // 3. Emit event
+      this.eventEmitter.emit(
+        'token.refreshed',
+        new TokenRefreshedEvent(user.id, user.username),
+      );
+
+      // 4. Return new token
+      this.logger.log(`✅ Token refreshed for user: ${user.username}`);
+      return { access_token: accessToken };
+    } catch (error) {
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+      this.logger.error('Error refreshing token', error);
+      throw new UnauthorizedException('Gagal refresh token');
     }
+  }
 }

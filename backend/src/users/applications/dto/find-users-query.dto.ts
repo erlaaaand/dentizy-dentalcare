@@ -5,7 +5,7 @@ import {
   Min,
   IsString,
   IsBoolean,
-  Max
+  Max,
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -16,7 +16,7 @@ export class FindUsersQueryDto {
     required: false,
     enum: UserRole,
     description: 'Filter berdasarkan role pengguna',
-    example: UserRole.DOKTER
+    example: UserRole.DOKTER,
   })
   @IsOptional()
   @IsEnum(UserRole, { message: 'Role tidak valid' })
@@ -25,7 +25,7 @@ export class FindUsersQueryDto {
   @ApiProperty({
     required: false,
     description: 'Pencarian berdasarkan nama atau username',
-    example: 'andi'
+    example: 'andi',
   })
   @IsOptional()
   @IsString()
@@ -36,7 +36,7 @@ export class FindUsersQueryDto {
     required: false,
     description: 'Halaman ke berapa',
     example: 1,
-    default: 1
+    default: 1,
   })
   @IsOptional()
   @Type(() => Number)
@@ -48,7 +48,7 @@ export class FindUsersQueryDto {
     required: false,
     description: 'Jumlah data per halaman (maksimal 100)',
     example: 10,
-    default: 10
+    default: 10,
   })
   @IsOptional()
   @Type(() => Number)
@@ -61,7 +61,7 @@ export class FindUsersQueryDto {
     required: false,
     description: 'Filter berdasarkan status aktif',
     example: true,
-    type: Boolean
+    type: Boolean,
   })
   @IsOptional()
   @Transform(({ value }) => {

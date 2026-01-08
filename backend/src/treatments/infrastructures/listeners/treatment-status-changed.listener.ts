@@ -6,19 +6,23 @@ import { TreatmentDeactivatedEvent } from '../../infrastructures/events/treatmen
 
 @Injectable()
 export class TreatmentStatusChangedListener {
-    private readonly logger = new Logger(TreatmentStatusChangedListener.name);
+  private readonly logger = new Logger(TreatmentStatusChangedListener.name);
 
-    @OnEvent('treatment.activated')
-    async handleTreatmentActivated(event: TreatmentActivatedEvent): Promise<void> {
-        this.logger.log(
-            `Treatment activated: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
-        );
-    }
+  @OnEvent('treatment.activated')
+  async handleTreatmentActivated(
+    event: TreatmentActivatedEvent,
+  ): Promise<void> {
+    this.logger.log(
+      `Treatment activated: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
+    );
+  }
 
-    @OnEvent('treatment.deactivated')
-    async handleTreatmentDeactivated(event: TreatmentDeactivatedEvent): Promise<void> {
-        this.logger.warn(
-            `Treatment deactivated: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
-        );
-    }
+  @OnEvent('treatment.deactivated')
+  async handleTreatmentDeactivated(
+    event: TreatmentDeactivatedEvent,
+  ): Promise<void> {
+    this.logger.warn(
+      `Treatment deactivated: ${event.kodePerawatan} (ID: ${event.treatmentId})`,
+    );
+  }
 }

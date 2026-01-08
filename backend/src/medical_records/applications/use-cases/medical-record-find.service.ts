@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { MedicalRecord } from '../../domains/entities/medical-record.entity';
@@ -9,90 +15,92 @@ import { AppointmentStatus } from '../../../appointments/domains/entities/appoin
 
 @Injectable()
 export class MedicalRecordFindService {
-    private readonly logger = new Logger(MedicalRecordFindService.name);
+  private readonly logger = new Logger(MedicalRecordFindService.name);
 
-    constructor(
-        @InjectRepository(MedicalRecord)
-        private readonly repository: Repository<MedicalRecord>,
-        private readonly authService: MedicalRecordAuthorizationService,
-        private readonly validator: MedicalRecordValidator,
-    ) { }
+  constructor(
+    @InjectRepository(MedicalRecord)
+    private readonly repository: Repository<MedicalRecord>,
+    private readonly authService: MedicalRecordAuthorizationService,
+    private readonly validator: MedicalRecordValidator,
+  ) {}
 
-    /**
-     * Find medical record by ID with authorization check
-     */
-    async execute(id: number, user: User): Promise<MedicalRecord> {
-        // Validate input
-        this.validator.validateId(id);
-        this.validator.validateUserId(user.id);
+  /**
+   * Find medical record by ID with authorization check
+   */
+  async execute(id: number, user: User): Promise<MedicalRecord> {
+    // Validate input
+    this.validator.validateId(id);
+    this.validator.validateUserId(user.id);
 
-        // Build query with authorization filter
-        const queryBuilder = this.repository
-            .createQueryBuilder('record')
-            .leftJoinAndSelect('record.appointment', 'appointment')
-            .leftJoinAndSelect('appointment.patient', 'patient')
-            .leftJoinAndSelect('appointment.doctor', 'appointmentDoctor')
-            .leftJoinAndSelect('appointmentDoctor.roles', 'doctorRoles')
-            .leftJoinAndSelect('record.doctor', 'doctor')
-            .where('record.id = :id', { id });
+    // Build query with authorization filter
+    const queryBuilder = this.repository
+      .createQueryBuilder('record')
+      .leftJoinAndSelect('record.appointment', 'appointment')
+      .leftJoinAndSelect('appointment.patient', 'patient')
+      .leftJoinAndSelect('appointment.doctor', 'appointmentDoctor')
+      .leftJoinAndSelect('appointmentDoctor.roles', 'doctorRoles')
+      .leftJoinAndSelect('record.doctor', 'doctor')
+      .where('record.id = :id', { id });
 
-        // Apply role-based filtering
-        this.applyAuthorizationFilter(queryBuilder, user);
+    // Apply role-based filtering
+    this.applyAuthorizationFilter(queryBuilder, user);
 
-        // Execute query
-        const record = await queryBuilder.getOne();
+    // Execute query
+    const record = await queryBuilder.getOne();
 
-        if (!record) {
-            throw new NotFoundException(
-                `Rekam medis dengan ID #${id} tidak ditemukan atau Anda tidak memiliki akses`
-            );
-        }
-        
-        if (!record.appointment) {
-            throw new BadRequestException(`Appointment untuk rekam medis #${id} tidak ditemukan`);
-        }
+    if (!record) {
+      throw new NotFoundException(
+        `Rekam medis dengan ID #${id} tidak ditemukan atau Anda tidak memiliki akses`,
+      );
+    }
 
-        // Double-check authorization at domain level
-        this.authService.validateViewPermission(user, record);
+    if (!record.appointment) {
+      throw new BadRequestException(
+        `Appointment untuk rekam medis #${id} tidak ditemukan`,
+      );
+    }
 
-        // Log access
-        this.logger.log(
-            `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
-            `accessed medical record #${id}`
+    // Double-check authorization at domain level
+    this.authService.validateViewPermission(user, record);
+
+    // Log access
+    this.logger.log(
+      `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
+        `accessed medical record #${id}`,
+    );
+
+    return record;
+  }
+
+  /**
+   * Apply authorization filter based on user role
+   */
+  private applyAuthorizationFilter(queryBuilder: any, user: User): void {
+    const isKepalaKlinik = this.authService.isKepalaKlinik(user);
+    const isDokter = this.authService.isDokter(user);
+    const isStaf = this.authService.isStaf(user);
+
+    if (!isKepalaKlinik) {
+      if (isDokter) {
+        // Doctor can see records they created OR from their appointments
+        queryBuilder.andWhere(
+          '(appointment.doctor_id = :userId OR record.doctor_id = :userId)',
+          { userId: user.id },
         );
-
-        return record;
+      } else if (isStaf) {
+        // Staff can see records they created OR any active records
+        queryBuilder.andWhere(
+          '(record.doctor_id = :userId OR appointment.status != :cancelled)',
+          {
+            userId: user.id,
+            cancelled: AppointmentStatus.DIBATALKAN,
+          },
+        );
+      } else {
+        // Unknown role - deny access by impossible condition
+        queryBuilder.andWhere('1 = 0');
+      }
     }
-
-    /**
-     * Apply authorization filter based on user role
-     */
-    private applyAuthorizationFilter(queryBuilder: any, user: User): void {
-        const isKepalaKlinik = this.authService.isKepalaKlinik(user);
-        const isDokter = this.authService.isDokter(user);
-        const isStaf = this.authService.isStaf(user);
-
-        if (!isKepalaKlinik) {
-            if (isDokter) {
-                // Doctor can see records they created OR from their appointments
-                queryBuilder.andWhere(
-                    '(appointment.doctor_id = :userId OR record.doctor_id = :userId)',
-                    { userId: user.id }
-                );
-            } else if (isStaf) {
-                // Staff can see records they created OR any active records
-                queryBuilder.andWhere(
-                    '(record.doctor_id = :userId OR appointment.status != :cancelled)',
-                    {
-                        userId: user.id,
-                        cancelled: AppointmentStatus.DIBATALKAN
-                    }
-                );
-            } else {
-                // Unknown role - deny access by impossible condition
-                queryBuilder.andWhere('1 = 0');
-            }
-        }
-        // Kepala Klinik has no filter (can see all)
-    }
+    // Kepala Klinik has no filter (can see all)
+  }
 }

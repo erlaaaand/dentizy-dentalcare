@@ -8,21 +8,21 @@ import { PatientSearchValidator } from './patient-search.validator';
 
 @Injectable()
 export class PatientValidator {
-    constructor(
-        private readonly createValidator: PatientCreateValidator,
-        private readonly updateValidator: PatientUpdateValidator,
-        private readonly searchValidator: PatientSearchValidator,
-    ) { }
+  constructor(
+    private readonly createValidator: PatientCreateValidator,
+    private readonly updateValidator: PatientUpdateValidator,
+    private readonly searchValidator: PatientSearchValidator,
+  ) {}
 
-    async validateCreate(dto: CreatePatientDto): Promise<void> {
-        return this.createValidator.validate(dto);
-    }
+  async validateCreate(dto: CreatePatientDto): Promise<void> {
+    return this.createValidator.validate(dto);
+  }
 
-    async validateUpdate(id: number, dto: UpdatePatientDto): Promise<void> {
-        return this.updateValidator.validate(id, dto);
-    }
+  async validateUpdate(id: number, dto: UpdatePatientDto): Promise<void> {
+    return this.updateValidator.validate(id, dto);
+  }
 
-    validateSearchQuery(query: SearchPatientDto): void {
-        return this.searchValidator.validate(query);
-    }
+  validateSearchQuery(query: SearchPatientDto): void {
+    return this.searchValidator.validate(query);
+  }
 }

@@ -14,40 +14,43 @@ import { VerifyTokenResponseDto } from '../dto/verify-token.dto';
  */
 @Injectable()
 export class AuthService {
-    private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(AuthService.name);
 
-    constructor(
-        private readonly loginService: LoginService,
-        private readonly tokenVerificationService: TokenVerificationService,
-        private readonly tokenRefreshService: TokenRefreshService,
-        private readonly logoutService: LogoutService,
-    ) { }
+  constructor(
+    private readonly loginService: LoginService,
+    private readonly tokenVerificationService: TokenVerificationService,
+    private readonly tokenRefreshService: TokenRefreshService,
+    private readonly logoutService: LogoutService,
+  ) {}
 
-    /**
-     * Login user
-     */
-    async login(loginDto: LoginDto, metadata?: { ipAddress?: string; userAgent?: string }): Promise<LoginResponseDto> {
-        return this.loginService.execute(loginDto, metadata);
-    }
+  /**
+   * Login user
+   */
+  async login(
+    loginDto: LoginDto,
+    metadata?: { ipAddress?: string; userAgent?: string },
+  ): Promise<LoginResponseDto> {
+    return this.loginService.execute(loginDto, metadata);
+  }
 
-    /**
-     * Verify token
-     */
-    async verifyToken(token: string): Promise<VerifyTokenResponseDto> {
-        return this.tokenVerificationService.execute(token);
-    }
+  /**
+   * Verify token
+   */
+  async verifyToken(token: string): Promise<VerifyTokenResponseDto> {
+    return this.tokenVerificationService.execute(token);
+  }
 
-    /**
-     * Refresh token
-     */
-    async refreshToken(userId: number): Promise<{ access_token: string }> {
-        return this.tokenRefreshService.execute(userId);
-    }
+  /**
+   * Refresh token
+   */
+  async refreshToken(userId: number): Promise<{ access_token: string }> {
+    return this.tokenRefreshService.execute(userId);
+  }
 
-    /**
-     * Logout user
-     */
-    async logout(userId: number): Promise<{ message: string }> {
-        return this.logoutService.execute(userId);
-    }
+  /**
+   * Logout user
+   */
+  async logout(userId: number): Promise<{ message: string }> {
+    return this.logoutService.execute(userId);
+  }
 }

@@ -18,7 +18,6 @@ describe('NotificationStatsDto', () => {
     ],
   };
 
-
   it('should map values correctly', () => {
     const dto = plainToInstance(NotificationStatsDto, mockData);
     expect(dto).toMatchObject(mockData);

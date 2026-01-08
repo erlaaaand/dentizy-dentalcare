@@ -21,7 +21,6 @@ const mockChangesSingle: Partial<UpdatePatientDto> = {
 
 // 3. TEST SUITE
 describe('PatientUpdatedEvent', () => {
-
   // 4. SETUP AND TEARDOWN
   // Class ini adalah POJO sederhana, setup dilakukan langsung di dalam test case.
 
@@ -39,7 +38,7 @@ describe('PatientUpdatedEvent', () => {
     // Assert
     expect(event.patientId).toBe(mockPatientId);
     expect(event.changes).toEqual(mockChangesMultiple);
-    
+
     // Deep equality check for object
     expect(event.changes.nama_lengkap).toBe('Budi Santoso Update');
     expect(event.changes.is_active).toBe(false);

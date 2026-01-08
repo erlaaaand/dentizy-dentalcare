@@ -5,10 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { 
-  NotFoundException, 
-  ConflictException, 
-  BadRequestException 
+import {
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
 } from '@nestjs/common';
 
 import { PatientUpdateService } from '../patient-update.service';
@@ -114,24 +114,31 @@ describe('PatientUpdateService', () => {
       // Assert
       // 1. Find
       expect(repository.findOneBy).toHaveBeenCalledWith({ id: mockPatientId });
-      
+
       // 2. Validate
-      expect(validator.validateUpdate).toHaveBeenCalledWith(mockPatientId, mockUpdateDto);
-      
+      expect(validator.validateUpdate).toHaveBeenCalledWith(
+        mockPatientId,
+        mockUpdateDto,
+      );
+
       // 3. Save (Object.assign logic check implicitly via save arg)
-      expect(repository.save).toHaveBeenCalledWith(expect.objectContaining({
-        nama_lengkap: 'Budi Baru',
-        id: mockPatientId
-      }));
+      expect(repository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          nama_lengkap: 'Budi Baru',
+          id: mockPatientId,
+        }),
+      );
 
       // 4. Events & Side Effects
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'patient.updated',
-        expect.any(PatientUpdatedEvent)
+        expect.any(PatientUpdatedEvent),
       );
-      
+
       // 5. Cache Invalidation
-      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(mockPatientId);
+      expect(cacheService.invalidatePatientCache).toHaveBeenCalledWith(
+        mockPatientId,
+      );
       expect(cacheService.invalidateListCaches).toHaveBeenCalled();
 
       // 6. Result
@@ -146,7 +153,7 @@ describe('PatientUpdateService', () => {
       // Arrange
       const dtoWithDate = { ...mockUpdateDto, tanggal_lahir: '2000-12-31' };
       const patientEntity = { ...mockExistingPatient };
-      
+
       repository.findOneBy.mockResolvedValue(patientEntity);
       repository.save.mockImplementation((p) => Promise.resolve(p)); // Return what was passed
       mapper.toResponseDto.mockReturnValue({});
@@ -167,8 +174,10 @@ describe('PatientUpdateService', () => {
       repository.findOneBy.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.execute(999, mockUpdateDto)).rejects.toThrow(NotFoundException);
-      
+      await expect(service.execute(999, mockUpdateDto)).rejects.toThrow(
+        NotFoundException,
+      );
+
       // Ensure process stopped
       expect(repository.save).not.toHaveBeenCalled();
       expect(eventEmitter.emit).not.toHaveBeenCalled();
@@ -177,12 +186,18 @@ describe('PatientUpdateService', () => {
     it('should re-throw ConflictException from validator', async () => {
       // Arrange
       repository.findOneBy.mockResolvedValue(mockExistingPatient);
-      validator.validateUpdate.mockRejectedValue(new ConflictException('NIK duplicate'));
+      validator.validateUpdate.mockRejectedValue(
+        new ConflictException('NIK duplicate'),
+      );
 
       // Act & Assert
-      await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow(ConflictException);
-      await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow('NIK duplicate');
-      
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow(ConflictException);
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow('NIK duplicate');
+
       expect(repository.save).not.toHaveBeenCalled();
     });
 
@@ -190,22 +205,34 @@ describe('PatientUpdateService', () => {
       // Arrange
       repository.findOneBy.mockResolvedValue(mockExistingPatient);
       // Simulate DB error
-      repository.save.mockRejectedValue(new Error('Database connection failed'));
+      repository.save.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
 
       // Act & Assert
-      await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow(BadRequestException);
-      await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow('Gagal mengupdate data pasien');
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow('Gagal mengupdate data pasien');
     });
 
     it('should re-throw BadRequestException (e.g. from business logic) as is', async () => {
-        // Arrange
-        repository.findOneBy.mockResolvedValue(mockExistingPatient);
-        validator.validateUpdate.mockRejectedValue(new BadRequestException('Invalid logic'));
+      // Arrange
+      repository.findOneBy.mockResolvedValue(mockExistingPatient);
+      validator.validateUpdate.mockRejectedValue(
+        new BadRequestException('Invalid logic'),
+      );
 
-        // Act & Assert
-        await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow(BadRequestException);
-        await expect(service.execute(mockPatientId, mockUpdateDto)).rejects.toThrow('Invalid logic');
-        // Ensure it does NOT throw "Gagal mengupdate data pasien" wrapper
+      // Act & Assert
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.execute(mockPatientId, mockUpdateDto),
+      ).rejects.toThrow('Invalid logic');
+      // Ensure it does NOT throw "Gagal mengupdate data pasien" wrapper
     });
   });
 });

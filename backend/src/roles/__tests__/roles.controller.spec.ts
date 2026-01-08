@@ -14,7 +14,7 @@ describe('RolesController', () => {
     findAll: jest.fn(),
     findOne: jest.fn(),
     update: jest.fn(),
-    remove: jest.fn()
+    remove: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -38,7 +38,10 @@ describe('RolesController', () => {
 
   describe('create()', () => {
     it('should create a role', async () => {
-      const dto = { name: 'ADMIN', description: 'Administrator role' } as unknown as CreateRoleDto;
+      const dto = {
+        name: 'ADMIN',
+        description: 'Administrator role',
+      } as unknown as CreateRoleDto;
       mockRolesService.create.mockResolvedValue(dto);
 
       const result = await controller.create(dto);

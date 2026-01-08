@@ -108,12 +108,13 @@ describe('AuthController', () => {
       const expectedResult = {
         access_token: 'abc',
         refresh_token: 'xyz',
-        user: { // <-- Properti yang hilang
+        user: {
+          // <-- Properti yang hilang
           id: 1,
           username: 'erland',
           nama_lengkap: 'Erland Agsya',
-          roles: [{ id: 1, name: UserRole.DOKTER, description: 'Dokter' }]
-        }
+          roles: [{ id: 1, name: UserRole.DOKTER, description: 'Dokter' }],
+        },
       };
 
       // Kita bisa menggunakan 'as any' untuk menyederhanakan mock di tes
@@ -149,7 +150,7 @@ describe('AuthController', () => {
         username: 'erland',
         iat: 12345,
         exp: 123456,
-        valid: true // <-- Properti yang hilang
+        valid: true, // <-- Properti yang hilang
       };
 
       authService.verifyToken.mockResolvedValue(expectedResult as any);
@@ -202,7 +203,7 @@ describe('AuthController', () => {
         username: 'erland',
         nama_lengkap: 'Erland Updated',
         roles: [{ id: 1, name: UserRole.DOKTER, description: 'Dokter' }],
-        profile_photo: "http://example.com/photo.jpg",
+        profile_photo: 'http://example.com/photo.jpg',
         created_at: new Date(),
         updated_at: new Date(),
       };
@@ -225,7 +226,7 @@ describe('AuthController', () => {
       const expectedTokenPayload = {
         userId: updatedUserDto.id,
         username: updatedUserDto.username,
-        roles: updatedUserDto.roles.map(role => role.name),
+        roles: updatedUserDto.roles.map((role) => role.name),
       };
       expect(tokenService.generateToken).toHaveBeenCalledWith(
         expectedTokenPayload,

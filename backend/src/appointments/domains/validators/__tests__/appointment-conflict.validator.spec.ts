@@ -33,7 +33,7 @@ describe('AppointmentConflictValidator', () => {
     }).compile();
 
     validator = module.get<AppointmentConflictValidator>(
-      AppointmentConflictValidator
+      AppointmentConflictValidator,
     );
   });
 
@@ -62,23 +62,25 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).resolves.not.toThrow();
 
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         'appointment.doctor_id = :doctorId',
-        { doctorId }
+        { doctorId },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.tanggal_janji = :tanggalJanji',
-        { tanggalJanji }
+        { tanggalJanji },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.status = :status',
-        { status: AppointmentStatus.DIJADWALKAN }
+        { status: AppointmentStatus.DIJADWALKAN },
       );
-      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith(
+        'pessimistic_write',
+      );
     });
 
     it('should throw ConflictException when conflicting appointment exists', async () => {
@@ -91,7 +93,7 @@ describe('AppointmentConflictValidator', () => {
       };
 
       mockQueryBuilder.getOne.mockResolvedValue(
-        conflictingAppointment as Appointment
+        conflictingAppointment as Appointment,
       );
 
       await expect(
@@ -101,8 +103,8 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).rejects.toThrow(ConflictException);
 
       await expect(
@@ -112,9 +114,11 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
-      ).rejects.toThrow(/Dokter sudah memiliki janji temu di waktu yang berdekatan/);
+          bufferEnd,
+        ),
+      ).rejects.toThrow(
+        /Dokter sudah memiliki janji temu di waktu yang berdekatan/,
+      );
     });
 
     it('should include conflicting time in error message', async () => {
@@ -125,7 +129,7 @@ describe('AppointmentConflictValidator', () => {
       };
 
       mockQueryBuilder.getOne.mockResolvedValue(
-        conflictingAppointment as Appointment
+        conflictingAppointment as Appointment,
       );
 
       await expect(
@@ -135,8 +139,8 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).rejects.toThrow(new RegExp(conflictTime));
     });
 
@@ -147,7 +151,7 @@ describe('AppointmentConflictValidator', () => {
       };
 
       mockQueryBuilder.getOne.mockResolvedValue(
-        conflictingAppointment as Appointment
+        conflictingAppointment as Appointment,
       );
 
       await expect(
@@ -157,8 +161,8 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).rejects.toThrow(/minimal 30 menit/);
     });
 
@@ -171,10 +175,12 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
-      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith(
+        'pessimistic_write',
+      );
     });
 
     it('should filter by DIJADWALKAN status only', async () => {
@@ -186,12 +192,12 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.status = :status',
-        { status: AppointmentStatus.DIJADWALKAN }
+        { status: AppointmentStatus.DIJADWALKAN },
       );
     });
   });
@@ -215,13 +221,13 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).resolves.not.toThrow();
 
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         'appointment.id != :appointmentId',
-        { appointmentId }
+        { appointmentId },
       );
     });
 
@@ -235,12 +241,12 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         'appointment.id != :appointmentId',
-        { appointmentId }
+        { appointmentId },
       );
     });
 
@@ -252,7 +258,7 @@ describe('AppointmentConflictValidator', () => {
       };
 
       mockQueryBuilder.getOne.mockResolvedValue(
-        conflictingAppointment as Appointment
+        conflictingAppointment as Appointment,
       );
 
       await expect(
@@ -263,8 +269,8 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).rejects.toThrow(ConflictException);
     });
 
@@ -278,21 +284,21 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       expect(mockQueryBuilder.where).toHaveBeenCalled();
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.doctor_id = :doctorId',
-        { doctorId }
+        { doctorId },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.tanggal_janji = :tanggalJanji',
-        { tanggalJanji }
+        { tanggalJanji },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.status = :status',
-        { status: AppointmentStatus.DIJADWALKAN }
+        { status: AppointmentStatus.DIJADWALKAN },
       );
     });
 
@@ -306,10 +312,12 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
-      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith('pessimistic_write');
+      expect(mockQueryBuilder.setLock).toHaveBeenCalledWith(
+        'pessimistic_write',
+      );
     });
   });
 
@@ -331,8 +339,8 @@ describe('AppointmentConflictValidator', () => {
           tanggalJanji,
           jamJanji,
           bufferStart,
-          bufferEnd
-        )
+          bufferEnd,
+        ),
       ).rejects.toThrow(dbError);
     });
 
@@ -346,7 +354,7 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         '08:00:00',
         '07:30:00',
-        '08:30:00'
+        '08:30:00',
       );
 
       await validator.validateNoConflict(
@@ -355,7 +363,7 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         '16:00:00',
         '15:30:00',
-        '16:30:00'
+        '16:30:00',
       );
 
       expect(mockQueryBuilder.getOne).toHaveBeenCalledTimes(2);
@@ -373,7 +381,7 @@ describe('AppointmentConflictValidator', () => {
         date1,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       await validator.validateNoConflictForUpdate(
@@ -383,13 +391,13 @@ describe('AppointmentConflictValidator', () => {
         date2,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       // Should query twice with different dates
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.tanggal_janji = :tanggalJanji',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -402,7 +410,7 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       await validator.validateNoConflict(
@@ -411,7 +419,7 @@ describe('AppointmentConflictValidator', () => {
         tanggalJanji,
         jamJanji,
         bufferStart,
-        bufferEnd
+        bufferEnd,
       );
 
       expect(mockQueryBuilder.where).toHaveBeenCalledTimes(2);
@@ -430,8 +438,8 @@ describe('AppointmentConflictValidator', () => {
           new Date('2024-11-20'),
           '10:00:00',
           '09:30:00',
-          '10:30:00'
-        )
+          '10:30:00',
+        ),
       ).resolves.not.toThrow();
 
       // Verify all query methods were called

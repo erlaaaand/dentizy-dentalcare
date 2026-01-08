@@ -130,20 +130,20 @@ describe('AppointmentCancellationService', () => {
     jest.spyOn(service['logger'], 'error').mockImplementation();
 
     // Setup mock TransactionManager yang lebih realistis
-    (
-      transactionManager.executeInTransaction as jest.Mock
-    ).mockImplementation(async (queryRunner, callback) => {
-      try {
-        const result = await callback(queryRunner);
-        await queryRunner.commitTransaction();
-        return result;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    });
+    (transactionManager.executeInTransaction as jest.Mock).mockImplementation(
+      async (queryRunner, callback) => {
+        try {
+          const result = await callback(queryRunner);
+          await queryRunner.commitTransaction();
+          return result;
+        } catch (error) {
+          await queryRunner.rollbackTransaction();
+          throw error;
+        } finally {
+          await queryRunner.release();
+        }
+      },
+    );
   });
 
   afterEach(() => {
@@ -159,9 +159,9 @@ describe('AppointmentCancellationService', () => {
       (repository.findByIdInTransaction as jest.Mock).mockResolvedValue(
         mockAppointment,
       );
-      (cancellationValidator.validateCancellation as jest.Mock).mockImplementation(
-        () => {},
-      );
+      (
+        cancellationValidator.validateCancellation as jest.Mock
+      ).mockImplementation(() => {});
       (domainService.cancelAppointment as jest.Mock).mockReturnValue(
         mockCancelledAppointment,
       );
@@ -229,9 +229,9 @@ describe('AppointmentCancellationService', () => {
       (repository.findByIdInTransaction as jest.Mock).mockResolvedValue(
         mockAppointment,
       );
-      (cancellationValidator.validateCancellation as jest.Mock).mockImplementation(
-        () => {},
-      );
+      (
+        cancellationValidator.validateCancellation as jest.Mock
+      ).mockImplementation(() => {});
       (domainService.cancelAppointment as jest.Mock).mockReturnValue(
         mockCancelledAppointment,
       );
@@ -329,9 +329,9 @@ describe('AppointmentCancellationService', () => {
       (repository.findByIdInTransaction as jest.Mock).mockResolvedValue(
         mockAppointment,
       );
-      (cancellationValidator.validateCancellation as jest.Mock).mockImplementation(
-        () => {},
-      );
+      (
+        cancellationValidator.validateCancellation as jest.Mock
+      ).mockImplementation(() => {});
       (domainService.cancelAppointment as jest.Mock).mockReturnValue(
         mockCancelledAppointment,
       );

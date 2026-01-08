@@ -46,10 +46,7 @@ import { PaymentCompletedListener } from './infrastructures/listeners/payment-co
 import { PaymentDeletedListener } from './infrastructures/listeners/payment-deleted.listener';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Payment]),
-    EventEmitterModule.forRoot(),
-  ],
+  imports: [TypeOrmModule.forFeature([Payment]), EventEmitterModule.forRoot()],
   controllers: [PaymentsController],
   providers: [
     // Main Service
@@ -98,4 +95,4 @@ import { PaymentDeletedListener } from './infrastructures/listeners/payment-dele
     InvoiceGeneratorService,
   ],
 })
-export class PaymentsModule { }
+export class PaymentsModule {}

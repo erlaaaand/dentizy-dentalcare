@@ -16,11 +16,15 @@ describe('Events Index', () => {
     });
 
     it('should export AppointmentCancelledEvent', () => {
-      expect(EventsIndex.AppointmentCancelledEvent).toBe(AppointmentCancelledEvent);
+      expect(EventsIndex.AppointmentCancelledEvent).toBe(
+        AppointmentCancelledEvent,
+      );
     });
 
     it('should export AppointmentCompletedEvent', () => {
-      expect(EventsIndex.AppointmentCompletedEvent).toBe(AppointmentCompletedEvent);
+      expect(EventsIndex.AppointmentCompletedEvent).toBe(
+        AppointmentCompletedEvent,
+      );
     });
 
     it('should export AppointmentDeletedEvent', () => {
@@ -36,7 +40,7 @@ describe('Events Index', () => {
 
     it('should export all expected events', () => {
       const exports = Object.keys(EventsIndex);
-      
+
       expect(exports).toContain('AppointmentCreatedEvent');
       expect(exports).toContain('AppointmentUpdatedEvent');
       expect(exports).toContain('AppointmentCancelledEvent');
@@ -49,34 +53,34 @@ describe('Events Index', () => {
     it('should allow instantiation of AppointmentCreatedEvent', () => {
       const appointment = { id: 1 } as any;
       const event = new EventsIndex.AppointmentCreatedEvent(appointment, true);
-      
+
       expect(event).toBeInstanceOf(AppointmentCreatedEvent);
     });
 
     it('should allow instantiation of AppointmentCancelledEvent', () => {
       const appointment = { id: 1 } as any;
       const event = new EventsIndex.AppointmentCancelledEvent(appointment, 5);
-      
+
       expect(event).toBeInstanceOf(AppointmentCancelledEvent);
     });
 
     it('should allow instantiation of AppointmentCompletedEvent', () => {
       const appointment = { id: 1 } as any;
       const event = new EventsIndex.AppointmentCompletedEvent(appointment, 5);
-      
+
       expect(event).toBeInstanceOf(AppointmentCompletedEvent);
     });
 
     it('should allow instantiation of AppointmentUpdatedEvent', () => {
       const appointment = { id: 1 } as any;
       const event = new EventsIndex.AppointmentUpdatedEvent(appointment, true);
-      
+
       expect(event).toBeInstanceOf(AppointmentUpdatedEvent);
     });
 
     it('should allow instantiation of AppointmentDeletedEvent', () => {
       const event = new EventsIndex.AppointmentDeletedEvent(1, 5);
-      
+
       expect(event).toBeInstanceOf(AppointmentDeletedEvent);
     });
   });

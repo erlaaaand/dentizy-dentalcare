@@ -13,21 +13,20 @@ const rawUserData = {
   // Data relasi (Nested)
   roles: [
     { id: 1, name: 'DOCTOR', description: 'Dokter Umum', extraField: 'Sampah' },
-    { id: 2, name: 'ADMIN', description: 'Admin Klinik' }
+    { id: 2, name: 'ADMIN', description: 'Admin Klinik' },
   ],
   created_at: mockDate.toISOString(), // String ISO
-  updated_at: mockDate,             // Object Date
+  updated_at: mockDate, // Object Date
   profile_photo: 'avatar.jpg',
-  
+
   // --- DATA SENSITIF (Harus Dibuang) ---
   password: 'hashed_secret_password',
   refresh_token: 'some_token',
-  is_deleted: false
+  is_deleted: false,
 };
 
 // 3. TEST SUITE
 describe('UserResponseDto', () => {
-  
   // 4. SETUP AND TEARDOWN
   // Stateless
 
@@ -73,7 +72,7 @@ describe('UserResponseDto', () => {
   describe('Date Transformation', () => {
     it('should convert string dates to Date objects', () => {
       const dto = plainToInstance(UserResponseDto, rawUserData);
-      
+
       // created_at aslinya string ISO, harus jadi Date
       expect(dto.created_at).toBeInstanceOf(Date);
       expect(dto.created_at.toISOString()).toBe(mockDate.toISOString());

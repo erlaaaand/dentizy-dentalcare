@@ -11,7 +11,9 @@ describe('TransactionManager', () => {
 
   // ==================== MOCK DATA ====================
   const mockOperation = jest.fn().mockResolvedValue('success');
-  const mockFailingOperation = jest.fn().mockRejectedValue(new Error('Operation failed'));
+  const mockFailingOperation = jest
+    .fn()
+    .mockRejectedValue(new Error('Operation failed'));
 
   // ==================== SETUP AND TEARDOWN ====================
   beforeEach(async () => {
@@ -105,9 +107,7 @@ describe('TransactionManager', () => {
       expect(logSpy).toHaveBeenCalledWith(
         expect.stringContaining('Transaction'),
       );
-      expect(logSpy).toHaveBeenCalledWith(
-        expect.stringContaining('started'),
-      );
+      expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('started'));
     });
 
     it('should log transaction commit', async () => {
@@ -121,7 +121,9 @@ describe('TransactionManager', () => {
     });
 
     it('should log transaction rollback', async () => {
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
 
       await expect(
         manager.runInTransaction(mockFailingOperation),
@@ -175,16 +177,16 @@ describe('TransactionManager', () => {
       const op2 = jest.fn().mockRejectedValue(new Error('Failed'));
       const op3 = jest.fn().mockResolvedValue('result3');
 
-      await expect(
-        manager.runBatch([op1, op2, op3]),
-      ).rejects.toThrow('Failed');
+      await expect(manager.runBatch([op1, op2, op3])).rejects.toThrow('Failed');
 
       expect(mockQueryRunner.rollbackTransaction).toHaveBeenCalled();
       expect(op3).not.toHaveBeenCalled();
     });
 
     it('should log batch progress', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
       const operations = [
         jest.fn().mockResolvedValue('r1'),
         jest.fn().mockResolvedValue('r2'),
@@ -212,15 +214,9 @@ describe('TransactionManager', () => {
   // ==================== RUN WITH SAVEPOINT TESTS ====================
   describe('runWithSavepoint', () => {
     it('should create savepoint before operation', async () => {
-      await manager.runWithSavepoint(
-        mockQueryRunner,
-        mockOperation,
-        'test_sp',
-      );
+      await manager.runWithSavepoint(mockQueryRunner, mockOperation, 'test_sp');
 
-      expect(mockQueryRunner.query).toHaveBeenCalledWith(
-        'SAVEPOINT test_sp',
-      );
+      expect(mockQueryRunner.query).toHaveBeenCalledWith('SAVEPOINT test_sp');
     });
 
     it('should rollback to savepoint on failure', async () => {
@@ -238,7 +234,9 @@ describe('TransactionManager', () => {
     });
 
     it('should log savepoint creation', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await manager.runWithSavepoint(mockQueryRunner, mockOperation, 'test_sp');
 
@@ -248,7 +246,9 @@ describe('TransactionManager', () => {
     });
 
     it('should log savepoint completion', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await manager.runWithSavepoint(mockQueryRunner, mockOperation, 'test_sp');
 
@@ -314,7 +314,8 @@ describe('TransactionManager', () => {
 
     it('should retry on deadlock error', async () => {
       const deadlockError = new Error('Deadlock detected');
-      const retriableOp = jest.fn()
+      const retriableOp = jest
+        .fn()
         .mockRejectedValueOnce(deadlockError)
         .mockResolvedValueOnce('success');
 
@@ -328,9 +329,9 @@ describe('TransactionManager', () => {
       const deadlockError = new Error('Deadlock detected');
       const failingOp = jest.fn().mockRejectedValue(deadlockError);
 
-      await expect(
-        manager.runWithRetry(failingOp, 2),
-      ).rejects.toThrow('Deadlock detected');
+      await expect(manager.runWithRetry(failingOp, 2)).rejects.toThrow(
+        'Deadlock detected',
+      );
 
       expect(failingOp).toHaveBeenCalledTimes(2);
     });
@@ -339,27 +340,28 @@ describe('TransactionManager', () => {
       const normalError = new Error('Normal error');
       const failingOp = jest.fn().mockRejectedValue(normalError);
 
-      await expect(
-        manager.runWithRetry(failingOp, 3),
-      ).rejects.toThrow('Normal error');
+      await expect(manager.runWithRetry(failingOp, 3)).rejects.toThrow(
+        'Normal error',
+      );
 
       expect(failingOp).toHaveBeenCalledTimes(1);
     });
 
     it('should log retry attempts', async () => {
-      const debugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+      const debugSpy = jest
+        .spyOn(Logger.prototype, 'debug')
+        .mockImplementation();
 
       await manager.runWithRetry(mockOperation, 3);
 
-      expect(debugSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Attempt'),
-      );
+      expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Attempt'));
     });
 
     it('should log deadlock warnings', async () => {
       const warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
       const deadlockError = new Error('Deadlock detected');
-      const retriableOp = jest.fn()
+      const retriableOp = jest
+        .fn()
         .mockRejectedValueOnce(deadlockError)
         .mockResolvedValueOnce('success');
 
@@ -398,9 +400,7 @@ describe('TransactionManager', () => {
       const op1 = jest.fn().mockResolvedValue('result1');
       const op2 = jest.fn().mockRejectedValue(new Error('Failed'));
 
-      await expect(
-        manager.runParallel([op1, op2]),
-      ).rejects.toThrow('Failed');
+      await expect(manager.runParallel([op1, op2])).rejects.toThrow('Failed');
     });
   });
 
@@ -414,7 +414,9 @@ describe('TransactionManager', () => {
     });
 
     it('should return false when database query fails', async () => {
-      jest.spyOn(dataSource, 'query').mockRejectedValue(new Error('Connection failed'));
+      jest
+        .spyOn(dataSource, 'query')
+        .mockRejectedValue(new Error('Connection failed'));
 
       const result = await manager.healthCheck();
 
@@ -422,8 +424,12 @@ describe('TransactionManager', () => {
     });
 
     it('should log health check failure', async () => {
-      const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-      jest.spyOn(dataSource, 'query').mockRejectedValue(new Error('Connection failed'));
+      const errorSpy = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation();
+      jest
+        .spyOn(dataSource, 'query')
+        .mockRejectedValue(new Error('Connection failed'));
 
       await manager.healthCheck();
 

@@ -44,7 +44,6 @@ const mockRole = (id: number, name: UserRole): Role => ({
   users: [],
 });
 
-
 // ============================================================================
 // TEST SUITE
 // ============================================================================
@@ -84,7 +83,9 @@ describe('MedicalRecordQueryBuilder', () => {
     }).compile();
 
     builder = module.get<MedicalRecordQueryBuilder>(MedicalRecordQueryBuilder);
-    repository = module.get<Repository<MedicalRecord>>(getRepositoryToken(MedicalRecord));
+    repository = module.get<Repository<MedicalRecord>>(
+      getRepositoryToken(MedicalRecord),
+    );
   });
 
   afterEach(() => {
@@ -108,23 +109,23 @@ describe('MedicalRecordQueryBuilder', () => {
       expect(repository.createQueryBuilder).toHaveBeenCalledWith('record');
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'record.appointment',
-        'appointment'
+        'appointment',
       );
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'appointment.patient',
-        'patient'
+        'patient',
       );
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'appointment.doctor',
-        'appointmentDoctor'
+        'appointmentDoctor',
       );
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'appointmentDoctor.roles',
-        'doctorRoles'
+        'doctorRoles',
       );
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
         'record.doctor',
-        'doctor'
+        'doctor',
       );
       expect(query).toBe(mockQueryBuilder);
     });
@@ -141,34 +142,46 @@ describe('MedicalRecordQueryBuilder', () => {
     });
 
     it('should not apply filters for Kepala Klinik', () => {
-      const query = builder.applyAuthorizationFilter(mockQueryBuilder, mockKepalaKlinik);
+      const query = builder.applyAuthorizationFilter(
+        mockQueryBuilder,
+        mockKepalaKlinik,
+      );
 
       expect(mockQueryBuilder.andWhere).not.toHaveBeenCalled();
       expect(query).toBe(mockQueryBuilder);
     });
 
     it('should apply doctor filter for Dokter role', () => {
-      const query = builder.applyAuthorizationFilter(mockQueryBuilder, mockDokter);
+      const query = builder.applyAuthorizationFilter(
+        mockQueryBuilder,
+        mockDokter,
+      );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         '(appointment.doctor_id = :userId OR record.doctor_id = :userId)',
-        { userId: mockDokter.id }
+        { userId: mockDokter.id },
       );
       expect(query).toBe(mockQueryBuilder);
     });
 
     it('should apply status filter for Staf role', () => {
-      const query = builder.applyAuthorizationFilter(mockQueryBuilder, mockStaf);
+      const query = builder.applyAuthorizationFilter(
+        mockQueryBuilder,
+        mockStaf,
+      );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.status != :cancelled',
-        { cancelled: AppointmentStatus.DIBATALKAN }
+        { cancelled: AppointmentStatus.DIBATALKAN },
       );
       expect(query).toBe(mockQueryBuilder);
     });
 
     it('should deny all for unknown roles', () => {
-      const query = builder.applyAuthorizationFilter(mockQueryBuilder, mockUnknownUser);
+      const query = builder.applyAuthorizationFilter(
+        mockQueryBuilder,
+        mockUnknownUser,
+      );
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith('1 = 0');
       expect(query).toBe(mockQueryBuilder);
@@ -191,7 +204,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.patient_id = :patientId',
-          { patientId: 100 }
+          { patientId: 100 },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -203,7 +216,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.doctor_id = :doctorId',
-          { doctorId: 200 }
+          { doctorId: 200 },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -215,7 +228,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.appointment_id = :appointmentId',
-          { appointmentId: 300 }
+          { appointmentId: 300 },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -228,18 +241,22 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.created_at >= :startDate',
-          { startDate }
+          { startDate },
         );
         expect(query).toBe(mockQueryBuilder);
       });
 
       it('should add end date filter', () => {
         const endDate = new Date('2024-01-31');
-        const query = builder.filterByDateRange(mockQueryBuilder, undefined, endDate);
+        const query = builder.filterByDateRange(
+          mockQueryBuilder,
+          undefined,
+          endDate,
+        );
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.created_at <= :endDate',
-          { endDate }
+          { endDate },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -247,15 +264,19 @@ describe('MedicalRecordQueryBuilder', () => {
       it('should add both date filters', () => {
         const startDate = new Date('2024-01-01');
         const endDate = new Date('2024-01-31');
-        const query = builder.filterByDateRange(mockQueryBuilder, startDate, endDate);
+        const query = builder.filterByDateRange(
+          mockQueryBuilder,
+          startDate,
+          endDate,
+        );
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.created_at >= :startDate',
-          { startDate }
+          { startDate },
         );
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'record.created_at <= :endDate',
-          { endDate }
+          { endDate },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -272,12 +293,12 @@ describe('MedicalRecordQueryBuilder', () => {
       it('should add appointment status filter', () => {
         const query = builder.filterByAppointmentStatus(
           mockQueryBuilder,
-          AppointmentStatus.SELESAI
+          AppointmentStatus.SELESAI,
         );
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           'appointment.status = :status',
-          { status: AppointmentStatus.SELESAI }
+          { status: AppointmentStatus.SELESAI },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -289,7 +310,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
           expect.stringContaining('record.subjektif LIKE :search'),
-          { search: '%demam%' }
+          { search: '%demam%' },
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -300,7 +321,7 @@ describe('MedicalRecordQueryBuilder', () => {
         const query = builder.filterIncomplete(mockQueryBuilder);
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-          expect.stringContaining('record.subjektif IS NULL')
+          expect.stringContaining('record.subjektif IS NULL'),
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -311,7 +332,7 @@ describe('MedicalRecordQueryBuilder', () => {
         const query = builder.filterComplete(mockQueryBuilder);
 
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-          expect.stringContaining('record.subjektif IS NOT NULL')
+          expect.stringContaining('record.subjektif IS NOT NULL'),
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -373,20 +394,29 @@ describe('MedicalRecordQueryBuilder', () => {
     it('should apply default sorting', () => {
       const query = builder.sortBy(mockQueryBuilder);
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.created_at', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.created_at',
+        'DESC',
+      );
       expect(query).toBe(mockQueryBuilder);
     });
 
     it('should sort by created_at', () => {
       const query = builder.sortBy(mockQueryBuilder, 'created_at', 'ASC');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.created_at', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.created_at',
+        'ASC',
+      );
     });
 
     it('should sort by updated_at', () => {
       const query = builder.sortBy(mockQueryBuilder, 'updated_at', 'DESC');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.updated_at', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.updated_at',
+        'DESC',
+      );
     });
 
     it('should sort by appointment_date', () => {
@@ -394,26 +424,35 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
         'appointment.appointment_date',
-        'ASC'
+        'ASC',
       );
     });
 
     it('should sort by patient_name', () => {
       const query = builder.sortBy(mockQueryBuilder, 'patient_name', 'ASC');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('patient.nama_lengkap', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'patient.nama_lengkap',
+        'ASC',
+      );
     });
 
     it('should sort by doctor_name', () => {
       const query = builder.sortBy(mockQueryBuilder, 'doctor_name', 'DESC');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('doctor.name', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'doctor.name',
+        'DESC',
+      );
     });
 
     it('should use default field for invalid sort field', () => {
       const query = builder.sortBy(mockQueryBuilder, 'invalid_field', 'ASC');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.created_at', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.created_at',
+        'ASC',
+      );
     });
   });
 
@@ -443,7 +482,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
         expect(mockQueryBuilder.withDeleted).toHaveBeenCalled();
         expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
-          'record.deleted_at IS NOT NULL'
+          'record.deleted_at IS NOT NULL',
         );
         expect(query).toBe(mockQueryBuilder);
       });
@@ -463,14 +502,19 @@ describe('MedicalRecordQueryBuilder', () => {
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
       };
-      (repository.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (repository.createQueryBuilder as jest.Mock).mockReturnValue(
+        mockQueryBuilder,
+      );
     });
 
     it('should build query with default settings for Kepala Klinik', () => {
       const query = builder.buildFindAllQuery(mockKepalaKlinik);
 
       expect(repository.createQueryBuilder).toHaveBeenCalledWith('record');
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.created_at', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.created_at',
+        'DESC',
+      );
       expect(query).toBe(mockQueryBuilder);
     });
 
@@ -479,7 +523,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         expect.stringContaining('doctor_id = :userId'),
-        expect.anything()
+        expect.anything(),
       );
     });
 
@@ -502,65 +546,79 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.patient_id = :patientId',
-        { patientId: 100 }
+        { patientId: 100 },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.doctor_id = :doctorId',
-        { doctorId: 200 }
+        { doctorId: 200 },
       );
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('record.updated_at', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'record.updated_at',
+        'ASC',
+      );
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(20);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(20);
     });
 
     it('should apply patient filter only', () => {
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { patientId: 100 });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        patientId: 100,
+      });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.patient_id = :patientId',
-        { patientId: 100 }
+        { patientId: 100 },
       );
     });
 
     it('should apply doctor filter only', () => {
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { doctorId: 200 });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        doctorId: 200,
+      });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.doctor_id = :doctorId',
-        { doctorId: 200 }
+        { doctorId: 200 },
       );
     });
 
     it('should apply appointment filter only', () => {
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { appointmentId: 300 });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        appointmentId: 300,
+      });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.appointment_id = :appointmentId',
-        { appointmentId: 300 }
+        { appointmentId: 300 },
       );
     });
 
     it('should apply search filter only', () => {
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { search: 'batuk' });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        search: 'batuk',
+      });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         expect.stringContaining('record.subjektif LIKE :search'),
-        { search: '%batuk%' }
+        { search: '%batuk%' },
       );
     });
 
     it('should apply date range filters', () => {
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-01-31');
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { startDate, endDate });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        startDate,
+        endDate,
+      });
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.created_at >= :startDate',
-        { startDate }
+        { startDate },
       );
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.created_at <= :endDate',
-        { endDate }
+        { endDate },
       );
     });
 
@@ -571,7 +629,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'appointment.status = :status',
-        { status: AppointmentStatus.SELESAI }
+        { status: AppointmentStatus.SELESAI },
       );
     });
 
@@ -581,11 +639,17 @@ describe('MedicalRecordQueryBuilder', () => {
         sortOrder: 'ASC',
       });
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('patient.nama_lengkap', 'ASC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'patient.nama_lengkap',
+        'ASC',
+      );
     });
 
     it('should apply pagination when provided', () => {
-      const query = builder.buildFindAllQuery(mockKepalaKlinik, { page: 3, limit: 15 });
+      const query = builder.buildFindAllQuery(mockKepalaKlinik, {
+        page: 3,
+        limit: 15,
+      });
 
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(30);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(15);
@@ -617,7 +681,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'record.patient_id = :patientId',
-        { patientId: 0 }
+        { patientId: 0 },
       );
     });
 
@@ -626,7 +690,7 @@ describe('MedicalRecordQueryBuilder', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         expect.anything(),
-        { search: '%%' }
+        { search: '%%' },
       );
     });
 
@@ -645,17 +709,14 @@ describe('MedicalRecordQueryBuilder', () => {
     it('should handle multiple roles user', () => {
       const multiRoleUser: User = {
         ...mockDokter,
-        roles: [
-          mockRole(2, UserRole.DOKTER),
-          mockRole(3, UserRole.STAF),
-        ],
+        roles: [mockRole(2, UserRole.DOKTER), mockRole(3, UserRole.STAF)],
       };
 
       builder.applyAuthorizationFilter(mockQueryBuilder, multiRoleUser);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         '(appointment.doctor_id = :userId OR record.doctor_id = :userId)',
-        { userId: multiRoleUser.id }
+        { userId: multiRoleUser.id },
       );
     });
   });
@@ -673,7 +734,9 @@ describe('MedicalRecordQueryBuilder', () => {
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
       };
-      (repository.createQueryBuilder as jest.Mock).mockReturnValue(mockQueryBuilder);
+      (repository.createQueryBuilder as jest.Mock).mockReturnValue(
+        mockQueryBuilder,
+      );
     });
 
     it('should allow chaining multiple filters', () => {

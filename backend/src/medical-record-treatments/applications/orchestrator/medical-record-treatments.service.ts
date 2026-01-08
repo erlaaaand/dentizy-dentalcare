@@ -15,46 +15,57 @@ import { MedicalRecordTreatmentRepository } from '../../../medical-record-treatm
 
 @Injectable()
 export class MedicalRecordTreatmentsService {
-    constructor(
-        private readonly createUseCase: CreateMedicalRecordTreatmentUseCase,
-        private readonly updateUseCase: UpdateMedicalRecordTreatmentUseCase,
-        private readonly deleteUseCase: DeleteMedicalRecordTreatmentUseCase,
-        private readonly findAllUseCase: FindAllMedicalRecordTreatmentsUseCase,
-        private readonly findOneUseCase: FindOneMedicalRecordTreatmentUseCase,
-        private readonly findByMedicalRecordIdUseCase: FindByMedicalRecordIdUseCase,
-        private readonly getTotalUseCase: GetTotalByMedicalRecordIdUseCase,
-        private readonly repository: MedicalRecordTreatmentRepository
-    ) { }
+  constructor(
+    private readonly createUseCase: CreateMedicalRecordTreatmentUseCase,
+    private readonly updateUseCase: UpdateMedicalRecordTreatmentUseCase,
+    private readonly deleteUseCase: DeleteMedicalRecordTreatmentUseCase,
+    private readonly findAllUseCase: FindAllMedicalRecordTreatmentsUseCase,
+    private readonly findOneUseCase: FindOneMedicalRecordTreatmentUseCase,
+    private readonly findByMedicalRecordIdUseCase: FindByMedicalRecordIdUseCase,
+    private readonly getTotalUseCase: GetTotalByMedicalRecordIdUseCase,
+    private readonly repository: MedicalRecordTreatmentRepository,
+  ) {}
 
-    async create(dto: CreateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatmentResponseDto> {
-        return await this.createUseCase.execute(dto);
-    }
+  async create(
+    dto: CreateMedicalRecordTreatmentDto,
+  ): Promise<MedicalRecordTreatmentResponseDto> {
+    return await this.createUseCase.execute(dto);
+  }
 
-    async findAll(query: QueryMedicalRecordTreatmentDto) {
-        return await this.findAllUseCase.execute(query);
-    }
+  async findAll(query: QueryMedicalRecordTreatmentDto) {
+    return await this.findAllUseCase.execute(query);
+  }
 
-    async findOne(id: number): Promise<MedicalRecordTreatmentResponseDto> {
-        return await this.findOneUseCase.execute(id);
-    }
+  async findOne(id: number): Promise<MedicalRecordTreatmentResponseDto> {
+    return await this.findOneUseCase.execute(id);
+  }
 
-    async findByMedicalRecordId(medicalRecordId: number): Promise<MedicalRecordTreatmentResponseDto[]> {
-        return await this.findByMedicalRecordIdUseCase.execute(medicalRecordId);
-    }
+  async findByMedicalRecordId(
+    medicalRecordId: number,
+  ): Promise<MedicalRecordTreatmentResponseDto[]> {
+    return await this.findByMedicalRecordIdUseCase.execute(medicalRecordId);
+  }
 
-    async update(id: number, dto: UpdateMedicalRecordTreatmentDto): Promise<MedicalRecordTreatmentResponseDto> {
-        return await this.updateUseCase.execute(id, dto);
-    }
+  async update(
+    id: number,
+    dto: UpdateMedicalRecordTreatmentDto,
+  ): Promise<MedicalRecordTreatmentResponseDto> {
+    return await this.updateUseCase.execute(id, dto);
+  }
 
-    async remove(id: number): Promise<void> {
-        return await this.deleteUseCase.execute(id);
-    }
+  async remove(id: number): Promise<void> {
+    return await this.deleteUseCase.execute(id);
+  }
 
-    async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
-        return await this.getTotalUseCase.execute(medicalRecordId);
-    }
+  async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
+    return await this.getTotalUseCase.execute(medicalRecordId);
+  }
 
-    async getTopTreatments(limit: number = 10, startDate?: Date, endDate?: Date): Promise<any[]> {
-        return await this.repository.getTopTreatments(limit, startDate, endDate);
-    }
+  async getTopTreatments(
+    limit: number = 10,
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<any[]> {
+    return await this.repository.getTopTreatments(limit, startDate, endDate);
+  }
 }

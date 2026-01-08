@@ -5,14 +5,14 @@ import { TreatmentCategoryDeletedEvent } from '../../infrastructures/events/trea
 
 @Injectable()
 export class TreatmentCategoryDeletedListener {
-    private readonly logger = new Logger(TreatmentCategoryDeletedListener.name);
+  private readonly logger = new Logger(TreatmentCategoryDeletedListener.name);
 
-    @OnEvent('treatment-category.deleted')
-    handleDeletedEvent(event: TreatmentCategoryDeletedEvent) {
-        this.logger.log(
-            `Treatment category deleted: ID=${event.categoryId}, Name=${event.categoryName}`,
-        );
+  @OnEvent('treatment-category.deleted')
+  handleDeletedEvent(event: TreatmentCategoryDeletedEvent) {
+    this.logger.log(
+      `Treatment category deleted: ID=${event.categoryId}, Name=${event.categoryName}`,
+    );
 
-        // Additional actions: cleanup, audit log, etc.
-    }
+    // Additional actions: cleanup, audit log, etc.
+  }
 }

@@ -111,8 +111,12 @@ describe('PatientValidator (Facade)', () => {
       createValidator.validate.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(validator.validateCreate(mockCreateDto)).rejects.toThrow(BadRequestException);
-      await expect(validator.validateCreate(mockCreateDto)).rejects.toThrow('Create Validation Failed');
+      await expect(validator.validateCreate(mockCreateDto)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(validator.validateCreate(mockCreateDto)).rejects.toThrow(
+        'Create Validation Failed',
+      );
     });
 
     it('should propagate errors thrown by updateValidator', async () => {
@@ -121,18 +125,26 @@ describe('PatientValidator (Facade)', () => {
       updateValidator.validate.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(validator.validateUpdate(1, mockUpdateDto)).rejects.toThrow(error);
+      await expect(validator.validateUpdate(1, mockUpdateDto)).rejects.toThrow(
+        error,
+      );
     });
 
     it('should propagate errors thrown by searchValidator', () => {
       // Arrange
       const error = new BadRequestException('Search Validation Failed');
       // Note: searchValidator is usually synchronous in your code, so use mockImplementation throwing
-      searchValidator.validate.mockImplementation(() => { throw error; });
+      searchValidator.validate.mockImplementation(() => {
+        throw error;
+      });
 
       // Act & Assert
-      expect(() => validator.validateSearchQuery(mockSearchQuery)).toThrow(BadRequestException);
-      expect(() => validator.validateSearchQuery(mockSearchQuery)).toThrow('Search Validation Failed');
+      expect(() => validator.validateSearchQuery(mockSearchQuery)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateSearchQuery(mockSearchQuery)).toThrow(
+        'Search Validation Failed',
+      );
     });
   });
 });

@@ -49,34 +49,34 @@
 
 The application is built with a focus on modularity and performance.
 
-* **Authentication & Authorization**: Secure JWT token-based system with granular Role-Based Access Control (RBAC).
-* **User Management**: Complete lifecycle management for clinic staff and administrators.
-* **Communication**: Integrated Email Service using Nodemailer for automated notifications.
-* **Data Persistence**: TypeORM implementation with MySQL for reliable relational data storage.
-* **Advanced Security**:
-    * Helmet for HTTP header security.
-    * CSRF protection and Rate Limiting (Throttler).
-    * Bcrypt password hashing.
-* **Documentation**: Auto-generated, interactive Swagger/OpenAPI documentation.
-* **Performance**: Redis-ready caching mechanism and Event-driven architecture.
-* **Automation**: Task scheduling via Cron jobs.
-* **Quality Assurance**: Comprehensive Unit and E2E testing suites using Jest.
+- **Authentication & Authorization**: Secure JWT token-based system with granular Role-Based Access Control (RBAC).
+- **User Management**: Complete lifecycle management for clinic staff and administrators.
+- **Communication**: Integrated Email Service using Nodemailer for automated notifications.
+- **Data Persistence**: TypeORM implementation with MySQL for reliable relational data storage.
+- **Advanced Security**:
+  - Helmet for HTTP header security.
+  - CSRF protection and Rate Limiting (Throttler).
+  - Bcrypt password hashing.
+- **Documentation**: Auto-generated, interactive Swagger/OpenAPI documentation.
+- **Performance**: Redis-ready caching mechanism and Event-driven architecture.
+- **Automation**: Task scheduling via Cron jobs.
+- **Quality Assurance**: Comprehensive Unit and E2E testing suites using Jest.
 
 ---
 
 ## Tech Stack
 
-| Technology | Purpose |
-| :--- | :--- |
-| **NestJS** | Progressive Node.js framework for backend logic |
-| **TypeScript** | Strongly typed superset of JavaScript |
-| **TypeORM** | Object-Relational Mapper for database interaction |
-| **MySQL** | Primary relational database management system |
-| **Passport JWT** | Authentication strategy middleware |
-| **Swagger** | API documentation and interface testing |
-| **Jest** | Testing framework for Unit and E2E tests |
-| **Nodemailer** | Module for sending e-mails |
-| **Helmet** | Middleware for securing HTTP headers |
+| Technology       | Purpose                                           |
+| :--------------- | :------------------------------------------------ |
+| **NestJS**       | Progressive Node.js framework for backend logic   |
+| **TypeScript**   | Strongly typed superset of JavaScript             |
+| **TypeORM**      | Object-Relational Mapper for database interaction |
+| **MySQL**        | Primary relational database management system     |
+| **Passport JWT** | Authentication strategy middleware                |
+| **Swagger**      | API documentation and interface testing           |
+| **Jest**         | Testing framework for Unit and E2E tests          |
+| **Nodemailer**   | Module for sending e-mails                        |
+| **Helmet**       | Middleware for securing HTTP headers              |
 
 ---
 
@@ -84,10 +84,10 @@ The application is built with a focus on modularity and performance.
 
 Ensure your development environment meets the following requirements:
 
-* **Node.js**: v18.x or higher
-* **npm**: v9.x or higher
-* **MySQL**: v8.x or higher
-* **Git**: Latest version
+- **Node.js**: v18.x or higher
+- **npm**: v9.x or higher
+- **MySQL**: v8.x or higher
+- **Git**: Latest version
 
 ---
 
@@ -96,19 +96,22 @@ Ensure your development environment meets the following requirements:
 Follow these steps to set up the development environment:
 
 1.  **Clone the Repository**
+
     ```bash
     git clone <repository-url>
     cd backend
     ```
 
 2.  **Install Dependencies**
+
     ```bash
     npm install
     ```
 
 3.  **Database Setup**
-    
+
     Execute the following SQL command to create the database:
+
     ```sql
     CREATE DATABASE dentizy_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ```
@@ -122,6 +125,7 @@ Follow these steps to set up the development environment:
 <br>
 
 1.  Duplicate the example environment file:
+
     ```bash
     cp .env.example .env
     ```
@@ -162,6 +166,7 @@ Follow these steps to set up the development environment:
 <br>
 
 **Generate a secure JWT Secret:**
+
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
@@ -242,6 +247,7 @@ Once the application is running, access the interactive API documentation:
 **Swagger UI:** `http://localhost:3000/api`
 
 The Swagger documentation provides:
+
 - All available endpoints
 - Request/Response schemas
 - Interactive API testing
@@ -285,6 +291,7 @@ mau deploy
 ### Manual Deployment
 
 1. **Build the application:**
+
    ```bash
    npm run build
    ```
@@ -348,12 +355,13 @@ npm run lint
 **Erland Agsya Agustian**
 
 - Email: [erlandagsya458@gmail.com](mailto:erlandagsya458@gmail.com)
-- Instagram: [@erlaaaand_](https://instagram.com/erlaaaand_)
+- Instagram: [@erlaaaand\_](https://instagram.com/erlaaaand_)
 - LinkedIn: [Connect with me](https://www.linkedin.com/in/erland-agsya-6619892a1)
 
 ### Get in Touch
 
 Feel free to reach out for:
+
 - Bug reports
 - Feature requests
 - Collaboration opportunities

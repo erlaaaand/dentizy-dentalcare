@@ -11,40 +11,40 @@ import { AppointmentDeletedEvent } from '../../infrastructures/events';
  */
 @Injectable()
 export class AppointmentDeletionService {
-    private readonly logger = new Logger(AppointmentDeletionService.name);
+  private readonly logger = new Logger(AppointmentDeletionService.name);
 
-    constructor(
-        private readonly repository: AppointmentsRepository,
-        private readonly validator: AppointmentValidator,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: AppointmentsRepository,
+    private readonly validator: AppointmentValidator,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    /**
-     * Execute: Delete appointment
-     * Note: Hanya bisa delete jika belum ada medical record
-     */
-    async execute(id: number, user: User): Promise<void> {
-        try {
-            // 1. FIND APPOINTMENT
-            const appointment = await this.repository.findById(id);
-            this.validator.validateAppointmentExists(appointment, id);
+  /**
+   * Execute: Delete appointment
+   * Note: Hanya bisa delete jika belum ada medical record
+   */
+  async execute(id: number, user: User): Promise<void> {
+    try {
+      // 1. FIND APPOINTMENT
+      const appointment = await this.repository.findById(id);
+      this.validator.validateAppointmentExists(appointment, id);
 
-            // 2. VALIDASI: Tidak boleh delete jika sudah ada medical record
-            this.validator.validateForDeletion(appointment!);
+      // 2. VALIDASI: Tidak boleh delete jika sudah ada medical record
+      this.validator.validateForDeletion(appointment!);
 
-            // 3. DELETE APPOINTMENT
-            await this.repository.remove(appointment!);
+      // 3. DELETE APPOINTMENT
+      await this.repository.remove(appointment!);
 
-            // 4. EMIT EVENT
-            this.eventEmitter.emit(
-                'appointment.deleted',
-                new AppointmentDeletedEvent(id, user.id)
-            );
+      // 4. EMIT EVENT
+      this.eventEmitter.emit(
+        'appointment.deleted',
+        new AppointmentDeletedEvent(id, user.id),
+      );
 
-            this.logger.log(`🗑️ Appointment #${id} deleted`);
-        } catch (error) {
-            this.logger.error(`❌ Error deleting appointment ID ${id}:`, error.stack);
-            throw error;
-        }
+      this.logger.log(`🗑️ Appointment #${id} deleted`);
+    } catch (error) {
+      this.logger.error(`❌ Error deleting appointment ID ${id}:`, error.stack);
+      throw error;
     }
+  }
 }

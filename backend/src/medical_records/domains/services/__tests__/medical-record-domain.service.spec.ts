@@ -5,7 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { MedicalRecordDomainService } from '../medical-record-domain.service';
 import { MedicalRecord } from '../../entities/medical-record.entity';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 
 // ============================================================================
 // MOCK DATA
@@ -22,13 +25,16 @@ const createMockMedicalRecord = (): Partial<MedicalRecord> => ({
   created_at: new Date('2024-01-15'),
 });
 
-const createMockAppointment = (status: AppointmentStatus = AppointmentStatus.DIJADWALKAN): Appointment => ({
-  id: 10,
-  patient_id: 3,
-  doctor_id: 2,
-  tanggal_janji: new Date('2024-01-15'),
-  status,
-} as Appointment);
+const createMockAppointment = (
+  status: AppointmentStatus = AppointmentStatus.DIJADWALKAN,
+): Appointment =>
+  ({
+    id: 10,
+    patient_id: 3,
+    doctor_id: 2,
+    tanggal_janji: new Date('2024-01-15'),
+    status,
+  }) as Appointment;
 
 // ============================================================================
 // TEST SUITE
@@ -44,7 +50,9 @@ describe('MedicalRecordDomainService', () => {
       providers: [MedicalRecordDomainService],
     }).compile();
 
-    service = module.get<MedicalRecordDomainService>(MedicalRecordDomainService);
+    service = module.get<MedicalRecordDomainService>(
+      MedicalRecordDomainService,
+    );
   });
 
   it('should be defined', () => {
@@ -71,8 +79,9 @@ describe('MedicalRecordDomainService', () => {
         plan: null,
       };
 
-      expect(() => service.validateSOAPContent(record))
-        .toThrow(BadRequestException);
+      expect(() => service.validateSOAPContent(record)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass when multiple SOAP fields are filled', () => {
@@ -84,8 +93,9 @@ describe('MedicalRecordDomainService', () => {
     it('should throw error when all fields are undefined', () => {
       const record: Partial<MedicalRecord> = {};
 
-      expect(() => service.validateSOAPContent(record))
-        .toThrow(BadRequestException);
+      expect(() => service.validateSOAPContent(record)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass when only plan is filled', () => {
@@ -104,32 +114,37 @@ describe('MedicalRecordDomainService', () => {
     it('should pass for valid appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIJADWALKAN);
 
-      expect(() => service.validateAppointmentEligibility(appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateAppointmentEligibility(appointment),
+      ).not.toThrow();
     });
 
     it('should throw error for cancelled appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIBATALKAN);
 
-      expect(() => service.validateAppointmentEligibility(appointment))
-        .toThrow(ConflictException);
+      expect(() => service.validateAppointmentEligibility(appointment)).toThrow(
+        ConflictException,
+      );
     });
 
     it('should throw error when appointment is null', () => {
-      expect(() => service.validateAppointmentEligibility(null))
-        .toThrow(BadRequestException);
+      expect(() => service.validateAppointmentEligibility(null)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass for SELESAI appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.SELESAI);
 
-      expect(() => service.validateAppointmentEligibility(appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateAppointmentEligibility(appointment),
+      ).not.toThrow();
     });
 
     it('should throw error when appointment is undefined', () => {
-      expect(() => service.validateAppointmentEligibility(undefined))
-        .toThrow(BadRequestException);
+      expect(() => service.validateAppointmentEligibility(undefined)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -140,22 +155,25 @@ describe('MedicalRecordDomainService', () => {
     it('should pass for non-cancelled appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIJADWALKAN);
 
-      expect(() => service.validateAppointmentForUpdate(appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateAppointmentForUpdate(appointment),
+      ).not.toThrow();
     });
 
     it('should throw error for cancelled appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIBATALKAN);
 
-      expect(() => service.validateAppointmentForUpdate(appointment))
-        .toThrow(ConflictException);
+      expect(() => service.validateAppointmentForUpdate(appointment)).toThrow(
+        ConflictException,
+      );
     });
 
     it('should pass for SELESAI appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.SELESAI);
 
-      expect(() => service.validateAppointmentForUpdate(appointment))
-        .not.toThrow();
+      expect(() =>
+        service.validateAppointmentForUpdate(appointment),
+      ).not.toThrow();
     });
   });
 
@@ -164,22 +182,23 @@ describe('MedicalRecordDomainService', () => {
   // ==========================================================================
   describe('validateNoExistingRecord', () => {
     it('should pass when no existing record', () => {
-      expect(() => service.validateNoExistingRecord(null))
-        .not.toThrow();
+      expect(() => service.validateNoExistingRecord(null)).not.toThrow();
     });
 
     it('should throw error when existing record found', () => {
       const existingRecord = createMockMedicalRecord() as MedicalRecord;
 
-      expect(() => service.validateNoExistingRecord(existingRecord))
-        .toThrow(ConflictException);
+      expect(() => service.validateNoExistingRecord(existingRecord)).toThrow(
+        ConflictException,
+      );
     });
 
     it('should throw error with correct message', () => {
       const existingRecord = createMockMedicalRecord() as MedicalRecord;
 
-      expect(() => service.validateNoExistingRecord(existingRecord))
-        .toThrow('Janji temu ini sudah memiliki rekam medis');
+      expect(() => service.validateNoExistingRecord(existingRecord)).toThrow(
+        'Janji temu ini sudah memiliki rekam medis',
+      );
     });
   });
 
@@ -231,7 +250,7 @@ describe('MedicalRecordDomainService', () => {
   describe('shouldUpdateAppointmentStatus', () => {
     it('should return true for non-SELESAI appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIJADWALKAN);
-      
+
       const result = service.shouldUpdateAppointmentStatus(appointment);
 
       expect(result).toBe(true);
@@ -239,7 +258,7 @@ describe('MedicalRecordDomainService', () => {
 
     it('should return false for SELESAI appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.SELESAI);
-      
+
       const result = service.shouldUpdateAppointmentStatus(appointment);
 
       expect(result).toBe(false);
@@ -247,7 +266,7 @@ describe('MedicalRecordDomainService', () => {
 
     it('should return true for DIBATALKAN appointment', () => {
       const appointment = createMockAppointment(AppointmentStatus.DIBATALKAN);
-      
+
       const result = service.shouldUpdateAppointmentStatus(appointment);
 
       expect(result).toBe(true);
@@ -316,34 +335,39 @@ describe('MedicalRecordDomainService', () => {
     it('should pass for valid length', () => {
       const value = 'A'.repeat(1000);
 
-      expect(() => service.validateSOAPFieldLength('Subjektif', value))
-        .not.toThrow();
+      expect(() =>
+        service.validateSOAPFieldLength('Subjektif', value),
+      ).not.toThrow();
     });
 
     it('should throw error for too long field', () => {
       const value = 'A'.repeat(5001);
 
-      expect(() => service.validateSOAPFieldLength('Subjektif', value))
-        .toThrow(BadRequestException);
+      expect(() => service.validateSOAPFieldLength('Subjektif', value)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass for empty string', () => {
-      expect(() => service.validateSOAPFieldLength('Subjektif', ''))
-        .not.toThrow();
+      expect(() =>
+        service.validateSOAPFieldLength('Subjektif', ''),
+      ).not.toThrow();
     });
 
     it('should pass for exact max length', () => {
       const value = 'A'.repeat(5000);
 
-      expect(() => service.validateSOAPFieldLength('Subjektif', value, 5000))
-        .not.toThrow();
+      expect(() =>
+        service.validateSOAPFieldLength('Subjektif', value, 5000),
+      ).not.toThrow();
     });
 
     it('should use custom max length', () => {
       const value = 'A'.repeat(101);
 
-      expect(() => service.validateSOAPFieldLength('Test', value, 100))
-        .toThrow(BadRequestException);
+      expect(() => service.validateSOAPFieldLength('Test', value, 100)).toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -354,8 +378,7 @@ describe('MedicalRecordDomainService', () => {
     it('should validate all fields successfully', () => {
       const data = createMockMedicalRecord();
 
-      expect(() => service.validateAllSOAPFields(data))
-        .not.toThrow();
+      expect(() => service.validateAllSOAPFields(data)).not.toThrow();
     });
 
     it('should throw error for too long subjektif', () => {
@@ -363,8 +386,9 @@ describe('MedicalRecordDomainService', () => {
         subjektif: 'A'.repeat(5001),
       };
 
-      expect(() => service.validateAllSOAPFields(data))
-        .toThrow(BadRequestException);
+      expect(() => service.validateAllSOAPFields(data)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should validate multiple fields', () => {
@@ -373,15 +397,13 @@ describe('MedicalRecordDomainService', () => {
         objektif: 'B'.repeat(4999),
       };
 
-      expect(() => service.validateAllSOAPFields(data))
-        .not.toThrow();
+      expect(() => service.validateAllSOAPFields(data)).not.toThrow();
     });
 
     it('should handle undefined fields', () => {
       const data: Partial<MedicalRecord> = {};
 
-      expect(() => service.validateAllSOAPFields(data))
-        .not.toThrow();
+      expect(() => service.validateAllSOAPFields(data)).not.toThrow();
     });
   });
 
@@ -503,15 +525,15 @@ describe('MedicalRecordDomainService', () => {
         subjektif: 'New value',
       };
 
-      expect(() => service.validateUpdateHasChanges(updateData))
-        .not.toThrow();
+      expect(() => service.validateUpdateHasChanges(updateData)).not.toThrow();
     });
 
     it('should throw error when no changes', () => {
       const updateData: Partial<MedicalRecord> = {};
 
-      expect(() => service.validateUpdateHasChanges(updateData))
-        .toThrow(BadRequestException);
+      expect(() => service.validateUpdateHasChanges(updateData)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass with multiple changes', () => {
@@ -520,8 +542,7 @@ describe('MedicalRecordDomainService', () => {
         objektif: 'New',
       };
 
-      expect(() => service.validateUpdateHasChanges(updateData))
-        .not.toThrow();
+      expect(() => service.validateUpdateHasChanges(updateData)).not.toThrow();
     });
   });
 

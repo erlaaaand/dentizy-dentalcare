@@ -5,7 +5,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AppointmentValidator } from '../appointment.validator';
-import { Appointment, AppointmentStatus } from '../../entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { UserRole } from '../../../../roles/entities/role.entity';
 import { MedicalRecord } from '../../../../medical_records/domains/entities/medical-record.entity';
@@ -26,7 +29,11 @@ describe('AppointmentValidator', () => {
     username: 'dr.chief',
     nama_lengkap: 'Dr. Chief',
     roles: [
-      { id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' } as any,
+      {
+        id: 2,
+        name: UserRole.KEPALA_KLINIK,
+        description: 'Clinic Head',
+      } as any,
     ],
   } as User;
 
@@ -36,7 +43,11 @@ describe('AppointmentValidator', () => {
     nama_lengkap: 'Dr. Dual',
     roles: [
       { id: 1, name: UserRole.DOKTER, description: 'Doctor' } as any,
-      { id: 2, name: UserRole.KEPALA_KLINIK, description: 'Clinic Head' } as any,
+      {
+        id: 2,
+        name: UserRole.KEPALA_KLINIK,
+        description: 'Clinic Head',
+      } as any,
     ],
   } as User;
 
@@ -67,13 +78,13 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateAppointmentExists(appointment, 1)
+        validator.validateAppointmentExists(appointment, 1),
       ).not.toThrow();
     });
 
     it('should throw NotFoundException when appointment is null', () => {
       expect(() => validator.validateAppointmentExists(null, 999)).toThrow(
-        NotFoundException
+        NotFoundException,
       );
     });
 
@@ -82,7 +93,9 @@ describe('AppointmentValidator', () => {
       try {
         validator.validateAppointmentExists(null, id);
       } catch (error) {
-        expect(error.message).toBe(`Janji temu dengan ID #${id} tidak ditemukan`);
+        expect(error.message).toBe(
+          `Janji temu dengan ID #${id} tidak ditemukan`,
+        );
       }
     });
   });
@@ -95,7 +108,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockKepalaKlinik)
+        validator.validateViewAuthorization(appointment, mockKepalaKlinik),
       ).not.toThrow();
     });
 
@@ -106,7 +119,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDoctor)
+        validator.validateViewAuthorization(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -117,11 +130,11 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDoctor)
+        validator.validateViewAuthorization(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDoctor)
+        validator.validateViewAuthorization(appointment, mockDoctor),
       ).toThrow('Anda tidak memiliki akses ke janji temu ini');
     });
 
@@ -132,7 +145,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDualRole)
+        validator.validateViewAuthorization(appointment, mockDualRole),
       ).not.toThrow();
     });
 
@@ -143,7 +156,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockStaff)
+        validator.validateViewAuthorization(appointment, mockStaff),
       ).not.toThrow();
     });
   });
@@ -156,7 +169,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateStatusForCompletion(appointment)
+        validator.validateStatusForCompletion(appointment),
       ).not.toThrow();
     });
 
@@ -166,13 +179,13 @@ describe('AppointmentValidator', () => {
         status: AppointmentStatus.SELESAI,
       } as Appointment;
 
-      expect(() =>
-        validator.validateStatusForCompletion(appointment)
-      ).toThrow(ConflictException);
+      expect(() => validator.validateStatusForCompletion(appointment)).toThrow(
+        ConflictException,
+      );
 
-      expect(() =>
-        validator.validateStatusForCompletion(appointment)
-      ).toThrow(/berstatus 'dijadwalkan'/);
+      expect(() => validator.validateStatusForCompletion(appointment)).toThrow(
+        /berstatus 'dijadwalkan'/,
+      );
     });
 
     it('should throw ConflictException for DIBATALKAN status', () => {
@@ -181,9 +194,9 @@ describe('AppointmentValidator', () => {
         status: AppointmentStatus.DIBATALKAN,
       } as Appointment;
 
-      expect(() =>
-        validator.validateStatusForCompletion(appointment)
-      ).toThrow(ConflictException);
+      expect(() => validator.validateStatusForCompletion(appointment)).toThrow(
+        ConflictException,
+      );
     });
 
     it('should include current status in error message', () => {
@@ -208,7 +221,10 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockKepalaKlinik)
+        validator.validateCompletionAuthorization(
+          appointment,
+          mockKepalaKlinik,
+        ),
       ).not.toThrow();
     });
 
@@ -219,7 +235,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockDoctor)
+        validator.validateCompletionAuthorization(appointment, mockDoctor),
       ).not.toThrow();
     });
 
@@ -230,11 +246,11 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockDoctor)
+        validator.validateCompletionAuthorization(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockDoctor)
+        validator.validateCompletionAuthorization(appointment, mockDoctor),
       ).toThrow('Hanya dokter yang menangani yang bisa menyelesaikan');
     });
 
@@ -245,7 +261,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockDualRole)
+        validator.validateCompletionAuthorization(appointment, mockDualRole),
       ).not.toThrow();
     });
   });
@@ -257,7 +273,9 @@ describe('AppointmentValidator', () => {
         status: AppointmentStatus.DIJADWALKAN,
       } as Appointment;
 
-      expect(() => validator.validateStatusForUpdate(appointment)).not.toThrow();
+      expect(() =>
+        validator.validateStatusForUpdate(appointment),
+      ).not.toThrow();
     });
 
     it('should throw ConflictException for SELESAI status', () => {
@@ -267,11 +285,11 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() => validator.validateStatusForUpdate(appointment)).toThrow(
-        ConflictException
+        ConflictException,
       );
 
       expect(() => validator.validateStatusForUpdate(appointment)).toThrow(
-        'Tidak bisa mengubah janji temu yang sudah selesai'
+        'Tidak bisa mengubah janji temu yang sudah selesai',
       );
     });
 
@@ -282,11 +300,11 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() => validator.validateStatusForUpdate(appointment)).toThrow(
-        ConflictException
+        ConflictException,
       );
 
       expect(() => validator.validateStatusForUpdate(appointment)).toThrow(
-        'Tidak bisa mengubah janji temu yang sudah dibatalkan'
+        'Tidak bisa mengubah janji temu yang sudah dibatalkan',
       );
     });
   });
@@ -317,11 +335,11 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() => validator.validateForDeletion(appointment)).toThrow(
-        ConflictException
+        ConflictException,
       );
 
       expect(() => validator.validateForDeletion(appointment)).toThrow(
-        'Tidak bisa menghapus janji temu yang sudah memiliki rekam medis'
+        'Tidak bisa menghapus janji temu yang sudah memiliki rekam medis',
       );
     });
   });
@@ -401,26 +419,26 @@ describe('AppointmentValidator', () => {
 
       // Check existence
       expect(() =>
-        validator.validateAppointmentExists(appointment, 1)
+        validator.validateAppointmentExists(appointment, 1),
       ).not.toThrow();
 
       // Check view authorization
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDoctor)
+        validator.validateViewAuthorization(appointment, mockDoctor),
       ).not.toThrow();
 
       // Check can complete
       expect(() =>
-        validator.validateStatusForCompletion(appointment)
+        validator.validateStatusForCompletion(appointment),
       ).not.toThrow();
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockDoctor)
+        validator.validateCompletionAuthorization(appointment, mockDoctor),
       ).not.toThrow();
 
       // Check can update
       expect(() =>
-        validator.validateStatusForUpdate(appointment)
+        validator.validateStatusForUpdate(appointment),
       ).not.toThrow();
 
       // Check can delete
@@ -435,11 +453,14 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockKepalaKlinik)
+        validator.validateViewAuthorization(appointment, mockKepalaKlinik),
       ).not.toThrow();
 
       expect(() =>
-        validator.validateCompletionAuthorization(appointment, mockKepalaKlinik)
+        validator.validateCompletionAuthorization(
+          appointment,
+          mockKepalaKlinik,
+        ),
       ).not.toThrow();
 
       expect(validator.isKepalaKlinik(mockKepalaKlinik)).toBe(true);
@@ -456,17 +477,17 @@ describe('AppointmentValidator', () => {
 
       // Cannot update
       expect(() =>
-        validator.validateStatusForUpdate(appointmentWithMR)
+        validator.validateStatusForUpdate(appointmentWithMR),
       ).toThrow(ConflictException);
 
       // Cannot delete
-      expect(() =>
-        validator.validateForDeletion(appointmentWithMR)
-      ).toThrow(ConflictException);
+      expect(() => validator.validateForDeletion(appointmentWithMR)).toThrow(
+        ConflictException,
+      );
 
       // Cannot complete again
       expect(() =>
-        validator.validateStatusForCompletion(appointmentWithMR)
+        validator.validateStatusForCompletion(appointmentWithMR),
       ).toThrow(ConflictException);
     });
   });
@@ -479,7 +500,7 @@ describe('AppointmentValidator', () => {
       } as Appointment;
 
       expect(() =>
-        validator.validateViewAuthorization(appointment, mockDoctor)
+        validator.validateViewAuthorization(appointment, mockDoctor),
       ).toThrow(ForbiddenException);
     });
 
@@ -490,7 +511,8 @@ describe('AppointmentValidator', () => {
       } as unknown as User;
 
       expect(validator.isDoctorOnly(userUndefinedRoles)).toBe(false);
-      expect(validator.isKepalaKlinik(userUndefinedRoles)).toBe(false);``
+      expect(validator.isKepalaKlinik(userUndefinedRoles)).toBe(false);
+      ``;
     });
 
     it('should handle multiple status validations', () => {

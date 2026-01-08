@@ -9,18 +9,20 @@ import { TreatmentResponseDto } from '../../../applications/dto/treatment-respon
 @Injectable()
 @QueryHandler(GetTreatmentQuery)
 export class GetTreatmentHandler implements IQueryHandler<GetTreatmentQuery> {
-    constructor(
-        private readonly repository: TreatmentRepository,
-        private readonly mapper: TreatmentMapper,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentRepository,
+    private readonly mapper: TreatmentMapper,
+  ) {}
 
-    async execute(query: GetTreatmentQuery): Promise<TreatmentResponseDto> {
-        const treatment = await this.repository.findOne(query.id);
+  async execute(query: GetTreatmentQuery): Promise<TreatmentResponseDto> {
+    const treatment = await this.repository.findOne(query.id);
 
-        if (!treatment) {
-            throw new NotFoundException(`Perawatan dengan ID ${query.id} tidak ditemukan`);
-        }
-
-        return this.mapper.toResponseDto(treatment);
+    if (!treatment) {
+      throw new NotFoundException(
+        `Perawatan dengan ID ${query.id} tidak ditemukan`,
+      );
     }
+
+    return this.mapper.toResponseDto(treatment);
+  }
 }

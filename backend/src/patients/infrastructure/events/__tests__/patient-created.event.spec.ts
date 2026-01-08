@@ -15,9 +15,8 @@ const mockPatientData = {
 
 // 3. TEST SUITE
 describe('PatientCreatedEvent', () => {
-  
   // 4. SETUP AND TEARDOWN
-  // Karena ini hanya instansiasi class sederhana (POJO), 
+  // Karena ini hanya instansiasi class sederhana (POJO),
   // tidak diperlukan setup kompleks seperti Test.createTestingModule.
 
   // 5. EXECUTE METHOD TESTS (Constructor & Properties)
@@ -34,16 +33,16 @@ describe('PatientCreatedEvent', () => {
     // Assert
     expect(event.patient).toEqual(mockPatientData);
     // Memastikan referensi objeknya sama (karena pass by reference)
-    expect(event.patient).toBe(mockPatientData); 
+    expect(event.patient).toBe(mockPatientData);
   });
 
   // 6. SUB-GROUP TESTS (Immutability Check - Optional)
-  
+
   describe('Immutability', () => {
     it('should have a accessible patient property', () => {
-        const event = new PatientCreatedEvent(mockPatientData);
-        expect(event.patient).toBeTruthy();
-        expect(event.patient.id).toBe(1);
+      const event = new PatientCreatedEvent(mockPatientData);
+      expect(event.patient).toBeTruthy();
+      expect(event.patient.id).toBe(1);
     });
   });
 });

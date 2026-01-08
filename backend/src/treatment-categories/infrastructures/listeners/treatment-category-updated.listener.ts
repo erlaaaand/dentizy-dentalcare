@@ -5,14 +5,14 @@ import { TreatmentCategoryUpdatedEvent } from '../../infrastructures/events/trea
 
 @Injectable()
 export class TreatmentCategoryUpdatedListener {
-    private readonly logger = new Logger(TreatmentCategoryUpdatedListener.name);
+  private readonly logger = new Logger(TreatmentCategoryUpdatedListener.name);
 
-    @OnEvent('treatment-category.updated')
-    handleUpdatedEvent(event: TreatmentCategoryUpdatedEvent) {
-        this.logger.log(
-            `Treatment category updated: ID=${event.categoryId}, Name=${event.categoryName}`,
-        );
+  @OnEvent('treatment-category.updated')
+  handleUpdatedEvent(event: TreatmentCategoryUpdatedEvent) {
+    this.logger.log(
+      `Treatment category updated: ID=${event.categoryId}, Name=${event.categoryName}`,
+    );
 
-        // Additional actions: invalidate cache, send notification, etc.
-    }
+    // Additional actions: invalidate cache, send notification, etc.
+  }
 }

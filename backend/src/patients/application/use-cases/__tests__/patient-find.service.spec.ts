@@ -64,7 +64,7 @@ describe('PatientFindService', () => {
     // Mock Cache Service (PENTING: Jalankan callback)
     // Kita membuat mock yang langsung menjalankan fungsi query yang dibungkus cache
     const mockCacheService = {
-      getCachedListOrSearch: jest.fn((query, callback) => callback()), 
+      getCachedListOrSearch: jest.fn((query, callback) => callback()),
       getCachedPatient: jest.fn((id, callback) => callback()),
     };
 
@@ -104,12 +104,14 @@ describe('PatientFindService', () => {
 
       // Assert
       expect(cacheService.getCachedListOrSearch).toHaveBeenCalled();
-      expect(repository.findAndCount).toHaveBeenCalledWith(expect.objectContaining({
-        take: 10,
-        skip: 0,
-        where: { is_active: true },
-        order: { created_at: 'DESC' },
-      }));
+      expect(repository.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({
+          take: 10,
+          skip: 0,
+          where: { is_active: true },
+          order: { created_at: 'DESC' },
+        }),
+      );
       expect(mapper.toResponseDtoList).toHaveBeenCalledWith([mockPatient]);
       expect(result).toEqual({
         data: [mockResponseDto],
@@ -123,9 +125,13 @@ describe('PatientFindService', () => {
     });
 
     it('should throw BadRequestException on repo error', async () => {
-      (repository.findAndCount as jest.Mock).mockRejectedValue(new Error('DB Error'));
+      (repository.findAndCount as jest.Mock).mockRejectedValue(
+        new Error('DB Error'),
+      );
 
-      await expect(service.findAll(mockSearchQuery)).rejects.toThrow(BadRequestException);
+      await expect(service.findAll(mockSearchQuery)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -135,7 +141,10 @@ describe('PatientFindService', () => {
 
       const result = await service.findOne(1);
 
-      expect(cacheService.getCachedPatient).toHaveBeenCalledWith(1, expect.any(Function));
+      expect(cacheService.getCachedPatient).toHaveBeenCalledWith(
+        1,
+        expect.any(Function),
+      );
       expect(repository.findOne).toHaveBeenCalledWith({
         where: { id: 1 },
         relations: ['appointments', 'medical_records'],
@@ -158,15 +167,19 @@ describe('PatientFindService', () => {
 
       const result = await service.findByMedicalRecordNumber('RM-001');
 
-      expect(repository.findOne).toHaveBeenCalledWith(expect.objectContaining({
-        where: { nomor_rekam_medis: 'RM-001' }
-      }));
+      expect(repository.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { nomor_rekam_medis: 'RM-001' },
+        }),
+      );
       expect(result).toEqual(mockResponseDto);
     });
 
     it('should throw NotFoundException if RM not found', async () => {
       (repository.findOne as jest.Mock).mockResolvedValue(null);
-      await expect(service.findByMedicalRecordNumber('RM-X')).rejects.toThrow(NotFoundException);
+      await expect(service.findByMedicalRecordNumber('RM-X')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -176,9 +189,11 @@ describe('PatientFindService', () => {
 
       await service.findByNik('12345');
 
-      expect(repository.findOne).toHaveBeenCalledWith(expect.objectContaining({
-        where: { nik: '12345' }
-      }));
+      expect(repository.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { nik: '12345' },
+        }),
+      );
     });
   });
 
@@ -191,32 +206,42 @@ describe('PatientFindService', () => {
 
       // Assert Structure
       expect(repository.createQueryBuilder).toHaveBeenCalledWith('patient');
-      expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith('patient.appointments', 'appointment');
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('appointment.doctor_id = :doctorId', { doctorId });
-      
+      expect(mockQueryBuilder.leftJoin).toHaveBeenCalledWith(
+        'patient.appointments',
+        'appointment',
+      );
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'appointment.doctor_id = :doctorId',
+        { doctorId },
+      );
+
       // Check pagination
       expect(mockQueryBuilder.skip).toHaveBeenCalledWith(0);
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(10);
-      
+
       // Result check
       expect(result.data).toEqual([mockResponseDto]);
     });
 
     it('should apply search filter logic in QueryBuilder if search param exists', async () => {
       const queryWithSearch = { ...mockSearchQuery, search: 'CariNama' };
-      
+
       await service.findByDoctor(doctorId, queryWithSearch);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         expect.stringContaining('patient.nama_lengkap LIKE :search'),
-        { search: '%CariNama%' }
+        { search: '%CariNama%' },
       );
     });
 
     it('should throw BadRequestException if QueryBuilder fails', async () => {
-      mockQueryBuilder.getManyAndCount.mockRejectedValue(new Error('Query Failed'));
+      mockQueryBuilder.getManyAndCount.mockRejectedValue(
+        new Error('Query Failed'),
+      );
 
-      await expect(service.findByDoctor(doctorId, mockSearchQuery)).rejects.toThrow(BadRequestException);
+      await expect(
+        service.findByDoctor(doctorId, mockSearchQuery),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

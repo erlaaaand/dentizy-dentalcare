@@ -3,4 +3,3 @@ describe('create-role.dto.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

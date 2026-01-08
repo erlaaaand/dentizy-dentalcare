@@ -1,7 +1,13 @@
 // __tests__/interface/filters/notification-exception.filter.spec.ts
 
 // 1. IMPORTS
-import { ArgumentsHost, HttpException, HttpStatus, Logger, BadRequestException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  Logger,
+  BadRequestException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 import {
@@ -33,8 +39,12 @@ const mockArgumentsHost = {
 } as unknown as ArgumentsHost;
 
 // Mocking Logger to avoid console spam and verify calls
-const mockLoggerError = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-const mockLoggerWarn = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+const mockLoggerError = jest
+  .spyOn(Logger.prototype, 'error')
+  .mockImplementation();
+const mockLoggerWarn = jest
+  .spyOn(Logger.prototype, 'warn')
+  .mockImplementation();
 const mockLoggerLog = jest.spyOn(Logger.prototype, 'log').mockImplementation();
 
 // 3. TEST SUITE
@@ -128,7 +138,10 @@ describe('Exception Filters', () => {
       });
 
       it('should log error for server errors (5xx)', () => {
-        const exception = new HttpException('Server Fail', HttpStatus.INTERNAL_SERVER_ERROR);
+        const exception = new HttpException(
+          'Server Fail',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
         filter.catch(exception, mockArgumentsHost);
         expect(mockLoggerError).toHaveBeenCalled();
       });
@@ -146,15 +159,18 @@ describe('Exception Filters', () => {
     });
 
     it('should return basic response for generic HttpExceptions', () => {
-      const exception = new HttpException('Generic Error', HttpStatus.BAD_REQUEST);
-      
+      const exception = new HttpException(
+        'Generic Error',
+        HttpStatus.BAD_REQUEST,
+      );
+
       filter.catch(exception, mockArgumentsHost);
 
       expect(mockJson).toHaveBeenCalledWith(
         expect.objectContaining({
           statusCode: HttpStatus.BAD_REQUEST,
           message: 'Generic Error',
-        })
+        }),
       );
       // Should NOT have context/suggestion
       const response = mockJson.mock.calls[0][0];
@@ -164,41 +180,50 @@ describe('Exception Filters', () => {
     // 6. SUB-GROUP TESTS (Suggestions)
     describe('Contextual Suggestions', () => {
       it('should add suggestion context when error message contains "notification"', () => {
-        const exception = new HttpException('Notification service failed', HttpStatus.NOT_FOUND);
-        
+        const exception = new HttpException(
+          'Notification service failed',
+          HttpStatus.NOT_FOUND,
+        );
+
         filter.catch(exception, mockArgumentsHost);
 
         expect(mockJson).toHaveBeenCalledWith(
           expect.objectContaining({
             context: 'notification',
             suggestion: 'Check if the notification ID exists', // Suggestion for 404
-          })
+          }),
         );
       });
 
       it('should provide correct suggestion for RATE_LIMIT (Too Many Requests)', () => {
-        const exception = new HttpException('Email send limit reached', HttpStatus.TOO_MANY_REQUESTS);
-        
+        const exception = new HttpException(
+          'Email send limit reached',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+
         filter.catch(exception, mockArgumentsHost);
 
         expect(mockJson).toHaveBeenCalledWith(
           expect.objectContaining({
             context: 'notification', // "Email" triggers isNotificationError
             suggestion: 'Rate limit exceeded, please try again later',
-          })
+          }),
         );
       });
 
       it('should provide correct suggestion for CONFLICT', () => {
-        const exception = new HttpException('Reminder already processed', HttpStatus.CONFLICT);
-        
+        const exception = new HttpException(
+          'Reminder already processed',
+          HttpStatus.CONFLICT,
+        );
+
         filter.catch(exception, mockArgumentsHost);
 
         expect(mockJson).toHaveBeenCalledWith(
           expect.objectContaining({
             context: 'notification', // "Reminder" triggers isNotificationError
             suggestion: 'Notification may already be processed',
-          })
+          }),
         );
       });
     });
@@ -221,7 +246,7 @@ describe('Exception Filters', () => {
         response: {
           message: validationErrors,
           error: 'Bad Request',
-          statusCode: 400
+          statusCode: 400,
         },
         getStatus: () => 400,
       };
@@ -233,13 +258,16 @@ describe('Exception Filters', () => {
         expect.objectContaining({
           message: 'Validation failed',
           errors: validationErrors,
-        })
+        }),
       );
       expect(mockLoggerWarn).toHaveBeenCalled();
     });
 
     it('should fallback to standard handling for non-validation errors', () => {
-      const exception = new HttpException('Standard Error', HttpStatus.FORBIDDEN);
+      const exception = new HttpException(
+        'Standard Error',
+        HttpStatus.FORBIDDEN,
+      );
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -247,7 +275,7 @@ describe('Exception Filters', () => {
       expect(mockJson).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Standard Error',
-        })
+        }),
       );
       // Should NOT have errors array
       const response = mockJson.mock.calls[0][0];

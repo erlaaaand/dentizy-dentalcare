@@ -17,7 +17,8 @@ const mockUser: User = {
   ],
 } as User;
 
-const mockAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
+const mockAccessToken =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.payload.signature';
 
 // ======================
 // TEST SUITE
@@ -160,7 +161,10 @@ describe('AuthMapper', () => {
     it('should handle user with no roles', () => {
       const userWithNoRoles = { ...mockUser, roles: [] } as User;
 
-      const result = AuthMapper.toLoginResponse(userWithNoRoles, mockAccessToken);
+      const result = AuthMapper.toLoginResponse(
+        userWithNoRoles,
+        mockAccessToken,
+      );
 
       expect(result.user.roles).toEqual([]);
     });
@@ -222,7 +226,10 @@ describe('AuthMapper', () => {
       const tokenPayload = AuthMapper.toTokenPayload(userWithZeroId);
       expect(tokenPayload.userId).toBe(0);
 
-      const loginResponse = AuthMapper.toLoginResponse(userWithZeroId, mockAccessToken);
+      const loginResponse = AuthMapper.toLoginResponse(
+        userWithZeroId,
+        mockAccessToken,
+      );
       expect(loginResponse.user.id).toBe(0);
     });
 
@@ -243,7 +250,10 @@ describe('AuthMapper', () => {
         nama_lengkap: 'Test User @#$%^&*()',
       } as User;
 
-      const result = AuthMapper.toLoginResponse(userWithSpecialChars, mockAccessToken);
+      const result = AuthMapper.toLoginResponse(
+        userWithSpecialChars,
+        mockAccessToken,
+      );
 
       expect(result.user.nama_lengkap).toBe('Test User @#$%^&*()');
     });
@@ -254,7 +264,10 @@ describe('AuthMapper', () => {
         nama_lengkap: '',
       } as User;
 
-      const result = AuthMapper.toLoginResponse(userWithEmptyName, mockAccessToken);
+      const result = AuthMapper.toLoginResponse(
+        userWithEmptyName,
+        mockAccessToken,
+      );
 
       expect(result.user.nama_lengkap).toBe('');
     });

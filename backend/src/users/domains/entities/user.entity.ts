@@ -9,7 +9,7 @@ import {
   ManyToMany,
   JoinTable,
   Index,
-  DeleteDateColumn
+  DeleteDateColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { MedicalRecord } from '../../../medical_records/domains/entities/medical-record.entity';
@@ -31,11 +31,11 @@ export class User {
   @Exclude()
   password: string;
 
-  @Column({ 
-      type: 'varchar', // <--- [WAJIB DITAMBAHKAN]
-      length: 255, 
-      unique: true, 
-      nullable: true 
+  @Column({
+    type: 'varchar', // <--- [WAJIB DITAMBAHKAN]
+    length: 255,
+    unique: true,
+    nullable: true,
   })
   @Index('idx_user_email')
   email: string | null;

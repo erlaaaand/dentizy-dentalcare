@@ -30,34 +30,34 @@ import { EmailChannelService } from './infrastructures/channels/email-channel.se
 import { NotificationCronService } from './infrastructures/jobs/notification-cron.service';
 
 @Module({
-    imports: [
-        TypeOrmModule.forFeature([Notification]),
-        ScheduleModule.forRoot(), // Enable cron jobs
-    ],
-    controllers: [NotificationsController],
-    providers: [
-        // Orchestrator
-        NotificationsService,
+  imports: [
+    TypeOrmModule.forFeature([Notification]),
+    ScheduleModule.forRoot(), // Enable cron jobs
+  ],
+  controllers: [NotificationsController],
+  providers: [
+    // Orchestrator
+    NotificationsService,
 
-        // Use Cases
-        ScheduleReminderService,
-        CancelRemindersService,
-        SendNotificationService,
-        ProcessBatchService,
-        RetryFailedService,
-        GetNotificationsService,
+    // Use Cases
+    ScheduleReminderService,
+    CancelRemindersService,
+    SendNotificationService,
+    ProcessBatchService,
+    RetryFailedService,
+    GetNotificationsService,
 
-        // Domain Services
-        NotificationSchedulerService,
-        NotificationValidatorService,
+    // Domain Services
+    NotificationSchedulerService,
+    NotificationValidatorService,
 
-        // Infrastructure
-        NotificationRepository,
-        EmailChannelService,
-        NotificationCronService,
-    ],
-    exports: [
-        NotificationsService, // Export for use in other modules (e.g., Appointments)
-    ],
+    // Infrastructure
+    NotificationRepository,
+    EmailChannelService,
+    NotificationCronService,
+  ],
+  exports: [
+    NotificationsService, // Export for use in other modules (e.g., Appointments)
+  ],
 })
-export class NotificationsModule { }
+export class NotificationsModule {}

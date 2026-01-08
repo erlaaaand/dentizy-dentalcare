@@ -27,14 +27,18 @@ export class NotificationSchedulerService {
 
       // Validate time format
       if (!appointment.jam_janji || typeof appointment.jam_janji !== 'string') {
-        this.logger.error(`Appointment #${appointment.id} has invalid time format`);
+        this.logger.error(
+          `Appointment #${appointment.id} has invalid time format`,
+        );
         return null;
       }
 
       // Parse time string (format: "HH:mm")
       const timeParts = appointment.jam_janji.split(':');
       if (timeParts.length !== 2) {
-        this.logger.error(`Appointment #${appointment.id} has malformed time: ${appointment.jam_janji}`);
+        this.logger.error(
+          `Appointment #${appointment.id} has malformed time: ${appointment.jam_janji}`,
+        );
         return null;
       }
 
@@ -42,14 +46,23 @@ export class NotificationSchedulerService {
       const minutes = parseInt(timeParts[1], 10);
 
       // Validate time values
-      if (isNaN(hours) || isNaN(minutes) || hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
-        this.logger.error(`Appointment #${appointment.id} has invalid time values: ${appointment.jam_janji}`);
+      if (
+        isNaN(hours) ||
+        isNaN(minutes) ||
+        hours < 0 ||
+        hours > 23 ||
+        minutes < 0 ||
+        minutes > 59
+      ) {
+        this.logger.error(
+          `Appointment #${appointment.id} has invalid time values: ${appointment.jam_janji}`,
+        );
         return null;
       }
 
       // Create appointment date-time in UTC
       const appointmentDate = new Date(appointment.tanggal_janji);
-      
+
       // Check if date is valid
       if (isNaN(appointmentDate.getTime())) {
         this.logger.error(`Appointment #${appointment.id} has invalid date`);
@@ -66,13 +79,12 @@ export class NotificationSchedulerService {
       if (reminderTime <= now) {
         this.logger.warn(
           `Cannot schedule past reminder for appointment #${appointment.id}. ` +
-          `Reminder time: ${reminderTime.toISOString()}, Now: ${now.toISOString()}`
+            `Reminder time: ${reminderTime.toISOString()}, Now: ${now.toISOString()}`,
         );
         return null;
       }
 
       return reminderTime;
-
     } catch (error) {
       this.logger.error('Error calculating reminder time:', error);
       return null;

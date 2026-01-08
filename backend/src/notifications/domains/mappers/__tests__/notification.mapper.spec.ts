@@ -2,7 +2,10 @@
 import { NotificationMapper } from '../notification.mapper';
 import { Notification } from '../../entities/notification.entity';
 import { NotificationResponseDto } from '../../../applications/dto/notification-response.dto';
-import { NotificationStatus, NotificationType } from '../../entities/notification.entity';
+import {
+  NotificationStatus,
+  NotificationType,
+} from '../../entities/notification.entity';
 import { AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
 
 // 2. MOCK DATA
@@ -29,19 +32,19 @@ const mockNotificationWithAppointment: Notification = {
       alamat: 'Jl. Test No. 123',
       tanggal_lahir: new Date('1990-01-01'),
       created_at: new Date('2024-01-01T00:00:00.000Z'),
-      updated_at: new Date('2024-01-01T00:00:00.000Z')
+      updated_at: new Date('2024-01-01T00:00:00.000Z'),
     } as any,
     doctor_id: 300,
     doctor: {
       id: 300,
       nama_lengkap: 'Dr. Smith',
       created_at: new Date('2024-01-01T00:00:00.000Z'),
-      updated_at: new Date('2024-01-01T00:00:00.000Z')
+      updated_at: new Date('2024-01-01T00:00:00.000Z'),
     } as any,
     status: AppointmentStatus.DIJADWALKAN,
     created_at: new Date('2024-01-14T09:00:00.000Z'),
-    updated_at: new Date('2024-01-14T09:00:00.000Z')
-  }
+    updated_at: new Date('2024-01-14T09:00:00.000Z'),
+  },
 } as any;
 
 const mockNotificationWithoutAppointment: Notification = {
@@ -81,14 +84,14 @@ const mockNotificationWithPartialAppointment: Notification = {
       alamat: null,
       tanggal_lahir: null,
       created_at: new Date('2024-01-01T00:00:00.000Z'),
-      updated_at: new Date('2024-01-01T00:00:00.000Z')
+      updated_at: new Date('2024-01-01T00:00:00.000Z'),
     } as any,
     doctor_id: 301,
     doctor: null, // Doctor is null
     status: AppointmentStatus.DIJADWALKAN,
     created_at: new Date('2024-01-14T07:00:00.000Z'),
-    updated_at: new Date('2024-01-14T07:00:00.000Z')
-  }
+    updated_at: new Date('2024-01-14T07:00:00.000Z'),
+  },
 } as any;
 
 const mockNotificationWithNullDoctor: Notification = {
@@ -114,14 +117,14 @@ const mockNotificationWithNullDoctor: Notification = {
       alamat: 'Jl. Example No. 456',
       tanggal_lahir: new Date('1985-05-15'),
       created_at: new Date('2024-01-01T00:00:00.000Z'),
-      updated_at: new Date('2024-01-01T00:00:00.000Z')
+      updated_at: new Date('2024-01-01T00:00:00.000Z'),
     } as any,
     doctor_id: 302,
     doctor: undefined, // Doctor is undefined
     status: AppointmentStatus.DIJADWALKAN,
     created_at: new Date('2024-01-14T11:00:00.000Z'),
-    updated_at: new Date('2024-01-14T11:00:00.000Z')
-  }
+    updated_at: new Date('2024-01-14T11:00:00.000Z'),
+  },
 } as any;
 
 const mockNotificationEdgeCases: Notification = {
@@ -147,32 +150,36 @@ const mockNotificationEdgeCases: Notification = {
       alamat: null,
       tanggal_lahir: null,
       created_at: new Date('2020-01-01T00:00:00.000Z'),
-      updated_at: new Date('2020-01-01T00:00:00.000Z')
+      updated_at: new Date('2020-01-01T00:00:00.000Z'),
     } as any,
     doctor_id: 0,
     doctor: {
       id: 0,
       nama_lengkap: 'Dr. A', // Edge case: short doctor name
       created_at: new Date('2020-01-01T00:00:00.000Z'),
-      updated_at: new Date('2020-01-01T00:00:00.000Z')
+      updated_at: new Date('2020-01-01T00:00:00.000Z'),
     } as any,
     status: AppointmentStatus.DIBATALKAN,
     created_at: new Date('2020-01-01T00:00:00.000Z'),
-    updated_at: new Date('2024-12-31T23:59:59.999Z')
-  }
+    updated_at: new Date('2024-12-31T23:59:59.999Z'),
+  },
 } as any;
 
-const mockAllNotificationTypes = Object.values(NotificationType).map((type, index) => ({
-  ...mockNotificationWithAppointment,
-  id: index + 10,
-  type
-}));
+const mockAllNotificationTypes = Object.values(NotificationType).map(
+  (type, index) => ({
+    ...mockNotificationWithAppointment,
+    id: index + 10,
+    type,
+  }),
+);
 
-const mockAllStatusTypes = Object.values(NotificationStatus).map((status, index) => ({
-  ...mockNotificationWithAppointment,
-  id: index + 20,
-  status
-}));
+const mockAllStatusTypes = Object.values(NotificationStatus).map(
+  (status, index) => ({
+    ...mockNotificationWithAppointment,
+    id: index + 20,
+    status,
+  }),
+);
 
 // 3. TEST SUITE
 describe('NotificationMapper', () => {
@@ -207,28 +214,38 @@ describe('NotificationMapper', () => {
     describe('Basic Field Mapping', () => {
       it('should map basic notification fields correctly', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result.id).toBe(mockNotificationWithAppointment.id);
-        expect(result.appointment_id).toBe(mockNotificationWithAppointment.appointment_id);
+        expect(result.appointment_id).toBe(
+          mockNotificationWithAppointment.appointment_id,
+        );
         expect(result.type).toBe(mockNotificationWithAppointment.type);
         expect(result.status).toBe(mockNotificationWithAppointment.status);
         expect(result.send_at).toBe(mockNotificationWithAppointment.send_at);
         expect(result.sent_at).toBe(mockNotificationWithAppointment.sent_at);
-        expect(result.created_at).toBe(mockNotificationWithAppointment.created_at);
-        expect(result.updated_at).toBe(mockNotificationWithAppointment.updated_at);
+        expect(result.created_at).toBe(
+          mockNotificationWithAppointment.created_at,
+        );
+        expect(result.updated_at).toBe(
+          mockNotificationWithAppointment.updated_at,
+        );
       });
 
       it('should handle null sent_at value', () => {
         // Arrange
         const notificationWithNullSentAt = {
           ...mockNotificationWithAppointment,
-          sent_at: null
+          sent_at: null,
         };
 
         // Act
-        const result = NotificationMapper.toResponseDto(notificationWithNullSentAt);
+        const result = NotificationMapper.toResponseDto(
+          notificationWithNullSentAt,
+        );
 
         // Assert
         expect(result.sent_at).toBeNull();
@@ -236,7 +253,9 @@ describe('NotificationMapper', () => {
 
       it('should handle Date objects for all date fields', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result.send_at).toBeInstanceOf(Date);
@@ -249,18 +268,28 @@ describe('NotificationMapper', () => {
     describe('Appointment Field Mapping', () => {
       it('should include appointment when present', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result.appointment).toBeDefined();
-        expect(result.appointment!.id).toBe(mockNotificationWithAppointment.appointment!.id);
-        expect(result.appointment!.tanggal_janji).toBe(mockNotificationWithAppointment.appointment!.tanggal_janji);
-        expect(result.appointment!.jam_janji).toBe(mockNotificationWithAppointment.appointment!.jam_janji);
+        expect(result.appointment!.id).toBe(
+          mockNotificationWithAppointment.appointment!.id,
+        );
+        expect(result.appointment!.tanggal_janji).toBe(
+          mockNotificationWithAppointment.appointment!.tanggal_janji,
+        );
+        expect(result.appointment!.jam_janji).toBe(
+          mockNotificationWithAppointment.appointment!.jam_janji,
+        );
       });
 
       it('should not include appointment when absent', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithoutAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithoutAppointment,
+        );
 
         // Assert
         expect(result.appointment).toBeUndefined();
@@ -268,18 +297,28 @@ describe('NotificationMapper', () => {
 
       it('should map patient information correctly', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result.appointment!.patient).toBeDefined();
-        expect(result.appointment!.patient!.id).toBe(mockNotificationWithAppointment.appointment!.patient.id);
-        expect(result.appointment!.patient!.nama_lengkap).toBe(mockNotificationWithAppointment.appointment!.patient.nama_lengkap);
-        expect(result.appointment!.patient!.email).toBe(mockNotificationWithAppointment.appointment!.patient.email);
+        expect(result.appointment!.patient!.id).toBe(
+          mockNotificationWithAppointment.appointment!.patient.id,
+        );
+        expect(result.appointment!.patient!.nama_lengkap).toBe(
+          mockNotificationWithAppointment.appointment!.patient.nama_lengkap,
+        );
+        expect(result.appointment!.patient!.email).toBe(
+          mockNotificationWithAppointment.appointment!.patient.email,
+        );
       });
 
       it('should not include extra patient fields', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         const patientFields = Object.keys(result.appointment!.patient!);
@@ -291,17 +330,25 @@ describe('NotificationMapper', () => {
 
       it('should map doctor information correctly when present', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result.appointment!.doctor).toBeDefined();
-        expect(result.appointment!.doctor!.id).toBe(mockNotificationWithAppointment.appointment!.doctor!.id);
-        expect(result.appointment!.doctor!.nama_lengkap).toBe(mockNotificationWithAppointment.appointment!.doctor!.nama_lengkap);
+        expect(result.appointment!.doctor!.id).toBe(
+          mockNotificationWithAppointment.appointment!.doctor!.id,
+        );
+        expect(result.appointment!.doctor!.nama_lengkap).toBe(
+          mockNotificationWithAppointment.appointment!.doctor!.nama_lengkap,
+        );
       });
 
       it('should handle null doctor', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithPartialAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithPartialAppointment,
+        );
 
         // Assert
         expect(result.appointment!.doctor).toBeNull();
@@ -309,7 +356,9 @@ describe('NotificationMapper', () => {
 
       it('should handle undefined doctor', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithNullDoctor);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithNullDoctor,
+        );
 
         // Assert
         expect(result.appointment!.doctor).toBeNull();
@@ -317,7 +366,9 @@ describe('NotificationMapper', () => {
 
       it('should not include extra doctor fields', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         const doctorFields = Object.keys(result.appointment!.doctor!);
@@ -331,7 +382,9 @@ describe('NotificationMapper', () => {
     describe('Edge Cases', () => {
       it('should handle zero values for IDs', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationEdgeCases);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationEdgeCases,
+        );
 
         // Assert
         expect(result.id).toBe(0);
@@ -343,19 +396,25 @@ describe('NotificationMapper', () => {
 
       it('should handle edge case date values', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationEdgeCases);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationEdgeCases,
+        );
 
         // Assert
         expect(result.send_at).toEqual(new Date('2023-12-31T23:59:59.999Z'));
         expect(result.sent_at).toEqual(new Date('2024-01-01T00:00:00.000Z'));
         expect(result.created_at).toEqual(new Date('2020-01-01T00:00:00.000Z'));
         expect(result.updated_at).toEqual(new Date('2024-12-31T23:59:59.999Z'));
-        expect(result.appointment!.tanggal_janji).toEqual(new Date('2024-02-29T10:00:00.000Z'));
+        expect(result.appointment!.tanggal_janji).toEqual(
+          new Date('2024-02-29T10:00:00.000Z'),
+        );
       });
 
       it('should handle short string values', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationEdgeCases);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationEdgeCases,
+        );
 
         // Assert
         expect(result.appointment!.patient!.nama_lengkap).toBe('A');
@@ -366,7 +425,7 @@ describe('NotificationMapper', () => {
 
       it('should handle all notification types', () => {
         // Act & Assert
-        mockAllNotificationTypes.forEach(notification => {
+        mockAllNotificationTypes.forEach((notification) => {
           const result = NotificationMapper.toResponseDto(notification);
           expect(result.type).toBe(notification.type);
           expect(Object.values(NotificationType)).toContain(result.type);
@@ -375,7 +434,7 @@ describe('NotificationMapper', () => {
 
       it('should handle all status types', () => {
         // Act & Assert
-        mockAllStatusTypes.forEach(notification => {
+        mockAllStatusTypes.forEach((notification) => {
           const result = NotificationMapper.toResponseDto(notification);
           expect(result.status).toBe(notification.status);
           expect(Object.values(NotificationStatus)).toContain(result.status);
@@ -386,7 +445,9 @@ describe('NotificationMapper', () => {
     describe('Data Structure Integrity', () => {
       it('should return NotificationResponseDto type', () => {
         // Act
-        const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+        const result = NotificationMapper.toResponseDto(
+          mockNotificationWithAppointment,
+        );
 
         // Assert
         expect(result).toMatchObject({
@@ -405,31 +466,43 @@ describe('NotificationMapper', () => {
             patient: expect.objectContaining({
               id: expect.any(Number),
               nama_lengkap: expect.any(String),
-              email: expect.any(String)
+              email: expect.any(String),
             }),
             doctor: expect.objectContaining({
               id: expect.any(Number),
-              nama_lengkap: expect.any(String)
-            })
-          })
+              nama_lengkap: expect.any(String),
+            }),
+          }),
         });
       });
 
       it('should maintain immutability of input data', () => {
         // Arrange
         const originalNotification = { ...mockNotificationWithAppointment };
-        const originalAppointment = { ...mockNotificationWithAppointment.appointment };
-        const originalPatient = { ...mockNotificationWithAppointment.appointment.patient };
-        const originalDoctor = { ...mockNotificationWithAppointment.appointment.doctor };
+        const originalAppointment = {
+          ...mockNotificationWithAppointment.appointment,
+        };
+        const originalPatient = {
+          ...mockNotificationWithAppointment.appointment.patient,
+        };
+        const originalDoctor = {
+          ...mockNotificationWithAppointment.appointment.doctor,
+        };
 
         // Act
         NotificationMapper.toResponseDto(mockNotificationWithAppointment);
 
         // Assert
         expect(mockNotificationWithAppointment).toEqual(originalNotification);
-        expect(mockNotificationWithAppointment.appointment).toEqual(originalAppointment);
-        expect(mockNotificationWithAppointment.appointment.patient).toEqual(originalPatient);
-        expect(mockNotificationWithAppointment.appointment.doctor).toEqual(originalDoctor);
+        expect(mockNotificationWithAppointment.appointment).toEqual(
+          originalAppointment,
+        );
+        expect(mockNotificationWithAppointment.appointment.patient).toEqual(
+          originalPatient,
+        );
+        expect(mockNotificationWithAppointment.appointment.doctor).toEqual(
+          originalDoctor,
+        );
       });
     });
   });
@@ -440,7 +513,7 @@ describe('NotificationMapper', () => {
       const notifications = [
         mockNotificationWithAppointment,
         mockNotificationWithoutAppointment,
-        mockNotificationWithPartialAppointment
+        mockNotificationWithPartialAppointment,
       ];
 
       // Act
@@ -482,7 +555,7 @@ describe('NotificationMapper', () => {
       // Arrange
       const largeArray = Array.from({ length: 100 }, (_, index) => ({
         ...mockNotificationWithAppointment,
-        id: index + 1
+        id: index + 1,
       }));
 
       // Act
@@ -499,7 +572,7 @@ describe('NotificationMapper', () => {
       const notifications = [
         { ...mockNotificationWithAppointment, id: 1 },
         { ...mockNotificationWithAppointment, id: 2 },
-        { ...mockNotificationWithAppointment, id: 3 }
+        { ...mockNotificationWithAppointment, id: 3 },
       ];
 
       // Act
@@ -515,7 +588,7 @@ describe('NotificationMapper', () => {
       // Arrange
       const notifications = [
         mockNotificationWithAppointment,
-        mockNotificationWithoutAppointment
+        mockNotificationWithoutAppointment,
       ];
 
       // Spy on toResponseDto method
@@ -526,8 +599,12 @@ describe('NotificationMapper', () => {
 
       // Assert
       expect(toResponseDtoSpy).toHaveBeenCalledTimes(2);
-      expect(toResponseDtoSpy).toHaveBeenCalledWith(mockNotificationWithAppointment);
-      expect(toResponseDtoSpy).toHaveBeenCalledWith(mockNotificationWithoutAppointment);
+      expect(toResponseDtoSpy).toHaveBeenCalledWith(
+        mockNotificationWithAppointment,
+      );
+      expect(toResponseDtoSpy).toHaveBeenCalledWith(
+        mockNotificationWithoutAppointment,
+      );
 
       // Cleanup
       toResponseDtoSpy.mockRestore();
@@ -537,7 +614,9 @@ describe('NotificationMapper', () => {
   describe('Type Safety and Validation', () => {
     it('should not include retry_count in response', () => {
       // Act
-      const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+      const result = NotificationMapper.toResponseDto(
+        mockNotificationWithAppointment,
+      );
 
       // Assert
       expect(result).not.toHaveProperty('retry_count');
@@ -545,7 +624,9 @@ describe('NotificationMapper', () => {
 
     it('should not include error_message in response', () => {
       // Act
-      const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+      const result = NotificationMapper.toResponseDto(
+        mockNotificationWithAppointment,
+      );
 
       // Assert
       expect(result).not.toHaveProperty('error_message');
@@ -553,11 +634,19 @@ describe('NotificationMapper', () => {
 
     it('should not include appointment extra fields', () => {
       // Act
-      const result = NotificationMapper.toResponseDto(mockNotificationWithAppointment);
+      const result = NotificationMapper.toResponseDto(
+        mockNotificationWithAppointment,
+      );
 
       // Assert
       const appointmentFields = Object.keys(result.appointment!);
-      expect(appointmentFields).toEqual(['id', 'tanggal_janji', 'jam_janji', 'patient', 'doctor']);
+      expect(appointmentFields).toEqual([
+        'id',
+        'tanggal_janji',
+        'jam_janji',
+        'patient',
+        'doctor',
+      ]);
       expect(appointmentFields).not.toContain('status');
       expect(appointmentFields).not.toContain('created_at');
       expect(appointmentFields).not.toContain('updated_at');
@@ -584,18 +673,18 @@ describe('NotificationMapper', () => {
       // Arrange
       const notifications = Array.from({ length: 5 }, (_, index) => ({
         ...mockNotificationWithAppointment,
-        id: index + 1
+        id: index + 1,
       }));
 
       // Act
       const results = [
         NotificationMapper.toResponseDtoArray(notifications),
         NotificationMapper.toResponseDtoArray(notifications),
-        NotificationMapper.toResponseDtoArray(notifications)
+        NotificationMapper.toResponseDtoArray(notifications),
       ];
 
       // Assert
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toHaveLength(5);
         expect(result[0].id).toBe(1);
         expect(result[4].id).toBe(5);
@@ -609,7 +698,7 @@ describe('NotificationMapper', () => {
         // Jika perlu copy appointment juga agar aman:
         appointment: mockNotificationWithAppointment.appointment
           ? { ...mockNotificationWithAppointment.appointment }
-          : undefined
+          : undefined,
       };
       const notification = mockNotificationWithAppointment;
 
@@ -626,9 +715,7 @@ describe('NotificationMapper', () => {
 // Add custom Jest matcher for type checking
 expect.extend({
   toBeOneOf(received, items) {
-    const pass = items.some(item =>
-      this.equals(received, item)
-    );
+    const pass = items.some((item) => this.equals(received, item));
     const message = pass
       ? () => `expected ${received} not to be one of [${items.join(', ')}]`
       : () => `expected ${received} to be one of [${items.join(', ')}]`;

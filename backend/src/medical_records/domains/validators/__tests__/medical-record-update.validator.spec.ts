@@ -10,7 +10,9 @@ import { AppointmentStatus } from '../../../../appointments/domains/entities/app
 // ============================================================================
 // MOCK DATA
 // ============================================================================
-const createMockRecord = (overrides?: Partial<MedicalRecord>): MedicalRecord => {
+const createMockRecord = (
+  overrides?: Partial<MedicalRecord>,
+): MedicalRecord => {
   const now = Date.now();
   const recentDate = new Date(now - 1 * 86400000);
   return {
@@ -34,7 +36,9 @@ const createMockRecord = (overrides?: Partial<MedicalRecord>): MedicalRecord => 
   } as MedicalRecord;
 };
 
-const createValidDto = (overrides?: Partial<UpdateMedicalRecordDto>): UpdateMedicalRecordDto => {
+const createValidDto = (
+  overrides?: Partial<UpdateMedicalRecordDto>,
+): UpdateMedicalRecordDto => {
   return {
     subjektif: 'Updated keluhan',
     objektif: 'Updated hasil',
@@ -78,19 +82,23 @@ describe('MedicalRecordUpdateValidator', () => {
     it('should throw error if dto is null', () => {
       const record = createMockRecord();
 
-      expect(() => validator.validate(null as any, record))
-        .toThrow(BadRequestException);
-      expect(() => validator.validate(null as any, record))
-        .toThrow('Data update harus diisi');
+      expect(() => validator.validate(null as any, record)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validate(null as any, record)).toThrow(
+        'Data update harus diisi',
+      );
     });
 
     it('should throw error if record is null', () => {
       const dto = createValidDto();
 
-      expect(() => validator.validate(dto, null as any))
-        .toThrow(BadRequestException);
-      expect(() => validator.validate(dto, null as any))
-        .toThrow('Rekam medis tidak ditemukan');
+      expect(() => validator.validate(dto, null as any)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validate(dto, null as any)).toThrow(
+        'Rekam medis tidak ditemukan',
+      );
     });
 
     it('should validate record age constraint', () => {
@@ -99,10 +107,12 @@ describe('MedicalRecordUpdateValidator', () => {
         created_at: new Date('2020-01-01'), // More than 90 days old
       });
 
-      expect(() => validator.validate(dto, oldRecord))
-        .toThrow(BadRequestException);
-      expect(() => validator.validate(dto, oldRecord))
-        .toThrow('tidak dapat diubah');
+      expect(() => validator.validate(dto, oldRecord)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validate(dto, oldRecord)).toThrow(
+        'tidak dapat diubah',
+      );
     });
 
     it('should throw error for cancelled appointment', () => {
@@ -114,10 +124,12 @@ describe('MedicalRecordUpdateValidator', () => {
         } as any,
       });
 
-      expect(() => validator.validate(dto, record))
-        .toThrow(BadRequestException);
-      expect(() => validator.validate(dto, record))
-        .toThrow('janji temu yang dibatalkan');
+      expect(() => validator.validate(dto, record)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validate(dto, record)).toThrow(
+        'janji temu yang dibatalkan',
+      );
     });
 
     it('should throw error for deleted record', () => {
@@ -126,10 +138,10 @@ describe('MedicalRecordUpdateValidator', () => {
         deleted_at: new Date(),
       });
 
-      expect(() => validator.validate(dto, record))
-        .toThrow(BadRequestException);
-      expect(() => validator.validate(dto, record))
-        .toThrow('sudah dihapus');
+      expect(() => validator.validate(dto, record)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validate(dto, record)).toThrow('sudah dihapus');
     });
   });
 
@@ -146,10 +158,10 @@ describe('MedicalRecordUpdateValidator', () => {
     it('should throw error if no fields are being updated', () => {
       const dto: UpdateMedicalRecordDto = {};
 
-      expect(() => validator.validateDto(dto))
-        .toThrow(BadRequestException);
-      expect(() => validator.validateDto(dto))
-        .toThrow('Setidaknya satu field harus diisi');
+      expect(() => validator.validateDto(dto)).toThrow(BadRequestException);
+      expect(() => validator.validateDto(dto)).toThrow(
+        'Setidaknya satu field harus diisi',
+      );
     });
 
     it('should pass if only subjektif is updated', () => {
@@ -191,10 +203,12 @@ describe('MedicalRecordUpdateValidator', () => {
           subjektif: 'a'.repeat(5001),
         });
 
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow(BadRequestException);
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow('tidak boleh lebih dari 5000 karakter');
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          BadRequestException,
+        );
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          'tidak boleh lebih dari 5000 karakter',
+        );
       });
 
       it('should throw error if field is too short (less than 3 chars)', () => {
@@ -202,10 +216,12 @@ describe('MedicalRecordUpdateValidator', () => {
           subjektif: 'ab',
         });
 
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow(BadRequestException);
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow('minimal 3 karakter');
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          BadRequestException,
+        );
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          'minimal 3 karakter',
+        );
       });
 
       it('should allow empty string to clear field', () => {
@@ -223,10 +239,12 @@ describe('MedicalRecordUpdateValidator', () => {
           subjektif: '   ',
         });
 
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow(BadRequestException);
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow('tidak boleh hanya berisi spasi');
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          BadRequestException,
+        );
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          'tidak boleh hanya berisi spasi',
+        );
       });
 
       it('should throw error for only punctuation', () => {
@@ -234,10 +252,12 @@ describe('MedicalRecordUpdateValidator', () => {
           subjektif: '....',
         });
 
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow(BadRequestException);
-        expect(() => validator.validateSOAPFields(dto))
-          .toThrow('harus berisi teks yang valid');
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          BadRequestException,
+        );
+        expect(() => validator.validateSOAPFields(dto)).toThrow(
+          'harus berisi teks yang valid',
+        );
       });
 
       it('should pass for valid text content', () => {
@@ -263,10 +283,12 @@ describe('MedicalRecordUpdateValidator', () => {
       };
       const record = createMockRecord();
 
-      expect(() => validator.validateBusinessRules(dto, record))
-        .toThrow(BadRequestException);
-      expect(() => validator.validateBusinessRules(dto, record))
-        .toThrow('mengosongkan semua field SOAP');
+      expect(() => validator.validateBusinessRules(dto, record)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateBusinessRules(dto, record)).toThrow(
+        'mengosongkan semua field SOAP',
+      );
     });
 
     it('should pass if at least one field remains filled', () => {
@@ -285,8 +307,9 @@ describe('MedicalRecordUpdateValidator', () => {
         created_at: new Date('2020-01-01'),
       });
 
-      expect(() => validator.validateBusinessRules(dto, oldRecord))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateBusinessRules(dto, oldRecord)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass for recent records', () => {
@@ -295,7 +318,9 @@ describe('MedicalRecordUpdateValidator', () => {
         created_at: new Date(),
       });
 
-      expect(() => validator.validateBusinessRules(dto, recentRecord)).not.toThrow();
+      expect(() =>
+        validator.validateBusinessRules(dto, recentRecord),
+      ).not.toThrow();
     });
   });
 
@@ -310,10 +335,12 @@ describe('MedicalRecordUpdateValidator', () => {
         objektif: record.objektif,
       };
 
-      expect(() => validator.validateHasChanges(dto, record))
-        .toThrow(BadRequestException);
-      expect(() => validator.validateHasChanges(dto, record))
-        .toThrow('Tidak ada perubahan');
+      expect(() => validator.validateHasChanges(dto, record)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validator.validateHasChanges(dto, record)).toThrow(
+        'Tidak ada perubahan',
+      );
     });
 
     it('should pass if at least one field is changed', () => {
@@ -406,7 +433,7 @@ describe('MedicalRecordUpdateValidator', () => {
 
       const warnings = validator.getValidationWarnings(dto, oldRecord);
 
-      expect(warnings.some(w => w.includes('berumur'))).toBe(true);
+      expect(warnings.some((w) => w.includes('berumur'))).toBe(true);
     });
 
     it('should return multiple warnings', () => {
@@ -490,13 +517,12 @@ describe('MedicalRecordUpdateValidator', () => {
       });
 
       const warnings = validator.getValidationWarnings(dto, record);
-      console.log("WARNINGS:", warnings);
+      console.log('WARNINGS:', warnings);
 
-      expect(warnings.some(w => w.includes('30 hari'))).toBe(true);
+      expect(warnings.some((w) => w.includes('30 hari'))).toBe(true);
 
       jest.useRealTimers();
     });
-
   });
 
   // ============================================================================
@@ -518,8 +544,9 @@ describe('MedicalRecordUpdateValidator', () => {
         appointment: null as any,
       });
 
-      expect(() => validator.validate(dto, record))
-        .toThrow(BadRequestException);
+      expect(() => validator.validate(dto, record)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should handle record at exactly 90 days', () => {
@@ -537,8 +564,9 @@ describe('MedicalRecordUpdateValidator', () => {
         created_at: new Date(Date.now() - 91 * 24 * 60 * 60 * 1000),
       });
 
-      expect(() => validator.validateBusinessRules(dto, record))
-        .toThrow(BadRequestException);
+      expect(() => validator.validateBusinessRules(dto, record)).toThrow(
+        BadRequestException,
+      );
     });
   });
 });

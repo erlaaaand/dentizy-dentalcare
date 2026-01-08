@@ -29,8 +29,8 @@ describe('UsersController', () => {
             remove: jest.fn(),
             changePassword: jest.fn(),
             resetPassword: jest.fn(),
-            generateTemporaryPassword: jest.fn()
-          }
+            generateTemporaryPassword: jest.fn(),
+          },
         },
 
         // [PERBAIKAN] 2. Tambahkan mock untuk AuthService (index 1)
@@ -41,7 +41,7 @@ describe('UsersController', () => {
             // Jika tidak ada, objek kosong {} saja sudah cukup untuk DI
             validateUser: jest.fn(),
             login: jest.fn(),
-          }
+          },
         },
 
         // Mock Guards
@@ -57,7 +57,7 @@ describe('UsersController', () => {
           provide: ThrottlerGuard,
           useValue: { canActivate: jest.fn(() => true) },
         },
-      ]
+      ],
     })
       .overrideGuard(AuthGuard('jwt'))
       .useValue({ canActivate: jest.fn(() => true) })
@@ -83,7 +83,7 @@ describe('UsersController', () => {
         username: 'testuser',
         password: 'Password123!',
         nama_lengkap: 'Test User',
-        roles: [1]
+        roles: [1],
       };
 
       const expectedResult = {
@@ -92,7 +92,7 @@ describe('UsersController', () => {
         nama_lengkap: 'Test User',
         roles: [{ id: 1, name: 'staf', description: 'Staf' }],
         created_at: new Date(),
-        updated_at: new Date()
+        updated_at: new Date(),
       };
 
       usersService.create.mockResolvedValue(expectedResult);
@@ -110,13 +110,13 @@ describe('UsersController', () => {
       const changePasswordDto = {
         oldPassword: 'OldPass123!',
         newPassword: 'NewPass123!',
-        confirmPassword: 'NewPass123!'
+        confirmPassword: 'NewPass123!',
       };
 
       const expectedResult = {
         message: 'Password berhasil diubah',
         timestamp: expect.any(String),
-        user: { id: 1, username: 'testuser' }
+        user: { id: 1, username: 'testuser' },
       };
 
       usersService.changePassword.mockResolvedValue(expectedResult);
@@ -127,7 +127,7 @@ describe('UsersController', () => {
       expect(usersService.changePassword).toHaveBeenCalledWith(
         1,
         'OldPass123!',
-        'NewPass123!'
+        'NewPass123!',
       );
     });
 
@@ -136,11 +136,11 @@ describe('UsersController', () => {
       const changePasswordDto = {
         oldPassword: 'OldPass123!',
         newPassword: 'NewPass123!',
-        confirmPassword: 'DifferentPass123!'
+        confirmPassword: 'DifferentPass123!',
       };
 
       await expect(
-        controller.changePassword(user, changePasswordDto)
+        controller.changePassword(user, changePasswordDto),
       ).rejects.toThrow(BadRequestException);
 
       expect(usersService.changePassword).not.toHaveBeenCalled();

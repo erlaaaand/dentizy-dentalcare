@@ -3,4 +3,3 @@ describe('update-role.dto.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

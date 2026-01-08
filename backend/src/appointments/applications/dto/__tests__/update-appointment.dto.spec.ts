@@ -71,7 +71,7 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const statusError = errors.find(error => error.property === 'status');
+      const statusError = errors.find((error) => error.property === 'status');
       expect(statusError?.constraints).toBeDefined();
       expect(statusError?.constraints?.isEnum).toBeDefined();
     });
@@ -108,7 +108,9 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const tanggalError = errors.find(error => error.property === 'tanggal_janji');
+      const tanggalError = errors.find(
+        (error) => error.property === 'tanggal_janji',
+      );
       expect(tanggalError?.constraints).toBeDefined();
       expect(tanggalError?.constraints?.isDateString).toBeDefined();
     });
@@ -120,7 +122,9 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const tanggalError = errors.find(error => error.property === 'tanggal_janji');
+      const tanggalError = errors.find(
+        (error) => error.property === 'tanggal_janji',
+      );
       expect(tanggalError?.constraints).toBeDefined();
       expect(tanggalError?.constraints?.isDateString).toBeDefined();
     });
@@ -166,7 +170,7 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const jamError = errors.find(error => error.property === 'jam_janji');
+      const jamError = errors.find((error) => error.property === 'jam_janji');
       expect(jamError?.constraints).toBeDefined();
       expect(jamError?.constraints?.matches).toBeDefined();
     });
@@ -178,7 +182,7 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const jamError = errors.find(error => error.property === 'jam_janji');
+      const jamError = errors.find((error) => error.property === 'jam_janji');
       expect(jamError?.constraints).toBeDefined();
       expect(jamError?.constraints?.matches).toBeDefined();
     });
@@ -241,7 +245,7 @@ describe('UpdateAppointmentDto', () => {
       const errors = await validate(dto);
 
       expect(errors.length).toBeGreaterThan(0);
-      const keluhanError = errors.find(error => error.property === 'keluhan');
+      const keluhanError = errors.find((error) => error.property === 'keluhan');
       expect(keluhanError?.constraints).toBeDefined();
       expect(keluhanError?.constraints?.maxLength).toBeDefined();
     });

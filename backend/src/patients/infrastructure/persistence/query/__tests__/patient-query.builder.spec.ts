@@ -2,7 +2,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SelectQueryBuilder, Brackets } from 'typeorm';
 import { PatientQueryBuilder } from '../../../../infrastructure/persistence/query/patient-query.builder'; // Sesuaikan path
-import { SearchPatientDto, SortField, SortOrder } from '../../../../application/dto/search-patient.dto';
+import {
+  SearchPatientDto,
+  SortField,
+  SortOrder,
+} from '../../../../application/dto/search-patient.dto';
 import { Patient } from '../../../../domains/entities/patient.entity';
 
 // 2. MOCK DATA
@@ -68,7 +72,7 @@ describe('PatientQueryBuilder', () => {
 
     it('should apply default sorting if no params provided', () => {
       builder.build(mockQb, {});
-      
+
       // Default: Created At DESC
       expect(mockQb.orderBy).toHaveBeenCalledWith('patient.created_at', 'DESC');
       // Secondary sort: ID DESC
@@ -107,7 +111,7 @@ describe('PatientQueryBuilder', () => {
 
       expect(mockQb.andWhere).toHaveBeenCalledWith(
         'patient.tanggal_lahir >= :maxBirthDate',
-        expect.objectContaining({ maxBirthDate: expect.any(String) })
+        expect.objectContaining({ maxBirthDate: expect.any(String) }),
       );
     });
 
@@ -117,7 +121,7 @@ describe('PatientQueryBuilder', () => {
 
       expect(mockQb.andWhere).toHaveBeenCalledWith(
         'patient.tanggal_lahir <= :minBirthDate',
-        expect.objectContaining({ minBirthDate: expect.any(String) })
+        expect.objectContaining({ minBirthDate: expect.any(String) }),
       );
     });
   });
@@ -126,10 +130,13 @@ describe('PatientQueryBuilder', () => {
     it('should join appointments table when doctor_id is provided', () => {
       builder.build(mockQb, { doctor_id: 99 });
 
-      expect(mockQb.leftJoin).toHaveBeenCalledWith('patient.appointments', 'appointment');
+      expect(mockQb.leftJoin).toHaveBeenCalledWith(
+        'patient.appointments',
+        'appointment',
+      );
       expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'appointment.doctor_id = :doctor_id', 
-        { doctor_id: 99 }
+        'appointment.doctor_id = :doctor_id',
+        { doctor_id: 99 },
       );
       expect(mockQb.distinct).toHaveBeenCalledWith(true);
     });
@@ -139,8 +146,8 @@ describe('PatientQueryBuilder', () => {
     it('should filter by is_active boolean', () => {
       builder.build(mockQb, { is_active: true });
       expect(mockQb.andWhere).toHaveBeenCalledWith(
-        'patient.is_active = :is_active', 
-        { is_active: true }
+        'patient.is_active = :is_active',
+        { is_active: true },
       );
     });
 
@@ -148,7 +155,7 @@ describe('PatientQueryBuilder', () => {
       builder.build(mockQb, { is_new: true });
       expect(mockQb.andWhere).toHaveBeenCalledWith(
         'patient.created_at >= :thirtyDaysAgo',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -157,43 +164,76 @@ describe('PatientQueryBuilder', () => {
     it('should filter by start and end date', () => {
       const from = '2023-01-01';
       const to = '2023-01-31';
-      builder.build(mockQb, { tanggal_daftar_dari: from, tanggal_daftar_sampai: to });
+      builder.build(mockQb, {
+        tanggal_daftar_dari: from,
+        tanggal_daftar_sampai: to,
+      });
 
-      expect(mockQb.andWhere).toHaveBeenCalledWith('DATE(patient.created_at) >= :dateFrom', { dateFrom: from });
-      expect(mockQb.andWhere).toHaveBeenCalledWith('DATE(patient.created_at) <= :dateTo', { dateTo: to });
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'DATE(patient.created_at) >= :dateFrom',
+        { dateFrom: from },
+      );
+      expect(mockQb.andWhere).toHaveBeenCalledWith(
+        'DATE(patient.created_at) <= :dateTo',
+        { dateTo: to },
+      );
     });
   });
 
   describe('Sorting Logic', () => {
     it('should handle generic field sorting', () => {
-      builder.build(mockQb, { sortBy: SortField.NAMA_LENGKAP, sortOrder: SortOrder.ASC });
-      expect(mockQb.orderBy).toHaveBeenCalledWith('patient.nama_lengkap', 'ASC');
+      builder.build(mockQb, {
+        sortBy: SortField.NAMA_LENGKAP,
+        sortOrder: SortOrder.ASC,
+      });
+      expect(mockQb.orderBy).toHaveBeenCalledWith(
+        'patient.nama_lengkap',
+        'ASC',
+      );
     });
 
     it('should handle special sorting for UMUR (Age)', () => {
       // Sorting by Age ASC means Sorting by BirthDate DESC
-      builder.build(mockQb, { sortBy: SortField.UMUR, sortOrder: SortOrder.ASC });
-      
-      expect(mockQb.orderBy).toHaveBeenCalledWith('patient.tanggal_lahir', 'DESC');
+      builder.build(mockQb, {
+        sortBy: SortField.UMUR,
+        sortOrder: SortOrder.ASC,
+      });
+
+      expect(mockQb.orderBy).toHaveBeenCalledWith(
+        'patient.tanggal_lahir',
+        'DESC',
+      );
     });
 
     it('should handle special sorting for UMUR (Age) DESC', () => {
       // Sorting by Age DESC means Sorting by BirthDate ASC
-      builder.build(mockQb, { sortBy: SortField.UMUR, sortOrder: SortOrder.DESC });
-      
-      expect(mockQb.orderBy).toHaveBeenCalledWith('patient.tanggal_lahir', 'ASC');
+      builder.build(mockQb, {
+        sortBy: SortField.UMUR,
+        sortOrder: SortOrder.DESC,
+      });
+
+      expect(mockQb.orderBy).toHaveBeenCalledWith(
+        'patient.tanggal_lahir',
+        'ASC',
+      );
     });
   });
 
   describe('Helper: addEagerRelations', () => {
     it('should add relations', () => {
-        // Mock return value untuk leftJoinAndSelect yang hanya ada di method helper ini
-        mockQb.leftJoinAndSelect = jest.fn().mockReturnThis();
-        
-        builder.addEagerRelations(mockQb);
+      // Mock return value untuk leftJoinAndSelect yang hanya ada di method helper ini
+      mockQb.leftJoinAndSelect = jest.fn().mockReturnThis();
 
-        expect(mockQb.leftJoinAndSelect).toHaveBeenCalledWith('patient.appointments', 'appointment');
-        expect(mockQb.leftJoinAndSelect).toHaveBeenCalledWith('patient.medical_records', 'medical_record');
+      builder.addEagerRelations(mockQb);
+
+      expect(mockQb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'patient.appointments',
+        'appointment',
+      );
+      expect(mockQb.leftJoinAndSelect).toHaveBeenCalledWith(
+        'patient.medical_records',
+        'medical_record',
+      );
     });
   });
 });

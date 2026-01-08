@@ -2,11 +2,11 @@
 
 // 1. IMPORTS
 import { Test, TestingModule } from '@nestjs/testing';
-import { 
-  EmailTemplatesService, 
-  ReminderEmailData, 
-  ConfirmationEmailData, 
-  CancellationEmailData 
+import {
+  EmailTemplatesService,
+  ReminderEmailData,
+  ConfirmationEmailData,
+  CancellationEmailData,
 } from '../../../infrastructures/templates/email-templates.service';
 
 // 2. MOCK DATA
@@ -114,7 +114,7 @@ describe('EmailTemplatesService', () => {
       expect(result).toContain('telah dibatalkan');
       // Verify warning/red styling class or color
       expect(result).toContain('info-box');
-      expect(result).toContain('#dc2626'); 
+      expect(result).toContain('#dc2626');
     });
 
     it('should include reason section when provided', () => {

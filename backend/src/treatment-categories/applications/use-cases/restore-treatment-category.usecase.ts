@@ -8,27 +8,33 @@ import { TreatmentCategoryRestoredEvent } from '../../infrastructures/events/tre
 
 @Injectable()
 export class RestoreTreatmentCategoryUseCase {
-    constructor(
-        private readonly repository: TreatmentCategoryRepository,
-        private readonly mapper: TreatmentCategoryMapper,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentCategoryRepository,
+    private readonly mapper: TreatmentCategoryMapper,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number): Promise<TreatmentCategoryResponseDto> {
-        // Restore
-        await this.repository.restore(id);
+  async execute(id: number): Promise<TreatmentCategoryResponseDto> {
+    // Restore
+    await this.repository.restore(id);
 
-        // Find restored entity
-        const category = await this.repository.findOne(id);
+    // Find restored entity
+    const category = await this.repository.findOne(id);
 
-        if (!category) {
-            throw new NotFoundException(`Kategori perawatan dengan ID ${id} tidak ditemukan`);
-        }
-
-        // Emit event
-        const event = new TreatmentCategoryRestoredEvent(id, category.namaKategori, new Date());
-        this.eventEmitter.emit('treatment-category.restored', event);
-
-        return this.mapper.toResponseDto(category);
+    if (!category) {
+      throw new NotFoundException(
+        `Kategori perawatan dengan ID ${id} tidak ditemukan`,
+      );
     }
+
+    // Emit event
+    const event = new TreatmentCategoryRestoredEvent(
+      id,
+      category.namaKategori,
+      new Date(),
+    );
+    this.eventEmitter.emit('treatment-category.restored', event);
+
+    return this.mapper.toResponseDto(category);
+  }
 }

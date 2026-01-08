@@ -85,7 +85,11 @@ describe('JwtStrategy', () => {
 
       it('should handle different userId', async () => {
         const payload = { sub: 123, username: 'otheruser' };
-        const otherUser = { ...mockUser, id: 123, username: 'otheruser' } as User;
+        const otherUser = {
+          ...mockUser,
+          id: 123,
+          username: 'otheruser',
+        } as User;
         usersService.findOneForAuth.mockResolvedValue(otherUser);
 
         const result = await strategy.validate(payload);

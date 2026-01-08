@@ -5,9 +5,9 @@ import { Appointment } from '../../domains/entities/appointment.entity';
  * Triggered ketika appointment diupdate
  */
 export class AppointmentUpdatedEvent {
-    constructor(
-        public readonly appointment: Appointment,
-        public readonly isTimeUpdated: boolean, // apakah waktu berubah (perlu reschedule)
-        public readonly updatedBy?: number,
-    ) { }
+  constructor(
+    public readonly appointment: Appointment,
+    public readonly isTimeUpdated: boolean, // apakah waktu berubah (perlu reschedule)
+    public readonly updatedBy?: number,
+  ) {}
 }

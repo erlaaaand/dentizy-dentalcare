@@ -3,11 +3,7 @@
 // 1. IMPORTS
 import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
-import {
-  SearchPatientDto,
-  SortField,
-  SortOrder
-} from '../search-patient.dto';
+import { SearchPatientDto, SortField, SortOrder } from '../search-patient.dto';
 import { Gender } from '../../../domains/entities/patient.entity';
 
 // Mock Gender untuk isolasi test
@@ -35,7 +31,6 @@ const validFullQuery = {
 
 // 3. TEST SUITE
 describe('SearchPatientDto', () => {
-
   // 4. SETUP AND TEARDOWN
   // DTO stateless, tidak butuh setup kompleks
 
@@ -149,7 +144,9 @@ describe('SearchPatientDto', () => {
 
   describe('Enum Validation', () => {
     it('should fail if invalid sortBy provided', async () => {
-      const dto = plainToInstance(SearchPatientDto, { sortBy: 'INVALID_COLUMN' });
+      const dto = plainToInstance(SearchPatientDto, {
+        sortBy: 'INVALID_COLUMN',
+      });
       const errors = await validate(dto);
       expect(errors[0].property).toBe('sortBy');
       expect(errors[0].constraints).toHaveProperty('isEnum');
@@ -165,17 +162,22 @@ describe('SearchPatientDto', () => {
 
   describe('Date & Range Validation', () => {
     it('should fail if date string format is invalid', async () => {
-      const dto = plainToInstance(SearchPatientDto, { tanggal_daftar_dari: '01-01-2023' }); // Wrong format
+      const dto = plainToInstance(SearchPatientDto, {
+        tanggal_daftar_dari: '01-01-2023',
+      }); // Wrong format
       const errors = await validate(dto);
       expect(errors[0].property).toBe('tanggal_daftar_dari');
       expect(errors[0].constraints).toHaveProperty('isDateString');
     });
 
     it('should validate age range constraints', async () => {
-      const dto = plainToInstance(SearchPatientDto, { umur_min: -5, umur_max: 200 });
+      const dto = plainToInstance(SearchPatientDto, {
+        umur_min: -5,
+        umur_max: 200,
+      });
       const errors = await validate(dto);
 
-      const properties = errors.map(e => e.property);
+      const properties = errors.map((e) => e.property);
       expect(properties).toContain('umur_min'); // Min 0
       expect(properties).toContain('umur_max'); // Max 150
     });

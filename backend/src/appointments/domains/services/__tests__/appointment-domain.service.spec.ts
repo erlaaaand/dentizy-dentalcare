@@ -1,6 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppointmentDomainService } from '../appointment-domain.service';
-import { Appointment, AppointmentStatus } from '../../entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../entities/appointment.entity';
 import { User } from '../../../../users/domains/entities/user.entity';
 import { Patient } from '../../../../patients/domains/entities/patient.entity';
 import { CreateAppointmentDto } from '../../../applications/dto/create-appointment.dto';
@@ -50,7 +53,7 @@ describe('AppointmentDomainService', () => {
         dto,
         mockPatient,
         mockDoctor,
-        tanggalJanji
+        tanggalJanji,
       );
 
       expect(result.patient_id).toBe(10);
@@ -77,7 +80,7 @@ describe('AppointmentDomainService', () => {
         dto,
         mockPatient,
         mockDoctor,
-        new Date('2024-11-20')
+        new Date('2024-11-20'),
       );
 
       expect(result.status).toBe(AppointmentStatus.SELESAI);
@@ -96,7 +99,7 @@ describe('AppointmentDomainService', () => {
         dto,
         mockPatient,
         mockDoctor,
-        new Date('2024-11-20')
+        new Date('2024-11-20'),
       );
 
       expect(result.status).toBe(AppointmentStatus.DIJADWALKAN);
@@ -446,7 +449,7 @@ describe('AppointmentDomainService', () => {
         createDto,
         mockPatient,
         mockDoctor,
-        new Date('2024-11-20')
+        new Date('2024-11-20'),
       ) as Appointment;
 
       expect(appointment.status).toBe(AppointmentStatus.DIJADWALKAN);
@@ -458,7 +461,7 @@ describe('AppointmentDomainService', () => {
 
       const updated = service.updateAppointmentEntity(
         appointment as Appointment,
-        updateDto
+        updateDto,
       );
 
       expect(updated.jam_janji).toBe('11:00:00');
@@ -482,7 +485,7 @@ describe('AppointmentDomainService', () => {
         createDto,
         mockPatient,
         mockDoctor,
-        new Date('2024-11-20')
+        new Date('2024-11-20'),
       ) as Appointment;
 
       const cancelled = service.cancelAppointment(appointment as Appointment);

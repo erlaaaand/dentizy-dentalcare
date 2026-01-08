@@ -105,7 +105,10 @@ describe('PatientSearchService', () => {
     it('should search patients successfully with pagination and filters', async () => {
       // Arrange
       const totalCount = 15;
-      mockTypeOrmQueryBuilder.getManyAndCount.mockResolvedValue([[mockPatient], totalCount]);
+      mockTypeOrmQueryBuilder.getManyAndCount.mockResolvedValue([
+        [mockPatient],
+        totalCount,
+      ]);
 
       // Act
       const result = await service.execute(mockSearchQuery);
@@ -113,14 +116,19 @@ describe('PatientSearchService', () => {
       // Assert
       // 1. Check Cache Wrapper
       expect(cacheService.getCachedListOrSearch).toHaveBeenCalled();
-      
+
       // 2. Check Validation
-      expect(validator.validateSearchQuery).toHaveBeenCalledWith(mockSearchQuery);
+      expect(validator.validateSearchQuery).toHaveBeenCalledWith(
+        mockSearchQuery,
+      );
 
       // 3. Check Builder Logic
       expect(repository.createQueryBuilder).toHaveBeenCalledWith('patient');
-      expect(queryBuilderService.build).toHaveBeenCalledWith(mockTypeOrmQueryBuilder, mockSearchQuery);
-      
+      expect(queryBuilderService.build).toHaveBeenCalledWith(
+        mockTypeOrmQueryBuilder,
+        mockSearchQuery,
+      );
+
       // 4. Check Pagination Calculations
       // Page 2, Limit 5 -> Skip = (2-1)*5 = 5
       expect(mockTypeOrmQueryBuilder.take).toHaveBeenCalledWith(5);
@@ -147,11 +155,17 @@ describe('PatientSearchService', () => {
     it('should re-throw BadRequestException if validation fails', async () => {
       // Arrange
       const error = new BadRequestException('Invalid query param');
-      validator.validateSearchQuery.mockImplementation(() => { throw error; });
+      validator.validateSearchQuery.mockImplementation(() => {
+        throw error;
+      });
 
       // Act & Assert
-      await expect(service.execute(mockSearchQuery)).rejects.toThrow(BadRequestException);
-      await expect(service.execute(mockSearchQuery)).rejects.toThrow('Invalid query param');
+      await expect(service.execute(mockSearchQuery)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.execute(mockSearchQuery)).rejects.toThrow(
+        'Invalid query param',
+      );
 
       // Verify execution stopped before DB call
       expect(queryBuilderService.build).not.toHaveBeenCalled();
@@ -160,12 +174,18 @@ describe('PatientSearchService', () => {
 
     it('should wrap generic errors into BadRequestException', async () => {
       // Arrange
-      mockTypeOrmQueryBuilder.getManyAndCount.mockRejectedValue(new Error('Database Connection Failed'));
+      mockTypeOrmQueryBuilder.getManyAndCount.mockRejectedValue(
+        new Error('Database Connection Failed'),
+      );
 
       // Act & Assert
       // Kode Anda menangkap error umum dan melempar BadRequest baru
-      await expect(service.execute(mockSearchQuery)).rejects.toThrow(BadRequestException);
-      await expect(service.execute(mockSearchQuery)).rejects.toThrow('Gagal mencari pasien. Silakan coba lagi.');
+      await expect(service.execute(mockSearchQuery)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.execute(mockSearchQuery)).rejects.toThrow(
+        'Gagal mencari pasien. Silakan coba lagi.',
+      );
     });
 
     it('should handle default pagination values correctly', async () => {

@@ -154,9 +154,7 @@ describe('MedicalRecordDeletionService', () => {
           throw new Error('Forbidden');
         });
 
-      await expect(service.execute(1, mockDokter)).rejects.toThrow(
-        'Forbidden',
-      );
+      await expect(service.execute(1, mockDokter)).rejects.toThrow('Forbidden');
     });
 
     it('should log deletion warning with user details', async () => {
@@ -237,9 +235,9 @@ describe('MedicalRecordDeletionService', () => {
     it('should throw when record not found', async () => {
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.hardDelete(999, mockKepalaKlinik),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.hardDelete(999, mockKepalaKlinik)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('should log HARD DELETE warning', async () => {
@@ -459,15 +457,12 @@ describe('MedicalRecordDeletionService', () => {
     });
 
     it('should handle record with null relations', async () => {
-      const recordWithoutRelations = Object.assign(
-        new MedicalRecord(),
-        {
-          ...mockMedicalRecord,
-          appointment: undefined,
-          patient: undefined,
-          doctor: undefined,
-        }
-      );
+      const recordWithoutRelations = Object.assign(new MedicalRecord(), {
+        ...mockMedicalRecord,
+        appointment: undefined,
+        patient: undefined,
+        doctor: undefined,
+      });
       jest
         .spyOn(repository, 'findOne')
         .mockResolvedValue(recordWithoutRelations);
@@ -491,9 +486,9 @@ describe('MedicalRecordDeletionService', () => {
     it('should handle very large ID', async () => {
       jest.spyOn(repository, 'findOne').mockResolvedValue(null);
 
-      await expect(
-        service.execute(999999, mockKepalaKlinik),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.execute(999999, mockKepalaKlinik)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

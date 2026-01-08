@@ -7,7 +7,11 @@ import { SearchPatientDto } from '../../../application/dto/search-patient.dto';
 import { PatientResponseDto } from '../../../application/dto/patient-response.dto';
 
 // 2. MOCK DATA
-const mockSearchQuery: SearchPatientDto = { page: 1, limit: 10, search: 'Budi' };
+const mockSearchQuery: SearchPatientDto = {
+  page: 1,
+  limit: 10,
+  search: 'Budi',
+};
 const mockListQuery: SearchPatientDto = { page: 1, limit: 10 }; // Tanpa search param
 const mockResult = { data: ['Patient A'], meta: { total: 1 } };
 const mockPatientId = 123;
@@ -26,9 +30,7 @@ describe('PatientCacheService', () => {
       set: jest.fn(),
       del: jest.fn(),
       // Mocking internal structure untuk method invalidateListCaches
-      stores: [
-        { clear: jest.fn().mockResolvedValue(undefined) }
-      ],
+      stores: [{ clear: jest.fn().mockResolvedValue(undefined) }],
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -58,7 +60,10 @@ describe('PatientCacheService', () => {
       const fallbackMock = jest.fn();
 
       // Act
-      const result = await service.getCachedListOrSearch(mockSearchQuery, fallbackMock);
+      const result = await service.getCachedListOrSearch(
+        mockSearchQuery,
+        fallbackMock,
+      );
 
       // Assert
       expect(cacheManager.get).toHaveBeenCalled();
@@ -72,7 +77,10 @@ describe('PatientCacheService', () => {
       const fallbackMock = jest.fn().mockResolvedValue(mockResult);
 
       // Act
-      const result = await service.getCachedListOrSearch(mockSearchQuery, fallbackMock);
+      const result = await service.getCachedListOrSearch(
+        mockSearchQuery,
+        fallbackMock,
+      );
 
       // Assert
       expect(fallbackMock).toHaveBeenCalled();
@@ -86,7 +94,10 @@ describe('PatientCacheService', () => {
       (cacheManager.get as jest.Mock).mockResolvedValue(mockPatientDto);
       const fallbackMock = jest.fn();
 
-      const result = await service.getCachedPatient(mockPatientId, fallbackMock);
+      const result = await service.getCachedPatient(
+        mockPatientId,
+        fallbackMock,
+      );
 
       expect(result).toEqual(mockPatientDto);
       expect(fallbackMock).not.toHaveBeenCalled();
@@ -96,13 +107,16 @@ describe('PatientCacheService', () => {
       (cacheManager.get as jest.Mock).mockResolvedValue(null);
       const fallbackMock = jest.fn().mockResolvedValue(mockPatientDto);
 
-      const result = await service.getCachedPatient(mockPatientId, fallbackMock);
+      const result = await service.getCachedPatient(
+        mockPatientId,
+        fallbackMock,
+      );
 
       expect(fallbackMock).toHaveBeenCalled();
       expect(cacheManager.set).toHaveBeenCalledWith(
         expect.stringContaining(`detail:{"id":${mockPatientId}}`), // Key check
         mockPatientDto,
-        300000 // 300 seconds * 1000
+        300000, // 300 seconds * 1000
       );
       expect(result).toEqual(mockPatientDto);
     });
@@ -118,7 +132,7 @@ describe('PatientCacheService', () => {
       expect(cacheManager.set).toHaveBeenCalledWith(
         expect.stringContaining('stats'),
         { total: 100 },
-        60000 // 60 seconds * 1000
+        60000, // 60 seconds * 1000
       );
     });
   });
@@ -135,7 +149,7 @@ describe('PatientCacheService', () => {
       expect(cacheManager.set).toHaveBeenCalledWith(
         expect.any(String),
         expect.any(Object),
-        60000 // 60 * 1000
+        60000, // 60 * 1000
       );
     });
 
@@ -148,7 +162,7 @@ describe('PatientCacheService', () => {
       expect(cacheManager.set).toHaveBeenCalledWith(
         expect.any(String),
         expect.any(Object),
-        300000 // 300 * 1000
+        300000, // 300 * 1000
       );
     });
   });
@@ -161,7 +175,10 @@ describe('PatientCacheService', () => {
       const fallbackMock = jest.fn().mockResolvedValue('Fallback Data');
 
       // Act
-      const result = await service.getCachedListOrSearch(mockListQuery, fallbackMock);
+      const result = await service.getCachedListOrSearch(
+        mockListQuery,
+        fallbackMock,
+      );
 
       // Assert
       expect(fallbackMock).toHaveBeenCalled(); // Tetap jalan meski cache error
@@ -175,13 +192,11 @@ describe('PatientCacheService', () => {
       await service.invalidatePatientCache(mockPatientId);
 
       expect(cacheManager.del).toHaveBeenCalledWith(
-        expect.stringContaining(`detail:{"id":${mockPatientId}}`)
+        expect.stringContaining(`detail:{"id":${mockPatientId}}`),
       );
     });
 
     it('should clear entire store for list invalidation', async () => {
-      
-
       // Act
       await service.invalidateListCaches();
 
@@ -192,11 +207,11 @@ describe('PatientCacheService', () => {
     });
 
     it('should handle errors during invalidation gracefully', async () => {
-       const mockStore = (cacheManager as any).stores[0];
-       mockStore.clear.mockRejectedValue(new Error('Clear failed'));
+      const mockStore = (cacheManager as any).stores[0];
+      mockStore.clear.mockRejectedValue(new Error('Clear failed'));
 
-       // Should not throw exception
-       await expect(service.invalidateListCaches()).resolves.not.toThrow();
+      // Should not throw exception
+      await expect(service.invalidateListCaches()).resolves.not.toThrow();
     });
   });
 });

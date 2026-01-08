@@ -108,7 +108,9 @@ describe('RolesService', () => {
 
     it('should throw if role does not exist', async () => {
       repo.findOneBy.mockResolvedValue(null);
-      await expect(service.update(999, { name: 'updated' })).rejects.toThrow(NotFoundException);
+      await expect(service.update(999, { name: 'updated' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

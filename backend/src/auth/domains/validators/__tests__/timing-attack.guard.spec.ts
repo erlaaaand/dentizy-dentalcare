@@ -136,9 +136,8 @@ describe('TimingAttackGuard', () => {
       it('should execute operation and return result', async () => {
         const operation = jest.fn().mockResolvedValue('success');
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBe('success');
         expect(operation).toHaveBeenCalledTimes(1);
@@ -157,9 +156,8 @@ describe('TimingAttackGuard', () => {
       it('should return correct value from operation', async () => {
         const operation = jest.fn().mockResolvedValue({ data: 'test' });
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toEqual({ data: 'test' });
       });
@@ -167,9 +165,8 @@ describe('TimingAttackGuard', () => {
       it('should handle operation returning null', async () => {
         const operation = jest.fn().mockResolvedValue(null);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBeNull();
       });
@@ -177,9 +174,8 @@ describe('TimingAttackGuard', () => {
       it('should handle operation returning undefined', async () => {
         const operation = jest.fn().mockResolvedValue(undefined);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBeUndefined();
       });
@@ -187,9 +183,8 @@ describe('TimingAttackGuard', () => {
       it('should handle operation returning number', async () => {
         const operation = jest.fn().mockResolvedValue(42);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBe(42);
       });
@@ -197,9 +192,8 @@ describe('TimingAttackGuard', () => {
       it('should handle operation returning boolean', async () => {
         const operation = jest.fn().mockResolvedValue(true);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBe(true);
       });
@@ -240,7 +234,9 @@ describe('TimingAttackGuard', () => {
 
       it('should apply timing protection for different error types', async () => {
         const startTime = Date.now();
-        const operation = jest.fn().mockRejectedValue(new TypeError('Type error'));
+        const operation = jest
+          .fn()
+          .mockRejectedValue(new TypeError('Type error'));
 
         await expect(
           TimingAttackGuard.executeWithTimingProtection(operation),
@@ -302,9 +298,8 @@ describe('TimingAttackGuard', () => {
       it('should handle operation that resolves immediately', async () => {
         const operation = jest.fn().mockResolvedValue('immediate');
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toBe('immediate');
       });
@@ -316,9 +311,8 @@ describe('TimingAttackGuard', () => {
         });
 
         const startTime = Date.now();
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
         const elapsed = Date.now() - startTime;
 
         expect(result).toBe('slow');
@@ -329,9 +323,8 @@ describe('TimingAttackGuard', () => {
         const largeObject = { data: 'x'.repeat(10000) };
         const operation = jest.fn().mockResolvedValue(largeObject);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toEqual(largeObject);
       });
@@ -340,9 +333,8 @@ describe('TimingAttackGuard', () => {
         const array = [1, 2, 3, 4, 5];
         const operation = jest.fn().mockResolvedValue(array);
 
-        const result = await TimingAttackGuard.executeWithTimingProtection(
-          operation,
-        );
+        const result =
+          await TimingAttackGuard.executeWithTimingProtection(operation);
 
         expect(result).toEqual(array);
       });

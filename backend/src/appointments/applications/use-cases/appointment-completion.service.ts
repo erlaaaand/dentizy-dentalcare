@@ -13,49 +13,54 @@ import { AppointmentCompletedEvent } from '../../infrastructures/events/';
  */
 @Injectable()
 export class AppointmentCompletionService {
-    private readonly logger = new Logger(AppointmentCompletionService.name);
+  private readonly logger = new Logger(AppointmentCompletionService.name);
 
-    constructor(
-        private readonly repository: AppointmentsRepository,
-        private readonly validator: AppointmentValidator,
-        private readonly domainService: AppointmentDomainService,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly repository: AppointmentsRepository,
+    private readonly validator: AppointmentValidator,
+    private readonly domainService: AppointmentDomainService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    /**
-     * Execute: Complete appointment
-     */
-    async execute(id: number, user: User): Promise<Appointment> {
-        try {
-            // 1. FIND APPOINTMENT
-            const appointment = await this.repository.findById(id);
-            this.validator.validateAppointmentExists(appointment, id);
+  /**
+   * Execute: Complete appointment
+   */
+  async execute(id: number, user: User): Promise<Appointment> {
+    try {
+      // 1. FIND APPOINTMENT
+      const appointment = await this.repository.findById(id);
+      this.validator.validateAppointmentExists(appointment, id);
 
-            // 2. VALIDASI: Authorization
-            this.validator.validateViewAuthorization(appointment!, user);
+      // 2. VALIDASI: Authorization
+      this.validator.validateViewAuthorization(appointment!, user);
 
-            // 3. VALIDASI: Status harus DIJADWALKAN
-            this.validator.validateStatusForCompletion(appointment!);
+      // 3. VALIDASI: Status harus DIJADWALKAN
+      this.validator.validateStatusForCompletion(appointment!);
 
-            // 4. VALIDASI: Authorization untuk completion
-            this.validator.validateCompletionAuthorization(appointment!, user);
+      // 4. VALIDASI: Authorization untuk completion
+      this.validator.validateCompletionAuthorization(appointment!, user);
 
-            // 5. UPDATE STATUS
-            const updatedAppointment = this.domainService.completeAppointment(appointment!);
-            const savedAppointment = await this.repository.save(updatedAppointment);
+      // 5. UPDATE STATUS
+      const updatedAppointment = this.domainService.completeAppointment(
+        appointment!,
+      );
+      const savedAppointment = await this.repository.save(updatedAppointment);
 
-            // 6. EMIT EVENT
-            this.eventEmitter.emit(
-                'appointment.completed',
-                new AppointmentCompletedEvent(savedAppointment, user.id)
-            );
+      // 6. EMIT EVENT
+      this.eventEmitter.emit(
+        'appointment.completed',
+        new AppointmentCompletedEvent(savedAppointment, user.id),
+      );
 
-            this.logger.log(`✅ Appointment #${id} completed by user #${user.id}`);
+      this.logger.log(`✅ Appointment #${id} completed by user #${user.id}`);
 
-            return savedAppointment;
-        } catch (error) {
-            this.logger.error(`❌ Error completing appointment ID ${id}:`, error.stack);
-            throw error;
-        }
+      return savedAppointment;
+    } catch (error) {
+      this.logger.error(
+        `❌ Error completing appointment ID ${id}:`,
+        error.stack,
+      );
+      throw error;
     }
+  }
 }

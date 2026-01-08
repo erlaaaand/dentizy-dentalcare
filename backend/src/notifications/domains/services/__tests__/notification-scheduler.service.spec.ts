@@ -1,7 +1,10 @@
 // 1. IMPORTS
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationSchedulerService } from '../notification-scheduler.service';
-import { Appointment, AppointmentStatus } from '../../../../appointments/domains/entities/appointment.entity';
+import {
+  Appointment,
+  AppointmentStatus,
+} from '../../../../appointments/domains/entities/appointment.entity';
 
 // 2. MOCK DATA
 // Current date for reference (mock for consistent testing)
@@ -20,55 +23,55 @@ const mockFutureAppointment: Appointment = {
     alamat: 'Jl. Test No. 123',
     tanggal_lahir: new Date('1990-01-01'),
     created_at: new Date('2024-01-01T00:00:00.000Z'),
-    updated_at: new Date('2024-01-01T00:00:00.000Z')
+    updated_at: new Date('2024-01-01T00:00:00.000Z'),
   } as any,
   doctor: {
     id: 200,
     nama_lengkap: 'Dr. Smith',
     created_at: new Date('2024-01-01T00:00:00.000Z'),
-    updated_at: new Date('2024-01-01T00:00:00.000Z')
+    updated_at: new Date('2024-01-01T00:00:00.000Z'),
   } as any,
   created_at: new Date('2024-01-14T09:00:00.000Z'),
-  updated_at: new Date('2024-01-14T09:00:00.000Z')
+  updated_at: new Date('2024-01-14T09:00:00.000Z'),
 } as any;
 
 const mockPastAppointment: Appointment = {
   ...mockFutureAppointment,
   id: 2,
   tanggal_janji: new Date('2024-01-13T10:00:00.000Z'), // January 13, 2024, 10:00 AM (yesterday)
-  jam_janji: '10:00'
+  jam_janji: '10:00',
 };
 
 const mockAppointmentToday: Appointment = {
   ...mockFutureAppointment,
   id: 3,
   tanggal_janji: new Date('2024-01-14T15:00:00.000Z'), // Today at 3:00 PM
-  jam_janji: '15:00'
+  jam_janji: '15:00',
 };
 
 const mockAppointmentTomorrow: Appointment = {
   ...mockFutureAppointment,
   id: 4,
   tanggal_janji: new Date('2024-01-15T10:00:00.000Z'), // Tomorrow at 10:00 AM
-  jam_janji: '10:00'
+  jam_janji: '10:00',
 };
 
 const mockAppointmentWithInvalidTime: Appointment = {
   ...mockFutureAppointment,
   id: 5,
-  jam_janji: 'invalid-time'
+  jam_janji: 'invalid-time',
 };
 
 const mockAppointmentWithEmptyTime: Appointment = {
   ...mockFutureAppointment,
   id: 6,
-  jam_janji: ''
+  jam_janji: '',
 };
 
 const mockAppointmentWithNullDate: Appointment = {
   ...mockFutureAppointment,
   id: 7,
-  tanggal_janji: null as any
+  tanggal_janji: null as any,
 };
 
 const mockAppointmentEdgeCases = [
@@ -76,26 +79,26 @@ const mockAppointmentEdgeCases = [
     ...mockFutureAppointment,
     id: 8,
     tanggal_janji: new Date('2024-01-17T00:00:00.000Z'), // Midnight appointment
-    jam_janji: '00:00'
+    jam_janji: '00:00',
   },
   {
     ...mockFutureAppointment,
     id: 9,
     tanggal_janji: new Date('2024-01-17T23:59:00.000Z'), // End of day appointment
-    jam_janji: '23:59'
+    jam_janji: '23:59',
   },
   {
     ...mockFutureAppointment,
     id: 10,
     tanggal_janji: new Date('2024-02-29T10:00:00.000Z'), // Leap day appointment
-    jam_janji: '10:00'
+    jam_janji: '10:00',
   },
   {
     ...mockFutureAppointment,
     id: 11,
     tanggal_janji: new Date('2024-12-31T20:00:00.000Z'), // New Year's Eve
-    jam_janji: '20:00'
-  }
+    jam_janji: '20:00',
+  },
 ];
 
 // Mock Logger
@@ -116,7 +119,9 @@ describe('NotificationSchedulerService', () => {
       providers: [NotificationSchedulerService],
     }).compile();
 
-    service = module.get<NotificationSchedulerService>(NotificationSchedulerService);
+    service = module.get<NotificationSchedulerService>(
+      NotificationSchedulerService,
+    );
 
     // Mock the logger
     Object.defineProperty(service, 'logger', {
@@ -177,7 +182,7 @@ describe('NotificationSchedulerService', () => {
         testCases.forEach(([appointmentTime, expectedReminderTime]) => {
           const appointment = {
             ...mockFutureAppointment,
-            tanggal_janji: new Date(appointmentTime)
+            tanggal_janji: new Date(appointmentTime),
           };
 
           const result = service.calculateReminderTime(appointment);
@@ -190,7 +195,7 @@ describe('NotificationSchedulerService', () => {
         // Arrange
         const appointmentTimes = ['08:00', '12:00', '18:00', '23:59'];
 
-        appointmentTimes.forEach(jam_janji => {
+        appointmentTimes.forEach((jam_janji) => {
           const appointment = { ...mockFutureAppointment, jam_janji };
 
           // Act
@@ -213,9 +218,13 @@ describe('NotificationSchedulerService', () => {
         const reminderDate = new Date(result!);
 
         // Check date is 1 day before
-        expect(reminderDate.getUTCDate()).toBe(appointmentDate.getUTCDate() - 1);
+        expect(reminderDate.getUTCDate()).toBe(
+          appointmentDate.getUTCDate() - 1,
+        );
         expect(reminderDate.getUTCMonth()).toBe(appointmentDate.getUTCMonth());
-        expect(reminderDate.getUTCFullYear()).toBe(appointmentDate.getUTCFullYear());
+        expect(reminderDate.getUTCFullYear()).toBe(
+          appointmentDate.getUTCFullYear(),
+        );
       });
     });
 
@@ -254,8 +263,10 @@ describe('NotificationSchedulerService', () => {
         // Assert
         expect(mockLogger.warn).toHaveBeenCalledWith(
           expect.stringMatching(
-            new RegExp(`Cannot schedule past reminder for appointment #${mockPastAppointment.id}`)
-          )
+            new RegExp(
+              `Cannot schedule past reminder for appointment #${mockPastAppointment.id}`,
+            ),
+          ),
         );
       });
 
@@ -265,7 +276,7 @@ describe('NotificationSchedulerService', () => {
 
         // Assert
         expect(mockLogger.warn).toHaveBeenCalledWith(
-          expect.stringContaining(`appointment #${mockPastAppointment.id}`)
+          expect.stringContaining(`appointment #${mockPastAppointment.id}`),
         );
       });
     });
@@ -273,7 +284,9 @@ describe('NotificationSchedulerService', () => {
     describe('Error Handling', () => {
       it('should return null and log error for invalid time format', () => {
         // Act
-        const result = service.calculateReminderTime(mockAppointmentWithInvalidTime);
+        const result = service.calculateReminderTime(
+          mockAppointmentWithInvalidTime,
+        );
 
         // Assert
         expect(result).toBeNull();
@@ -282,7 +295,9 @@ describe('NotificationSchedulerService', () => {
 
       it('should return null for empty time string', () => {
         // Act
-        const result = service.calculateReminderTime(mockAppointmentWithEmptyTime);
+        const result = service.calculateReminderTime(
+          mockAppointmentWithEmptyTime,
+        );
 
         // Assert
         expect(result).toBeNull();
@@ -290,7 +305,9 @@ describe('NotificationSchedulerService', () => {
 
       it('should return null for null appointment date', () => {
         // Act
-        const result = service.calculateReminderTime(mockAppointmentWithNullDate);
+        const result = service.calculateReminderTime(
+          mockAppointmentWithNullDate,
+        );
 
         // Assert
         expect(result).toBeNull();
@@ -304,7 +321,7 @@ describe('NotificationSchedulerService', () => {
           { ...mockFutureAppointment, jam_janji: '10' }, // Missing minutes
         ];
 
-        malformedTimeCases.forEach(appointment => {
+        malformedTimeCases.forEach((appointment) => {
           const result = service.calculateReminderTime(appointment);
           expect(result).toBeNull();
         });
@@ -373,7 +390,7 @@ describe('NotificationSchedulerService', () => {
         const appointment = {
           ...mockFutureAppointment,
           tanggal_janji: new Date('2024-01-16T14:00:00.000Z'), // UTC time
-          jam_janji: '14:00'
+          jam_janji: '14:00',
         };
 
         const result = service.calculateReminderTime(appointment);
@@ -390,9 +407,11 @@ describe('NotificationSchedulerService', () => {
 
         if (result) {
           const appointmentDateTime = new Date(appointment.tanggal_janji);
-          
+
           const expectedReminderTime = new Date(appointmentDateTime);
-          expectedReminderTime.setUTCDate(expectedReminderTime.getUTCDate() - 1);
+          expectedReminderTime.setUTCDate(
+            expectedReminderTime.getUTCDate() - 1,
+          );
           expectedReminderTime.setUTCHours(9, 0, 0, 0);
 
           expect(result.toISOString()).toBe(expectedReminderTime.toISOString());
@@ -429,7 +448,9 @@ describe('NotificationSchedulerService', () => {
 
     it('should return false for appointment with invalid time', () => {
       // Act
-      const result = service.shouldScheduleReminder(mockAppointmentWithInvalidTime);
+      const result = service.shouldScheduleReminder(
+        mockAppointmentWithInvalidTime,
+      );
 
       // Assert
       expect(result).toBe(false);
@@ -477,7 +498,7 @@ describe('NotificationSchedulerService', () => {
         // Assert
         expect(result).toEqual({
           canSchedule: true,
-          reminderTime: new Date('2024-01-15T09:00:00.000Z')
+          reminderTime: new Date('2024-01-15T09:00:00.000Z'),
         });
       });
 
@@ -487,7 +508,9 @@ describe('NotificationSchedulerService', () => {
 
         // Assert
         expect(result.reminderTime).toBeInstanceOf(Date);
-        expect(result.reminderTime!.toISOString()).toBe('2024-01-15T09:00:00.000Z');
+        expect(result.reminderTime!.toISOString()).toBe(
+          '2024-01-15T09:00:00.000Z',
+        );
       });
     });
 
@@ -500,7 +523,7 @@ describe('NotificationSchedulerService', () => {
         expect(result).toEqual({
           canSchedule: false,
           reminderTime: null,
-          reason: 'Reminder time would be in the past'
+          reason: 'Reminder time would be in the past',
         });
       });
 
@@ -530,7 +553,7 @@ describe('NotificationSchedulerService', () => {
         expect(result).toEqual({
           canSchedule: false,
           reminderTime: null,
-          reason: 'Reminder time would be in the past'
+          reason: 'Reminder time would be in the past',
         });
       });
 
@@ -551,10 +574,10 @@ describe('NotificationSchedulerService', () => {
         const testCases = [
           mockFutureAppointment,
           mockPastAppointment,
-          mockAppointmentWithInvalidTime
+          mockAppointmentWithInvalidTime,
         ];
 
-        testCases.forEach(appointment => {
+        testCases.forEach((appointment) => {
           const result = service.getReminderInfo(appointment);
 
           expect(result).toHaveProperty('canSchedule');
@@ -581,7 +604,8 @@ describe('NotificationSchedulerService', () => {
 
       testAppointments.forEach(({ appointment, shouldSchedule }) => {
         const calculateResult = service.calculateReminderTime(appointment);
-        const shouldScheduleResult = service.shouldScheduleReminder(appointment);
+        const shouldScheduleResult =
+          service.shouldScheduleReminder(appointment);
         const infoResult = service.getReminderInfo(appointment);
 
         // Consistency check
@@ -614,12 +638,14 @@ describe('NotificationSchedulerService', () => {
 
   describe('Performance and Reliability', () => {
     it('should handle rapid successive calls', () => {
-      const rapidCalls = Array(50).fill(0).map((_, index) => ({
-        ...mockFutureAppointment,
-        id: index + 100
-      }));
+      const rapidCalls = Array(50)
+        .fill(0)
+        .map((_, index) => ({
+          ...mockFutureAppointment,
+          id: index + 100,
+        }));
 
-      rapidCalls.forEach(appointment => {
+      rapidCalls.forEach((appointment) => {
         const result = service.calculateReminderTime(appointment);
         expect(result).toBeInstanceOf(Date);
       });
@@ -642,7 +668,7 @@ describe('NotificationSchedulerService', () => {
           ...appt.doctor,
           created_at: new Date(appt.doctor.created_at.getTime()),
           updated_at: new Date(appt.doctor.updated_at.getTime()),
-        }
+        },
       });
 
       const originalAppointment = cloneAppointment(mockFutureAppointment);
@@ -660,16 +686,16 @@ describe('NotificationSchedulerService', () => {
         {
           ...mockFutureAppointment,
           tanggal_janji: new Date('2024-03-31T10:00:00.000Z'), // DST start in some zones
-          jam_janji: '10:00'
+          jam_janji: '10:00',
         },
         {
           ...mockFutureAppointment,
           tanggal_janji: new Date('2024-10-27T10:00:00.000Z'), // DST end in some zones
-          jam_janji: '10:00'
-        }
+          jam_janji: '10:00',
+        },
       ];
 
-      dstAppointments.forEach(appointment => {
+      dstAppointments.forEach((appointment) => {
         const result = service.calculateReminderTime(appointment);
         // Should not throw and should return valid date or null
         expect(result === null || result instanceof Date).toBe(true);

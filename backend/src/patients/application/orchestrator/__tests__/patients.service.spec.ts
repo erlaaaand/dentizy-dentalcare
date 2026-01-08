@@ -169,7 +169,9 @@ describe('PatientsService', () => {
 
       const result = await service.findByMedicalRecordNumber(mrn);
 
-      expect(mockFindService.findByMedicalRecordNumber).toHaveBeenCalledWith(mrn);
+      expect(mockFindService.findByMedicalRecordNumber).toHaveBeenCalledWith(
+        mrn,
+      );
       expect(result).toBe(mockPatientResponse);
     });
   });
@@ -208,7 +210,10 @@ describe('PatientsService', () => {
       const updateDto: UpdatePatientDto = {
         nama_lengkap: 'Jane Doe',
       } as UpdatePatientDto;
-      const updatedResponse = { ...mockPatientResponse, nama_lengkap: 'Jane Doe' };
+      const updatedResponse = {
+        ...mockPatientResponse,
+        nama_lengkap: 'Jane Doe',
+      };
 
       mockUpdateService.execute.mockResolvedValue(updatedResponse);
 

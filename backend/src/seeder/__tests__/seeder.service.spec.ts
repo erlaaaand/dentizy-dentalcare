@@ -5,7 +5,10 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, ObjectLiteral } from 'typeorm';
 import { Role, UserRole } from '../../roles/entities/role.entity';
 import { User } from '../../users/domains/entities/user.entity';
-import { Patient, Gender } from '../../patients/domains/entities/patient.entity';
+import {
+  Patient,
+  Gender,
+} from '../../patients/domains/entities/patient.entity';
 import {
   Appointment,
   AppointmentStatus,
@@ -35,8 +38,8 @@ describe('SeederService', () => {
   let mockMedicalRecordRepo: MockRepository<MedicalRecord>;
 
   const loggerSpies = {
-    log: jest.spyOn(Logger.prototype, 'log').mockImplementation(() => { }),
-    error: jest.spyOn(Logger.prototype, 'error').mockImplementation(() => { }),
+    log: jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {}),
+    error: jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {}),
   };
 
   // DATA MOCK
@@ -47,9 +50,7 @@ describe('SeederService', () => {
   ];
   const mockDokter = { id: 1, username: 'anisa.putri' };
   const mockPatient = { id: 1, nik: '3201012345678901' };
-  const mockSavedAppt = [
-    { id: 1, status: AppointmentStatus.SELESAI },
-  ];
+  const mockSavedAppt = [{ id: 1, status: AppointmentStatus.SELESAI }];
 
   beforeEach(async () => {
     mockRoleRepo = {

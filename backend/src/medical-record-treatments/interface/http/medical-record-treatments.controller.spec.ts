@@ -9,7 +9,9 @@ describe('MedicalRecordTreatmentsController', () => {
       controllers: [MedicalRecordTreatmentsController],
     }).compile();
 
-    controller = module.get<MedicalRecordTreatmentsController>(MedicalRecordTreatmentsController);
+    controller = module.get<MedicalRecordTreatmentsController>(
+      MedicalRecordTreatmentsController,
+    );
   });
 
   it('should be defined', () => {

@@ -96,7 +96,10 @@ describe('PatientCreationService', () => {
           provide: getRepositoryToken(Patient),
           useValue: { create: jest.fn(), save: jest.fn() }, // Repository utama (jarang dipakai lgsg krn via transaction)
         },
-        { provide: MedicalRecordNumberGenerator, useValue: mockRecordGenerator },
+        {
+          provide: MedicalRecordNumberGenerator,
+          useValue: mockRecordGenerator,
+        },
         { provide: PatientValidator, useValue: mockValidator },
         { provide: TransactionManager, useValue: mockTransactionManager },
         { provide: PatientCacheService, useValue: mockCacheService },
@@ -136,17 +139,22 @@ describe('PatientCreationService', () => {
       // 2. Check Logic inside Transaction
       expect(mockValidator.validateCreate).toHaveBeenCalledWith(mockDto);
       expect(mockRecordGenerator.generate).toHaveBeenCalled();
-      expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(Patient, expect.objectContaining({
-        ...mockDto,
-        nomor_rekam_medis: 'RM-202311-001',
-        is_active: true,
-      }));
-      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(mockPatientEntity);
+      expect(mockQueryRunner.manager.create).toHaveBeenCalledWith(
+        Patient,
+        expect.objectContaining({
+          ...mockDto,
+          nomor_rekam_medis: 'RM-202311-001',
+          is_active: true,
+        }),
+      );
+      expect(mockQueryRunner.manager.save).toHaveBeenCalledWith(
+        mockPatientEntity,
+      );
 
       // 3. Check Side Effects (Outside Transaction)
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
         'patient.created',
-        expect.any(PatientCreatedEvent)
+        expect.any(PatientCreatedEvent),
       );
       // Memastikan payload event benar
       const eventPayload = mockEventEmitter.emit.mock.calls[0][1];
@@ -165,7 +173,9 @@ describe('PatientCreationService', () => {
       mockValidator.validateCreate.mockRejectedValue(validationError);
 
       // Act & Assert
-      await expect(service.execute(mockDto)).rejects.toThrow('NIK already exists');
+      await expect(service.execute(mockDto)).rejects.toThrow(
+        'NIK already exists',
+      );
 
       // Verify flow stops at validation
       expect(mockValidator.validateCreate).toHaveBeenCalled();
@@ -180,7 +190,9 @@ describe('PatientCreationService', () => {
     it('should throw error if record generation fails', async () => {
       // Arrange
       mockValidator.validateCreate.mockResolvedValue(undefined);
-      mockRecordGenerator.generate.mockRejectedValue(new Error('Generator Error'));
+      mockRecordGenerator.generate.mockRejectedValue(
+        new Error('Generator Error'),
+      );
 
       // Act & Assert
       await expect(service.execute(mockDto)).rejects.toThrow('Generator Error');

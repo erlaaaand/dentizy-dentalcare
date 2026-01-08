@@ -255,7 +255,9 @@ describe('PatientsController', () => {
   describe('restore', () => {
     it('should restore a patient and return a message', async () => {
       const id = 1;
-      const expectedMessage = { message: 'Pasien John Doe berhasil dipulihkan' };
+      const expectedMessage = {
+        message: 'Pasien John Doe berhasil dipulihkan',
+      };
 
       service.restore.mockResolvedValue(expectedMessage);
 

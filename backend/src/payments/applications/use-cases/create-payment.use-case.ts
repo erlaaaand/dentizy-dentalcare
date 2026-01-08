@@ -13,71 +13,75 @@ import { StatusPembayaran } from '../../domains/entities/payments.entity';
 
 @Injectable()
 export class CreatePaymentUseCase {
-    constructor(
-        private readonly paymentRepository: PaymentRepository,
-        private readonly paymentMapper: PaymentMapper,
-        private readonly calculatorService: PaymentCalculatorService,
-        private readonly validatorService: PaymentValidatorService,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly paymentMapper: PaymentMapper,
+    private readonly calculatorService: PaymentCalculatorService,
+    private readonly validatorService: PaymentValidatorService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(dto: CreatePaymentDto): Promise<PaymentResponseDto> {
-        // Check for duplicate payment
-        const existingPayment = await this.paymentRepository.findByMedicalRecordId(dto.medicalRecordId);
-        if (existingPayment) {
-            throw new ConflictException(`Pembayaran untuk rekam medis ID ${dto.medicalRecordId} sudah ada`);
-        }
-
-        // Validate payment data
-        this.validatorService.validatePaymentData({
-            totalBiaya: dto.totalBiaya,
-            diskonTotal: dto.diskonTotal,
-            jumlahBayar: dto.jumlahBayar,
-        });
-
-        // Calculate payment details
-        const calculation = this.calculatorService.calculate(
-            dto.totalBiaya,
-            dto.diskonTotal || 0,
-            dto.jumlahBayar,
-        );
-
-        // Override status with calculated status
-        dto.statusPembayaran = calculation.statusPembayaran;
-
-        // Create payment
-        const payment = await this.paymentRepository.create(dto);
-        const response = this.paymentMapper.toResponseDto(payment);
-
-        // Emit created event
-        this.eventEmitter.emit(
-            'payment.created',
-            new PaymentCreatedEvent(
-                payment.id,
-                payment.medicalRecordId,
-                payment.patientId,
-                payment.nomorInvoice,
-                Number(payment.totalAkhir),
-                payment.statusPembayaran,
-                payment.createdBy,
-            ),
-        );
-
-        // Emit completed event if payment is complete
-        if (payment.statusPembayaran === StatusPembayaran.LUNAS) {
-            this.eventEmitter.emit(
-                'payment.completed',
-                new PaymentCompletedEvent(
-                    payment.id,
-                    payment.medicalRecordId,
-                    payment.patientId,
-                    payment.nomorInvoice,
-                    Number(payment.totalAkhir),
-                    payment.createdAt,
-                ),
-            );
-        }
-
-        return response;
+  async execute(dto: CreatePaymentDto): Promise<PaymentResponseDto> {
+    // Check for duplicate payment
+    const existingPayment = await this.paymentRepository.findByMedicalRecordId(
+      dto.medicalRecordId,
+    );
+    if (existingPayment) {
+      throw new ConflictException(
+        `Pembayaran untuk rekam medis ID ${dto.medicalRecordId} sudah ada`,
+      );
     }
+
+    // Validate payment data
+    this.validatorService.validatePaymentData({
+      totalBiaya: dto.totalBiaya,
+      diskonTotal: dto.diskonTotal,
+      jumlahBayar: dto.jumlahBayar,
+    });
+
+    // Calculate payment details
+    const calculation = this.calculatorService.calculate(
+      dto.totalBiaya,
+      dto.diskonTotal || 0,
+      dto.jumlahBayar,
+    );
+
+    // Override status with calculated status
+    dto.statusPembayaran = calculation.statusPembayaran;
+
+    // Create payment
+    const payment = await this.paymentRepository.create(dto);
+    const response = this.paymentMapper.toResponseDto(payment);
+
+    // Emit created event
+    this.eventEmitter.emit(
+      'payment.created',
+      new PaymentCreatedEvent(
+        payment.id,
+        payment.medicalRecordId,
+        payment.patientId,
+        payment.nomorInvoice,
+        Number(payment.totalAkhir),
+        payment.statusPembayaran,
+        payment.createdBy,
+      ),
+    );
+
+    // Emit completed event if payment is complete
+    if (payment.statusPembayaran === StatusPembayaran.LUNAS) {
+      this.eventEmitter.emit(
+        'payment.completed',
+        new PaymentCompletedEvent(
+          payment.id,
+          payment.medicalRecordId,
+          payment.patientId,
+          payment.nomorInvoice,
+          Number(payment.totalAkhir),
+          payment.createdAt,
+        ),
+      );
+    }
+
+    return response;
+  }
 }

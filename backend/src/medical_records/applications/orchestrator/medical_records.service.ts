@@ -21,135 +21,137 @@ import { MedicalRecordsRepository } from '../../../medical_records/infrastructur
  */
 @Injectable()
 export class MedicalRecordsService {
-    constructor(
-        private readonly mapper: MedicalRecordMapper,
-        private readonly creationService: MedicalRecordCreationService,
-        private readonly updateService: MedicalRecordUpdateService,
-        private readonly findService: MedicalRecordFindService,
-        private readonly searchService: MedicalRecordSearchService,
-        private readonly appointmentFinderService: MedicalRecordAppointmentFinderService,
-        private readonly deletionService: MedicalRecordDeletionService,
-        private readonly queryBuilder: MedicalRecordQueryBuilder,
-        private readonly repository: MedicalRecordsRepository,
-    ) { }
+  constructor(
+    private readonly mapper: MedicalRecordMapper,
+    private readonly creationService: MedicalRecordCreationService,
+    private readonly updateService: MedicalRecordUpdateService,
+    private readonly findService: MedicalRecordFindService,
+    private readonly searchService: MedicalRecordSearchService,
+    private readonly appointmentFinderService: MedicalRecordAppointmentFinderService,
+    private readonly deletionService: MedicalRecordDeletionService,
+    private readonly queryBuilder: MedicalRecordQueryBuilder,
+    private readonly repository: MedicalRecordsRepository,
+  ) {}
 
-    /**
-     * Create new medical record
-     */
-    async create(
-        createDto: CreateMedicalRecordDto,
-        user: User
-    ): Promise<MedicalRecordResponseDto> {
-        const entity = await this.creationService.execute(createDto, user);
-        return this.mapper.toResponseDto(entity);
+  /**
+   * Create new medical record
+   */
+  async create(
+    createDto: CreateMedicalRecordDto,
+    user: User,
+  ): Promise<MedicalRecordResponseDto> {
+    const entity = await this.creationService.execute(createDto, user);
+    return this.mapper.toResponseDto(entity);
+  }
+
+  /**
+   * Find all medical records with authorization
+   */
+  async findAll(user: User, query: FindAllMedicalRecordQueryDto) {
+    const qb = this.queryBuilder.buildFindAllQuery(user, query);
+
+    const [records, total] = await qb.getManyAndCount();
+
+    return {
+      data: this.mapper.toResponseDtoArray(records),
+      total,
+      page: query.page ?? 1,
+      limit: query.limit ?? 10,
+    };
+  }
+
+  /**
+   * Search medical records with filters
+   */
+  async search(
+    filters: SearchMedicalRecordDto,
+    user: User,
+  ): Promise<{
+    data: MedicalRecordResponseDto[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
+    const result = await this.searchService.execute(filters, user);
+
+    return {
+      data: this.mapper.toResponseDtoArray(result.data),
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+    };
+  }
+
+  /**
+   * Find medical record by ID
+   */
+  async findOne(id: number, user: User): Promise<MedicalRecordResponseDto> {
+    const entity = await this.findService.execute(id, user);
+    return this.mapper.toResponseDto(entity);
+  }
+
+  /**
+   * Find medical record by appointment ID
+   */
+  async findByAppointmentId(
+    appointmentId: number,
+    user: User,
+  ): Promise<MedicalRecordResponseDto | null> {
+    const entity = await this.appointmentFinderService.execute(
+      appointmentId,
+      user,
+    );
+
+    if (!entity) {
+      return null;
     }
 
-    /**
-     * Find all medical records with authorization
-     */
-    async findAll(user: User, query: FindAllMedicalRecordQueryDto) {
-        const qb = this.queryBuilder.buildFindAllQuery(user, query);
+    return this.mapper.toResponseDto(entity);
+  }
 
-        const [records, total] = await qb.getManyAndCount();
+  /**
+   * Update medical record
+   */
+  async update(
+    id: number,
+    updateDto: UpdateMedicalRecordDto,
+    user: User,
+  ): Promise<MedicalRecordResponseDto> {
+    const entity = await this.updateService.execute(id, updateDto, user);
+    return this.mapper.toResponseDto(entity);
+  }
 
-        return {
-            data: this.mapper.toResponseDtoArray(records),
-            total,
-            page: query.page ?? 1,
-            limit: query.limit ?? 10,
-        };
-    }
+  /**
+   * Delete medical record (soft delete)
+   */
+  async remove(id: number, user: User): Promise<void> {
+    await this.deletionService.execute(id, user);
+  }
 
+  /**
+   * Hard delete medical record (permanent)
+   */
+  async hardDelete(id: number, user: User): Promise<void> {
+    await this.deletionService.hardDelete(id, user);
+  }
 
-    /**
-     * Search medical records with filters
-     */
-    async search(
-        filters: SearchMedicalRecordDto,
-        user: User
-    ): Promise<{
-        data: MedicalRecordResponseDto[];
-        total: number;
-        page: number;
-        limit: number;
-    }> {
-        const result = await this.searchService.execute(filters, user);
+  /**
+   * Restore soft-deleted medical record
+   */
+  async restore(id: number, user: User): Promise<MedicalRecordResponseDto> {
+    const entity = await this.deletionService.restore(id, user);
+    return this.mapper.toResponseDto(entity);
+  }
 
-        return {
-            data: this.mapper.toResponseDtoArray(result.data),
-            total: result.total,
-            page: result.page,
-            limit: result.limit,
-        };
-    }
+  /**
+   * Check if medical record exists for appointment
+   */
+  async existsForAppointment(appointmentId: number): Promise<boolean> {
+    return await this.appointmentFinderService.exists(appointmentId);
+  }
 
-    /**
-     * Find medical record by ID
-     */
-    async findOne(id: number, user: User): Promise<MedicalRecordResponseDto> {
-        const entity = await this.findService.execute(id, user);
-        return this.mapper.toResponseDto(entity);
-    }
-
-    /**
-     * Find medical record by appointment ID
-     */
-    async findByAppointmentId(
-        appointmentId: number,
-        user: User
-    ): Promise<MedicalRecordResponseDto | null> {
-        const entity = await this.appointmentFinderService.execute(appointmentId, user);
-
-        if (!entity) {
-            return null;
-        }
-
-        return this.mapper.toResponseDto(entity);
-    }
-
-    /**
-     * Update medical record
-     */
-    async update(
-        id: number,
-        updateDto: UpdateMedicalRecordDto,
-        user: User
-    ): Promise<MedicalRecordResponseDto> {
-        const entity = await this.updateService.execute(id, updateDto, user);
-        return this.mapper.toResponseDto(entity);
-    }
-
-    /**
-     * Delete medical record (soft delete)
-     */
-    async remove(id: number, user: User): Promise<void> {
-        await this.deletionService.execute(id, user);
-    }
-
-    /**
-     * Hard delete medical record (permanent)
-     */
-    async hardDelete(id: number, user: User): Promise<void> {
-        await this.deletionService.hardDelete(id, user);
-    }
-
-    /**
-     * Restore soft-deleted medical record
-     */
-    async restore(id: number, user: User): Promise<MedicalRecordResponseDto> {
-        const entity = await this.deletionService.restore(id, user);
-        return this.mapper.toResponseDto(entity);
-    }
-
-    /**
-     * Check if medical record exists for appointment
-     */
-    async existsForAppointment(appointmentId: number): Promise<boolean> {
-        return await this.appointmentFinderService.exists(appointmentId);
-    }
-
-    async getDoctorStatistics(startDate?: Date, endDate?: Date): Promise<any[]> {
-        // Memanggil method baru di repository (pastikan repo sudah diupdate)
-        return await this.repository.getDoctorPerformance(startDate, endDate);
-    }
+  async getDoctorStatistics(startDate?: Date, endDate?: Date): Promise<any[]> {
+    // Memanggil method baru di repository (pastikan repo sudah diupdate)
+    return await this.repository.getDoctorPerformance(startDate, endDate);
+  }
 }

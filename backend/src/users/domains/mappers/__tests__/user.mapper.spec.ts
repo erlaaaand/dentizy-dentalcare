@@ -3,4 +3,3 @@ describe('user.mapper.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

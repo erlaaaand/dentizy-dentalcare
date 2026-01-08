@@ -8,66 +8,71 @@ import { MedicalRecordValidator } from '../../domains/validators/medical-record.
 
 @Injectable()
 export class MedicalRecordAppointmentFinderService {
-    private readonly logger = new Logger(MedicalRecordAppointmentFinderService.name);
+  private readonly logger = new Logger(
+    MedicalRecordAppointmentFinderService.name,
+  );
 
-    constructor(
-        @InjectRepository(MedicalRecord)
-        private readonly repository: Repository<MedicalRecord>,
-        private readonly authService: MedicalRecordAuthorizationService,
-        private readonly validator: MedicalRecordValidator,
-    ) { }
+  constructor(
+    @InjectRepository(MedicalRecord)
+    private readonly repository: Repository<MedicalRecord>,
+    private readonly authService: MedicalRecordAuthorizationService,
+    private readonly validator: MedicalRecordValidator,
+  ) {}
 
-    /**
-     * Find medical record by appointment ID with authorization
-     */
-    async execute(appointmentId: number, user: User): Promise<MedicalRecord | null> {
-        // Validate input
-        this.validator.validateAppointmentId(appointmentId);
-        this.validator.validateUserId(user.id);
+  /**
+   * Find medical record by appointment ID with authorization
+   */
+  async execute(
+    appointmentId: number,
+    user: User,
+  ): Promise<MedicalRecord | null> {
+    // Validate input
+    this.validator.validateAppointmentId(appointmentId);
+    this.validator.validateUserId(user.id);
 
-        // Find medical record with relations
-        const record = await this.repository.findOne({
-            where: { appointment_id: appointmentId },
-            relations: [
-                'appointment',
-                'appointment.patient',
-                'appointment.doctor',
-                'appointment.doctor.roles',
-                'doctor',
-                'patient'
-            ],
-        });
+    // Find medical record with relations
+    const record = await this.repository.findOne({
+      where: { appointment_id: appointmentId },
+      relations: [
+        'appointment',
+        'appointment.patient',
+        'appointment.doctor',
+        'appointment.doctor.roles',
+        'doctor',
+        'patient',
+      ],
+    });
 
-        // If no record found, return null (not an error)
-        if (!record) {
-            this.logger.log(
-                `No medical record found for appointment #${appointmentId}`
-            );
-            return null;
-        }
-
-        // Validate user has permission to view this record
-        this.authService.validateViewPermission(user, record);
-
-        // Log access
-        this.logger.log(
-            `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
-            `accessed medical record #${record.id} via appointment #${appointmentId}`
-        );
-
-        return record;
+    // If no record found, return null (not an error)
+    if (!record) {
+      this.logger.log(
+        `No medical record found for appointment #${appointmentId}`,
+      );
+      return null;
     }
 
-    /**
-     * Check if medical record exists for appointment (without loading full data)
-     */
-    async exists(appointmentId: number): Promise<boolean> {
-        this.validator.validateAppointmentId(appointmentId);
+    // Validate user has permission to view this record
+    this.authService.validateViewPermission(user, record);
 
-        const count = await this.repository.count({
-            where: { appointment_id: appointmentId }
-        });
+    // Log access
+    this.logger.log(
+      `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
+        `accessed medical record #${record.id} via appointment #${appointmentId}`,
+    );
 
-        return count > 0;
-    }
+    return record;
+  }
+
+  /**
+   * Check if medical record exists for appointment (without loading full data)
+   */
+  async exists(appointmentId: number): Promise<boolean> {
+    this.validator.validateAppointmentId(appointmentId);
+
+    const count = await this.repository.count({
+      where: { appointment_id: appointmentId },
+    });
+
+    return count > 0;
+  }
 }

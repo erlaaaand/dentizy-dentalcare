@@ -8,126 +8,120 @@ import { MedicalRecordValidator } from '../../domains/validators/medical-record.
 
 @Injectable()
 export class MedicalRecordDeletionService {
-    private readonly logger = new Logger(MedicalRecordDeletionService.name);
+  private readonly logger = new Logger(MedicalRecordDeletionService.name);
 
-    constructor(
-        @InjectRepository(MedicalRecord)
-        private readonly repository: Repository<MedicalRecord>,
-        private readonly authService: MedicalRecordAuthorizationService,
-        private readonly validator: MedicalRecordValidator,
-    ) { }
+  constructor(
+    @InjectRepository(MedicalRecord)
+    private readonly repository: Repository<MedicalRecord>,
+    private readonly authService: MedicalRecordAuthorizationService,
+    private readonly validator: MedicalRecordValidator,
+  ) {}
 
-    /**
-     * Delete (soft delete) medical record
-     * Only Kepala Klinik can delete
-     */
-    async execute(id: number, user: User): Promise<void> {
-        // Validate input
-        this.validator.validateId(id);
-        this.validator.validateUserId(user.id);
+  /**
+   * Delete (soft delete) medical record
+   * Only Kepala Klinik can delete
+   */
+  async execute(id: number, user: User): Promise<void> {
+    // Validate input
+    this.validator.validateId(id);
+    this.validator.validateUserId(user.id);
 
-        // Check authorization first (only Kepala Klinik)
-        this.authService.validateDeletePermission(user);
+    // Check authorization first (only Kepala Klinik)
+    this.authService.validateDeletePermission(user);
 
-        // Find medical record
-        const record = await this.repository.findOne({
-            where: { id },
-            relations: ['appointment', 'patient', 'doctor'],
-        });
+    // Find medical record
+    const record = await this.repository.findOne({
+      where: { id },
+      relations: ['appointment', 'patient', 'doctor'],
+    });
 
-        if (!record) {
-            throw new NotFoundException(
-                `Rekam medis dengan ID #${id} tidak ditemukan`
-            );
-        }
-
-        // Log deletion action
-        this.logger.warn(
-            `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
-            `deleting medical record #${id} for patient #${record.patient_id}`
-        );
-
-        // Perform soft delete
-        await this.repository.softRemove(record);
-
-        this.logger.log(
-            `Medical record #${id} successfully deleted (soft delete)`
-        );
+    if (!record) {
+      throw new NotFoundException(
+        `Rekam medis dengan ID #${id} tidak ditemukan`,
+      );
     }
 
-    /**
-     * Hard delete medical record (permanent removal)
-     * Use with extreme caution
-     */
-    async hardDelete(id: number, user: User): Promise<void> {
-        // Validate input
-        this.validator.validateId(id);
-        this.validator.validateUserId(user.id);
+    // Log deletion action
+    this.logger.warn(
+      `User ${user.id} (${this.authService.getRoleSummary(user)}) ` +
+        `deleting medical record #${id} for patient #${record.patient_id}`,
+    );
 
-        // Check authorization
-        this.authService.validateDeletePermission(user);
+    // Perform soft delete
+    await this.repository.softRemove(record);
 
-        // Find medical record
-        const record = await this.repository.findOne({
-            where: { id },
-            withDeleted: true, // Include soft-deleted records
-        });
+    this.logger.log(`Medical record #${id} successfully deleted (soft delete)`);
+  }
 
-        if (!record) {
-            throw new NotFoundException(
-                `Rekam medis dengan ID #${id} tidak ditemukan`
-            );
-        }
+  /**
+   * Hard delete medical record (permanent removal)
+   * Use with extreme caution
+   */
+  async hardDelete(id: number, user: User): Promise<void> {
+    // Validate input
+    this.validator.validateId(id);
+    this.validator.validateUserId(user.id);
 
-        // Log hard deletion
-        this.logger.warn(
-            `HARD DELETE: User ${user.id} permanently removing medical record #${id}`
-        );
+    // Check authorization
+    this.authService.validateDeletePermission(user);
 
-        // Permanent deletion
-        await this.repository.remove(record);
+    // Find medical record
+    const record = await this.repository.findOne({
+      where: { id },
+      withDeleted: true, // Include soft-deleted records
+    });
 
-        this.logger.warn(
-            `Medical record #${id} PERMANENTLY DELETED`
-        );
+    if (!record) {
+      throw new NotFoundException(
+        `Rekam medis dengan ID #${id} tidak ditemukan`,
+      );
     }
 
-    /**
-     * Restore soft-deleted medical record
-     */
-    async restore(id: number, user: User): Promise<MedicalRecord> {
-        // Validate input
-        this.validator.validateId(id);
-        this.validator.validateUserId(user.id);
+    // Log hard deletion
+    this.logger.warn(
+      `HARD DELETE: User ${user.id} permanently removing medical record #${id}`,
+    );
 
-        // Check authorization
-        this.authService.validateDeletePermission(user);
+    // Permanent deletion
+    await this.repository.remove(record);
 
-        // Find soft-deleted record
-        const record = await this.repository.findOne({
-            where: { id },
-            withDeleted: true,
-        });
+    this.logger.warn(`Medical record #${id} PERMANENTLY DELETED`);
+  }
 
-        if (!record) {
-            throw new NotFoundException(
-                `Rekam medis dengan ID #${id} tidak ditemukan`
-            );
-        }
+  /**
+   * Restore soft-deleted medical record
+   */
+  async restore(id: number, user: User): Promise<MedicalRecord> {
+    // Validate input
+    this.validator.validateId(id);
+    this.validator.validateUserId(user.id);
 
-        if (!record.deleted_at) {
-            throw new NotFoundException(
-                `Rekam medis #${id} tidak dalam status dihapus`
-            );
-        }
+    // Check authorization
+    this.authService.validateDeletePermission(user);
 
-        // Restore record
-        await this.repository.recover(record);
+    // Find soft-deleted record
+    const record = await this.repository.findOne({
+      where: { id },
+      withDeleted: true,
+    });
 
-        this.logger.log(
-            `User ${user.id} restored medical record #${id}`
-        );
-
-        return record;
+    if (!record) {
+      throw new NotFoundException(
+        `Rekam medis dengan ID #${id} tidak ditemukan`,
+      );
     }
+
+    if (!record.deleted_at) {
+      throw new NotFoundException(
+        `Rekam medis #${id} tidak dalam status dihapus`,
+      );
+    }
+
+    // Restore record
+    await this.repository.recover(record);
+
+    this.logger.log(`User ${user.id} restored medical record #${id}`);
+
+    return record;
+  }
 }

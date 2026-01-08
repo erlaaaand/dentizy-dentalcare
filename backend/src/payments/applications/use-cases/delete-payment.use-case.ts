@@ -6,28 +6,24 @@ import { PaymentDeletedEvent } from '../../infrastructures/events/payment-delete
 
 @Injectable()
 export class DeletePaymentUseCase {
-    constructor(
-        private readonly paymentRepository: PaymentRepository,
-        private readonly eventEmitter: EventEmitter2,
-    ) { }
+  constructor(
+    private readonly paymentRepository: PaymentRepository,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
-    async execute(id: number, deletedBy?: number): Promise<void> {
-        const payment = await this.paymentRepository.findOne(id);
+  async execute(id: number, deletedBy?: number): Promise<void> {
+    const payment = await this.paymentRepository.findOne(id);
 
-        if (!payment) {
-            throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
-        }
-
-        await this.paymentRepository.softDelete(id);
-
-        // Emit deleted event
-        this.eventEmitter.emit(
-            'payment.deleted',
-            new PaymentDeletedEvent(
-                payment.id,
-                payment.nomorInvoice,
-                deletedBy,
-            ),
-        );
+    if (!payment) {
+      throw new NotFoundException(`Pembayaran dengan ID ${id} tidak ditemukan`);
     }
+
+    await this.paymentRepository.softDelete(id);
+
+    // Emit deleted event
+    this.eventEmitter.emit(
+      'payment.deleted',
+      new PaymentDeletedEvent(payment.id, payment.nomorInvoice, deletedBy),
+    );
+  }
 }

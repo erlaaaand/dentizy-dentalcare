@@ -8,20 +8,20 @@ import { TreatmentMapper } from '../../../domains/mappers/treatment.mapper';
 @Injectable()
 @QueryHandler(SearchTreatmentsQuery)
 export class SearchTreatmentsHandler implements IQueryHandler<SearchTreatmentsQuery> {
-    constructor(
-        private readonly repository: TreatmentRepository,
-        private readonly mapper: TreatmentMapper,
-    ) { }
+  constructor(
+    private readonly repository: TreatmentRepository,
+    private readonly mapper: TreatmentMapper,
+  ) {}
 
-    async execute(query: SearchTreatmentsQuery) {
-        const { data } = await this.repository.findAll({
-            search: query.keyword,
-            categoryId: query.categoryId,
-            isActive: true,
-            page: 1,
-            limit: 50,
-        });
+  async execute(query: SearchTreatmentsQuery) {
+    const { data } = await this.repository.findAll({
+      search: query.keyword,
+      categoryId: query.categoryId,
+      isActive: true,
+      page: 1,
+      limit: 50,
+    });
 
-        return this.mapper.toListResponseDtoList(data);
-    }
+    return this.mapper.toListResponseDtoList(data);
+  }
 }

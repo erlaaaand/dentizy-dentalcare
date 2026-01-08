@@ -5,15 +5,15 @@ import { PaymentCompletedEvent } from '../events/payment-completed.event';
 
 @Injectable()
 export class PaymentCompletedListener {
-    private readonly logger = new Logger(PaymentCompletedListener.name);
+  private readonly logger = new Logger(PaymentCompletedListener.name);
 
-    @OnEvent('payment.completed')
-    async handlePaymentCompleted(event: PaymentCompletedEvent) {
-        this.logger.log(`Payment completed: ${event.nomorInvoice}`);
+  @OnEvent('payment.completed')
+  async handlePaymentCompleted(event: PaymentCompletedEvent) {
+    this.logger.log(`Payment completed: ${event.nomorInvoice}`);
 
-        // TODO: Send completion notification
-        // TODO: Update medical record to completed
-        // TODO: Generate receipt
-        // TODO: Update revenue statistics
-    }
+    // TODO: Send completion notification
+    // TODO: Update medical record to completed
+    // TODO: Generate receipt
+    // TODO: Update revenue statistics
+  }
 }

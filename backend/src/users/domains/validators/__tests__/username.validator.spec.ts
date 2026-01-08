@@ -3,4 +3,3 @@ describe('username.validator.ts', () => {
     expect(true).toBeDefined();
   });
 });
-

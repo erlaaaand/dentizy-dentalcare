@@ -5,8 +5,8 @@ import { Appointment } from '../../domains/entities/appointment.entity';
  * Triggered ketika appointment diselesaikan
  */
 export class AppointmentCompletedEvent {
-    constructor(
-        public readonly appointment: Appointment,
-        public readonly completedBy: number, // user ID
-    ) { }
+  constructor(
+    public readonly appointment: Appointment,
+    public readonly completedBy: number, // user ID
+  ) {}
 }

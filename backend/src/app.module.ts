@@ -26,6 +26,7 @@ import { TreatmentsModule } from './treatments/treatments.module';
 import { MedicalRecordTreatmentsModule } from './medical-record-treatments/medical-record-treatments.module';
 import { PaymentsModule } from './payments/payments.module';
 import { UploadsModule } from './uploads/uploads.module';
+// import { FingerprintsModule } from './fingerprints/fingerprints.module';
 
 @Module({
   imports: [
@@ -46,10 +47,12 @@ import { UploadsModule } from './uploads/uploads.module';
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => [{
-        ttl: configService.get<number>('THROTTLE_TTL', 60000),
-        limit: configService.get<number>('THROTTLE_LIMIT', 100),
-      }],
+      useFactory: (configService: ConfigService) => [
+        {
+          ttl: configService.get<number>('THROTTLE_TTL', 60000),
+          limit: configService.get<number>('THROTTLE_LIMIT', 100),
+        },
+      ],
     }),
 
     // ✅ Caching global
@@ -120,7 +123,8 @@ import { UploadsModule } from './uploads/uploads.module';
     TreatmentsModule,
     MedicalRecordTreatmentsModule,
     PaymentsModule,
-    UploadsModule
+    UploadsModule,
+    // FingerprintsModule
   ],
   // ✅ FIX: Add HealthController here
   controllers: [HealthController],
@@ -142,4 +146,4 @@ import { UploadsModule } from './uploads/uploads.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

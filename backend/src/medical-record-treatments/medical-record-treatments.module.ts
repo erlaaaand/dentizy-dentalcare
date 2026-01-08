@@ -89,4 +89,4 @@ import { TreatmentsModule } from '../treatments/treatments.module';
     MedicalRecordTreatmentTransactionService,
   ],
 })
-export class MedicalRecordTreatmentsModule { }
+export class MedicalRecordTreatmentsModule {}

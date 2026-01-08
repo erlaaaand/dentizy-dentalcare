@@ -102,7 +102,9 @@ describe('Password Validator', () => {
     });
 
     it('should reject passwords without special characters', () => {
-      expect(PASSWORD_REGEX.test(mockInvalidPasswords.noSpecialChar)).toBe(false);
+      expect(PASSWORD_REGEX.test(mockInvalidPasswords.noSpecialChar)).toBe(
+        false,
+      );
     });
 
     it('should reject passwords that are too short', () => {
@@ -146,23 +148,31 @@ describe('Password Validator', () => {
     it('should return error for password without lowercase', () => {
       const result = validatePasswordStrength(mockInvalidPasswords.noLowercase);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password harus mengandung minimal satu huruf kecil');
+      expect(result.errors).toContain(
+        'Password harus mengandung minimal satu huruf kecil',
+      );
     });
 
     it('should return error for password without uppercase', () => {
       const result = validatePasswordStrength(mockInvalidPasswords.noUppercase);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password harus mengandung minimal satu huruf besar');
+      expect(result.errors).toContain(
+        'Password harus mengandung minimal satu huruf besar',
+      );
     });
 
     it('should return error for password without digit', () => {
       const result = validatePasswordStrength(mockInvalidPasswords.noDigit);
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password harus mengandung minimal satu angka');
+      expect(result.errors).toContain(
+        'Password harus mengandung minimal satu angka',
+      );
     });
 
     it('should return error for password without special character', () => {
-      const result = validatePasswordStrength(mockInvalidPasswords.noSpecialChar);
+      const result = validatePasswordStrength(
+        mockInvalidPasswords.noSpecialChar,
+      );
       expect(result.isValid).toBe(false);
       expect(result.errors).toContain(
         'Password harus mengandung minimal satu karakter khusus (@$!%*?&#)',
@@ -170,7 +180,9 @@ describe('Password Validator', () => {
     });
 
     it('should return multiple errors for password missing multiple requirements', () => {
-      const result = validatePasswordStrength(mockInvalidPasswords.missingMultiple);
+      const result = validatePasswordStrength(
+        mockInvalidPasswords.missingMultiple,
+      );
       expect(result.isValid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(1);
     });
@@ -215,18 +227,24 @@ describe('Password Validator', () => {
       errors = await validate(testDto);
 
       // Assert
-      expect(errors[0].constraints?.isStrongPassword).toBe(PASSWORD_VALIDATION_MESSAGE);
+      expect(errors[0].constraints?.isStrongPassword).toBe(
+        PASSWORD_VALIDATION_MESSAGE,
+      );
     });
 
     it('should use custom validation message when provided', async () => {
       // Arrange
-      const customDto = new TestPasswordWithCustomMessageDto(mockInvalidPasswords.tooShort);
+      const customDto = new TestPasswordWithCustomMessageDto(
+        mockInvalidPasswords.tooShort,
+      );
 
       // Act
       errors = await validate(customDto);
 
       // Assert
-      expect(errors[0].constraints?.isStrongPassword).toBe('Custom password error message');
+      expect(errors[0].constraints?.isStrongPassword).toBe(
+        'Custom password error message',
+      );
     });
 
     it('should reject non-string values', async () => {
@@ -366,8 +384,13 @@ describe('Password Validator', () => {
     });
 
     it('should reject other special characters', async () => {
-      const invalidSpecialChars = ['Test^1234', 'Test+1234', 'Test=1234', 'Test-1234'];
-      
+      const invalidSpecialChars = [
+        'Test^1234',
+        'Test+1234',
+        'Test=1234',
+        'Test-1234',
+      ];
+
       for (const password of invalidSpecialChars) {
         testDto = new TestPasswordDto(password);
         errors = await validate(testDto);
@@ -466,13 +489,19 @@ describe('Password Validator', () => {
     it('should return specific errors only for missing requirements', () => {
       const result = validatePasswordStrength('TestPassword');
       expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('Password harus mengandung minimal satu angka');
+      expect(result.errors).toContain(
+        'Password harus mengandung minimal satu angka',
+      );
       expect(result.errors).toContain(
         'Password harus mengandung minimal satu karakter khusus (@$!%*?&#)',
       );
       expect(result.errors).not.toContain('Password minimal 8 karakter');
-      expect(result.errors).not.toContain('Password harus mengandung minimal satu huruf kecil');
-      expect(result.errors).not.toContain('Password harus mengandung minimal satu huruf besar');
+      expect(result.errors).not.toContain(
+        'Password harus mengandung minimal satu huruf kecil',
+      );
+      expect(result.errors).not.toContain(
+        'Password harus mengandung minimal satu huruf besar',
+      );
     });
   });
 });

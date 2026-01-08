@@ -3,4 +3,3 @@ describe('user-updated.event.ts', () => {
     expect(true).toBeDefined();
   });
 });
-
