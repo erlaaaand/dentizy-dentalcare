@@ -6,6 +6,18 @@ import {
 import { DataSource } from 'typeorm';
 import { Patient } from '../../domains/entities/patient.entity';
 
+interface DatabaseError {
+  code?: string;
+  errno?: string | number;
+  message?: string;
+}
+
+// Definisikan tipe result untuk nomor rekam medis
+interface MedicalRecordResult {
+  nomor_rekam_medis?: string;
+}
+
+
 @Injectable()
 export class MedicalRecordNumberGenerator {
   private readonly logger = new Logger(MedicalRecordNumberGenerator.name);
@@ -104,7 +116,7 @@ export class MedicalRecordNumberGenerator {
   /**
    * Calculate next sequence number
    */
-  private calculateNextSequence(result: any, datePrefix: string): number {
+  private calculateNextSequence(result: MedicalRecordResult | null, datePrefix: string): number {
     if (!result?.nomor_rekam_medis) {
       return 1;
     }
@@ -137,24 +149,19 @@ export class MedicalRecordNumberGenerator {
   /**
    * Check if error is retryable
    */
-  private isRetryableError(error: any): boolean {
+  private isRetryableError(error: DatabaseError): boolean {
     const retryableCodes = [
-      'ER_LOCK_DEADLOCK',
-      'ER_LOCK_WAIT_TIMEOUT',
-      '40001', // Serialization failure
-      '40P01', // Deadlock detected (PostgreSQL)
-      'SQLITE_BUSY', // SQLite locked
+      1213,
+      1205,
     ];
 
-    const errorCode = error.code || error.errno;
-    const errorMessage = error.message || '';
+    const errorCode: number = typeof error.errno === 'number' ? error.errno : -1;
+    const errorMessage = error.message?.toLowerCase() || '';
 
-    return retryableCodes.some(
-      (code) =>
-        errorCode === code ||
-        errorMessage.includes(code) ||
-        errorMessage.toLowerCase().includes('deadlock') ||
-        errorMessage.toLowerCase().includes('lock timeout'),
+    return(
+      retryableCodes.includes(errorCode)||
+      errorMessage.includes('deadlock') ||
+      errorMessage.includes('lock wait timeout')
     );
   }
 

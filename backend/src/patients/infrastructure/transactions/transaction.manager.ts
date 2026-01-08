@@ -4,20 +4,20 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { DataSource, QueryRunner } from 'typeorm';
 
 @Injectable()
 export class TransactionManager {
   private readonly logger = new Logger(TransactionManager.name);
   private readonly MAX_RETRY_ATTEMPTS = 5;
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(private readonly dataSource: DataSource) { }
 
   /**
    * Execute operation dengan transaction dan retry mechanism
    */
   async executeWithRetry<T>(
-    operation: (queryRunner: any) => Promise<T>,
+    operation: (queryRunner: QueryRunner) => Promise<T>,
   ): Promise<T> {
     let attempts = 0;
     let lastError: Error = new Error('Unknown error occurred');
@@ -79,16 +79,33 @@ export class TransactionManager {
     throw new BadRequestException('Operasi gagal setelah beberapa percobaan');
   }
 
-  private isRetryableError(error: any): boolean {
+  private isRetryableError(error: unknown): boolean {
+
+    if (
+      typeof error !== 'object' ||
+      error === null ||
+      !('code' in error) ||
+      !('message' in error)
+    ) {
+      return false;
+    }
+
+    const dbError = error as { code?: string | number; message?: string };
+
     const retryableCodes = [
-      'ER_LOCK_DEADLOCK',
-      'ER_LOCK_WAIT_TIMEOUT',
-      '40001', // Serialization failure
-      '40P01', // Deadlock detected (PostgreSQL)
+      'ER_LOCK_DEADLOCK', // MySQL deadlock
+      'ER_LOCK_WAIT_TIMEOUT', // MySQL lock timeout
+      1213, // kode numerik deadlock MySQL
+      1205, // kode numerik lock wait timeout MySQL
     ];
 
+    const errorCode = dbError.code;
+    const errorMessage = dbError.message?.toLowerCase() || '';
+
     return retryableCodes.some(
-      (code) => error.code === code || error.message?.includes(code),
+      (code) =>
+        errorCode === code ||
+        errorMessage.includes(typeof code === 'string' ? code.toLowerCase() : ''),
     );
   }
 }
