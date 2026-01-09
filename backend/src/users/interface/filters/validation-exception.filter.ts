@@ -5,27 +5,54 @@ import {
   BadRequestException,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
+
+interface ValidationErrorObject {
+  property: string;
+  constraints?: Record<string, string>;
+  value?: unknown;
+}
+
+interface FormattedValidationError {
+  field?: string;
+  message: string;
+  value?: unknown;
+}
+
+interface ErrorResponse {
+  statusCode: number;
+  timestamp: string;
+  path: string;
+  method: string;
+  error: string;
+  message: string;
+  validationErrors?: FormattedValidationError[];
+}
+
+interface ExceptionResponseBody {
+  message?: string | string[];
+  error?: string;
+  statusCode?: number;
+}
 
 @Catch(BadRequestException)
 export class ValidationExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ValidationExceptionFilter.name);
 
-  catch(exception: BadRequestException, host: ArgumentsHost) {
+  catch(exception: BadRequestException, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
+    const request = ctx.getRequest<Request>();
 
     const status = exception.getStatus();
     const exceptionResponse = exception.getResponse();
 
-    let validationErrors: any[] = [];
+    let validationErrors: FormattedValidationError[] = [];
     let message = 'Validation failed';
 
     if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
-      const responseBody = exceptionResponse as any;
+      const responseBody = exceptionResponse as ExceptionResponseBody;
 
-      // Handle class-validator errors
       if (Array.isArray(responseBody.message)) {
         validationErrors = this.formatValidationErrors(responseBody.message);
         message = 'Input validation failed';
@@ -39,7 +66,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
       validationErrors,
     );
 
-    const errorResponse = {
+    const errorResponse: ErrorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -52,18 +79,20 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     response.status(status).json(errorResponse);
   }
 
-  /**
-   * Format validation errors into user-friendly format
-   */
-  private formatValidationErrors(errors: any[]): any[] {
-    return errors.map((error) => {
+  private formatValidationErrors(
+    errors: (string | ValidationErrorObject)[],
+  ): FormattedValidationError[] {
+    return errors.map((error): FormattedValidationError => {
       if (typeof error === 'string') {
         return { message: error };
       }
 
+      const constraints = error.constraints || {};
+      const constraintMessages = Object.values(constraints);
+
       return {
         field: error.property,
-        message: Object.values(error.constraints || {}).join(', '),
+        message: constraintMessages.join(', '),
         value: error.value,
       };
     });

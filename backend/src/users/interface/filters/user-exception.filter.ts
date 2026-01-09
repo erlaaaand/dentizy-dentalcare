@@ -9,34 +9,77 @@ import {
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 
+interface HttpExceptionResponse {
+  message: string | string[];
+  error?: string;
+  details?: unknown;
+}
+
+interface ErrorResponse {
+  statusCode: number;
+  timestamp: string;
+  path: string;
+  method: string;
+  error: string;
+  message: string | string[];
+  details?: unknown;
+  validationErrors?: ValidationError[];
+  stack?: string;
+}
+
+interface ValidationError {
+  message: string;
+}
+
+interface DatabaseError {
+  message: string;
+  error: string;
+  details?: DatabaseErrorDetails;
+}
+
+interface DatabaseErrorDetails {
+  constraint?: string;
+  table?: string;
+  column?: string;
+  code?: string;
+  detail?: string;
+}
+
+interface PostgresError extends Error {
+  code?: string;
+  constraint?: string;
+  table?: string;
+  column?: string;
+  detail?: string;
+}
+
 @Catch()
 export class UserExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(UserExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
+    let message: string | string[] = 'Internal server error';
     let error = 'InternalServerError';
-    let details: any = undefined;
+    let details: unknown = undefined;
 
-    // Handle different types of exceptions
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
-      } else if (typeof exceptionResponse === 'object') {
-        message = (exceptionResponse as any).message || message;
-        error = (exceptionResponse as any).error || error;
-        details = (exceptionResponse as any).details;
+      } else {
+        const responseObj = exceptionResponse as HttpExceptionResponse;
+        message = responseObj.message || message;
+        error = responseObj.error || error;
+        details = responseObj.details;
       }
     } else if (exception instanceof QueryFailedError) {
-      // Handle database errors
       status = HttpStatus.BAD_REQUEST;
       const dbError = this.handleDatabaseError(exception);
       message = dbError.message;
@@ -47,14 +90,12 @@ export class UserExceptionFilter implements ExceptionFilter {
       error = exception.name;
     }
 
-    // Log the error
     this.logger.error(
       `${request.method} ${request.url} - Status: ${status} - Error: ${message}`,
       exception instanceof Error ? exception.stack : undefined,
     );
 
-    // Build response
-    const errorResponse: any = {
+    const errorResponse: ErrorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -63,18 +104,15 @@ export class UserExceptionFilter implements ExceptionFilter {
       message,
     };
 
-    // Add details if available
     if (details) {
       errorResponse.details = details;
     }
 
-    // Add validation errors if present
     if (status === HttpStatus.BAD_REQUEST && Array.isArray(message)) {
-      errorResponse.validationErrors = message;
+      errorResponse.validationErrors = message.map(msg => ({ message: msg }));
       errorResponse.message = 'Validation failed';
     }
 
-    // Don't expose stack trace in production
     if (process.env.NODE_ENV === 'development' && exception instanceof Error) {
       errorResponse.stack = exception.stack;
     }
@@ -82,19 +120,11 @@ export class UserExceptionFilter implements ExceptionFilter {
     response.status(status).json(errorResponse);
   }
 
-  /**
-   * Handle database-specific errors
-   */
-  private handleDatabaseError(error: QueryFailedError): {
-    message: string;
-    error: string;
-    details?: any;
-  } {
-    const dbError = error as any;
+  private handleDatabaseError(error: QueryFailedError): DatabaseError {
+    const dbError = error as unknown as PostgresError;
 
-    // PostgreSQL error codes
     switch (dbError.code) {
-      case '23505': // Unique violation
+      case '23505':
         return {
           message: this.extractUniqueViolationMessage(dbError),
           error: 'ConflictError',
@@ -104,7 +134,7 @@ export class UserExceptionFilter implements ExceptionFilter {
           },
         };
 
-      case '23503': // Foreign key violation
+      case '23503':
         return {
           message: 'Data terkait tidak ditemukan atau sedang digunakan',
           error: 'ForeignKeyViolation',
@@ -114,7 +144,7 @@ export class UserExceptionFilter implements ExceptionFilter {
           },
         };
 
-      case '23502': // Not null violation
+      case '23502':
         return {
           message: 'Field yang required tidak boleh kosong',
           error: 'NotNullViolation',
@@ -124,7 +154,7 @@ export class UserExceptionFilter implements ExceptionFilter {
           },
         };
 
-      case '22P02': // Invalid text representation
+      case '22P02':
         return {
           message: 'Format data tidak valid',
           error: 'InvalidDataFormat',
@@ -143,10 +173,7 @@ export class UserExceptionFilter implements ExceptionFilter {
     }
   }
 
-  /**
-   * Extract user-friendly message from unique violation error
-   */
-  private extractUniqueViolationMessage(error: any): string {
+  private extractUniqueViolationMessage(error: PostgresError): string {
     if (error.constraint?.includes('username')) {
       return 'Username sudah digunakan';
     }
@@ -155,7 +182,6 @@ export class UserExceptionFilter implements ExceptionFilter {
       return 'Email sudah terdaftar';
     }
 
-    // Extract the duplicate value if available
     if (error.detail) {
       const match = error.detail.match(/Key \((.+?)\)=\((.+?)\)/);
       if (match) {
