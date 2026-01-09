@@ -157,7 +157,10 @@ export class PatientRepository extends Repository<Patient> {
   /**
    * Check if patient exists by unique field
    */
-  async existsByField<K extends keyof Patient>(field: K, value: Patient[K]): Promise<boolean> {
+  async existsByField<K extends keyof Patient>(
+    field: K,
+    value: Patient[K],
+  ): Promise<boolean> {
     const count = await this.createQueryBuilder('patient')
       .where(`patient.${field as string} = :value`, { value })
       .getCount();

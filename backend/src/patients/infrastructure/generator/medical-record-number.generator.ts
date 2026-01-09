@@ -17,7 +17,6 @@ interface MedicalRecordResult {
   nomor_rekam_medis?: string;
 }
 
-
 @Injectable()
 export class MedicalRecordNumberGenerator {
   private readonly logger = new Logger(MedicalRecordNumberGenerator.name);
@@ -116,7 +115,10 @@ export class MedicalRecordNumberGenerator {
   /**
    * Calculate next sequence number
    */
-  private calculateNextSequence(result: MedicalRecordResult | null, datePrefix: string): number {
+  private calculateNextSequence(
+    result: MedicalRecordResult | null,
+    datePrefix: string,
+  ): number {
     if (!result?.nomor_rekam_medis) {
       return 1;
     }
@@ -150,16 +152,14 @@ export class MedicalRecordNumberGenerator {
    * Check if error is retryable
    */
   private isRetryableError(error: DatabaseError): boolean {
-    const retryableCodes = [
-      1213,
-      1205,
-    ];
+    const retryableCodes = [1213, 1205];
 
-    const errorCode: number = typeof error.errno === 'number' ? error.errno : -1;
+    const errorCode: number =
+      typeof error.errno === 'number' ? error.errno : -1;
     const errorMessage = error.message?.toLowerCase() || '';
 
-    return(
-      retryableCodes.includes(errorCode)||
+    return (
+      retryableCodes.includes(errorCode) ||
       errorMessage.includes('deadlock') ||
       errorMessage.includes('lock wait timeout')
     );

@@ -11,7 +11,7 @@ export class TransactionManager {
   private readonly logger = new Logger(TransactionManager.name);
   private readonly MAX_RETRY_ATTEMPTS = 5;
 
-  constructor(private readonly dataSource: DataSource) { }
+  constructor(private readonly dataSource: DataSource) {}
 
   /**
    * Execute operation dengan transaction dan retry mechanism
@@ -80,7 +80,6 @@ export class TransactionManager {
   }
 
   private isRetryableError(error: unknown): boolean {
-
     if (
       typeof error !== 'object' ||
       error === null ||
@@ -105,7 +104,9 @@ export class TransactionManager {
     return retryableCodes.some(
       (code) =>
         errorCode === code ||
-        errorMessage.includes(typeof code === 'string' ? code.toLowerCase() : ''),
+        errorMessage.includes(
+          typeof code === 'string' ? code.toLowerCase() : '',
+        ),
     );
   }
 }
