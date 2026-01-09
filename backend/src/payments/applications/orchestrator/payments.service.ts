@@ -7,7 +7,7 @@ import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { QueryPaymentDto } from '../dto/query-payment.dto';
 import { PaymentResponseDto } from '../dto/payment-response.dto';
-import { ProcessPaymentDto } from '../../applications/dto/process-payment.dto'; // Sesuaikan path jika perlu
+import { ProcessPaymentDto } from '../../applications/dto/process-payment.dto';
 
 // Use Cases
 import { CreatePaymentUseCase } from '../use-cases/create-payment.use-case';
@@ -29,6 +29,22 @@ import {
   MetodePembayaran,
   StatusPembayaran,
 } from '../../../payments/domains/entities/payments.entity';
+
+interface PaginatedPaymentResponse {
+  data: PaymentResponseDto[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface RevenueData {
+  total: number;
+  startDate?: Date;
+  endDate?: Date;
+}
 
 @Injectable()
 export class PaymentsService {
@@ -52,7 +68,7 @@ export class PaymentsService {
     return await this.createPaymentUseCase.execute(dto);
   }
 
-  async findAll(query: QueryPaymentDto) {
+  async findAll(query: QueryPaymentDto): Promise<PaginatedPaymentResponse> {
     return await this.getPaymentListUseCase.execute(query);
   }
 
@@ -72,7 +88,6 @@ export class PaymentsService {
       await this.getPaymentByMedicalRecordQuery.execute(medicalRecordId);
 
     if (!payment) {
-      const { NotFoundException } = await import('@nestjs/common');
       throw new NotFoundException(
         `Pembayaran untuk rekam medis ID ${medicalRecordId} tidak ditemukan`,
       );
@@ -81,7 +96,10 @@ export class PaymentsService {
     return this.paymentMapper.toResponseDto(payment);
   }
 
-  async findByPatientId(patientId: number, limit: number = 10) {
+  async findByPatientId(
+    patientId: number,
+    limit: number = 10,
+  ): Promise<PaymentResponseDto[]> {
     const payments = await this.getPaymentsByPatientQuery.execute(
       patientId,
       limit,
@@ -125,7 +143,11 @@ export class PaymentsService {
     );
   }
 
-  async processPayment(id: number, dto: ProcessPaymentDto, userId: number) {
+  async processPayment(
+    id: number,
+    dto: ProcessPaymentDto,
+    userId: number,
+  ): Promise<PaymentResponseDto> {
     const payment = await this.findOne(id);
 
     if (!payment) {
