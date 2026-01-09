@@ -1,7 +1,29 @@
 // domains/services/token.service.ts
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { TokenPayloadDto } from '../../applications/dto/token-payload.dto';
+
+/**
+ * Interface untuk JWT payload yang di-decode
+ */
+interface JwtPayload {
+  username: string;
+  sub: number;
+  roles: string[];
+  iat?: number;
+  exp?: number;
+}
+
+/**
+ * Interface untuk decoded token (tanpa verifikasi)
+ */
+interface DecodedToken {
+  username: string;
+  sub: number;
+  roles: string[];
+  iat?: number;
+  exp?: number;
+}
 
 @Injectable()
 export class TokenService {
@@ -33,7 +55,7 @@ export class TokenService {
    */
   verifyToken(token: string): TokenPayloadDto {
     try {
-      const decoded = this.jwtService.verify(token);
+      const decoded = this.jwtService.verify<JwtPayload>(token);
 
       return {
         userId: decoded.sub,
@@ -41,16 +63,35 @@ export class TokenService {
         roles: decoded.roles || [],
       };
     } catch (error) {
-      this.logger.warn('Token verification failed');
-      throw new Error('Invalid or expired token');
+      this.logger.warn(
+        'Token verification failed',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 
   /**
    * Decode token without verification (for debugging)
    */
-  decodeToken(token: string): any {
-    return this.jwtService.decode(token);
+  decodeToken(token: string): DecodedToken | null {
+    try {
+      const decoded = this.jwtService.decode(token);
+
+      // Validate that decoded is a proper object with expected structure
+      if (!decoded || typeof decoded !== 'object' || !('sub' in decoded)) {
+        this.logger.warn('Invalid token structure');
+        return null;
+      }
+
+      return decoded as DecodedToken;
+    } catch (error) {
+      this.logger.warn(
+        'Failed to decode token',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
+      return null;
+    }
   }
 
   /**

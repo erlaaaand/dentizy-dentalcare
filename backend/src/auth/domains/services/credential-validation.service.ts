@@ -1,27 +1,43 @@
 // domains/services/credential-validation.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 
+/**
+ * Interface untuk hasil validasi
+ */
+interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
+/**
+ * Interface untuk hasil validasi lengkap credentials
+ */
+interface CredentialValidationResult {
+  valid: boolean;
+  errors: string[];
+}
+
 @Injectable()
 export class CredentialValidationService {
   private readonly logger = new Logger(CredentialValidationService.name);
 
-  // Business rules
+  // Business rules - constants
   private readonly MIN_USERNAME_LENGTH = 3;
   private readonly MAX_USERNAME_LENGTH = 50;
   private readonly MIN_PASSWORD_LENGTH = 8;
+  private readonly USERNAME_REGEX = /^[a-zA-Z0-9_]+$/;
 
   /**
    * Validate username format
    */
-  validateUsername(username: string): { valid: boolean; message?: string } {
+  validateUsername(username: string): ValidationResult {
     if (!username) {
       return { valid: false, message: 'Username tidak boleh kosong' };
     }
 
-    // 2. Lakukan trim SATU KALI dan simpan
+    // Trim ONCE and reuse
     const trimmedUsername = username.trim();
 
-    // 3. Gunakan 'trimmedUsername' untuk SEMUA validasi di bawah ini
     if (trimmedUsername.length === 0) {
       return { valid: false, message: 'Username tidak boleh kosong' };
     }
@@ -40,8 +56,7 @@ export class CredentialValidationService {
       };
     }
 
-    const usernameRegex = /^[a-zA-Z0-9_]+$/;
-    if (!usernameRegex.test(trimmedUsername)) {
+    if (!this.USERNAME_REGEX.test(trimmedUsername)) {
       return {
         valid: false,
         message: 'Username hanya boleh mengandung huruf, angka, dan underscore',
@@ -54,10 +69,7 @@ export class CredentialValidationService {
   /**
    * Validate password format (not strength, just basic format)
    */
-  validatePasswordFormat(password: string): {
-    valid: boolean;
-    message?: string;
-  } {
+  validatePasswordFormat(password: string): ValidationResult {
     if (!password || password.length === 0) {
       return { valid: false, message: 'Password tidak boleh kosong' };
     }
@@ -78,10 +90,7 @@ export class CredentialValidationService {
   validateCredentials(
     username: string,
     password: string,
-  ): {
-    valid: boolean;
-    errors: string[];
-  } {
+  ): CredentialValidationResult {
     const errors: string[] = [];
 
     const usernameResult = this.validateUsername(username);
