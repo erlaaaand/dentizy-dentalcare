@@ -5,6 +5,7 @@ import { TokenService } from '../../domains/services/token.service';
 import { AuthMapper } from '../../domains/mappers/auth.mapper';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { TokenRefreshedEvent } from '../../infrastructures/events/token-refreshed.event';
+import { User } from '../../../users/domains/entities/user.entity';
 
 @Injectable()
 export class TokenRefreshService {
@@ -21,13 +22,14 @@ export class TokenRefreshService {
    */
   async execute(userId: number): Promise<{ access_token: string }> {
     try {
-      // 1. Find user
-      const user = (await this.usersService.findOneForAuth(userId)) as any;
+      // 1. Find user - properly typed as User entity
+      const user = await this.usersService.findOneForAuth(userId);
 
       if (!user) {
         throw new UnauthorizedException('User tidak ditemukan');
       }
 
+      // TypeScript now knows 'user' is User type, not any
       // 2. Generate new token
       const tokenPayload = AuthMapper.toTokenPayload(user);
       const accessToken = this.tokenService.generateToken(tokenPayload);

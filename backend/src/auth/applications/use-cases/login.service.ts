@@ -11,6 +11,14 @@ import { LoginResponseDto } from '../dto/login-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserLoggedInEvent } from '../../infrastructures/events/user-logged-in.event';
 
+/**
+ * Interface untuk metadata login
+ */
+interface LoginMetadata {
+  ipAddress?: string;
+  userAgent?: string;
+}
+
 @Injectable()
 export class LoginService {
   private readonly logger = new Logger(LoginService.name);
@@ -29,7 +37,7 @@ export class LoginService {
    */
   async execute(
     loginDto: LoginDto,
-    metadata?: { ipAddress?: string; userAgent?: string },
+    metadata?: LoginMetadata,
   ): Promise<LoginResponseDto> {
     return this.timingDefense.executeWithProtection(async () => {
       const { username, password } = loginDto;
@@ -44,9 +52,7 @@ export class LoginService {
       }
 
       // 2. Find user
-      const user = await this.usersService.findByUsernameOrEmail(
-        loginDto.username,
-      );
+      const user = await this.usersService.findByUsernameOrEmail(username);
 
       // 3. Verify password (always compare even if user not found)
       const passwordToCheck = user?.password || null;
