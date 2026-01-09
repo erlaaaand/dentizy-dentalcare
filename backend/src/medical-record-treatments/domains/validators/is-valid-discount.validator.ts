@@ -7,10 +7,16 @@ import {
   ValidationArguments,
 } from 'class-validator';
 
+// 1. Definisikan interface untuk objek yang memiliki harga dan jumlah
+interface ItemWithPriceAndQuantity {
+  jumlah?: number;
+  hargaSatuan?: number;
+}
+
 @ValidatorConstraint({ name: 'isValidDiscount', async: false })
 export class IsValidDiscountConstraint implements ValidatorConstraintInterface {
   validate(diskon: number, args: ValidationArguments): boolean {
-    const object = args.object as any;
+    const object = args.object as ItemWithPriceAndQuantity;
     if (diskon === undefined || diskon === null) return true;
 
     if (diskon < 0) return false;
