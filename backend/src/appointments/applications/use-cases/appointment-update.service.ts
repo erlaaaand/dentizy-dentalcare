@@ -45,51 +45,22 @@ export class AppointmentUpdateService {
           );
           this.validator.validateAppointmentExists(appointment, id);
 
+          // TypeScript now knows appointment is not null
+          const validAppointment = appointment!;
+
           // 2. VALIDASI: Status untuk update
-          this.validator.validateStatusForUpdate(appointment!);
+          this.validator.validateStatusForUpdate(validAppointment);
 
           // 3. VALIDASI WAKTU (jika waktu diupdate)
           const isTimeUpdated = this.domainService.isTimeUpdated(dto);
 
           if (isTimeUpdated) {
-            const tanggalJanji = dto.tanggal_janji
-              ? new Date(dto.tanggal_janji)
-              : appointment!.tanggal_janji;
-
-            const jamJanji = dto.jam_janji || appointment!.jam_janji;
-
-            // Validasi tanggal & jam kerja
-            if (dto.tanggal_janji) {
-              this.timeValidator.validateDateNotInPast(tanggalJanji);
-            }
-            if (dto.jam_janji) {
-              this.timeValidator.validateWorkingHours(jamJanji);
-            }
-
-            // Validasi conflict (exclude appointment yang sedang diupdate)
-            const appointmentDate = new Date(tanggalJanji);
-            appointmentDate.setHours(0, 0, 0, 0);
-
-            const { bufferStart, bufferEnd } =
-              this.timeValidator.calculateBufferWindow(
-                appointmentDate,
-                jamJanji,
-              );
-
-            await this.conflictValidator.validateNoConflictForUpdate(
-              qr,
-              id,
-              appointment!.doctor_id,
-              appointmentDate,
-              jamJanji,
-              bufferStart,
-              bufferEnd,
-            );
+            await this.validateTimeUpdate(qr, id, validAppointment, dto);
           }
 
           // 4. UPDATE APPOINTMENT
           const updatedAppointment = this.domainService.updateAppointmentEntity(
-            appointment!,
+            validAppointment,
             dto,
           );
 
@@ -113,8 +84,54 @@ export class AppointmentUpdateService {
 
       return appointment;
     } catch (error) {
-      this.logger.error(`❌ Error updating appointment ID ${id}:`, error.stack);
+      this.logger.error(
+        `❌ Error updating appointment ID ${id}:`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
+  }
+
+  /**
+   * Validate time update dengan conflict detection
+   */
+  private async validateTimeUpdate(
+    queryRunner: any,
+    appointmentId: number,
+    appointment: Appointment,
+    dto: UpdateAppointmentDto,
+  ): Promise<void> {
+    const tanggalJanji = dto.tanggal_janji
+      ? new Date(dto.tanggal_janji)
+      : appointment.tanggal_janji;
+
+    const jamJanji = dto.jam_janji || appointment.jam_janji;
+
+    // Validasi tanggal & jam kerja
+    if (dto.tanggal_janji) {
+      this.timeValidator.validateDateNotInPast(tanggalJanji);
+    }
+    if (dto.jam_janji) {
+      this.timeValidator.validateWorkingHours(jamJanji);
+    }
+
+    // Validasi conflict (exclude appointment yang sedang diupdate)
+    const appointmentDate = new Date(tanggalJanji);
+    appointmentDate.setHours(0, 0, 0, 0);
+
+    const { bufferStart, bufferEnd } = this.timeValidator.calculateBufferWindow(
+      appointmentDate,
+      jamJanji,
+    );
+
+    await this.conflictValidator.validateNoConflictForUpdate(
+      queryRunner,
+      appointmentId,
+      appointment.doctor_id,
+      appointmentDate,
+      jamJanji,
+      bufferStart,
+      bufferEnd,
+    );
   }
 }

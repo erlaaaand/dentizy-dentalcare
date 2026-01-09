@@ -28,14 +28,20 @@ export class AppointmentFindService {
       // 2. VALIDASI: Appointment exists
       this.validator.validateAppointmentExists(appointment, id);
 
+      // TypeScript now knows appointment is not null
+      const validAppointment = appointment!;
+
       // 3. VALIDASI: Authorization (dokter hanya bisa lihat milik sendiri)
-      this.validator.validateViewAuthorization(appointment!, user);
+      this.validator.validateViewAuthorization(validAppointment, user);
 
       this.logger.debug(`📋 Found appointment #${id}`);
 
-      return appointment!;
+      return validAppointment;
     } catch (error) {
-      this.logger.error(`❌ Error finding appointment ID ${id}:`, error.stack);
+      this.logger.error(
+        `❌ Error finding appointment ID ${id}:`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

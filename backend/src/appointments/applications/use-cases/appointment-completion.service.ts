@@ -31,19 +31,21 @@ export class AppointmentCompletionService {
       const appointment = await this.repository.findById(id);
       this.validator.validateAppointmentExists(appointment, id);
 
+      // TypeScript now knows appointment is not null
+      const validAppointment = appointment!;
+
       // 2. VALIDASI: Authorization
-      this.validator.validateViewAuthorization(appointment!, user);
+      this.validator.validateViewAuthorization(validAppointment, user);
 
       // 3. VALIDASI: Status harus DIJADWALKAN
-      this.validator.validateStatusForCompletion(appointment!);
+      this.validator.validateStatusForCompletion(validAppointment);
 
       // 4. VALIDASI: Authorization untuk completion
-      this.validator.validateCompletionAuthorization(appointment!, user);
+      this.validator.validateCompletionAuthorization(validAppointment, user);
 
       // 5. UPDATE STATUS
-      const updatedAppointment = this.domainService.completeAppointment(
-        appointment!,
-      );
+      const updatedAppointment =
+        this.domainService.completeAppointment(validAppointment);
       const savedAppointment = await this.repository.save(updatedAppointment);
 
       // 6. EMIT EVENT
@@ -58,7 +60,7 @@ export class AppointmentCompletionService {
     } catch (error) {
       this.logger.error(
         `❌ Error completing appointment ID ${id}:`,
-        error.stack,
+        error instanceof Error ? error.stack : String(error),
       );
       throw error;
     }

@@ -73,7 +73,7 @@ export class AppointmentCancellationService {
     } catch (error) {
       this.logger.error(
         `❌ Error cancelling appointment ID ${id}:`,
-        error.stack,
+        error instanceof Error ? error.stack : String(error),
       );
       throw error;
     }

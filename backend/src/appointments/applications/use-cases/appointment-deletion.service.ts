@@ -29,11 +29,14 @@ export class AppointmentDeletionService {
       const appointment = await this.repository.findById(id);
       this.validator.validateAppointmentExists(appointment, id);
 
+      // TypeScript now knows appointment is not null
+      const validAppointment = appointment!;
+
       // 2. VALIDASI: Tidak boleh delete jika sudah ada medical record
-      this.validator.validateForDeletion(appointment!);
+      this.validator.validateForDeletion(validAppointment);
 
       // 3. DELETE APPOINTMENT
-      await this.repository.remove(appointment!);
+      await this.repository.remove(validAppointment);
 
       // 4. EMIT EVENT
       this.eventEmitter.emit(
@@ -41,9 +44,12 @@ export class AppointmentDeletionService {
         new AppointmentDeletedEvent(id, user.id),
       );
 
-      this.logger.log(`🗑️ Appointment #${id} deleted`);
+      this.logger.log(`🗑️ Appointment #${id} deleted by user #${user.id}`);
     } catch (error) {
-      this.logger.error(`❌ Error deleting appointment ID ${id}:`, error.stack);
+      this.logger.error(
+        `❌ Error deleting appointment ID ${id}:`,
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }

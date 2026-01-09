@@ -65,7 +65,7 @@ export class AppointmentCreationService {
               dto.jam_janji,
             );
 
-          // 5. [UPDATE] VALIDASI KONFLIK DUA ARAH
+          // 5. VALIDASI KONFLIK DUA ARAH
 
           // A. Cek Jadwal Dokter (Dokter tidak boleh sibuk)
           await this.conflictValidator.validateDoctorNoConflict(
@@ -87,7 +87,7 @@ export class AppointmentCreationService {
             bufferEnd,
           );
 
-          // 6. Create Entity
+          // 6. Create Entity (patient and doctor are validated to be non-null)
           const appointmentData = this.domainService.createAppointmentEntity(
             dto,
             patient!,
@@ -111,7 +111,10 @@ export class AppointmentCreationService {
       this.logger.log(`✅ Appointment created: #${appointment.id}`);
       return appointment;
     } catch (error) {
-      this.logger.error('❌ Error creating appointment:', error.stack);
+      this.logger.error(
+        '❌ Error creating appointment:',
+        error instanceof Error ? error.stack : String(error),
+      );
       throw error;
     }
   }
