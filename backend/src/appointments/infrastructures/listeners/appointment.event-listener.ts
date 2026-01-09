@@ -24,7 +24,9 @@ export class AppointmentEventListener {
    * Schedule reminder notification
    */
   @OnEvent('appointment.created')
-  async handleAppointmentCreated(event: AppointmentCreatedEvent) {
+  async handleAppointmentCreated(
+    event: AppointmentCreatedEvent,
+  ): Promise<void> {
     this.logger.log(`📅 Appointment created: #${event.appointment.id}`);
 
     if (event.shouldScheduleReminder) {
@@ -37,8 +39,9 @@ export class AppointmentEventListener {
         );
       } catch (error) {
         this.logger.error(
-          `❌ Failed to schedule reminder: ${error.message}`,
-          error.stack,
+          `❌ Failed to schedule reminder for appointment #${event.appointment.id}:`,
+          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error.stack : undefined,
         );
       }
     }
@@ -49,9 +52,13 @@ export class AppointmentEventListener {
    * Cancel reminder notifications
    */
   @OnEvent('appointment.cancelled')
-  async handleAppointmentCancelled(event: AppointmentCancelledEvent) {
+  async handleAppointmentCancelled(
+    event: AppointmentCancelledEvent,
+  ): Promise<void> {
     this.logger.log(
-      `❌ Appointment cancelled: #${event.appointment.id} by user #${event.cancelledBy}`,
+      `❌ Appointment cancelled: #${event.appointment.id} by user #${event.cancelledBy}${
+        event.reason ? ` (reason: ${event.reason})` : ''
+      }`,
     );
 
     try {
@@ -61,8 +68,9 @@ export class AppointmentEventListener {
       );
     } catch (error) {
       this.logger.error(
-        `❌ Failed to cancel reminders: ${error.message}`,
-        error.stack,
+        `❌ Failed to cancel reminders for appointment #${event.appointment.id}:`,
+        error instanceof Error ? error.message : String(error),
+        error instanceof Error ? error.stack : undefined,
       );
     }
   }
@@ -72,14 +80,18 @@ export class AppointmentEventListener {
    * Log completion, dapat diperluas untuk analytics
    */
   @OnEvent('appointment.completed')
-  async handleAppointmentCompleted(event: AppointmentCompletedEvent) {
+  async handleAppointmentCompleted(
+    event: AppointmentCompletedEvent,
+  ): Promise<void> {
     this.logger.log(
       `✅ Appointment completed: #${event.appointment.id} by user #${event.completedBy}`,
     );
 
-    // Future: Send completion notification
-    // Future: Update statistics
-    // Future: Trigger medical record creation reminder
+    // Future enhancements:
+    // - Send completion notification to patient
+    // - Update statistics/analytics
+    // - Trigger medical record creation reminder
+    // - Update doctor performance metrics
   }
 
   /**
@@ -87,8 +99,14 @@ export class AppointmentEventListener {
    * Reschedule reminder jika waktu berubah
    */
   @OnEvent('appointment.updated')
-  async handleAppointmentUpdated(event: AppointmentUpdatedEvent) {
-    this.logger.log(`🔄 Appointment updated: #${event.appointment.id}`);
+  async handleAppointmentUpdated(
+    event: AppointmentUpdatedEvent,
+  ): Promise<void> {
+    this.logger.log(
+      `🔄 Appointment updated: #${event.appointment.id}${
+        event.updatedBy ? ` by user #${event.updatedBy}` : ''
+      }`,
+    );
 
     if (event.isTimeUpdated) {
       try {
@@ -111,8 +129,9 @@ export class AppointmentEventListener {
         }
       } catch (error) {
         this.logger.error(
-          `❌ Failed to reschedule reminder: ${error.message}`,
-          error.stack,
+          `❌ Failed to reschedule reminder for appointment #${event.appointment.id}:`,
+          error instanceof Error ? error.message : String(error),
+          error instanceof Error ? error.stack : undefined,
         );
       }
     }
@@ -123,7 +142,9 @@ export class AppointmentEventListener {
    * Cancel reminders and cleanup
    */
   @OnEvent('appointment.deleted')
-  async handleAppointmentDeleted(event: AppointmentDeletedEvent) {
+  async handleAppointmentDeleted(
+    event: AppointmentDeletedEvent,
+  ): Promise<void> {
     this.logger.log(
       `🗑️ Appointment deleted: #${event.appointmentId} by user #${event.deletedBy}`,
     );
@@ -135,8 +156,9 @@ export class AppointmentEventListener {
       );
     } catch (error) {
       this.logger.error(
-        `❌ Failed to cancel reminders: ${error.message}`,
-        error.stack,
+        `❌ Failed to cancel reminders for deleted appointment #${event.appointmentId}:`,
+        error instanceof Error ? error.message : String(error),
+        error instanceof Error ? error.stack : undefined,
       );
     }
   }
