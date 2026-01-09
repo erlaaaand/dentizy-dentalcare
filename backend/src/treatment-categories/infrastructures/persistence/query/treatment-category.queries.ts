@@ -88,7 +88,9 @@ export class TreatmentCategoryQueries {
     return parseInt(result?.count || '0', 10);
   }
 
-  async getCategoriesWithTreatmentCount(): Promise<CategoryWithTreatmentCountDto[]> {
+  async getCategoriesWithTreatmentCount(): Promise<
+    CategoryWithTreatmentCountDto[]
+  > {
     return await this.repository
       .createQueryBuilder('category')
       .leftJoin(
