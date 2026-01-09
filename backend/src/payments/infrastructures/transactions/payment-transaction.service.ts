@@ -1,7 +1,20 @@
-// backend/src/payments/infrastructures/persistence/transactions/payment-transaction.service.ts
 import { Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
-import { Payment } from '../../domains/entities/payments.entity';
+import { Payment, StatusPembayaran } from '../../domains/entities/payments.entity';
+
+interface RelatedUpdates {
+  medicalRecordUpdate?: {
+    id: number;
+    status?: string;
+    [key: string]: unknown;
+  };
+}
+
+interface RefundData {
+  refundAmount: number;
+  refundMethod: string;
+  refundNotes?: string;
+}
 
 @Injectable()
 export class PaymentTransactionService {
@@ -28,9 +41,7 @@ export class PaymentTransactionService {
 
   async createPaymentWithRelatedUpdates(
     paymentData: Partial<Payment>,
-    relatedUpdates: {
-      medicalRecordUpdate?: any;
-    },
+    relatedUpdates: RelatedUpdates,
   ): Promise<Payment> {
     return await this.executeInTransaction(async (queryRunner) => {
       const paymentRepo = queryRunner.manager.getRepository(Payment);
@@ -42,6 +53,11 @@ export class PaymentTransactionService {
       // Update medical record if needed
       if (relatedUpdates.medicalRecordUpdate) {
         // TODO: Update medical record status
+        // const medicalRecordRepo = queryRunner.manager.getRepository(MedicalRecord);
+        // await medicalRecordRepo.update(
+        //   relatedUpdates.medicalRecordUpdate.id,
+        //   relatedUpdates.medicalRecordUpdate
+        // );
       }
 
       return savedPayment;
@@ -50,11 +66,7 @@ export class PaymentTransactionService {
 
   async cancelPaymentWithRefund(
     paymentId: number,
-    refundData?: {
-      refundAmount: number;
-      refundMethod: string;
-      refundNotes?: string;
-    },
+    refundData?: RefundData,
   ): Promise<Payment> {
     return await this.executeInTransaction(async (queryRunner) => {
       const paymentRepo = queryRunner.manager.getRepository(Payment);
@@ -66,16 +78,25 @@ export class PaymentTransactionService {
       }
 
       // Update payment status
-      payment.statusPembayaran = 'dibatalkan' as any;
+      payment.statusPembayaran = StatusPembayaran.DIBATALKAN;
       const updatedPayment = await paymentRepo.save(payment);
 
       // Process refund if needed
       if (refundData) {
         // TODO: Create refund record
+        // const refundRepo = queryRunner.manager.getRepository(Refund);
+        // await refundRepo.save({
+        //   paymentId: payment.id,
+        //   amount: refundData.refundAmount,
+        //   method: refundData.refundMethod,
+        //   notes: refundData.refundNotes,
+        // });
       }
 
       // Revert medical record status
       // TODO: Update medical record
+      // const medicalRecordRepo = queryRunner.manager.getRepository(MedicalRecord);
+      // await medicalRecordRepo.update(payment.medicalRecordId, { status: 'unpaid' });
 
       return updatedPayment;
     });
@@ -83,7 +104,7 @@ export class PaymentTransactionService {
 
   async batchUpdatePaymentStatus(
     paymentIds: number[],
-    newStatus: string,
+    newStatus: StatusPembayaran,
   ): Promise<Payment[]> {
     return await this.executeInTransaction(async (queryRunner) => {
       const paymentRepo = queryRunner.manager.getRepository(Payment);
@@ -91,7 +112,7 @@ export class PaymentTransactionService {
       const payments = await paymentRepo.findByIds(paymentIds);
 
       payments.forEach((payment) => {
-        payment.statusPembayaran = newStatus as any;
+        payment.statusPembayaran = newStatus;
       });
 
       return await paymentRepo.save(payments);
