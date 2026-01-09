@@ -129,10 +129,7 @@ export class TreatmentRepository {
     });
   }
 
-  async update(
-    id: number,
-    dto: UpdateTreatmentDto,
-  ): Promise<Treatment | null> {
+  async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment | null> {
     await this.repository.update(id, dto);
     return await this.findOne(id);
   }

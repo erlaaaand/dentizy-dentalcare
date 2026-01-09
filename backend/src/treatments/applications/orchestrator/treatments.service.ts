@@ -78,8 +78,7 @@ export class TreatmentsService {
   }
 
   async findByKode(kodePerawatan: string): Promise<TreatmentResponseDto> {
-    const treatment =
-      await this.treatmentRepository.findByKode(kodePerawatan);
+    const treatment = await this.treatmentRepository.findByKode(kodePerawatan);
 
     if (!treatment) {
       throw new NotFoundException(

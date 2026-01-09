@@ -211,7 +211,9 @@ export class TreatmentsController {
     status: HttpStatus.CONFLICT,
     description: 'Treatment cannot be deleted',
   })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<MessageResponse> {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<MessageResponse> {
     await this.deleteTreatmentUseCase.execute(id);
     return { message: 'Perawatan berhasil dihapus' };
   }
