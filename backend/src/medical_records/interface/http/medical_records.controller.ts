@@ -1,3 +1,4 @@
+// interface/http/medical_records.controller.ts
 import {
   Controller,
   Get,
@@ -14,7 +15,6 @@ import {
   HttpStatus,
   UseInterceptors,
   ClassSerializerInterceptor,
-  // ClassSerializerInterceptor DIHAPUS
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,7 +30,6 @@ import { MedicalRecordsService } from '../../applications/orchestrator/medical_r
 import { CreateMedicalRecordDto } from '../../applications/dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from '../../applications/dto/update-medical-record.dto';
 import { SearchMedicalRecordDto } from '../../applications/dto/search-medical-record.dto';
-// DTO Respons yang Anda berikan
 import { MedicalRecordResponseDto } from '../../applications/dto/medical-record-response.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
@@ -41,6 +40,17 @@ import { User } from '../../../users/domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
+interface MessageResponse {
+  message: string;
+  count?: number;
+}
+
+interface DoctorStatsResponse {
+  statusCode: number;
+  message: string;
+  data: unknown[];
+}
+
 @ApiTags('Medical Records')
 @ApiBearerAuth('access-token')
 @Controller('medical-records')
@@ -50,7 +60,6 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 @ApiForbiddenResponse({
   description: 'Role user tidak memiliki akses ke endpoint ini',
 })
-// @UseInterceptors(ClassSerializerInterceptor) // <-- BARIS INI DIHAPUS
 export class MedicalRecordsController {
   constructor(private readonly medicalRecordsService: MedicalRecordsService) {}
 
@@ -64,7 +73,7 @@ export class MedicalRecordsController {
   @ApiResponse({
     status: 201,
     description: 'Rekam medis berhasil dibuat',
-    type: MedicalRecordResponseDto, // Sesuai DTO
+    type: MedicalRecordResponseDto,
   })
   @ApiResponse({ status: 400, description: 'Data tidak valid' })
   async create(
@@ -84,12 +93,9 @@ export class MedicalRecordsController {
   @ApiResponse({
     status: 200,
     description: 'Daftar rekam medis',
-    // Tipe respons paginasi biasanya objek, bukan array langsung
     schema: {
       example: {
-        data: [
-          /* ... daftar MedicalRecordResponseDto ... */
-        ],
+        data: [],
         total: 100,
         page: 1,
         limit: 10,
@@ -111,11 +117,10 @@ export class MedicalRecordsController {
     summary: 'Pencarian rekam medis',
     description: 'Pencarian multi-field: diagnosa, terapi, resep, dll.',
   })
-  // ... ApiQuery lainnya ...
   @ApiResponse({
     status: 200,
     description: 'Hasil pencarian rekam medis',
-    type: [MedicalRecordResponseDto], // Sesuai DTO
+    type: [MedicalRecordResponseDto],
   })
   async search(
     @Query(ValidationPipe) filters: SearchMedicalRecordDto,
@@ -133,7 +138,7 @@ export class MedicalRecordsController {
   @ApiResponse({
     status: 200,
     description: 'Detail rekam medis',
-    type: MedicalRecordResponseDto, // Sesuai DTO
+    type: MedicalRecordResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async findByAppointmentId(
@@ -154,7 +159,7 @@ export class MedicalRecordsController {
   async getDoctorStats(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ) {
+  ): Promise<DoctorStatsResponse> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
 
@@ -178,7 +183,7 @@ export class MedicalRecordsController {
   @ApiResponse({
     status: 200,
     description: 'Detail rekam medis',
-    type: MedicalRecordResponseDto, // Sesuai DTO
+    type: MedicalRecordResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async findOne(
@@ -195,7 +200,7 @@ export class MedicalRecordsController {
   @ApiResponse({
     status: 200,
     description: 'Rekam medis berhasil diupdate',
-    type: MedicalRecordResponseDto, // Sesuai DTO
+    type: MedicalRecordResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   @ApiResponse({ status: 400, description: 'Data tidak valid' })
@@ -206,8 +211,6 @@ export class MedicalRecordsController {
   ): Promise<MedicalRecordResponseDto> {
     return await this.medicalRecordsService.update(id, updateDto, user);
   }
-
-  // ... endpoint delete, restore, dan hardDelete tetap sama ...
 
   @Delete(':id')
   @Roles(UserRole.KEPALA_KLINIK)
@@ -228,7 +231,7 @@ export class MedicalRecordsController {
   async remove(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
-  ): Promise<{ message: string }> {
+  ): Promise<MessageResponse> {
     await this.medicalRecordsService.remove(id, user);
     return { message: 'Rekam medis berhasil dihapus' };
   }
@@ -252,7 +255,7 @@ export class MedicalRecordsController {
   async restore(
     @Param('id', ParseIntPipe) id: number,
     @GetUser() user: User,
-  ): Promise<{ message: string }> {
+  ): Promise<MessageResponse> {
     await this.medicalRecordsService.restore(id, user);
     return { message: 'Rekam medis berhasil dipulihkan' };
   }
