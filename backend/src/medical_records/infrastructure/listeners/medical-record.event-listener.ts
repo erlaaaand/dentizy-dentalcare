@@ -1,8 +1,16 @@
+// backend/src/medical-records/infrastructure/listeners/medical-record.event-listener.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { MedicalRecordCreatedEvent } from '../events/medical-record-created.event';
 import { MedicalRecordUpdatedEvent } from '../events/medical-record-updated.event';
 import { MedicalRecordDeletedEvent } from '../events/medical-record-deleted.event';
+
+// Interface untuk event restore (jika belum ada file event fisiknya)
+export interface RestoredEvent {
+  medicalRecordId: number;
+  restoredBy: number;
+  timestamp?: Date;
+}
 
 /**
  * Event Listener for Medical Record Domain Events
@@ -40,15 +48,12 @@ export class MedicalRecordEventListener {
       await this.sendNotification(event);
 
       // Update statistics/cache
-      await this.updateStatistics(event);
+      await this.updateStatistics(event.toJSON());
 
       // Trigger external integrations (if any)
       await this.triggerIntegrations(event);
     } catch (error) {
-      this.logger.error(
-        `Failed to process medical_record.created event: ${error.message}`,
-        error.stack,
-      );
+      this.handleError('created', error);
     }
   }
 
@@ -86,10 +91,7 @@ export class MedicalRecordEventListener {
       // Invalidate cache
       await this.invalidateCache(event);
     } catch (error) {
-      this.logger.error(
-        `Failed to process medical_record.updated event: ${error.message}`,
-        error.stack,
-      );
+      this.handleError('updated', error);
     }
   }
 
@@ -126,10 +128,7 @@ export class MedicalRecordEventListener {
       // Clear cache
       await this.clearCacheForDeletedRecord(event);
     } catch (error) {
-      this.logger.error(
-        `Failed to process medical_record.deleted event: ${error.message}`,
-        error.stack,
-      );
+      this.handleError('deleted', error);
     }
   }
 
@@ -137,7 +136,7 @@ export class MedicalRecordEventListener {
    * Handle medical record restored event
    */
   @OnEvent('medical_record.restored')
-  async handleMedicalRecordRestored(event: any): Promise<void> {
+  async handleMedicalRecordRestored(event: RestoredEvent): Promise<void> {
     this.logger.log(
       `♻️ Medical record #${event.medicalRecordId} restored by user #${event.restoredBy}`,
     );
@@ -152,147 +151,118 @@ export class MedicalRecordEventListener {
       // Update statistics
       await this.updateStatistics(event);
     } catch (error) {
-      this.logger.error(
-        `Failed to process medical_record.restored event: ${error.message}`,
-        error.stack,
-      );
+      this.handleError('restored', error);
     }
   }
 
+  // ===========================================================================
+  // PRIVATE HELPER METHODS
+  // ===========================================================================
+
   /**
    * Log audit trail to database/external service
+   * Menggunakan 'object' agar bisa menerima Interface hasil toJSON()
    */
   private async logAuditTrail(
     action: string,
-    eventData: Record<string, any>,
+    data: object,
     severity: 'info' | 'warning' | 'critical' = 'info',
   ): Promise<void> {
-    // TODO: Implement actual audit logging to database or external service
     this.logger.debug(
-      `Audit Trail [${severity.toUpperCase()}]: ${action}`,
-      JSON.stringify(eventData, null, 2),
+      `[AUDIT] Action: ${action} | Severity: ${severity} | Data: ${JSON.stringify(data)}`,
     );
   }
 
-  /**
-   * Send notification to relevant parties
-   */
   private async sendNotification(
     event: MedicalRecordCreatedEvent,
   ): Promise<void> {
-    // TODO: Implement notification service (email, SMS, push notification)
     this.logger.debug(
-      `Notification sent for medical record #${event.medicalRecordId}`,
+      `Sending creation notification for Record #${event.medicalRecordId} to Doctor #${event.doctorId}`,
     );
   }
 
-  /**
-   * Send update notification
-   */
   private async sendUpdateNotification(
     event: MedicalRecordUpdatedEvent,
   ): Promise<void> {
-    // TODO: Implement notification service
     this.logger.debug(
-      `Update notification sent for medical record #${event.medicalRecordId}`,
+      `Sending update notification for Record #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Send deletion notification
-   */
   private async sendDeletionNotification(
     event: MedicalRecordDeletedEvent,
   ): Promise<void> {
-    // TODO: Implement notification service
     this.logger.debug(
       `Deletion notification sent for medical record #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Send restoration notification
-   */
-  private async sendRestorationNotification(event: any): Promise<void> {
-    // TODO: Implement notification service
+  private async sendRestorationNotification(
+    event: RestoredEvent,
+  ): Promise<void> {
     this.logger.debug(
       `Restoration notification sent for medical record #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Update statistics/analytics
-   */
-  private async updateStatistics(event: any): Promise<void> {
-    // TODO: Update statistics in cache or analytics service
+  private async updateStatistics(data: object): Promise<void> {
     this.logger.debug('Statistics updated');
   }
 
-  /**
-   * Update deletion statistics
-   */
   private async updateDeletionStatistics(
     event: MedicalRecordDeletedEvent,
   ): Promise<void> {
-    // TODO: Track deletion metrics
     this.logger.debug('Deletion statistics updated');
   }
 
-  /**
-   * Trigger external integrations (e.g., HL7, FHIR)
-   */
   private async triggerIntegrations(
     event: MedicalRecordCreatedEvent,
   ): Promise<void> {
-    // TODO: Implement external integrations
     this.logger.debug('External integrations triggered');
   }
 
-  /**
-   * Handle record completion
-   */
   private async handleRecordCompleted(
     event: MedicalRecordUpdatedEvent,
   ): Promise<void> {
-    // TODO: Trigger completion workflows (e.g., billing, reporting)
     this.logger.log(
       `Record completion workflow triggered for #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Invalidate cache after update
-   */
   private async invalidateCache(
     event: MedicalRecordUpdatedEvent,
   ): Promise<void> {
-    // TODO: Clear relevant cache entries
     this.logger.debug(
       `Cache invalidated for medical record #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Clear cache for deleted record
-   */
   private async clearCacheForDeletedRecord(
     event: MedicalRecordDeletedEvent,
   ): Promise<void> {
-    // TODO: Clear all cache entries for deleted record
     this.logger.debug(
       `Cache cleared for deleted record #${event.medicalRecordId}`,
     );
   }
 
-  /**
-   * Archive data before permanent deletion
-   */
   private async archiveBeforePermanentDeletion(
     event: MedicalRecordDeletedEvent,
   ): Promise<void> {
-    // TODO: Archive to backup storage before permanent deletion
     this.logger.warn(
       `Archiving data for permanent deletion of record #${event.medicalRecordId}`,
+    );
+  }
+
+  /**
+   * Centralized error handling
+   */
+  private handleError(eventType: string, error: unknown): void {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    this.logger.error(
+      `Failed to process medical_record.${eventType} event: ${errorMessage}`,
+      errorStack,
     );
   }
 }

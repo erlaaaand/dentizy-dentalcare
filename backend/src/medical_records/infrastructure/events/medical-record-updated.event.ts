@@ -1,3 +1,48 @@
+// backend/src/medical-records/domains/events/medical-record-updated.event.ts
+
+/**
+ * Interface untuk struktur perubahan nilai (old vs new)
+ */
+export interface FieldChange {
+  old: string;
+  new: string;
+}
+
+/**
+ * Interface untuk menampung perubahan pada field spesifik
+ */
+export interface MedicalRecordChanges {
+  subjektif?: FieldChange;
+  objektif?: FieldChange;
+  assessment?: FieldChange;
+  plan?: FieldChange;
+}
+
+/**
+ * Interface untuk Metadata update
+ */
+export interface MedicalRecordUpdatedMetadata {
+  fieldsUpdated: string[];
+  isNowComplete: boolean;
+  wasComplete: boolean;
+}
+
+/**
+ * Interface untuk struktur JSON event saat diserialisasi
+ */
+export interface MedicalRecordUpdatedEventJson {
+  eventName: string;
+  eventVersion: string;
+  medicalRecordId: number;
+  appointmentId: number;
+  patientId: number;
+  doctorId: number;
+  updatedBy: number;
+  timestamp: string; // Serialized Date
+  changes?: MedicalRecordChanges;
+  metadata?: MedicalRecordUpdatedMetadata;
+}
+
 /**
  * Domain Event: Medical Record Updated
  * Triggered when a medical record is updated
@@ -10,17 +55,8 @@ export class MedicalRecordUpdatedEvent {
     public readonly doctorId: number,
     public readonly updatedBy: number,
     public readonly timestamp: Date = new Date(),
-    public readonly changes?: {
-      subjektif?: { old: string; new: string };
-      objektif?: { old: string; new: string };
-      assessment?: { old: string; new: string };
-      plan?: { old: string; new: string };
-    },
-    public readonly metadata?: {
-      fieldsUpdated: string[];
-      isNowComplete: boolean;
-      wasComplete: boolean;
-    },
+    public readonly changes?: MedicalRecordChanges,
+    public readonly metadata?: MedicalRecordUpdatedMetadata,
   ) {}
 
   /**
@@ -40,7 +76,7 @@ export class MedicalRecordUpdatedEvent {
   /**
    * Serialize event to JSON
    */
-  toJSON(): Record<string, any> {
+  toJSON(): MedicalRecordUpdatedEventJson {
     return {
       eventName: MedicalRecordUpdatedEvent.eventName,
       eventVersion: MedicalRecordUpdatedEvent.eventVersion,
@@ -57,8 +93,13 @@ export class MedicalRecordUpdatedEvent {
 
   /**
    * Create event from JSON
+   * Menggunakan 'unknown' untuk keamanan tipe data input
    */
-  static fromJSON(json: Record<string, any>): MedicalRecordUpdatedEvent {
+  static fromJSON(json: unknown): MedicalRecordUpdatedEvent {
+    if (!this.isValidJson(json)) {
+      throw new Error('Invalid JSON structure for MedicalRecordUpdatedEvent');
+    }
+
     return new MedicalRecordUpdatedEvent(
       json.medicalRecordId,
       json.appointmentId,
@@ -69,6 +110,55 @@ export class MedicalRecordUpdatedEvent {
       json.changes,
       json.metadata,
     );
+  }
+
+  /**
+   * Type Guard untuk memvalidasi struktur JSON secara runtime
+   */
+  private static isValidJson(
+    data: unknown,
+  ): data is MedicalRecordUpdatedEventJson {
+    if (typeof data !== 'object' || data === null) {
+      return false;
+    }
+
+    const record = data as Record<string, unknown>;
+
+    // Validasi field wajib
+    const hasRequiredFields =
+      typeof record.medicalRecordId === 'number' &&
+      typeof record.appointmentId === 'number' &&
+      typeof record.patientId === 'number' &&
+      typeof record.doctorId === 'number' &&
+      typeof record.updatedBy === 'number' &&
+      typeof record.timestamp === 'string';
+
+    if (!hasRequiredFields) return false;
+
+    // Validasi field opsional: changes
+    if (record.changes !== undefined) {
+      if (typeof record.changes !== 'object' || record.changes === null) {
+        return false;
+      }
+      // Kita bisa menambahkan validasi lebih dalam untuk struktur changes jika diperlukan
+    }
+
+    // Validasi field opsional: metadata
+    if (record.metadata !== undefined) {
+      if (typeof record.metadata !== 'object' || record.metadata === null) {
+        return false;
+      }
+      // Validasi struktur metadata jika ada
+      const meta = record.metadata as Record<string, unknown>;
+      if (
+        meta.fieldsUpdated !== undefined &&
+        !Array.isArray(meta.fieldsUpdated)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   /**

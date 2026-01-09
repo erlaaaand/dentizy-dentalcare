@@ -1,3 +1,31 @@
+// backend/src/medical-records/domains/events/medical-record-created.event.ts
+
+/**
+ * Interface untuk Metadata
+ */
+export interface MedicalRecordMetadata {
+  hasSubjektif: boolean;
+  hasObjektif: boolean;
+  hasAssessment: boolean;
+  hasPlan: boolean;
+  isComplete: boolean;
+}
+
+/**
+ * Interface untuk struktur JSON event saat diserialisasi.
+ */
+export interface MedicalRecordCreatedEventJson {
+  eventName: string;
+  eventVersion: string;
+  medicalRecordId: number;
+  appointmentId: number;
+  patientId: number;
+  doctorId: number;
+  createdBy: number;
+  timestamp: string; // Serialized Date is string
+  metadata?: MedicalRecordMetadata;
+}
+
 /**
  * Domain Event: Medical Record Created
  * Triggered when a new medical record is created
@@ -10,13 +38,7 @@ export class MedicalRecordCreatedEvent {
     public readonly doctorId: number,
     public readonly createdBy: number,
     public readonly timestamp: Date = new Date(),
-    public readonly metadata?: {
-      hasSubjektif: boolean;
-      hasObjektif: boolean;
-      hasAssessment: boolean;
-      hasPlan: boolean;
-      isComplete: boolean;
-    },
+    public readonly metadata?: MedicalRecordMetadata,
   ) {}
 
   /**
@@ -35,8 +57,9 @@ export class MedicalRecordCreatedEvent {
 
   /**
    * Serialize event to JSON
+   * Mengembalikan interface spesifik, bukan Record<string, any>
    */
-  toJSON(): Record<string, any> {
+  toJSON(): MedicalRecordCreatedEventJson {
     return {
       eventName: MedicalRecordCreatedEvent.eventName,
       eventVersion: MedicalRecordCreatedEvent.eventVersion,
@@ -52,8 +75,14 @@ export class MedicalRecordCreatedEvent {
 
   /**
    * Create event from JSON
+   * Menggunakan 'unknown' untuk input yang tidak dipercaya,
+   * lalu divalidasi dengan Type Guard.
    */
-  static fromJSON(json: Record<string, any>): MedicalRecordCreatedEvent {
+  static fromJSON(json: unknown): MedicalRecordCreatedEvent {
+    if (!this.isValidJson(json)) {
+      throw new Error('Invalid JSON structure for MedicalRecordCreatedEvent');
+    }
+
     return new MedicalRecordCreatedEvent(
       json.medicalRecordId,
       json.appointmentId,
@@ -62,6 +91,31 @@ export class MedicalRecordCreatedEvent {
       json.createdBy,
       new Date(json.timestamp),
       json.metadata,
+    );
+  }
+
+  /**
+   * Type Guard untuk memvalidasi runtime JSON
+   * Memastikan data yang masuk sesuai dengan kontrak MedicalRecordCreatedEventJson
+   */
+  private static isValidJson(
+    data: unknown,
+  ): data is MedicalRecordCreatedEventJson {
+    if (typeof data !== 'object' || data === null) {
+      return false;
+    }
+
+    const record = data as Record<string, unknown>;
+
+    return (
+      typeof record.medicalRecordId === 'number' &&
+      typeof record.appointmentId === 'number' &&
+      typeof record.patientId === 'number' &&
+      typeof record.doctorId === 'number' &&
+      typeof record.createdBy === 'number' &&
+      typeof record.timestamp === 'string' &&
+      // Metadata opsional, tapi jika ada harus berupa object
+      (record.metadata === undefined || typeof record.metadata === 'object')
     );
   }
 

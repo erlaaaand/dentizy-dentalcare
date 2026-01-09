@@ -1,3 +1,36 @@
+// backend/src/medical-records/domains/events/medical-record-deleted.event.ts
+
+/**
+ * Interface untuk Metadata penghapusan
+ */
+export interface MedicalRecordDeletedMetadata {
+  recordAge: number; // days since creation
+  wasComplete: boolean;
+  appointmentStatus: string;
+}
+
+/**
+ * Tipe literal untuk jenis penghapusan
+ */
+export type DeletionType = 'soft' | 'hard';
+
+/**
+ * Interface untuk struktur JSON event saat diserialisasi
+ */
+export interface MedicalRecordDeletedEventJson {
+  eventName: string;
+  eventVersion: string;
+  medicalRecordId: number;
+  appointmentId: number;
+  patientId: number;
+  doctorId: number;
+  deletedBy: number;
+  timestamp: string; // Serialized Date
+  deletionType: DeletionType;
+  reason?: string;
+  metadata?: MedicalRecordDeletedMetadata;
+}
+
 /**
  * Domain Event: Medical Record Deleted
  * Triggered when a medical record is soft-deleted or hard-deleted
@@ -10,13 +43,9 @@ export class MedicalRecordDeletedEvent {
     public readonly doctorId: number,
     public readonly deletedBy: number,
     public readonly timestamp: Date = new Date(),
-    public readonly deletionType: 'soft' | 'hard' = 'soft',
+    public readonly deletionType: DeletionType = 'soft',
     public readonly reason?: string,
-    public readonly metadata?: {
-      recordAge: number; // days since creation
-      wasComplete: boolean;
-      appointmentStatus: string;
-    },
+    public readonly metadata?: MedicalRecordDeletedMetadata,
   ) {}
 
   /**
@@ -35,8 +64,9 @@ export class MedicalRecordDeletedEvent {
 
   /**
    * Serialize event to JSON
+   * Menggunakan interface spesifik alih-alih Record<string, any>
    */
-  toJSON(): Record<string, any> {
+  toJSON(): MedicalRecordDeletedEventJson {
     return {
       eventName: MedicalRecordDeletedEvent.eventName,
       eventVersion: MedicalRecordDeletedEvent.eventVersion,
@@ -54,8 +84,13 @@ export class MedicalRecordDeletedEvent {
 
   /**
    * Create event from JSON
+   * Menerima input 'unknown' dan melakukan validasi ketat
    */
-  static fromJSON(json: Record<string, any>): MedicalRecordDeletedEvent {
+  static fromJSON(json: unknown): MedicalRecordDeletedEvent {
+    if (!this.isValidJson(json)) {
+      throw new Error('Invalid JSON structure for MedicalRecordDeletedEvent');
+    }
+
     return new MedicalRecordDeletedEvent(
       json.medicalRecordId,
       json.appointmentId,
@@ -67,6 +102,50 @@ export class MedicalRecordDeletedEvent {
       json.reason,
       json.metadata,
     );
+  }
+
+  /**
+   * Type Guard untuk memvalidasi struktur JSON secara runtime
+   */
+  private static isValidJson(
+    data: unknown,
+  ): data is MedicalRecordDeletedEventJson {
+    if (typeof data !== 'object' || data === null) {
+      return false;
+    }
+
+    const record = data as Record<string, unknown>;
+
+    // Validasi field wajib
+    const hasRequiredFields =
+      typeof record.medicalRecordId === 'number' &&
+      typeof record.appointmentId === 'number' &&
+      typeof record.patientId === 'number' &&
+      typeof record.doctorId === 'number' &&
+      typeof record.deletedBy === 'number' &&
+      typeof record.timestamp === 'string';
+
+    if (!hasRequiredFields) return false;
+
+    // Validasi DeletionType ('soft' atau 'hard')
+    const isValidType =
+      record.deletionType === 'soft' || record.deletionType === 'hard';
+    if (!isValidType) return false;
+
+    // Validasi field opsional: reason
+    if (record.reason !== undefined && typeof record.reason !== 'string') {
+      return false;
+    }
+
+    // Validasi field opsional: metadata
+    if (record.metadata !== undefined) {
+      if (typeof record.metadata !== 'object' || record.metadata === null) {
+        return false;
+      }
+      // Opsional: Bisa ditambahkan pengecekan properti metadata lebih detail di sini jika perlu
+    }
+
+    return true;
   }
 
   /**

@@ -1,5 +1,11 @@
+// infrastructure/transactions/transaction.manager.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, QueryRunner, EntityManager } from 'typeorm';
+
+interface DeadlockError extends Error {
+  code?: string;
+  errno?: number;
+}
 
 /**
  * Transaction Manager
@@ -37,9 +43,13 @@ export class TransactionManager {
     } catch (error) {
       await queryRunner.rollbackTransaction();
 
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+
       this.logger.error(
-        `Transaction ${txId} rolled back: ${error.message}`,
-        error.stack,
+        `Transaction ${txId} rolled back: ${errorMessage}`,
+        errorStack,
       );
 
       throw error;
@@ -96,8 +106,10 @@ export class TransactionManager {
       this.logger.debug(`Savepoint ${savepointName} completed`);
       return result;
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(
-        `Rolling back to savepoint ${savepointName}: ${error.message}`,
+        `Rolling back to savepoint ${savepointName}: ${errorMessage}`,
       );
       await queryRunner.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
       throw error;
@@ -137,7 +149,7 @@ export class TransactionManager {
 
         return await this.runInTransaction(operation, context);
       } catch (error) {
-        lastError = error;
+        lastError = error as Error;
 
         // Check if error is deadlock-related
         if (this.isDeadlockError(error) && attempt < maxRetries) {
@@ -185,7 +197,12 @@ export class TransactionManager {
   /**
    * Check if error is a deadlock error
    */
-  private isDeadlockError(error: any): boolean {
+  private isDeadlockError(error: unknown): boolean {
+    if (!(error instanceof Error)) {
+      return false;
+    }
+
+    const deadlockError = error as DeadlockError;
     const deadlockMessages = [
       'deadlock detected',
       'lock wait timeout',
@@ -193,7 +210,7 @@ export class TransactionManager {
       'deadlock found',
     ];
 
-    const errorMessage = error.message?.toLowerCase() || '';
+    const errorMessage = deadlockError.message?.toLowerCase() || '';
     return deadlockMessages.some((msg) => errorMessage.includes(msg));
   }
 
@@ -233,7 +250,9 @@ export class TransactionManager {
       await this.dataSource.query('SELECT 1');
       return true;
     } catch (error) {
-      this.logger.error(`Database health check failed: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Database health check failed: ${errorMessage}`);
       return false;
     }
   }
