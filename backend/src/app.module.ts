@@ -20,7 +20,7 @@ import { envValidationSchema } from './config/env.validation';
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
 import { HealthController } from './health/health.controller';
-import { DataSource } from 'typeorm';
+// import { DataSource } from 'typeorm';
 import { TreatmentCategoriesModule } from './treatment-categories/treatment-categories.module';
 import { TreatmentsModule } from './treatments/treatments.module';
 import { MedicalRecordTreatmentsModule } from './medical-record-treatments/medical-record-treatments.module';
