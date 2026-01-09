@@ -10,11 +10,11 @@ import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 
 @Injectable()
-export class PaymentLoggingInterceptor implements NestInterceptor {
+export class PaymentLoggingInterceptor<T> implements NestInterceptor<T,T> {
   private readonly logger = new Logger(PaymentLoggingInterceptor.name);
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
+    const request = context.switchToHttp().getRequest<Request>();
     const { method, url, body } = request;
     const now = Date.now();
 
@@ -27,15 +27,18 @@ export class PaymentLoggingInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap({
-        next: (data) => {
+        next: (_data: T) => {
           const responseTime = Date.now() - now;
           this.logger.log(`Completed: ${method} ${url} - ${responseTime}ms`);
         },
-        error: (error) => {
+        error: (error:unknown) => {
           const responseTime = Date.now() - now;
+
+          const message = error instanceof Error ? error.message : 'Unknown Error';
+
           this.logger.error(
             `Failed: ${method} ${url} - ${responseTime}ms`,
-            error.message,
+            message,
           );
         },
       }),
