@@ -24,7 +24,10 @@ interface ResponseWithStandardStructure {
 }
 
 @Injectable()
-export class PaymentTransformInterceptor<T> implements NestInterceptor<T, StandardResponse<T>> {
+export class PaymentTransformInterceptor<T> implements NestInterceptor<
+  T,
+  StandardResponse<T>
+> {
   intercept(
     context: ExecutionContext,
     next: CallHandler,

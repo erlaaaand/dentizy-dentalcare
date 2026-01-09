@@ -194,7 +194,9 @@ export class PaymentRepository {
       });
 
       if (!updatedPayment) {
-        throw new NotFoundException(`Payment with ID ${id} not found after update`);
+        throw new NotFoundException(
+          `Payment with ID ${id} not found after update`,
+        );
       }
 
       return updatedPayment;

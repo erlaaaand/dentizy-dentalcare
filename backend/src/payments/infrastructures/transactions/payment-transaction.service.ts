@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource, QueryRunner } from 'typeorm';
-import { Payment, StatusPembayaran } from '../../domains/entities/payments.entity';
+import {
+  Payment,
+  StatusPembayaran,
+} from '../../domains/entities/payments.entity';
 
 interface RelatedUpdates {
   medicalRecordUpdate?: {
