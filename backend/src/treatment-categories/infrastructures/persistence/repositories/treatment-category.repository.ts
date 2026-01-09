@@ -7,6 +7,7 @@ import { CreateTreatmentCategoryDto } from '../../../applications/dto/create-tre
 import { UpdateTreatmentCategoryDto } from '../../../applications/dto/update-treatment-category.dto';
 import { QueryTreatmentCategoryDto } from '../../../applications/dto/query-treatment-category.dto';
 import { TreatmentCategoryQueries } from '../query/treatment-category.queries';
+import { CategoryWithTreatmentCountDto } from '../../../../treatment-categories/applications/dto/category-with-treatment-count.dto';
 
 @Injectable()
 export class TreatmentCategoryRepository {
@@ -69,7 +70,7 @@ export class TreatmentCategoryRepository {
     return await this.queries.countTreatmentsByCategory(categoryId);
   }
 
-  async getCategoriesWithCount(): Promise<any[]> {
+  async getCategoriesWithCount(): Promise<CategoryWithTreatmentCountDto[]> {
     return await this.queries.getCategoriesWithTreatmentCount();
   }
 

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, SelectQueryBuilder } from 'typeorm';
 import { TreatmentCategory } from '../../../domains/entities/treatment-categories.entity';
 import { QueryTreatmentCategoryDto } from '../../../applications/dto/query-treatment-category.dto';
+import { CategoryWithTreatmentCountDto } from '../../../../treatment-categories/applications/dto/category-with-treatment-count.dto';
 
 @Injectable()
 export class TreatmentCategoryQueries {
@@ -87,7 +88,7 @@ export class TreatmentCategoryQueries {
     return parseInt(result?.count || '0', 10);
   }
 
-  async getCategoriesWithTreatmentCount(): Promise<any[]> {
+  async getCategoriesWithTreatmentCount(): Promise<CategoryWithTreatmentCountDto[]> {
     return await this.repository
       .createQueryBuilder('category')
       .leftJoin(
