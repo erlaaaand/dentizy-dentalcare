@@ -7,6 +7,15 @@ import { UserMapper } from '../../domains/mappers/user.mapper';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserCreatedEvent } from '../../infrastructures/events/user-created.event';
+import { Role } from '../../../roles/entities/role.entity';
+
+interface CreateUserPayload {
+  username: string;
+  nama_lengkap: string;
+  password: string;
+  roles: Role[];
+  email: string | null;
+}
 
 @Injectable()
 export class CreateUserService {
@@ -20,7 +29,6 @@ export class CreateUserService {
   ) {}
 
   async execute(createUserDto: CreateUserDto): Promise<UserResponseDto> {
-    // [FIX] Hapus specialization dari destructuring
     const {
       roles: roleIds,
       password,
@@ -43,14 +51,15 @@ export class CreateUserService {
 
       const hashedPassword = await this.passwordHasher.hash(password);
 
-      const newUser = await this.userRepository.create({
+      const payload: CreateUserPayload = {
         username,
         nama_lengkap,
         password: hashedPassword,
         roles,
         email: email || null,
-        // [FIX] Hapus specialization dari payload create
-      } as any);
+      };
+
+      const newUser = await this.userRepository.create(payload);
 
       this.eventEmitter.emit(
         'user.created',
@@ -67,7 +76,7 @@ export class CreateUserService {
       );
       return UserMapper.toResponseDto(newUser);
     } catch (error) {
-      this.logger.error('Error creating user:', error.message);
+      this.logger.error('Error creating user:', error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
   }

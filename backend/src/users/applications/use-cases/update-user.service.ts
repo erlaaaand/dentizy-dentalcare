@@ -5,7 +5,11 @@ import { UserValidationService } from '../../domains/services/user-validation.se
 import { UserMapper } from '../../domains/mappers/user.mapper';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { UserUpdatedEvent } from '../../infrastructures/events/user-updated.event';
+import {
+  UserUpdatedEvent,
+  UserChanges,
+  UserChangeValue
+} from '../../infrastructures/events/user-updated.event';
 import { UsernameValidator } from '../../domains/validators/username.validator';
 import { UserDataValidator } from '../../domains/validators/user-data.validator';
 import { PasswordHasherService } from '../../../auth/infrastructures/security/password-hasher.service';
@@ -25,7 +29,6 @@ export class UpdateUserService {
     userId: number,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
-    // [FIX] Hapus specialization dari destructuring
     const {
       roles: roleIds,
       username,
@@ -42,7 +45,7 @@ export class UpdateUserService {
         throw new BadRequestException(`User with id ${userId} not found`);
       }
 
-      const changes: Record<string, any> = {};
+      const changes: Record<string, UserChangeValue> = {};
 
       if (username && username !== user.username) {
         UsernameValidator.validate(username);
@@ -66,11 +69,12 @@ export class UpdateUserService {
       if (email !== undefined && email !== user.email) {
         if (email === '') {
           user.email = null;
+          changes.email = null;
         } else {
           await this.userValidation.validateUniqueEmail(email, userId);
           user.email = email;
+          changes.email = email;
         }
-        changes.email = email;
       }
 
       if (password) {
@@ -87,8 +91,6 @@ export class UpdateUserService {
         changes.roles = roleIds;
       }
 
-      // [FIX] Hapus blok logika update specialization di sini
-
       const updatedUser = await this.userRepository.update(user);
 
       this.eventEmitter.emit(
@@ -101,7 +103,7 @@ export class UpdateUserService {
       );
       return UserMapper.toResponseDto(updatedUser);
     } catch (error) {
-      this.logger.error(`Error updating user ID ${userId}:`, error.message);
+      this.logger.error(`Error updating user ID ${userId}:`, error instanceof Error ? error.message : 'Unknown error');
       throw error;
     }
   }

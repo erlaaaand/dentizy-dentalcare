@@ -13,21 +13,40 @@ import { UserMapper } from '../../domains/mappers/user.mapper';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { User } from '../../domains/entities/user.entity';
 
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  lastPage: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface UserListResponse {
+  data: UserResponseDto[];
+  meta: PaginationMeta;
+}
+
+interface UsernameAvailability {
+  available: boolean;
+  message: string;
+}
+
+interface UserStatistics {
+  total: number;
+  byRole: Record<string, number>;
+  active: number;
+  inactive: number;
+}
+
 @Injectable()
 export class FindUsersService {
   private readonly logger = new Logger(FindUsersService.name);
 
   constructor(private readonly userRepository: UserRepository) {}
 
-  /**
-   * Find all users with pagination, filters, and search
-   */
-  async findAll(query: FindUsersQueryDto): Promise<{
-    data: UserResponseDto[];
-    meta: any;
-  }> {
+  async findAll(query: FindUsersQueryDto): Promise<UserListResponse> {
     try {
-      // Log debug tidak masalah, tapi hati-hati jika query object membesar
       this.logger.debug(`Finding users with query: ${JSON.stringify(query)}`);
 
       const page = query.page || 1;
@@ -44,29 +63,27 @@ export class FindUsersService {
 
       this.logger.log(`📋 Retrieved ${users.length} users (Total: ${total})`);
 
+      const lastPage = Math.ceil(total / limit);
+
       return {
         data: UserMapper.toResponseDtoArray(users),
         meta: {
           total,
           page,
           limit,
-          lastPage: Math.ceil(total / limit),
-          hasNext: page < Math.ceil(total / limit),
+          lastPage,
+          hasNext: page < lastPage,
           hasPrev: page > 1,
         },
       };
     } catch (error) {
       this.logger.error('Error fetching users:', error);
-      // [FIX] Jangan ekspos error.message asli ke user (bisa bocor info database)
       throw new BadRequestException(
         'Gagal mengambil daftar users. Silakan coba lagi.',
       );
     }
   }
 
-  /**
-   * Find single user by ID
-   */
   async findOne(userId: number): Promise<UserResponseDto> {
     try {
       const user = await this.userRepository.findById(userId);
@@ -79,7 +96,6 @@ export class FindUsersService {
 
       return UserMapper.toResponseDto(user);
     } catch (error) {
-      // Re-throw jika itu adalah HttpException (seperti NotFoundException di atas)
       if (error instanceof NotFoundException) throw error;
 
       this.logger.error(`Error finding user ID ${userId}:`, error);
@@ -89,9 +105,6 @@ export class FindUsersService {
     }
   }
 
-  /**
-   * Find user for authentication (by ID)
-   */
   async findOneForAuth(userId: number): Promise<User> {
     try {
       const user = await this.userRepository.findByIdWithPassword(userId);
@@ -110,30 +123,18 @@ export class FindUsersService {
     }
   }
 
-  /**
-   * [FIX UTAMA] Find user by Username OR Email
-   * Digunakan oleh LoginService
-   */
   async findByUsernameOrEmailForAuth(identifier: string): Promise<User> {
-    // Kita panggil method baru di repository (pastikan Anda sudah update repository juga)
     const user =
       await this.userRepository.findByUsernameOrEmailWithPassword(identifier);
 
     if (!user) {
-      // Pesan error umum untuk keamanan (jangan spesifik "Username salah" atau "Email salah")
       throw new NotFoundException('User tidak ditemukan');
     }
 
     return user;
   }
 
-  /**
-   * Check username availability
-   */
-  async checkUsernameAvailability(username: string): Promise<{
-    available: boolean;
-    message: string;
-  }> {
+  async checkUsernameAvailability(username: string): Promise<UsernameAvailability> {
     try {
       const exists = await this.userRepository.usernameExists(username);
 
@@ -149,15 +150,7 @@ export class FindUsersService {
     }
   }
 
-  /**
-   * Get user statistics
-   */
-  async getUserStatistics(): Promise<{
-    total: number;
-    byRole: Record<string, number>;
-    active: number;
-    inactive: number;
-  }> {
+  async getUserStatistics(): Promise<UserStatistics> {
     try {
       return await this.userRepository.getStatistics();
     } catch (error) {
@@ -166,14 +159,10 @@ export class FindUsersService {
     }
   }
 
-  /**
-   * Get recently created users
-   */
   async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
     try {
-      // Validasi limit sebaiknya di Controller/DTO, tapi double check disini tidak apa-apa
       if (limit < 1 || limit > 50) {
-        limit = 10; // Fallback ke default daripada error
+        limit = 10;
       }
 
       const users = await this.userRepository.findRecentlyCreated(limit);

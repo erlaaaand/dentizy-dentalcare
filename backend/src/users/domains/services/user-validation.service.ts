@@ -2,19 +2,27 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
+import { User } from '../entities/user.entity';
+import { Role } from '../../../roles/entities/role.entity';
+
+interface CanDeleteResult {
+  canDelete: boolean;
+  reason?: string;
+}
+
+interface ValidationResult {
+  valid: boolean;
+  message?: string;
+}
 
 @Injectable()
 export class UserValidationService {
   private readonly logger = new Logger(UserValidationService.name);
 
-  // [FIX 1] Tambahkan Constructor untuk inject repository
   constructor(private readonly userRepository: UserRepository) {}
 
-  /**
-   * Validate username uniqueness
-   */
   validateUsernameUniqueness(
-    existingUser: any | null,
+    existingUser: User | null,
     newUsername: string,
     currentUsername?: string,
   ): void {
@@ -23,19 +31,13 @@ export class UserValidationService {
     }
   }
 
-  /**
-   * Validate user exists
-   */
-  validateUserExists(user: any | null, userId: number): void {
+  validateUserExists(user: User | null, userId: number): void {
     if (!user) {
       throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
     }
   }
 
-  /**
-   * Validate roles exist
-   */
-  validateRolesExist(requestedRoleIds: number[], foundRoles: any[]): void {
+  validateRolesExist(requestedRoleIds: number[], foundRoles: Role[]): void {
     if (foundRoles.length !== requestedRoleIds.length) {
       const foundIds = foundRoles.map((r) => r.id);
       const missingIds = requestedRoleIds.filter(
@@ -47,9 +49,6 @@ export class UserValidationService {
     }
   }
 
-  /**
-   * Validate password match
-   */
   validatePasswordsMatch(password: string, confirmPassword: string): void {
     if (password !== confirmPassword) {
       throw new ConflictException(
@@ -58,10 +57,7 @@ export class UserValidationService {
     }
   }
 
-  /**
-   * Validate user can be deleted
-   */
-  validateCanDelete(user: any): { canDelete: boolean; reason?: string } {
+  validateCanDelete(user: User): CanDeleteResult {
     if (user.medical_records && user.medical_records.length > 0) {
       return {
         canDelete: false,
@@ -71,13 +67,7 @@ export class UserValidationService {
     return { canDelete: true };
   }
 
-  /**
-   * Validate username format
-   */
-  validateUsernameFormat(username: string): {
-    valid: boolean;
-    message?: string;
-  } {
+  validateUsernameFormat(username: string): ValidationResult {
     if (!username || username.trim().length === 0) {
       return { valid: false, message: 'Username tidak boleh kosong' };
     }
@@ -101,14 +91,12 @@ export class UserValidationService {
     return { valid: true };
   }
 
-  // [FIX 2] Validasi Email Unik (Pastikan method findByEmail ada di Repository!)
   async validateUniqueEmail(
     email: string,
     currentUserId?: number,
   ): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
 
-    // Jika user ditemukan dan ID-nya BUKAN user yang sedang diedit -> Error
     if (existingUser && existingUser.id !== currentUserId) {
       throw new ConflictException(
         `Email "${email}" sudah digunakan oleh pengguna lain`,
