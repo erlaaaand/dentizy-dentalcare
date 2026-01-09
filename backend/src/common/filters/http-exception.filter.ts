@@ -9,6 +9,27 @@ import {
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 
+interface UserData {
+  id: number | string;
+  username: string;
+}
+
+interface RequestWithUser extends Request {
+  user?: UserData;
+}
+
+interface HttpExceptionResponse {
+  statusCode: number;
+  message: string | string[];
+  error?: string;
+}
+
+interface DatabaseError extends Error {
+  code?: string;
+  errno?: number;
+  sqlMessage?: string;
+}
+
 /**
  * Global Exception Filter untuk menangani semua error
  * dengan format response yang konsisten dan logging yang baik
@@ -20,21 +41,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const request = ctx.getRequest<RequestWithUser>();
 
     const timestamp = new Date().toISOString();
     const path = request.url;
     const method = request.method;
 
     // Extract user info (if authenticated)
-    const user = (request as any).user;
+    const user = request.user;
     const userId = user?.id || 'Anonymous';
     const username = user?.username || 'Guest';
 
     let status: number;
     let message: string | string[];
     let errorName: string;
-    let errorDetails: any = null;
+    let errorDetails: string | object | null = null;
 
     // ========================================
     // 1. Handle HTTP Exceptions (NestJS)
@@ -48,8 +69,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
-        message = (exceptionResponse as any).message || exception.message;
-        errorDetails = (exceptionResponse as any).error;
+        const responseObj = exceptionResponse as HttpExceptionResponse;
+        message = responseObj.message;
+        errorDetails = responseObj.error || null;
       } else {
         message = exception.message;
       }
@@ -61,7 +83,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = HttpStatus.BAD_REQUEST;
       errorName = 'DatabaseError';
 
-      const dbError = exception as any;
+      const dbError = exception as QueryFailedError & DatabaseError;
 
       // Handle duplicate entry error
       if (dbError.code === 'ER_DUP_ENTRY') {
@@ -105,8 +127,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
           errorDetails = exception.message;
         }
       } else {
+        const stringifiedError = String(exception);
         this.logger.error(
-          `Unknown Error: ${JSON.stringify(exception)} | User: ${username} | Path: ${path}`,
+          `Unknown Error: ${stringifiedError} | User: ${username} | Path: ${path}`,
         );
       }
     }
