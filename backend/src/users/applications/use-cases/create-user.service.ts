@@ -76,7 +76,10 @@ export class CreateUserService {
       );
       return UserMapper.toResponseDto(newUser);
     } catch (error) {
-      this.logger.error('Error creating user:', error instanceof Error ? error.message : 'Unknown error');
+      this.logger.error(
+        'Error creating user:',
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }

@@ -67,7 +67,8 @@ export class UserRepository {
   }
 
   async findAndCountUsers(params: FindUsersParams): Promise<[User[], number]> {
-    const qb: SelectQueryBuilder<User> = this.repository.createQueryBuilder('user');
+    const qb: SelectQueryBuilder<User> =
+      this.repository.createQueryBuilder('user');
 
     qb.leftJoinAndSelect('user.roles', 'role');
 
@@ -138,7 +139,9 @@ export class UserRepository {
     });
   }
 
-  async findByUsernameOrEmailWithPassword(identifier: string): Promise<User | null> {
+  async findByUsernameOrEmailWithPassword(
+    identifier: string,
+  ): Promise<User | null> {
     return this.repository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')

@@ -10,7 +10,7 @@ export class UserCreatedEvent {
     public readonly nama_lengkap: string,
     public readonly roles: string[],
     public readonly timestamp: Date = new Date(),
-  ) { }
+  ) {}
 
   /**
    * Get primary role (first role in array)

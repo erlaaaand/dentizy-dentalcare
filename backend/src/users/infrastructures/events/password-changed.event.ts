@@ -14,7 +14,7 @@ export class PasswordChangedEvent {
     public readonly username: string,
     public readonly changedBy: PasswordChangeActor,
     public readonly timestamp: Date = new Date(),
-  ) { }
+  ) {}
 
   /**
    * Check if password was changed by user themselves

@@ -8,7 +8,7 @@ export class UserDeletedEvent {
     public readonly userId: number,
     public readonly username: string,
     public readonly timestamp: Date = new Date(),
-  ) { }
+  ) {}
 
   /**
    * Get formatted message for logging

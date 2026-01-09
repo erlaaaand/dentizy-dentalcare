@@ -216,7 +216,9 @@ export class UsersController {
       },
     },
   })
-  async checkUsername(@Param('username') username: string): Promise<UsernameAvailability> {
+  async checkUsername(
+    @Param('username') username: string,
+  ): Promise<UsernameAvailability> {
     return this.usersService.checkUsernameAvailability(username);
   }
 
@@ -276,9 +278,7 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-  async remove(
-    @Param('id', ParseIntPipe) id: number,
-  ): Promise<DeleteResponse> {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<DeleteResponse> {
     return this.usersService.remove(id);
   }
 
@@ -354,7 +354,9 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-  async generateTempPassword(@Param('id', ParseIntPipe) id: number): Promise<TemporaryPasswordResponse> {
+  async generateTempPassword(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<TemporaryPasswordResponse> {
     return this.usersService.generateTemporaryPassword(id);
   }
 }

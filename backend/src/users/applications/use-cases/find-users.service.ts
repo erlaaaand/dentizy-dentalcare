@@ -134,7 +134,9 @@ export class FindUsersService {
     return user;
   }
 
-  async checkUsernameAvailability(username: string): Promise<UsernameAvailability> {
+  async checkUsernameAvailability(
+    username: string,
+  ): Promise<UsernameAvailability> {
     try {
       const exists = await this.userRepository.usernameExists(username);
 

@@ -28,7 +28,7 @@ export class UserUpdatedEvent {
     public readonly username: string,
     public readonly changes: UserChanges,
     public readonly timestamp: Date = new Date(),
-  ) { }
+  ) {}
 
   /**
    * Get list of changed field names

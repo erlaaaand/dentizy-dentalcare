@@ -109,7 +109,7 @@ export class UserExceptionFilter implements ExceptionFilter {
     }
 
     if (status === HttpStatus.BAD_REQUEST && Array.isArray(message)) {
-      errorResponse.validationErrors = message.map(msg => ({ message: msg }));
+      errorResponse.validationErrors = message.map((msg) => ({ message: msg }));
       errorResponse.message = 'Validation failed';
     }
 

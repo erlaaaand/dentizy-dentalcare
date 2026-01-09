@@ -117,12 +117,16 @@ export class UsersService {
     return this.resetPasswordService.execute(userId, newPassword, true);
   }
 
-  async generateTemporaryPassword(userId: number): Promise<TemporaryPasswordResponse> {
+  async generateTemporaryPassword(
+    userId: number,
+  ): Promise<TemporaryPasswordResponse> {
     this.logger.debug(`Generating temporary password for user ID: ${userId}`);
     return this.resetPasswordService.generateTemporaryPassword(userId);
   }
 
-  async checkUsernameAvailability(username: string): Promise<UsernameAvailability> {
+  async checkUsernameAvailability(
+    username: string,
+  ): Promise<UsernameAvailability> {
     this.logger.debug(`Checking username availability: ${username}`);
     return this.findUsersService.checkUsernameAvailability(username);
   }

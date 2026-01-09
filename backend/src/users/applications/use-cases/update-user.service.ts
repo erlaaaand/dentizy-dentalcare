@@ -8,7 +8,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   UserUpdatedEvent,
   UserChanges,
-  UserChangeValue
+  UserChangeValue,
 } from '../../infrastructures/events/user-updated.event';
 import { UsernameValidator } from '../../domains/validators/username.validator';
 import { UserDataValidator } from '../../domains/validators/user-data.validator';
@@ -103,7 +103,10 @@ export class UpdateUserService {
       );
       return UserMapper.toResponseDto(updatedUser);
     } catch (error) {
-      this.logger.error(`Error updating user ID ${userId}:`, error instanceof Error ? error.message : 'Unknown error');
+      this.logger.error(
+        `Error updating user ID ${userId}:`,
+        error instanceof Error ? error.message : 'Unknown error',
+      );
       throw error;
     }
   }
