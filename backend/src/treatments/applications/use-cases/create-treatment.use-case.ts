@@ -26,19 +26,14 @@ export class CreateTreatmentUseCase {
   ) {}
 
   async execute(dto: CreateTreatmentDto): Promise<TreatmentResponseDto> {
-    // Validate business rules
+    // Generate kode perawatan
     const newKode = await this.idGenerator.generateKodePerawatan();
 
-    const treatmentData = {
-      ...dto,
-      kodePerawatan: newKode,
-    };
-
-    // 3. Validate business rules (Menggunakan treatmentData yang sudah ada kodenya)
+    // Validate business rules
     const validation = this.validationService.validateTreatmentData({
-      kodePerawatan: treatmentData.kodePerawatan,
-      namaPerawatan: treatmentData.namaPerawatan,
-      harga: treatmentData.harga,
+      kodePerawatan: newKode,
+      namaPerawatan: dto.namaPerawatan,
+      harga: dto.harga,
     });
 
     if (!validation.isValid) {
@@ -53,10 +48,11 @@ export class CreateTreatmentUseCase {
       );
     }
 
+    // Create treatment entity data
+    const treatmentData = this.treatmentMapper.toEntity(dto, newKode);
+
     // Create treatment
-    const treatment = await this.treatmentRepository.create(
-      treatmentData as any,
-    );
+    const treatment = await this.treatmentRepository.create(treatmentData);
 
     // Emit event
     this.eventEmitter.emit(
@@ -66,7 +62,7 @@ export class CreateTreatmentUseCase {
         treatment.kodePerawatan,
         treatment.namaPerawatan,
         treatment.categoryId,
-        treatment.harga,
+        Number(treatment.harga),
         treatment.createdAt,
       ),
     );

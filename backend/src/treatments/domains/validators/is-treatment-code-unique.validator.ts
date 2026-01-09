@@ -9,6 +9,10 @@ import {
 } from 'class-validator';
 import { TreatmentRepository } from '../../infrastructures/persistence/repositories/treatment.repository';
 
+interface ObjectWithId {
+  id?: number;
+}
+
 @ValidatorConstraint({ name: 'IsTreatmentCodeUnique', async: true })
 @Injectable()
 export class IsTreatmentCodeUniqueConstraint implements ValidatorConstraintInterface {
@@ -20,7 +24,8 @@ export class IsTreatmentCodeUniqueConstraint implements ValidatorConstraintInter
   ): Promise<boolean> {
     if (!kodePerawatan) return true;
 
-    const excludeId = (args.object as any).id;
+    const object = args.object as ObjectWithId;
+    const excludeId = object.id;
     return !(await this.treatmentRepository.isKodeExists(
       kodePerawatan,
       excludeId,

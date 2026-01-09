@@ -1,11 +1,27 @@
 // backend/src/treatments/infrastructures/persistence/repositories/treatment.repository.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, FindOptionsWhere, In, Between } from 'typeorm';
+import { Repository, FindOptionsWhere, In, Between } from 'typeorm';
 import { Treatment } from '../../../domains/entities/treatments.entity';
-import { CreateTreatmentDto } from '../../../applications/dto/create-treatment.dto';
 import { UpdateTreatmentDto } from '../../../applications/dto/update-treatment.dto';
 import { QueryTreatmentDto } from '../../../applications/dto/query-treatment.dto';
+
+export interface TreatmentFindAllResult {
+  data: Treatment[];
+  total: number;
+}
+
+export interface TreatmentStatistics {
+  total: number;
+  active: number;
+  inactive: number;
+  averagePrice: number;
+}
+
+export interface BulkPriceUpdate {
+  id: number;
+  harga: number;
+}
 
 @Injectable()
 export class TreatmentRepository {
@@ -14,22 +30,13 @@ export class TreatmentRepository {
     private readonly repository: Repository<Treatment>,
   ) {}
 
-  async create(dto: CreateTreatmentDto): Promise<Treatment> {
-    const treatment = this.repository.create({
-      kodePerawatan: (dto as any).kodePerawatan,
-      categoryId: dto.categoryId,
-      namaPerawatan: dto.namaPerawatan,
-      deskripsi: dto.deskripsi,
-      harga: dto.harga,
-      durasiEstimasi: dto.durasiEstimasi,
-      isActive: dto.isActive ?? true,
-    });
+  // Menggunakan Partial<Treatment> agar kompatibel dengan output mapper
+  async create(data: Partial<Treatment>): Promise<Treatment> {
+    const treatment = this.repository.create(data);
     return await this.repository.save(treatment);
   }
 
-  async findAll(
-    query: QueryTreatmentDto,
-  ): Promise<{ data: Treatment[]; total: number }> {
+  async findAll(query: QueryTreatmentDto): Promise<TreatmentFindAllResult> {
     const {
       search,
       categoryId,
@@ -43,7 +50,7 @@ export class TreatmentRepository {
 
     const where: FindOptionsWhere<Treatment> = {};
 
-    if (categoryId) {
+    if (categoryId !== undefined) {
       where.categoryId = categoryId;
     }
 
@@ -63,10 +70,8 @@ export class TreatmentRepository {
       );
     }
 
-    // Dynamic sorting
     const sortField = `treatment.${sortBy}`;
     queryBuilder.orderBy(sortField, sortOrder);
-
     queryBuilder.skip(skip).take(limit);
 
     const [data, total] = await queryBuilder.getManyAndCount();
@@ -124,7 +129,10 @@ export class TreatmentRepository {
     });
   }
 
-  async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment | null> {
+  async update(
+    id: number,
+    dto: UpdateTreatmentDto,
+  ): Promise<Treatment | null> {
     await this.repository.update(id, dto);
     return await this.findOne(id);
   }
@@ -154,7 +162,7 @@ export class TreatmentRepository {
       .createQueryBuilder('treatment')
       .where('treatment.kodePerawatan = :kodePerawatan', { kodePerawatan });
 
-    if (excludeId) {
+    if (excludeId !== undefined) {
       queryBuilder.andWhere('treatment.id != :excludeId', { excludeId });
     }
 
@@ -168,7 +176,7 @@ export class TreatmentRepository {
   }): Promise<number> {
     const where: FindOptionsWhere<Treatment> = {};
 
-    if (filters?.categoryId) {
+    if (filters?.categoryId !== undefined) {
       where.categoryId = filters.categoryId;
     }
 
@@ -179,9 +187,7 @@ export class TreatmentRepository {
     return await this.repository.count({ where });
   }
 
-  async bulkUpdatePrices(
-    updates: { id: number; harga: number }[],
-  ): Promise<void> {
+  async bulkUpdatePrices(updates: BulkPriceUpdate[]): Promise<void> {
     await this.repository.manager.transaction(async (manager) => {
       for (const update of updates) {
         await manager.update(Treatment, update.id, { harga: update.harga });
@@ -189,26 +195,21 @@ export class TreatmentRepository {
     });
   }
 
-  async getTreatmentStatistics(): Promise<{
-    total: number;
-    active: number;
-    inactive: number;
-    averagePrice: number;
-  }> {
+  async getTreatmentStatistics(): Promise<TreatmentStatistics> {
     const [total, active, avgResult] = await Promise.all([
       this.repository.count(),
       this.repository.count({ where: { isActive: true } }),
       this.repository
         .createQueryBuilder('treatment')
         .select('AVG(treatment.harga)', 'average')
-        .getRawOne(),
+        .getRawOne<{ average: string | null }>(),
     ]);
 
     return {
       total,
       active,
       inactive: total - active,
-      averagePrice: parseFloat(avgResult?.average || 0),
+      averagePrice: parseFloat(avgResult?.average ?? '0'),
     };
   }
 }

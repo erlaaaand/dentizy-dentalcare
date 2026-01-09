@@ -1,5 +1,6 @@
-// backend/src/treatments/applications/mappers/treatment-category.mapper.ts
+// backend/src/treatments/domains/mappers/treatment-category.mapper.ts
 import { Injectable } from '@nestjs/common';
+import { TreatmentCategory } from '../../../treatment-categories/domains/entities/treatment-categories.entity';
 
 export interface TreatmentCategoryDto {
   id: number;
@@ -9,11 +10,10 @@ export interface TreatmentCategoryDto {
 
 @Injectable()
 export class TreatmentCategoryMapper {
-  toDto(category: any): TreatmentCategoryDto {
+  toDto(category: TreatmentCategory): TreatmentCategoryDto {
     return {
       id: category.id,
       namaKategori: category.namaKategori,
-      kodeKategori: category.kodeKategori,
     };
   }
 }

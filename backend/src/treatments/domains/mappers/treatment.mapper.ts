@@ -1,6 +1,6 @@
-// backend/src/treatments/applications/mappers/treatment.mapper.ts
+// backend/src/treatments/domains/mappers/treatment.mapper.ts
 import { Injectable } from '@nestjs/common';
-import { Treatment } from '../../domains/entities/treatments.entity';
+import { Treatment } from '../entities/treatments.entity';
 import { TreatmentResponseDto } from '../../applications/dto/treatment-response.dto';
 import { CreateTreatmentDto } from '../../applications/dto/create-treatment.dto';
 import { UpdateTreatmentDto } from '../../applications/dto/update-treatment.dto';
@@ -15,7 +15,7 @@ export class TreatmentMapper {
       kodePerawatan: treatment.kodePerawatan,
       namaPerawatan: treatment.namaPerawatan,
       deskripsi: treatment.deskripsi,
-      harga: treatment.harga,
+      harga: Number(treatment.harga),
       durasiEstimasi: treatment.durasiEstimasi,
       isActive: treatment.isActive,
       createdAt: treatment.createdAt,
@@ -34,16 +34,18 @@ export class TreatmentMapper {
       id: treatment.id,
       kodePerawatan: treatment.kodePerawatan,
       namaPerawatan: treatment.namaPerawatan,
-      harga: treatment.harga,
-      durasiEstimasi: treatment.durasiEstimasi,
+      harga: Number(treatment.harga),
+      durasiEstimasi: treatment.durasiEstimasi ?? undefined,
       isActive: treatment.isActive,
       categoryName: treatment.category?.namaKategori,
     };
   }
 
-  toEntity(dto: CreateTreatmentDto): Partial<Treatment> {
+  // Mengembalikan Partial<Treatment> sebagai pengganti ITreatmentCreate
+  toEntity(dto: CreateTreatmentDto, kodePerawatan: string): Partial<Treatment> {
     return {
       categoryId: dto.categoryId,
+      kodePerawatan,
       namaPerawatan: dto.namaPerawatan,
       deskripsi: dto.deskripsi,
       harga: dto.harga,
@@ -52,17 +54,28 @@ export class TreatmentMapper {
     };
   }
 
+  // Mengembalikan Partial<Treatment> sebagai pengganti ITreatmentUpdate
   toUpdateEntity(dto: UpdateTreatmentDto): Partial<Treatment> {
     const updateData: Partial<Treatment> = {};
 
-    if (dto.categoryId !== undefined) updateData.categoryId = dto.categoryId;
-    if (dto.namaPerawatan !== undefined)
+    if (dto.categoryId !== undefined) {
+      updateData.categoryId = dto.categoryId;
+    }
+    if (dto.namaPerawatan !== undefined) {
       updateData.namaPerawatan = dto.namaPerawatan;
-    if (dto.deskripsi !== undefined) updateData.deskripsi = dto.deskripsi;
-    if (dto.harga !== undefined) updateData.harga = dto.harga;
-    if (dto.durasiEstimasi !== undefined)
+    }
+    if (dto.deskripsi !== undefined) {
+      updateData.deskripsi = dto.deskripsi;
+    }
+    if (dto.harga !== undefined) {
+      updateData.harga = dto.harga;
+    }
+    if (dto.durasiEstimasi !== undefined) {
       updateData.durasiEstimasi = dto.durasiEstimasi;
-    if (dto.isActive !== undefined) updateData.isActive = dto.isActive;
+    }
+    if (dto.isActive !== undefined) {
+      updateData.isActive = dto.isActive;
+    }
 
     return updateData;
   }
