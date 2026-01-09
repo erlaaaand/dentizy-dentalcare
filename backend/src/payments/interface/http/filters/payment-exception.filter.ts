@@ -1,4 +1,3 @@
-// backend/src/payments/interface/http/filters/payment-exception.filter.ts
 import {
   ExceptionFilter,
   Catch,
@@ -7,28 +6,46 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Response, Request } from 'express';
+
+interface HttpExceptionResponse {
+  message: string | string[];
+  error?: string;
+  statusCode?: number;
+  errors?: Record<string, unknown>;
+}
+
+interface ErrorResponse {
+  statusCode: number;
+  timestamp: string;
+  path: string;
+  message: string;
+  errors?: Record<string, unknown>;
+}
 
 @Catch()
 export class PaymentExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(PaymentExceptionFilter.name);
 
-  catch(exception: unknown, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest();
+    const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
-    let errors: any = null;
+    let errors: Record<string, unknown> | null = null;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
       if (typeof exceptionResponse === 'object') {
-        message = (exceptionResponse as any).message || message;
-        errors = (exceptionResponse as any).errors || null;
+        const typedResponse = exceptionResponse as HttpExceptionResponse;
+        message = Array.isArray(typedResponse.message)
+          ? typedResponse.message.join(', ')
+          : typedResponse.message || message;
+        errors = typedResponse.errors || null;
       } else {
         message = exceptionResponse as string;
       }
@@ -41,12 +58,17 @@ export class PaymentExceptionFilter implements ExceptionFilter {
       exception instanceof Error ? exception.stack : undefined,
     );
 
-    response.status(status).json({
+    const errorResponse: ErrorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message,
-      ...(errors && { errors }),
-    });
+    };
+
+    if (errors) {
+      errorResponse.errors = errors;
+    }
+
+    response.status(status).json(errorResponse);
   }
 }
