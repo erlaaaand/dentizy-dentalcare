@@ -24,11 +24,22 @@ import { VerifyTokenDto } from '../../applications/dto/verify-token.dto';
 import { GetUser } from '../decorators/get-user.decorator';
 import { User } from '../../../users/domains/entities/user.entity';
 import type { Request } from 'express';
-
 import { UsersService } from '../../../users/applications/orchestrator/users.service';
-import { UpdateProfileDto } from '../../applications/dto/update-profile.dto'; // Buat file DTO ini
+import { UpdateProfileDto } from '../../applications/dto/update-profile.dto';
 import { UserResponseDto } from '../../../users/applications/dto/user-response.dto';
 import { TokenService } from '../../domains/services/token.service';
+
+/**
+ * Interface untuk response update profile yang include token
+ */
+interface UpdateProfileResponse extends UserResponseDto {
+  access_token: string;
+}
+
+/**
+ * Interface untuk user tanpa password
+ */
+interface UserWithoutPassword extends Omit<User, 'password'> {}
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -40,8 +51,8 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @UseGuards(ThrottlerGuard) // : Rate limiting untuk login
-  @HttpCode(HttpStatus.OK) // : Login sukses mengembalikan 200
+  @UseGuards(ThrottlerGuard)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login pengguna',
     description: 'Autentikasi via email/password dan dapatkan token',
@@ -52,17 +63,22 @@ export class AuthController {
     schema: {
       example: {
         access_token: 'jwt.access.token',
-        refresh_token: 'jwt.refresh.token',
+        user: {
+          id: 1,
+          username: 'dokter_tirta',
+          nama_lengkap: 'dr. Tirta Mandira',
+          roles: ['dokter', 'admin'],
+        },
       },
     },
   })
   @ApiResponse({ status: 401, description: 'Email atau password salah' })
   @ApiResponse({ status: 400, description: 'Data tidak valid' })
-  @ApiResponse({ status: 429, description: 'Terlalu banyak percobaan login' }) // Untuk Throttler
+  @ApiResponse({ status: 429, description: 'Terlalu banyak percobaan login' })
   async login(@Body(ValidationPipe) loginDto: LoginDto, @Req() req: Request) {
     const metadata = {
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent'),
+      ipAddress: req.ip || 'unknown',
+      userAgent: req.get('user-agent') || 'unknown',
     };
 
     return this.authService.login(loginDto, metadata);
@@ -70,7 +86,7 @@ export class AuthController {
 
   @Post('refresh')
   @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('access-token') // : Menandakan endpoint ini butuh token
+  @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({
@@ -84,23 +100,41 @@ export class AuthController {
   })
   @ApiResponse({ status: 401, description: 'Refresh token tidak valid' })
   async refresh(@GetUser() user: User) {
-    // Asumsi 'user' dari 'jwt' strategy (setelah validasi refresh token)
-    // Jika 'user' berisi data dari access token, Anda mungkin perlu service terpisah
     return this.authService.refreshToken(user.id);
   }
 
   @Post('verify')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verifikasi validitas token' })
-  @ApiResponse({ status: 200, description: 'Token valid', type: User })
-  @ApiResponse({ status: 401, description: 'Token tidak valid' })
+  @ApiResponse({
+    status: 200,
+    description: 'Token valid',
+    schema: {
+      example: {
+        valid: true,
+        userId: 1,
+        username: 'dokter_tirta',
+        roles: ['dokter', 'admin'],
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Token tidak valid',
+    schema: {
+      example: {
+        valid: false,
+        message: 'Token tidak valid atau sudah kadaluarsa',
+      },
+    },
+  })
   async verify(@Body(ValidationPipe) verifyTokenDto: VerifyTokenDto) {
     return this.authService.verifyToken(verifyTokenDto.token);
   }
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('access-token') //
+  @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout pengguna' })
   @ApiResponse({
@@ -117,17 +151,25 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth('access-token') //
+  @ApiBearerAuth('access-token')
   @ApiOperation({ summary: 'Dapatkan profil pengguna saat ini' })
   @ApiResponse({
     status: 200,
     description: 'Profil pengguna',
-    type: User, // Catatan: Ini akan menampilkan semua properti User di Swagger
-    // Sebaiknya gunakan UserResponseDto jika ada
+    schema: {
+      example: {
+        id: 1,
+        username: 'dokter_tirta',
+        nama_lengkap: 'dr. Tirta Mandira',
+        roles: [{ id: 1, name: 'dokter' }],
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        profile_photo: null,
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Token tidak valid' })
-  async getProfile(@GetUser() user: User) {
-    // Logika ini sudah bagus untuk membuang password
+  async getProfile(@GetUser() user: User): Promise<UserWithoutPassword> {
     const { password, ...userWithoutPassword } = user;
     return userWithoutPassword;
   }
@@ -140,7 +182,6 @@ export class AuthController {
     status: 200,
     description: 'Profil berhasil diupdate, mengembalikan token baru',
     schema: {
-      // Contoh skema respons gabungan
       example: {
         id: 1,
         username: 'erland_baru',
@@ -156,26 +197,25 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Token tidak valid' })
   @ApiResponse({ status: 409, description: 'Username sudah digunakan' })
   async updateMyProfile(
-    @GetUser() user: User, // Dapatkan user yang sedang login
-    @Body(ValidationPipe) updateProfileDto: UpdateProfileDto, // Gunakan DTO baru yang aman
-  ): Promise<UserResponseDto & { access_token: string }> {
-    // Panggil service update yang sudah ada
-    // 'updateProfileDto' tidak berisi 'roles', jadi aman
+    @GetUser() user: User,
+    @Body(ValidationPipe) updateProfileDto: UpdateProfileDto,
+  ): Promise<UpdateProfileResponse> {
+    // Update user profile
     const updatedUserDto = await this.usersService.update(
       user.id,
       updateProfileDto,
     );
 
-    // Buat token baru berdasarkan data yang sudah di-update
+    // Generate new token with updated data
     const tokenPayload = {
       userId: updatedUserDto.id,
       username: updatedUserDto.username,
-      roles: updatedUserDto.roles.map((role) => role.name), // Ambil roles dari DTO respons
+      roles: updatedUserDto.roles.map((role) => role.name),
     };
 
-    // Asumsi Anda punya method 'generateToken' di AuthService
-    const newAccessToken = this.tokenService.generateToken(tokenPayload); // Sesuaikan nama method jika perlu
-    // Kembalikan data user baru DAN token baru
+    const newAccessToken = this.tokenService.generateToken(tokenPayload);
+
+    // Return updated user data with new token
     return {
       ...updatedUserDto,
       access_token: newAccessToken,
