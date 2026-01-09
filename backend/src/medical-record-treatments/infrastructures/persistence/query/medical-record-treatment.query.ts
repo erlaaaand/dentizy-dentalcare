@@ -17,6 +17,51 @@ export interface TreatmentByCategory {
   totalRevenue: number;
 }
 
+export interface MostUsedTreatment {
+  treatmentId: number;
+  treatmentName: string;
+  usageCount: number;
+  totalQuantity: number;
+  totalRevenue: number;
+}
+
+export interface MonthlyRevenue {
+  month: number;
+  revenue: number;
+  treatmentCount: number;
+}
+
+interface RawStatisticsResult {
+  totalTreatments: string;
+  totalRevenue: string;
+  averagePrice: string;
+}
+
+interface RawCategoryResult {
+  categoryId: number;
+  categoryName: string;
+  totalTreatments: string;
+  totalRevenue: string;
+}
+
+interface RawMostUsedResult {
+  treatmentId: number;
+  treatmentName: string;
+  usageCount: string;
+  totalQuantity: string;
+  totalRevenue: string;
+}
+
+interface RawMonthlyRevenueResult {
+  month: number;
+  revenue: string;
+  treatmentCount: string;
+}
+
+interface RawDiscountResult {
+  totalDiscount: string;
+}
+
 @Injectable()
 export class MedicalRecordTreatmentQuery {
   constructor(
@@ -64,13 +109,9 @@ export class MedicalRecordTreatmentQuery {
       .addSelect('COALESCE(AVG(mrt.hargaSatuan), 0)', 'averagePrice')
       .where('mrt.medicalRecordId = :medicalRecordId', { medicalRecordId })
       .andWhere('mrt.deletedAt IS NULL')
-      .getRawOne();
+      .getRawOne<RawStatisticsResult>();
 
-    return {
-      totalTreatments: parseInt(result.totalTreatments) || 0,
-      totalRevenue: parseFloat(result.totalRevenue) || 0,
-      averagePrice: parseFloat(result.averagePrice) || 0,
-    };
+    return this.mapToStatistics(result);
   }
 
   async getStatisticsByDateRange(
@@ -87,13 +128,9 @@ export class MedicalRecordTreatmentQuery {
         endDate,
       })
       .andWhere('mrt.deletedAt IS NULL')
-      .getRawOne();
+      .getRawOne<RawStatisticsResult>();
 
-    return {
-      totalTreatments: parseInt(result.totalTreatments) || 0,
-      totalRevenue: parseFloat(result.totalRevenue) || 0,
-      averagePrice: parseFloat(result.averagePrice) || 0,
-    };
+    return this.mapToStatistics(result);
   }
 
   async getTreatmentsByCategory(
@@ -117,7 +154,7 @@ export class MedicalRecordTreatmentQuery {
       });
     }
 
-    const results = await query.getRawMany();
+    const results = await query.getRawMany<RawCategoryResult>();
 
     return results.map((r) => ({
       categoryId: r.categoryId,
@@ -127,8 +164,10 @@ export class MedicalRecordTreatmentQuery {
     }));
   }
 
-  async getMostUsedTreatments(limit: number = 10): Promise<any[]> {
-    return await this.repository
+  async getMostUsedTreatments(
+    limit: number = 10,
+  ): Promise<MostUsedTreatment[]> {
+    const results = await this.repository
       .createQueryBuilder('mrt')
       .leftJoinAndSelect('mrt.treatment', 'treatment')
       .select('treatment.id', 'treatmentId')
@@ -141,11 +180,19 @@ export class MedicalRecordTreatmentQuery {
       .addGroupBy('treatment.namaPerawatan')
       .orderBy('usageCount', 'DESC')
       .limit(limit)
-      .getRawMany();
+      .getRawMany<RawMostUsedResult>();
+
+    return results.map((r) => ({
+      treatmentId: r.treatmentId,
+      treatmentName: r.treatmentName,
+      usageCount: parseInt(r.usageCount) || 0,
+      totalQuantity: parseInt(r.totalQuantity) || 0,
+      totalRevenue: parseFloat(r.totalRevenue) || 0,
+    }));
   }
 
-  async getRevenueByMonth(year: number): Promise<any[]> {
-    return await this.repository
+  async getRevenueByMonth(year: number): Promise<MonthlyRevenue[]> {
+    const results = await this.repository
       .createQueryBuilder('mrt')
       .select('MONTH(mrt.createdAt)', 'month')
       .addSelect('COALESCE(SUM(mrt.total), 0)', 'revenue')
@@ -154,7 +201,13 @@ export class MedicalRecordTreatmentQuery {
       .andWhere('mrt.deletedAt IS NULL')
       .groupBy('MONTH(mrt.createdAt)')
       .orderBy('month', 'ASC')
-      .getRawMany();
+      .getRawMany<RawMonthlyRevenueResult>();
+
+    return results.map((r) => ({
+      month: r.month,
+      revenue: parseFloat(r.revenue) || 0,
+      treatmentCount: parseInt(r.treatmentCount) || 0,
+    }));
   }
 
   async getTotalDiscountByMedicalRecordId(
@@ -165,11 +218,29 @@ export class MedicalRecordTreatmentQuery {
       .select('COALESCE(SUM(mrt.diskon), 0)', 'totalDiscount')
       .where('mrt.medicalRecordId = :medicalRecordId', { medicalRecordId })
       .andWhere('mrt.deletedAt IS NULL')
-      .getRawOne();
+      .getRawOne<RawDiscountResult>();
 
-    return parseFloat(result?.totalDiscount || 0);
+    return parseFloat(result?.totalDiscount || '0');
+  }
+
+  /**
+   * Helper untuk memetakan hasil raw statistics
+   */
+  private mapToStatistics(
+    result: RawStatisticsResult | undefined,
+  ): TreatmentStatistics {
+    if (!result) {
+      return {
+        totalTreatments: 0,
+        totalRevenue: 0,
+        averagePrice: 0,
+      };
+    }
+
+    return {
+      totalTreatments: parseInt(result.totalTreatments) || 0,
+      totalRevenue: parseFloat(result.totalRevenue) || 0,
+      averagePrice: parseFloat(result.averagePrice) || 0,
+    };
   }
 }
-
-// backend/src/medical-record-treatments/infrastructures/persistence/queries/index.ts
-export * from './medical-record-treatment.query';

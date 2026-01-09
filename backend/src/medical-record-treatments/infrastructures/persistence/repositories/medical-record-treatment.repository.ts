@@ -1,11 +1,30 @@
 // backend/src/medical-record-treatments/infrastructures/persistence/repositories/medical-record-treatment.repository.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, FindOptionsWhere } from 'typeorm';
+import { Repository, FindOptionsWhere, SelectQueryBuilder } from 'typeorm';
 import { MedicalRecordTreatment } from '../../../domains/entities/medical-record-treatments.entity';
 import { CreateMedicalRecordTreatmentDto } from '../../../applications/dto/create-medical-record-treatment.dto';
 import { UpdateMedicalRecordTreatmentDto } from '../../../applications/dto/update-medical-record-treatment.dto';
 import { QueryMedicalRecordTreatmentDto } from '../../../applications/dto/query-medical-record-treatment.dto';
+
+// Interface untuk return value method getTopTreatments
+export interface TopTreatmentStatistics {
+  treatmentName: string;
+  usageCount: number;
+  totalRevenue: number;
+}
+
+// Interface untuk hasil RAW dari database (TypeORM mengembalikan string untuk fungsi agregat)
+interface RawTopTreatmentResult {
+  treatmentName: string;
+  usageCount: string;
+  totalRevenue: string;
+}
+
+// Interface untuk hasil RAW total
+interface RawTotalResult {
+  total: string; // Decimal/SUM result usually comes as string
+}
 
 @Injectable()
 export class MedicalRecordTreatmentRepository {
@@ -86,6 +105,7 @@ export class MedicalRecordTreatmentRepository {
       );
     }
 
+    // Pastikan konversi ke Number untuk perhitungan yang aman
     const jumlah = dto.jumlah ?? existing.jumlah;
     const hargaSatuan = dto.hargaSatuan ?? Number(existing.hargaSatuan);
     const diskon = dto.diskon ?? Number(existing.diskon);
@@ -118,14 +138,16 @@ export class MedicalRecordTreatmentRepository {
   }
 
   async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
+    // Gunakan Generic Type <RawTotalResult> agar result.total dikenali
     const result = await this.repository
       .createQueryBuilder('mrt')
       .select('SUM(mrt.total)', 'total')
       .where('mrt.medicalRecordId = :medicalRecordId', { medicalRecordId })
       .andWhere('mrt.deletedAt IS NULL')
-      .getRawOne();
+      .getRawOne<RawTotalResult>();
 
-    return parseFloat(result?.total || 0);
+    // Safety check dan parsing
+    return result && result.total ? parseFloat(result.total) : 0;
   }
 
   async exists(id: number): Promise<boolean> {
@@ -140,7 +162,7 @@ export class MedicalRecordTreatmentRepository {
     limit: number = 10,
     startDate?: Date,
     endDate?: Date,
-  ): Promise<any[]> {
+  ): Promise<TopTreatmentStatistics[]> {
     const query = this.repository
       .createQueryBuilder('mrt')
       .leftJoin('mrt.treatment', 'treatment')
@@ -149,7 +171,9 @@ export class MedicalRecordTreatmentRepository {
         'COUNT(mrt.id) AS usageCount',
         'SUM(mrt.subtotal) AS totalRevenue',
       ])
+      .where('mrt.deletedAt IS NULL') // Tambahkan filter deletedAt untuk akurasi
       .groupBy('treatment.id')
+      .addGroupBy('treatment.namaPerawatan') // PostgreSQL butuh ini jika tidak diagregasi
       .orderBy('usageCount', 'DESC')
       .limit(limit);
 
@@ -160,6 +184,14 @@ export class MedicalRecordTreatmentRepository {
       });
     }
 
-    return await query.getRawMany();
+    // Gunakan Generic Type <RawTopTreatmentResult>
+    const results = await query.getRawMany<RawTopTreatmentResult>();
+
+    // Mapping manual untuk konversi string ke number yang benar
+    return results.map((r) => ({
+      treatmentName: r.treatmentName,
+      usageCount: parseInt(r.usageCount) || 0,
+      totalRevenue: parseFloat(r.totalRevenue) || 0,
+    }));
   }
 }
