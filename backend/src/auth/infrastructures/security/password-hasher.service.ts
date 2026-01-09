@@ -2,6 +2,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
+/**
+ * Interface untuk hasil validasi kekuatan password
+ */
+interface PasswordStrengthResult {
+  strong: boolean;
+  reasons: string[];
+}
+
 @Injectable()
 export class PasswordHasherService {
   private readonly logger = new Logger(PasswordHasherService.name);
@@ -16,7 +24,10 @@ export class PasswordHasherService {
     try {
       return await bcrypt.hash(password, this.SALT_ROUNDS);
     } catch (error) {
-      this.logger.error('Failed to hash password', error);
+      this.logger.error(
+        'Failed to hash password',
+        error instanceof Error ? error.stack : 'Unknown error',
+      );
       throw new Error('Password hashing failed');
     }
   }
@@ -31,7 +42,10 @@ export class PasswordHasherService {
     try {
       return await bcrypt.compare(plainPassword, hashedPassword);
     } catch (error) {
-      this.logger.error('Failed to compare passwords', error);
+      this.logger.error(
+        'Failed to compare passwords',
+        error instanceof Error ? error.stack : 'Unknown error',
+      );
       return false;
     }
   }
@@ -46,7 +60,7 @@ export class PasswordHasherService {
   /**
    * Verify password strength (business rule implementation)
    */
-  isStrongPassword(password: string): { strong: boolean; reasons: string[] } {
+  isStrongPassword(password: string): PasswordStrengthResult {
     const reasons: string[] = [];
 
     if (password.length < 8) {
