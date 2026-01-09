@@ -1,12 +1,12 @@
+// applications/use-cases/medical-record-find.service.ts
 import {
   Injectable,
   Logger,
   NotFoundException,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { MedicalRecord } from '../../domains/entities/medical-record.entity';
 import { User } from '../../../users/domains/entities/user.entity';
 import { MedicalRecordAuthorizationService } from '../../domains/services/medical-record-authorization.service';
@@ -75,7 +75,10 @@ export class MedicalRecordFindService {
   /**
    * Apply authorization filter based on user role
    */
-  private applyAuthorizationFilter(queryBuilder: any, user: User): void {
+  private applyAuthorizationFilter(
+    queryBuilder: SelectQueryBuilder<MedicalRecord>,
+    user: User,
+  ): void {
     const isKepalaKlinik = this.authService.isKepalaKlinik(user);
     const isDokter = this.authService.isDokter(user);
     const isStaf = this.authService.isStaf(user);

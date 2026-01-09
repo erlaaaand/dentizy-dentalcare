@@ -1,3 +1,4 @@
+// applications/orchestrator/medical_records.service.ts
 import { Injectable } from '@nestjs/common';
 import { CreateMedicalRecordDto } from '../dto/create-medical-record.dto';
 import { UpdateMedicalRecordDto } from '../dto/update-medical-record.dto';
@@ -14,6 +15,7 @@ import { MedicalRecordDeletionService } from '../use-cases/medical-record-deleti
 import { FindAllMedicalRecordQueryDto } from '../dto/find-all-medical-record.dto';
 import { MedicalRecordQueryBuilder } from '../../infrastructure/persistence/query/medical-record-query.builder';
 import { MedicalRecordsRepository } from '../../../medical_records/infrastructure/persistence/repositories/medical-records.repository';
+import { DoctorPerformance } from '../../infrastructure/persistence/repositories/medical-records.repository';
 
 /**
  * Orchestrator Service
@@ -150,8 +152,13 @@ export class MedicalRecordsService {
     return await this.appointmentFinderService.exists(appointmentId);
   }
 
-  async getDoctorStatistics(startDate?: Date, endDate?: Date): Promise<any[]> {
-    // Memanggil method baru di repository (pastikan repo sudah diupdate)
+  /**
+   * Get doctor statistics
+   */
+  async getDoctorStatistics(
+    startDate?: Date,
+    endDate?: Date,
+  ): Promise<DoctorPerformance[]> {
     return await this.repository.getDoctorPerformance(startDate, endDate);
   }
 }
