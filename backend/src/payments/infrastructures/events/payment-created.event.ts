@@ -7,6 +7,6 @@ export class PaymentCreatedEvent {
     public readonly nomorInvoice: string,
     public readonly totalAkhir: number,
     public readonly statusPembayaran: string,
-    public readonly createdBy?: number,
+    public readonly createdBy: number | null,
   ) {}
 }
