@@ -43,6 +43,41 @@ import { User } from '../../domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
 
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  lastPage: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface UserListResponse {
+  data: UserResponseDto[];
+  meta: PaginationMeta;
+}
+
+interface DeleteResponse {
+  message: string;
+}
+
+interface UsernameAvailability {
+  available: boolean;
+  message: string;
+}
+
+interface UserStatistics {
+  total: number;
+  byRole: Record<string, number>;
+  active: number;
+  inactive: number;
+}
+
+interface TemporaryPasswordResponse {
+  temporaryPassword: string;
+  message: string;
+}
+
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
 @Controller('users')
@@ -114,12 +149,8 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'Daftar user berhasil diambil',
-    type: '', // ✅ Type safe & auto-generated docs
   })
-  async findAll(@Query() query: FindUsersQueryDto): Promise<{
-    data: UserResponseDto[];
-    meta: any;
-  }> {
+  async findAll(@Query() query: FindUsersQueryDto): Promise<UserListResponse> {
     return this.usersService.findAll(query);
   }
 
@@ -144,12 +175,7 @@ export class UsersController {
       },
     },
   })
-  async getStatistics(): Promise<{
-    total: number;
-    byRole: Record<string, number>;
-    active: number;
-    inactive: number;
-  }> {
+  async getStatistics(): Promise<UserStatistics> {
     return this.usersService.getUserStatistics();
   }
 
@@ -190,10 +216,7 @@ export class UsersController {
       },
     },
   })
-  async checkUsername(@Param('username') username: string): Promise<{
-    available: boolean;
-    message: string;
-  }> {
+  async checkUsername(@Param('username') username: string): Promise<UsernameAvailability> {
     return this.usersService.checkUsernameAvailability(username);
   }
 
@@ -255,7 +278,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
   async remove(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<{ message: string }> {
+  ): Promise<DeleteResponse> {
     return this.usersService.remove(id);
   }
 
@@ -282,7 +305,6 @@ export class UsersController {
     @GetUser() user: User,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<PasswordChangeResponseDto> {
-    // Validasi sudah dilakukan oleh DTO validators (@Match decorator)
     return this.usersService.changePassword(
       user.id,
       changePasswordDto.oldPassword,
@@ -332,10 +354,7 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-  async generateTempPassword(@Param('id', ParseIntPipe) id: number): Promise<{
-    temporaryPassword: string;
-    message: string;
-  }> {
+  async generateTempPassword(@Param('id', ParseIntPipe) id: number): Promise<TemporaryPasswordResponse> {
     return this.usersService.generateTemporaryPassword(id);
   }
 }
