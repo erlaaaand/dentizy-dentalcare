@@ -2,9 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
   Repository,
-  Between,
   FindOptionsWhere,
-  Like,
   DataSource,
   Brackets,
   EntityManager,
@@ -14,6 +12,11 @@ import { CreatePaymentDto } from '../../../applications/dto/create-payment.dto';
 import { UpdatePaymentDto } from '../../../applications/dto/update-payment.dto';
 import { QueryPaymentDto } from '../../../applications/dto/query-payment.dto';
 import { InvoiceGeneratorService } from '../../../domains/services/invoice-generator.service';
+
+interface PaginatedResult {
+  data: Payment[];
+  total: number;
+}
 
 @Injectable()
 export class PaymentRepository {
@@ -50,10 +53,7 @@ export class PaymentRepository {
     });
   }
 
-  // [FIX UTAMA] Mengubah findAll menggunakan QueryBuilder dengan Join
-  async findAll(
-    query: QueryPaymentDto,
-  ): Promise<{ data: Payment[]; total: number }> {
+  async findAll(query: QueryPaymentDto): Promise<PaginatedResult> {
     const {
       medicalRecordId,
       patientId,
@@ -69,11 +69,11 @@ export class PaymentRepository {
 
     const qb = this.repository.createQueryBuilder('payment');
 
-    // 1. JOIN RELASI (Agar nama pasien & detail rekam medis muncul)
+    // JOIN RELASI
     qb.leftJoinAndSelect('payment.patient', 'patient');
     qb.leftJoinAndSelect('payment.medicalRecord', 'medicalRecord');
 
-    // 2. FILTERING
+    // FILTERING
     if (medicalRecordId) {
       qb.andWhere('payment.medicalRecordId = :medicalRecordId', {
         medicalRecordId,
@@ -118,7 +118,7 @@ export class PaymentRepository {
       );
     }
 
-    // 3. SORTING & PAGINATION
+    // SORTING & PAGINATION
     qb.orderBy('payment.createdAt', 'DESC');
     qb.skip(skip).take(limit);
 
@@ -130,7 +130,6 @@ export class PaymentRepository {
   async findOne(id: number): Promise<Payment> {
     const payment = await this.repository.findOne({
       where: { id },
-      // [FIX] Jangan lupa join di findOne juga agar detail modal lengkap
       relations: ['patient', 'medicalRecord'],
     });
 
@@ -189,10 +188,16 @@ export class PaymentRepository {
       });
 
       // Return updated data dengan relasi
-      return (await paymentRepo.findOne({
+      const updatedPayment = await paymentRepo.findOne({
         where: { id },
         relations: ['patient'],
-      })) as Payment;
+      });
+
+      if (!updatedPayment) {
+        throw new NotFoundException(`Payment with ID ${id} not found after update`);
+      }
+
+      return updatedPayment;
     });
   }
 
@@ -221,8 +226,8 @@ export class PaymentRepository {
       );
     }
 
-    const result = await query.getRawOne();
-    return parseFloat(result?.total || 0);
+    const result = await query.getRawOne<{ total: string | null }>();
+    return parseFloat(result?.total || '0');
   }
 
   async count(where?: FindOptionsWhere<Payment>): Promise<number> {
