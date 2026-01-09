@@ -1,3 +1,4 @@
+// domains/validators/medical-record.validator.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { MedicalRecord } from '../entities/medical-record.entity';
 
@@ -80,7 +81,8 @@ export class MedicalRecordValidator {
     relations: string[],
   ): void {
     for (const relation of relations) {
-      if (!medicalRecord[relation]) {
+      const relationKey = relation as keyof MedicalRecord;
+      if (!medicalRecord[relationKey]) {
         throw new BadRequestException(
           `Relation '${relation}' harus dimuat terlebih dahulu`,
         );

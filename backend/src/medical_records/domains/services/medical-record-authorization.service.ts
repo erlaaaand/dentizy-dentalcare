@@ -1,8 +1,15 @@
+// domains/services/medical-record-authorization.service.ts
 import { Injectable, ForbiddenException } from '@nestjs/common';
 import { User } from '../../../users/domains/entities/user.entity';
 import { MedicalRecord } from './../entities/medical-record.entity';
 import { Appointment } from '../../../appointments/domains/entities/appointment.entity';
 import { UserRole } from '../../../roles/entities/role.entity';
+
+interface AccessFilter {
+  field: string;
+  value: number;
+  operator: 'eq' | 'in' | 'ne';
+}
 
 @Injectable()
 export class MedicalRecordAuthorizationService {
@@ -164,11 +171,7 @@ export class MedicalRecordAuthorizationService {
   /**
    * Get WHERE clause for findAll based on user role
    */
-  getAccessFilter(user: User): {
-    field: string;
-    value: any;
-    operator: 'eq' | 'in' | 'ne';
-  } | null {
+  getAccessFilter(user: User): AccessFilter | null {
     // Kepala Klinik: no filter, can see all
     if (this.isKepalaKlinik(user)) {
       return null;
@@ -200,8 +203,6 @@ export class MedicalRecordAuthorizationService {
    * Get user role summary for logging
    */
   getRoleSummary(user: User): string {
-    return user.roles
-      .map((r) => r.name.toUpperCase()) // ✅ convert ke huruf besar
-      .join(', ');
+    return user.roles.map((r) => r.name.toUpperCase()).join(', ');
   }
 }
