@@ -1,5 +1,4 @@
 // backend/src/treatments/interface/http/treatments.controller.ts
-
 import {
   Controller,
   Get,
@@ -26,12 +25,8 @@ import {
   ApiForbiddenResponse,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
-
-// Pastikan path import guard ini benar
 import { RolesGuard } from '../../../auth/interface/guards/roles.guard';
 import { Roles } from '../../../auth/interface/decorators/roles.decorator';
-
-// Pastikan UserRole di-import dari entity/enum yang benar dan memiliki value: DOKTER, STAF, KEPALA_KLINIK
 import { UserRole } from '../../../roles/entities/role.entity';
 
 import { CreateTreatmentDto } from '../../applications/dto/create-treatment.dto';
@@ -46,7 +41,11 @@ import { DeleteTreatmentUseCase } from '../../applications/use-cases/delete-trea
 import { RestoreTreatmentUseCase } from '../../applications/use-cases/restore-treatment.use-case';
 import { GetTreatmentUseCase } from '../../applications/use-cases/get-treatment.use-case';
 import { ListTreatmentsUseCase } from '../../applications/use-cases/list-treatments.use-case';
-import { GetTreatmentByCodeUseCase } from 'src/treatments/applications/use-cases/get-treatment-by-code.use-case';
+import { GetTreatmentByCodeUseCase } from '../../applications/use-cases/get-treatment-by-code.use-case';
+
+interface MessageResponse {
+  message: string;
+}
 
 @ApiTags('Treatments')
 @ApiBearerAuth('access-token')
@@ -55,7 +54,7 @@ import { GetTreatmentByCodeUseCase } from 'src/treatments/applications/use-cases
 @ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
 @ApiForbiddenResponse({
   description: 'Role user tidak memiliki akses ke endpoint ini',
-}) // Fix syntax missing '@'
+})
 @Controller('treatments')
 export class TreatmentsController {
   constructor(
@@ -69,7 +68,7 @@ export class TreatmentsController {
   ) {}
 
   @Post()
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Hanya Admin & Staf
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create new treatment' })
   @ApiResponse({
@@ -88,12 +87,11 @@ export class TreatmentsController {
   async create(
     @Body() createDto: CreateTreatmentDto,
   ): Promise<TreatmentResponseDto> {
-    // Return DTO langsung untuk Orval
     return this.createTreatmentUseCase.execute(createDto);
   }
 
   @Get()
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER) // Semua role bisa lihat
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Get all treatments with pagination and filters' })
   @ApiResponse({
@@ -125,8 +123,8 @@ export class TreatmentsController {
     status: HttpStatus.NOT_FOUND,
     description: 'Treatment not found',
   })
-  async findByKode(@Param('kode') kode: string) {
-    const data = await this.getTreatmentByCodeUseCase.execute(kode);
+  async findByKode(@Param('kode') kode: string): Promise<TreatmentResponseDto> {
+    return this.getTreatmentByCodeUseCase.execute(kode);
   }
 
   @Get(':id')
@@ -155,7 +153,7 @@ export class TreatmentsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Dokter biasanya tidak bisa edit harga
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Update treatment' })
   @ApiParam({
@@ -189,7 +187,7 @@ export class TreatmentsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.KEPALA_KLINIK) // Hanya Kepala Klinik yang boleh hapus
+  @Roles(UserRole.KEPALA_KLINIK)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Soft delete treatment' })
   @ApiParam({
@@ -213,13 +211,13 @@ export class TreatmentsController {
     status: HttpStatus.CONFLICT,
     description: 'Treatment cannot be deleted',
   })
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id', ParseIntPipe) id: number): Promise<MessageResponse> {
     await this.deleteTreatmentUseCase.execute(id);
     return { message: 'Perawatan berhasil dihapus' };
   }
 
   @Patch(':id/restore')
-  @Roles(UserRole.KEPALA_KLINIK) // Hanya Kepala Klinik
+  @Roles(UserRole.KEPALA_KLINIK)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Restore soft deleted treatment' })
   @ApiParam({

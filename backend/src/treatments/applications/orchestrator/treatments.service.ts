@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ConflictException,
 } from '@nestjs/common';
 import { TreatmentRepository } from '../../infrastructures/persistence/repositories/treatment.repository';
 import { TreatmentCategoryRepository } from '../../../treatment-categories/infrastructures/persistence/repositories/treatment-category.repository';
@@ -11,6 +10,15 @@ import { CreateTreatmentDto } from '../dto/create-treatment.dto';
 import { UpdateTreatmentDto } from '../dto/update-treatment.dto';
 import { QueryTreatmentDto } from '../dto/query-treatment.dto';
 import { TreatmentResponseDto } from '../dto/treatment-response.dto';
+import { PaginatedTreatmentResponseDto } from '../dto/paginated-treatment-response.dto';
+import { Treatment } from '../../domains/entities/treatments.entity';
+
+interface PaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
 
 @Injectable()
 export class TreatmentsService {
@@ -29,14 +37,22 @@ export class TreatmentsService {
     }
 
     try {
-      const treatment = await this.treatmentRepository.create(dto);
-      return this.mapToResponseDto(treatment);
+      // Note: This method requires kode to be generated elsewhere
+      // Consider using CreateTreatmentUseCase instead for production
+      throw new BadRequestException(
+        'Use CreateTreatmentUseCase for creating treatments',
+      );
     } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
       throw new BadRequestException('Gagal membuat perawatan');
     }
   }
 
-  async findAll(query: QueryTreatmentDto) {
+  async findAll(
+    query: QueryTreatmentDto,
+  ): Promise<PaginatedTreatmentResponseDto> {
     const { data, total } = await this.treatmentRepository.findAll(query);
     const { page = 1, limit = 10 } = query;
 
@@ -62,7 +78,8 @@ export class TreatmentsService {
   }
 
   async findByKode(kodePerawatan: string): Promise<TreatmentResponseDto> {
-    const treatment = await this.treatmentRepository.findByKode(kodePerawatan);
+    const treatment =
+      await this.treatmentRepository.findByKode(kodePerawatan);
 
     if (!treatment) {
       throw new NotFoundException(
@@ -84,7 +101,7 @@ export class TreatmentsService {
     }
 
     // Validate category if provided
-    if (dto.categoryId) {
+    if (dto.categoryId !== undefined) {
       const categoryExists = await this.categoryRepository.exists(
         dto.categoryId,
       );
@@ -95,18 +112,18 @@ export class TreatmentsService {
       }
     }
 
-    // Check if kode already exists (excluding current record)
-    // if (dto.kodePerawatan) {
-    //     const kodeExists = await this.treatmentRepository.isKodeExists(dto.kodePerawatan, id);
-    //     if (kodeExists) {
-    //         throw new ConflictException(`Kode perawatan ${dto.kodePerawatan} sudah digunakan`);
-    //     }
-    // }
-
     try {
       const treatment = await this.treatmentRepository.update(id, dto);
+      if (!treatment) {
+        throw new NotFoundException(
+          `Perawatan dengan ID ${id} tidak ditemukan setelah update`,
+        );
+      }
       return this.mapToResponseDto(treatment);
     } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
       throw new BadRequestException('Gagal mengupdate perawatan');
     }
   }
@@ -132,9 +149,18 @@ export class TreatmentsService {
     return this.mapToResponseDto(treatment);
   }
 
-  private mapToResponseDto(treatment: any): TreatmentResponseDto {
+  private mapToResponseDto(treatment: Treatment): TreatmentResponseDto {
     return new TreatmentResponseDto({
-      ...treatment,
+      id: treatment.id,
+      categoryId: treatment.categoryId,
+      kodePerawatan: treatment.kodePerawatan,
+      namaPerawatan: treatment.namaPerawatan,
+      deskripsi: treatment.deskripsi,
+      harga: Number(treatment.harga),
+      durasiEstimasi: treatment.durasiEstimasi,
+      isActive: treatment.isActive,
+      createdAt: treatment.createdAt,
+      updatedAt: treatment.updatedAt,
       category: treatment.category
         ? {
             id: treatment.category.id,
