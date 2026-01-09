@@ -1,4 +1,3 @@
-// backend/src/payments/interface/http/payments.controller.ts
 import {
   Controller,
   Get,
@@ -44,6 +43,34 @@ import { GetUser } from '../../../auth/interface/decorators/get-user.decorator';
 import { User } from '../../../users/domains/entities/user.entity';
 import { ProcessPaymentDto } from '../../../payments/applications/dto/process-payment.dto';
 
+interface StandardResponse<T = unknown> {
+  statusCode: number;
+  message: string;
+  data: T;
+}
+
+interface PaginatedResponse<T = unknown> {
+  statusCode: number;
+  message: string;
+  data: T[];
+  meta: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+interface RevenueResponse {
+  total: number;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+interface AuthenticatedRequest extends Request {
+  user?: User;
+}
+
 @ApiTags('Payments')
 @ApiBearerAuth('access-token')
 @Controller('payments')
@@ -73,8 +100,7 @@ export class PaymentsController {
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ProcessPaymentDto,
     @GetUser() user: User,
-  ) {
-    // Panggil service processPayment yang sudah dibuat sebelumnya
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const data = await this.paymentsService.processPayment(id, dto, user.id);
     return {
       statusCode: HttpStatus.OK,
@@ -84,7 +110,7 @@ export class PaymentsController {
   }
 
   @Post()
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Hanya Admin/Staf yang boleh input pembayaran
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Membuat pembayaran baru',
@@ -99,7 +125,10 @@ export class PaymentsController {
   @ApiConflictResponse({
     description: 'Pembayaran sudah ada untuk medical record ini',
   })
-  async create(@Body() createDto: CreatePaymentDto, @Req() req: any) {
+  async create(
+    @Body() createDto: CreatePaymentDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     if (req.user?.id) {
       createDto.createdBy = req.user.id;
     }
@@ -124,7 +153,9 @@ export class PaymentsController {
     description: 'Daftar pembayaran berhasil diambil',
     type: [PaymentResponseDto],
   })
-  async findAll(@Query() query: QueryPaymentDto) {
+  async findAll(
+    @Query() query: QueryPaymentDto,
+  ): Promise<PaginatedResponse<PaymentResponseDto>> {
     const result = await this.paymentsService.findAll(query);
     return {
       statusCode: HttpStatus.OK,
@@ -134,7 +165,7 @@ export class PaymentsController {
   }
 
   @Get('invoice/:nomorInvoice')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER) // Dokter mungkin perlu cek invoice
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan pembayaran berdasarkan nomor invoice',
@@ -150,7 +181,9 @@ export class PaymentsController {
     type: PaymentResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
-  async findByNomorInvoice(@Param('nomorInvoice') nomorInvoice: string) {
+  async findByNomorInvoice(
+    @Param('nomorInvoice') nomorInvoice: string,
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const data = await this.paymentsService.findByNomorInvoice(nomorInvoice);
     return {
       statusCode: HttpStatus.OK,
@@ -160,7 +193,7 @@ export class PaymentsController {
   }
 
   @Get('medical-record/:medicalRecordId')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER) // Dokter perlu tahu status bayar rekam medis
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan pembayaran berdasarkan medical record',
@@ -179,7 +212,7 @@ export class PaymentsController {
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   async findByMedicalRecordId(
     @Param('medicalRecordId', ParseIntPipe) medicalRecordId: number,
-  ) {
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const data =
       await this.paymentsService.findByMedicalRecordId(medicalRecordId);
     return {
@@ -190,7 +223,7 @@ export class PaymentsController {
   }
 
   @Get('patient/:patientId')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER) // Dokter perlu lihat history bayar pasien
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan riwayat pembayaran pasien',
@@ -215,7 +248,7 @@ export class PaymentsController {
   async findByPatientId(
     @Param('patientId', ParseIntPipe) patientId: number,
     @Query('limit') limit?: number,
-  ) {
+  ): Promise<StandardResponse<PaymentResponseDto[]>> {
     const data = await this.paymentsService.findByPatientId(patientId, limit);
     return {
       statusCode: HttpStatus.OK,
@@ -225,7 +258,7 @@ export class PaymentsController {
   }
 
   @Get('statistics')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Data sensitif klinik
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan statistik pembayaran',
@@ -246,7 +279,7 @@ export class PaymentsController {
   async getStatistics(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ) {
+  ): Promise<StandardResponse> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     const data = await this.paymentsService.getStatistics(start, end);
@@ -258,7 +291,7 @@ export class PaymentsController {
   }
 
   @Get('revenue')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Data sensitif klinik
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan total pendapatan',
@@ -275,7 +308,7 @@ export class PaymentsController {
   async getTotalRevenue(
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
-  ) {
+  ): Promise<StandardResponse<RevenueResponse>> {
     const start = startDate ? new Date(startDate) : undefined;
     const end = endDate ? new Date(endDate) : undefined;
     const total = await this.paymentsService.getTotalRevenue(start, end);
@@ -287,7 +320,7 @@ export class PaymentsController {
   }
 
   @Get('revenue/period')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Data sensitif klinik
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan pendapatan per periode',
@@ -306,7 +339,7 @@ export class PaymentsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('groupBy') groupBy: 'day' | 'month' | 'year' = 'day',
-  ) {
+  ): Promise<StandardResponse> {
     const data = await this.paymentsService.getRevenueByPeriod(
       new Date(startDate),
       new Date(endDate),
@@ -320,7 +353,7 @@ export class PaymentsController {
   }
 
   @Get(':id')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER) // Dokter boleh lihat detail
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF, UserRole.DOKTER)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mendapatkan detail pembayaran',
@@ -336,7 +369,9 @@ export class PaymentsController {
     type: PaymentResponseDto,
   })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const data = await this.paymentsService.findOne(id);
     return {
       statusCode: HttpStatus.OK,
@@ -346,7 +381,7 @@ export class PaymentsController {
   }
 
   @Patch(':id')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Edit hanya admin
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Mengupdate pembayaran',
@@ -365,8 +400,8 @@ export class PaymentsController {
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: UpdatePaymentDto,
-    @Req() req: any,
-  ) {
+    @Req() req: AuthenticatedRequest,
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const updatedBy = req.user?.id;
     const data = await this.paymentsService.update(id, updateDto, updatedBy);
     return {
@@ -377,7 +412,7 @@ export class PaymentsController {
   }
 
   @Patch(':id/cancel')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Cancel hanya admin
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Membatalkan pembayaran',
@@ -391,7 +426,10 @@ export class PaymentsController {
   })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   @ApiBadRequestResponse({ description: 'Pembayaran sudah dibatalkan' })
-  async cancel(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  async cancel(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<StandardResponse<PaymentResponseDto>> {
     const cancelledBy = req.user?.id;
     const data = await this.paymentsService.cancel(id, cancelledBy);
     return {
@@ -402,7 +440,7 @@ export class PaymentsController {
   }
 
   @Delete(':id')
-  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF) // Hapus hanya admin
+  @Roles(UserRole.KEPALA_KLINIK, UserRole.STAF)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Menghapus pembayaran (soft delete)',
@@ -411,7 +449,10 @@ export class PaymentsController {
   @ApiParam({ name: 'id', description: 'ID Pembayaran', type: Number })
   @ApiOkResponse({ description: 'Pembayaran berhasil dihapus' })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
-  async remove(@Param('id', ParseIntPipe) id: number, @Req() req: any) {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<StandardResponse<Record<string, never>>> {
     const deletedBy = req.user?.id;
     await this.paymentsService.remove(id, deletedBy);
     return {
