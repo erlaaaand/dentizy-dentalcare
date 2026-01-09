@@ -1,4 +1,3 @@
-// backend/src/payments/domains/entities/payments.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -134,15 +133,15 @@ export class Payment {
   statusPembayaran: StatusPembayaran;
 
   @Column({ type: 'text', nullable: true })
-  keterangan: string;
+  keterangan: string | null;
 
   // --- AUDIT TRAIL ---
   @Column({ type: 'int', nullable: true, name: 'created_by' })
   @Index('idx_payment_created_by')
-  createdBy: number;
+  createdBy: number | null;
 
   @Column({ type: 'int', nullable: true, name: 'updated_by' })
-  updatedBy: number;
+  updatedBy: number | null;
 
   @CreateDateColumn({ type: 'datetime', precision: 6, name: 'created_at' })
   createdAt: Date;
@@ -156,21 +155,18 @@ export class Payment {
     name: 'deleted_at',
     nullable: true,
   })
-  deletedAt: Date;
+  deletedAt: Date | null;
 
-  // --- RELATIONS (PERBAIKAN UTAMA) ---
+  // --- RELATIONS ---
 
-  // Relasi ke Pasien (Agar payment.patient tidak error)
   @ManyToOne(() => Patient)
   @JoinColumn({ name: 'patient_id' })
   patient: Patient;
 
-  // Relasi ke Rekam Medis
   @ManyToOne(() => MedicalRecord)
   @JoinColumn({ name: 'medical_record_id' })
   medicalRecord: MedicalRecord;
 
-  // Relasi ke User (Pembuat) - Opsional, untuk menampilkan nama kasir
   @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by' })
   creator: User;
@@ -181,11 +177,10 @@ export class Payment {
 
   // --- DOMAIN LOGIC & HOOKS ---
 
-  // Otomatis hitung ulang sebelum save/update
   @BeforeInsert()
   @BeforeUpdate()
-  recalculate() {
-    // Pastikan nilai numerik (handle jika string masuk)
+  recalculate(): void {
+    // Pastikan nilai numerik
     const total = Number(this.totalBiaya) || 0;
     const diskon = Number(this.diskonTotal) || 0;
     const bayar = Number(this.jumlahBayar) || 0;

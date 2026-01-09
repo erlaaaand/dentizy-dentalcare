@@ -20,8 +20,8 @@ export class PaymentMapper {
       kembalian: Number(entity.kembalian),
       metodePembayaran: entity.metodePembayaran,
       statusPembayaran: entity.statusPembayaran,
-      keterangan: entity.keterangan,
-      createdBy: entity.createdBy,
+      keterangan: entity.keterangan ?? undefined,
+      createdBy: entity.createdBy ?? undefined,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
     });
