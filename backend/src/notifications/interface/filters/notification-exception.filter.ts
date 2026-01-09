@@ -9,6 +9,38 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
+interface ErrorResponse {
+  statusCode: number;
+  timestamp: string;
+  path: string;
+  method: string;
+  message: string;
+  error?: string;
+  details?: unknown;
+  stack?: string;
+}
+
+interface ValidationErrorResponse {
+  message: string[] | string;
+  error?: string;
+}
+
+interface LogContext {
+  method: string;
+  url: string;
+  ip: string;
+  userAgent: string;
+  userId: string;
+  statusCode: number;
+  message: string;
+}
+
+interface RequestWithUser extends Request {
+  user?: {
+    id?: string | number;
+  };
+}
+
 /**
  * Custom Exception Filter for Notifications Module
  * Provides consistent error responses and logging
@@ -53,8 +85,8 @@ export class NotificationExceptionFilter implements ExceptionFilter {
     status: number,
     message: string,
     request: Request,
-  ) {
-    const baseResponse = {
+  ): ErrorResponse {
+    const baseResponse: ErrorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -79,15 +111,20 @@ export class NotificationExceptionFilter implements ExceptionFilter {
   /**
    * Extract detailed error information
    */
-  private getErrorDetails(exception: unknown): any {
+  private getErrorDetails(exception: unknown): unknown {
     if (exception instanceof HttpException) {
       const response = exception.getResponse();
 
       // Handle validation errors from class-validator
-      if (typeof response === 'object' && 'message' in response) {
+      if (
+        typeof response === 'object' &&
+        response !== null &&
+        'message' in response
+      ) {
+        const validationResponse = response as ValidationErrorResponse;
         return {
-          message: (response as any).message,
-          error: (response as any).error,
+          message: validationResponse.message,
+          error: validationResponse.error,
         };
       }
 
@@ -107,15 +144,22 @@ export class NotificationExceptionFilter implements ExceptionFilter {
   /**
    * Log error with appropriate level
    */
-  private logError(exception: unknown, request: Request, errorResponse: any) {
+  private logError(
+    exception: unknown,
+    request: Request,
+    errorResponse: ErrorResponse,
+  ) {
     const { method, url, ip, headers } = request;
     const userAgent = headers['user-agent'] || 'Unknown';
-    const userId = (request as any).user?.id || 'Anonymous';
+    const requestWithUser = request as RequestWithUser;
+    const userId = requestWithUser.user?.id
+      ? String(requestWithUser.user.id)
+      : 'Anonymous';
 
-    const logContext = {
+    const logContext: LogContext = {
       method,
       url,
-      ip,
+      ip: ip ?? 'unknown IP',
       userAgent,
       userId,
       statusCode: errorResponse.statusCode,
@@ -157,7 +201,16 @@ export class NotificationHttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
 
-    const errorResponse = {
+    interface NotificationErrorResponse {
+      statusCode: number;
+      timestamp: string;
+      path: string;
+      message: string;
+      context?: string;
+      suggestion?: string;
+    }
+
+    const errorResponse: NotificationErrorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
@@ -218,17 +271,28 @@ export class NotificationHttpExceptionFilter implements ExceptionFilter {
 export class ValidationExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(ValidationExceptionFilter.name);
 
-  catch(exception: any, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    interface ExceptionWithResponse {
+      response?: {
+        message?: string[];
+        [key: string]: unknown;
+      };
+      getStatus?: () => number;
+      message?: string;
+    }
+
+    const exceptionWithResponse = exception as ExceptionWithResponse;
+
     // Handle class-validator errors
     if (
-      exception?.response?.message &&
-      Array.isArray(exception.response.message)
+      exceptionWithResponse?.response?.message &&
+      Array.isArray(exceptionWithResponse.response.message)
     ) {
-      const validationErrors = exception.response.message;
+      const validationErrors = exceptionWithResponse.response.message;
 
       this.logger.warn(
         `Validation Error: ${request.method} ${request.url}`,
@@ -250,11 +314,14 @@ export class ValidationExceptionFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const message =
+      exception instanceof Error ? exception.message : 'Internal server error';
+
     response.status(status).json({
       statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception.message || 'Internal server error',
+      message: message,
     });
   }
 }

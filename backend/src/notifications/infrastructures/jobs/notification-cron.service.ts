@@ -4,6 +4,18 @@ import { Cron, CronExpression, SchedulerRegistry } from '@nestjs/schedule';
 import { ProcessBatchService } from '../../applications/use-cases/process-batch.service';
 import { NotificationRepository } from '../repositories/notification.repository';
 import { NotificationStatus } from '../../domains/entities/notification.entity';
+import { CronJob } from 'cron';
+
+export interface JobStatus {
+  name: string;
+  running: boolean;
+  nextRun: Date | string;
+}
+
+interface CronJobWithMetadata extends Omit<CronJob, 'nextDate'> {
+  running?: boolean;
+  nextDate?: () => { toJSDate: () => Date };
+}
 
 @Injectable()
 export class NotificationCronService implements OnModuleInit {
@@ -53,7 +65,9 @@ export class NotificationCronService implements OnModuleInit {
         );
       }
     } catch (error) {
-      this.logger.error(`❌ [${jobName}] Error:`, error.message);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`❌ [${jobName}] Error:`, errorMessage);
     } finally {
       this.isProcessing = false;
     }
@@ -94,7 +108,9 @@ export class NotificationCronService implements OnModuleInit {
         `⚠️ [${jobName}] Reset ${staleNotifications.length} stale notification(s) to PENDING`,
       );
     } catch (error) {
-      this.logger.error(`❌ [${jobName}] Error:`, error.message);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`❌ [${jobName}] Error:`, errorMessage);
     }
   }
 
@@ -127,7 +143,9 @@ export class NotificationCronService implements OnModuleInit {
         );
       }
     } catch (error) {
-      this.logger.error(`❌ [${jobName}] Error:`, error.message);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`❌ [${jobName}] Error:`, errorMessage);
     }
   }
 
@@ -139,8 +157,10 @@ export class NotificationCronService implements OnModuleInit {
 
     this.logger.log('📅 Scheduled Cron Jobs:');
     jobs.forEach((value, key) => {
+      const cronJob = value as CronJobWithMetadata;
+      const isRunning = cronJob.running ?? false;
       this.logger.log(
-        `  - ${key}: ${(value as any).running ? '✅ Running' : '⏸️  Stopped'}`,
+        `  - ${key}: ${isRunning ? '✅ Running' : '⏸️  Stopped'}`,
       );
     });
   }
@@ -183,22 +203,28 @@ export class NotificationCronService implements OnModuleInit {
   /**
    * Get job status
    */
-  getJobStatus(): {
-    name: string;
-    running: boolean;
-    nextRun: Date | string;
-  }[] {
+  getJobStatus(): JobStatus[] {
     const jobs = this.schedulerRegistry.getCronJobs();
-    const status: any[] = [];
+    const status: JobStatus[] = [];
 
     jobs.forEach((value, key) => {
+      const cronJob = value as CronJobWithMetadata;
+      const isRunning = cronJob.running ?? false;
+
+      let nextRun: Date | string = 'N/A';
+      if (cronJob.nextDate) {
+        try {
+          const nextDateObj = cronJob.nextDate();
+          nextRun = nextDateObj.toJSDate();
+        } catch {
+          nextRun = 'N/A';
+        }
+      }
+
       status.push({
         name: key,
-        running: (value as any).running ?? false,
-        nextRun: (() => {
-          const nd = (value as any).nextDate ? (value as any).nextDate() : null;
-          return nd ? nd.toJSDate() : 'N/A';
-        })(),
+        running: isRunning,
+        nextRun: nextRun,
       });
     });
 

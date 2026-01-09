@@ -9,6 +9,17 @@ export interface EmailData {
   html: string;
 }
 
+interface DoctorEntity {
+  nama_lengkap: string;
+  [key: string]: unknown;
+}
+
+interface AppointmentWithDoctor {
+  doctor?: DoctorEntity;
+  doctor_id?: string | number;
+  [key: string]: unknown;
+}
+
 @Injectable()
 export class EmailChannelService {
   private readonly logger = new Logger(EmailChannelService.name);
@@ -34,9 +45,9 @@ export class EmailChannelService {
         this.logger.log(`✅ Email sent to ${emailData.to}`);
         return; // Success
       } catch (error) {
-        lastError = error;
+        lastError = error as Error;
         this.logger.warn(
-          `⚠️ Email send attempt ${attempt + 1}/${this.MAX_RETRIES} failed: ${error.message}`,
+          `⚠️ Email send attempt ${attempt + 1}/${this.MAX_RETRIES} failed: ${lastError.message}`,
         );
 
         // Wait before retry
@@ -57,11 +68,15 @@ export class EmailChannelService {
   generateReminderEmail(notification: Notification): EmailData {
     const patient = notification.appointment.patient;
     const appointment = notification.appointment;
-    // doctor may be populated as an object (appointment.doctor) or only stored as an id (appointment.doctor_id)
-    const doctorObj: any = (notification.appointment as any).doctor;
-    const doctorId = (notification.appointment as any).doctor_id;
+
+    // Type-safe doctor access
+    const appointmentWithDoctor =
+      notification.appointment as unknown as AppointmentWithDoctor;
+    const doctorObj = appointmentWithDoctor.doctor;
+    const doctorId = appointmentWithDoctor.doctor_id;
+
     const doctorName =
-      doctorObj && typeof doctorObj === 'object' && doctorObj.nama_lengkap
+      doctorObj && typeof doctorObj === 'object' && 'nama_lengkap' in doctorObj
         ? doctorObj.nama_lengkap
         : typeof doctorId === 'string' || typeof doctorId === 'number'
           ? String(doctorId)
@@ -120,12 +135,12 @@ export class EmailChannelService {
                         <h2 style="margin: 0;">🦷 Klinik Dentizy</h2>
                         <p style="margin: 10px 0 0 0;">Pengingat Janji Temu</p>
                     </div>
-                    
+
                     <div class="content">
                         <p>Halo, <strong>${data.patientName}</strong>!</p>
-                        
+
                         <p>Ini adalah pengingat untuk janji temu Anda <strong>besok</strong> di Klinik Dentizy.</p>
-                        
+
                         <div class="detail-box">
                             <h3 style="margin-top: 0; color: #2563eb;">📋 Detail Janji Temu</h3>
                             <div class="detail-item">📅 <strong>Tanggal:</strong> ${data.date}</div>
@@ -133,16 +148,16 @@ export class EmailChannelService {
                             <div class="detail-item">👨‍⚕️ <strong>Dokter:</strong> ${data.doctorName}</div>
                             ${data.complaint ? `<div class="detail-item">📝 <strong>Keluhan:</strong> ${data.complaint}</div>` : ''}
                         </div>
-                        
+
                         <p class="warning">
-                            ⚠️ Penting: Jika Anda tidak dapat hadir, mohon hubungi klinik kami 
+                            ⚠️ Penting: Jika Anda tidak dapat hadir, mohon hubungi klinik kami
                             untuk reschedule atau pembatalan.
                         </p>
-                        
+
                         <p>Terima kasih atas perhatian Anda.</p>
                         <p><strong>Tim Klinik Dentizy</strong></p>
                     </div>
-                    
+
                     <div class="footer">
                         <p>Email ini dikirim otomatis, mohon tidak membalas.</p>
                         <p>© ${new Date().getFullYear()} Klinik Dentizy. All rights reserved.</p>
