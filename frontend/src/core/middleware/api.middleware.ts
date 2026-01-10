@@ -10,13 +10,15 @@ export async function apiMiddleware(
     try {
         return await handler(request);
     } catch (error) {
-        const appError = errorHandler.handle(error);
+        const appError: ApiError = errorHandler.handle(error);
 
         return NextResponse.json(
             {
                 success: false,
                 message: appError.message,
                 statusCode: appError.statusCode,
+                errors: appError.getValidationErrors(),
+                timestamp: appError.timestamp
             },
             { status: appError.statusCode }
         );
