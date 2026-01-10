@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   CreatePaymentDto,
   PaymentResponseDto,
@@ -21,15 +40,17 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getPayments = () => {
+
 /**
  * Endpoint khusus kasir untuk input pembayaran, hitung kembalian, dan update status lunas.
  * @summary Proses Pembayaran (Kasir)
  */
-const paymentsControllerProcess = (
+export const paymentsControllerProcess = (
     id: number,
     processPaymentDto: ProcessPaymentDto,
  ) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
       {url: `/payments/${id}/process`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -37,130 +58,885 @@ const paymentsControllerProcess = (
     },
       );
     }
-  /**
+  
+
+
+export const getPaymentsControllerProcessMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext> => {
+
+const mutationKey = ['paymentsControllerProcess'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerProcess>>, {id: number;data: ProcessPaymentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paymentsControllerProcess(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerProcessMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerProcess>>>
+    export type PaymentsControllerProcessMutationBody = ProcessPaymentDto
+    export type PaymentsControllerProcessMutationError = void
+
+    /**
+ * @summary Proses Pembayaran (Kasir)
+ */
+export const usePaymentsControllerProcess = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerProcess>>,
+        TError,
+        {id: number;data: ProcessPaymentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerProcessMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Endpoint untuk membuat data pembayaran baru. Status pembayaran akan otomatis ditentukan berdasarkan jumlah bayar.
  * @summary Membuat pembayaran baru
  */
-const paymentsControllerCreate = (
+export const paymentsControllerCreate = (
     createPaymentDto: CreatePaymentDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
       {url: `/payments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: createPaymentDto
+      data: createPaymentDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getPaymentsControllerCreateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCreate>>, TError,{data: CreatePaymentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCreate>>, TError,{data: CreatePaymentDto}, TContext> => {
+
+const mutationKey = ['paymentsControllerCreate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerCreate>>, {data: CreatePaymentDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  paymentsControllerCreate(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerCreate>>>
+    export type PaymentsControllerCreateMutationBody = CreatePaymentDto
+    export type PaymentsControllerCreateMutationError = void
+
+    /**
+ * @summary Membuat pembayaran baru
+ */
+export const usePaymentsControllerCreate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCreate>>, TError,{data: CreatePaymentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerCreate>>,
+        TError,
+        {data: CreatePaymentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Endpoint untuk mendapatkan daftar pembayaran dengan fitur filtering dan pagination
  * @summary Mendapatkan daftar pembayaran
  */
-const paymentsControllerFindAll = (
+export const paymentsControllerFindAll = (
     params?: PaymentsControllerFindAllParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto[]>(
       {url: `/payments`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerFindAllQueryKey = (params?: PaymentsControllerFindAllParams,) => {
+    return [
+    `/payments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError = void>(params?: PaymentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerFindAllQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerFindAll>>> = ({ signal }) => paymentsControllerFindAll(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerFindAllQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerFindAll>>>
+export type PaymentsControllerFindAllQueryError = void
+
+
+export function usePaymentsControllerFindAll<TData = Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError = void>(
+ params: undefined |  PaymentsControllerFindAllParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindAll<TData = Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError = void>(
+ params?: PaymentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindAll<TData = Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError = void>(
+ params?: PaymentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan daftar pembayaran
+ */
+
+export function usePaymentsControllerFindAll<TData = Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError = void>(
+ params?: PaymentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerFindAllQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mencari pembayaran menggunakan nomor invoice
  * @summary Mendapatkan pembayaran berdasarkan nomor invoice
  */
-const paymentsControllerFindByNomorInvoice = (
+export const paymentsControllerFindByNomorInvoice = (
     nomorInvoice: string,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
-      {url: `/payments/invoice/${nomorInvoice}`, method: 'GET'
+      {url: `/payments/invoice/${nomorInvoice}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerFindByNomorInvoiceQueryKey = (nomorInvoice?: string,) => {
+    return [
+    `/payments/invoice/${nomorInvoice}`
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerFindByNomorInvoiceQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError = void>(nomorInvoice: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerFindByNomorInvoiceQueryKey(nomorInvoice);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>> = ({ signal }) => paymentsControllerFindByNomorInvoice(nomorInvoice, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(nomorInvoice), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerFindByNomorInvoiceQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>>
+export type PaymentsControllerFindByNomorInvoiceQueryError = void
+
+
+export function usePaymentsControllerFindByNomorInvoice<TData = Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError = void>(
+ nomorInvoice: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByNomorInvoice<TData = Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError = void>(
+ nomorInvoice: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByNomorInvoice<TData = Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError = void>(
+ nomorInvoice: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan pembayaran berdasarkan nomor invoice
+ */
+
+export function usePaymentsControllerFindByNomorInvoice<TData = Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError = void>(
+ nomorInvoice: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByNomorInvoice>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerFindByNomorInvoiceQueryOptions(nomorInvoice,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mencari pembayaran menggunakan ID medical record
  * @summary Mendapatkan pembayaran berdasarkan medical record
  */
-const paymentsControllerFindByMedicalRecordId = (
+export const paymentsControllerFindByMedicalRecordId = (
     medicalRecordId: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
-      {url: `/payments/medical-record/${medicalRecordId}`, method: 'GET'
+      {url: `/payments/medical-record/${medicalRecordId}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+    return [
+    `/payments/medical-record/${medicalRecordId}`
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerFindByMedicalRecordIdQueryKey(medicalRecordId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>> = ({ signal }) => paymentsControllerFindByMedicalRecordId(medicalRecordId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(medicalRecordId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerFindByMedicalRecordIdQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>>
+export type PaymentsControllerFindByMedicalRecordIdQueryError = void
+
+
+export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan pembayaran berdasarkan medical record
+ */
+
+export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerFindByMedicalRecordIdQueryOptions(medicalRecordId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mendapatkan riwayat pembayaran berdasarkan ID pasien
  * @summary Mendapatkan riwayat pembayaran pasien
  */
-const paymentsControllerFindByPatientId = (
+export const paymentsControllerFindByPatientId = (
     patientId: number,
     params?: PaymentsControllerFindByPatientIdParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto[]>(
       {url: `/payments/patient/${patientId}`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerFindByPatientIdQueryKey = (patientId?: number,
+    params?: PaymentsControllerFindByPatientIdParams,) => {
+    return [
+    `/payments/patient/${patientId}`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerFindByPatientIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(patientId: number,
+    params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerFindByPatientIdQueryKey(patientId,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>> = ({ signal }) => paymentsControllerFindByPatientId(patientId,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(patientId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerFindByPatientIdQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>>
+export type PaymentsControllerFindByPatientIdQueryError = void
+
+
+export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
+ patientId: number,
+    params: undefined |  PaymentsControllerFindByPatientIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
+ patientId: number,
+    params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
+ patientId: number,
+    params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan riwayat pembayaran pasien
+ */
+
+export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
+ patientId: number,
+    params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerFindByPatientIdQueryOptions(patientId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mendapatkan statistik pembayaran dalam periode tertentu
  * @summary Mendapatkan statistik pembayaran
  */
-const paymentsControllerGetStatistics = (
+export const paymentsControllerGetStatistics = (
     params?: PaymentsControllerGetStatisticsParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
       {url: `/payments/statistics`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerGetStatisticsQueryKey = (params?: PaymentsControllerGetStatisticsParams,) => {
+    return [
+    `/payments/statistics`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerGetStatisticsQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError = void>(params?: PaymentsControllerGetStatisticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerGetStatisticsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>> = ({ signal }) => paymentsControllerGetStatistics(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerGetStatisticsQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>>
+export type PaymentsControllerGetStatisticsQueryError = void
+
+
+export function usePaymentsControllerGetStatistics<TData = Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError = void>(
+ params: undefined |  PaymentsControllerGetStatisticsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetStatistics>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetStatistics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetStatistics<TData = Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError = void>(
+ params?: PaymentsControllerGetStatisticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetStatistics>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetStatistics>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetStatistics<TData = Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError = void>(
+ params?: PaymentsControllerGetStatisticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan statistik pembayaran
+ */
+
+export function usePaymentsControllerGetStatistics<TData = Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError = void>(
+ params?: PaymentsControllerGetStatisticsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetStatistics>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerGetStatisticsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk menghitung total pendapatan dalam periode tertentu
  * @summary Mendapatkan total pendapatan
  */
-const paymentsControllerGetTotalRevenue = (
+export const paymentsControllerGetTotalRevenue = (
     params?: PaymentsControllerGetTotalRevenueParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
       {url: `/payments/revenue`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerGetTotalRevenueQueryKey = (params?: PaymentsControllerGetTotalRevenueParams,) => {
+    return [
+    `/payments/revenue`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerGetTotalRevenueQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError = void>(params?: PaymentsControllerGetTotalRevenueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerGetTotalRevenueQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>> = ({ signal }) => paymentsControllerGetTotalRevenue(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerGetTotalRevenueQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>>
+export type PaymentsControllerGetTotalRevenueQueryError = void
+
+
+export function usePaymentsControllerGetTotalRevenue<TData = Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError = void>(
+ params: undefined |  PaymentsControllerGetTotalRevenueParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetTotalRevenue<TData = Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError = void>(
+ params?: PaymentsControllerGetTotalRevenueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetTotalRevenue<TData = Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError = void>(
+ params?: PaymentsControllerGetTotalRevenueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan total pendapatan
+ */
+
+export function usePaymentsControllerGetTotalRevenue<TData = Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError = void>(
+ params?: PaymentsControllerGetTotalRevenueParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetTotalRevenue>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerGetTotalRevenueQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mendapatkan breakdown pendapatan per hari/bulan/tahun
  * @summary Mendapatkan pendapatan per periode
  */
-const paymentsControllerGetRevenueByPeriod = (
+export const paymentsControllerGetRevenueByPeriod = (
     params: PaymentsControllerGetRevenueByPeriodParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
       {url: `/payments/revenue/period`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerGetRevenueByPeriodQueryKey = (params?: PaymentsControllerGetRevenueByPeriodParams,) => {
+    return [
+    `/payments/revenue/period`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerGetRevenueByPeriodQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError = void>(params: PaymentsControllerGetRevenueByPeriodParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerGetRevenueByPeriodQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>> = ({ signal }) => paymentsControllerGetRevenueByPeriod(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerGetRevenueByPeriodQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>>
+export type PaymentsControllerGetRevenueByPeriodQueryError = void
+
+
+export function usePaymentsControllerGetRevenueByPeriod<TData = Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError = void>(
+ params: PaymentsControllerGetRevenueByPeriodParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetRevenueByPeriod<TData = Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError = void>(
+ params: PaymentsControllerGetRevenueByPeriodParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerGetRevenueByPeriod<TData = Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError = void>(
+ params: PaymentsControllerGetRevenueByPeriodParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan pendapatan per periode
+ */
+
+export function usePaymentsControllerGetRevenueByPeriod<TData = Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError = void>(
+ params: PaymentsControllerGetRevenueByPeriodParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerGetRevenueByPeriod>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerGetRevenueByPeriodQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mendapatkan detail pembayaran berdasarkan ID
  * @summary Mendapatkan detail pembayaran
  */
-const paymentsControllerFindOne = (
+export const paymentsControllerFindOne = (
     id: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
-      {url: `/payments/${id}`, method: 'GET'
+      {url: `/payments/${id}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPaymentsControllerFindOneQueryKey = (id?: number,) => {
+    return [
+    `/payments/${id}`
+    ] as const;
+    }
+
+    
+export const getPaymentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPaymentsControllerFindOneQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof paymentsControllerFindOne>>> = ({ signal }) => paymentsControllerFindOne(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PaymentsControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerFindOne>>>
+export type PaymentsControllerFindOneQueryError = void
+
+
+export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof paymentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof paymentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Mendapatkan detail pembayaran
+ */
+
+export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPaymentsControllerFindOneQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Endpoint untuk mengupdate data pembayaran. Status akan otomatis dihitung ulang jika jumlah bayar berubah.
  * @summary Mengupdate pembayaran
  */
-const paymentsControllerUpdate = (
+export const paymentsControllerUpdate = (
     id: number,
     updatePaymentDto: UpdatePaymentDto,
  ) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
       {url: `/payments/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -168,41 +944,176 @@ const paymentsControllerUpdate = (
     },
       );
     }
-  /**
+  
+
+
+export const getPaymentsControllerUpdateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext> => {
+
+const mutationKey = ['paymentsControllerUpdate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerUpdate>>, {id: number;data: UpdatePaymentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  paymentsControllerUpdate(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerUpdate>>>
+    export type PaymentsControllerUpdateMutationBody = UpdatePaymentDto
+    export type PaymentsControllerUpdateMutationError = void
+
+    /**
+ * @summary Mengupdate pembayaran
+ */
+export const usePaymentsControllerUpdate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerUpdate>>,
+        TError,
+        {id: number;data: UpdatePaymentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Endpoint untuk menghapus pembayaran secara soft delete
  * @summary Menghapus pembayaran (soft delete)
  */
-const paymentsControllerRemove = (
+export const paymentsControllerRemove = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<void>(
       {url: `/payments/${id}`, method: 'DELETE'
     },
       );
     }
-  /**
+  
+
+
+export const getPaymentsControllerRemoveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['paymentsControllerRemove'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerRemove>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  paymentsControllerRemove(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerRemove>>>
+    
+    export type PaymentsControllerRemoveMutationError = void
+
+    /**
+ * @summary Menghapus pembayaran (soft delete)
+ */
+export const usePaymentsControllerRemove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerRemove>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerRemoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Endpoint untuk membatalkan pembayaran. Pembayaran yang sudah dibatalkan tidak dapat diubah kembali.
  * @summary Membatalkan pembayaran
  */
-const paymentsControllerCancel = (
+export const paymentsControllerCancel = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<PaymentResponseDto>(
       {url: `/payments/${id}/cancel`, method: 'PATCH'
     },
       );
     }
-  return {paymentsControllerProcess,paymentsControllerCreate,paymentsControllerFindAll,paymentsControllerFindByNomorInvoice,paymentsControllerFindByMedicalRecordId,paymentsControllerFindByPatientId,paymentsControllerGetStatistics,paymentsControllerGetTotalRevenue,paymentsControllerGetRevenueByPeriod,paymentsControllerFindOne,paymentsControllerUpdate,paymentsControllerRemove,paymentsControllerCancel}};
-export type PaymentsControllerProcessResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerProcess']>>>
-export type PaymentsControllerCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerCreate']>>>
-export type PaymentsControllerFindAllResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerFindAll']>>>
-export type PaymentsControllerFindByNomorInvoiceResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerFindByNomorInvoice']>>>
-export type PaymentsControllerFindByMedicalRecordIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerFindByMedicalRecordId']>>>
-export type PaymentsControllerFindByPatientIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerFindByPatientId']>>>
-export type PaymentsControllerGetStatisticsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerGetStatistics']>>>
-export type PaymentsControllerGetTotalRevenueResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerGetTotalRevenue']>>>
-export type PaymentsControllerGetRevenueByPeriodResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerGetRevenueByPeriod']>>>
-export type PaymentsControllerFindOneResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerFindOne']>>>
-export type PaymentsControllerUpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerUpdate']>>>
-export type PaymentsControllerRemoveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerRemove']>>>
-export type PaymentsControllerCancelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPayments>['paymentsControllerCancel']>>>
+  
+
+
+export const getPaymentsControllerCancelMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['paymentsControllerCancel'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerCancel>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  paymentsControllerCancel(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PaymentsControllerCancelMutationResult = NonNullable<Awaited<ReturnType<typeof paymentsControllerCancel>>>
+    
+    export type PaymentsControllerCancelMutationError = void
+
+    /**
+ * @summary Membatalkan pembayaran
+ */
+export const usePaymentsControllerCancel = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof paymentsControllerCancel>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getPaymentsControllerCancelMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

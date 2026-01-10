@@ -12,15 +12,15 @@ export type MedicalRecordsControllerFindAllParams = {
 /**
  * Filter berdasarkan ID pasien
  */
-patient_id?: number;
+patient_id?: string;
 /**
  * Filter berdasarkan ID dokter
  */
-doctor_id?: number;
+doctor_id?: string;
 /**
  * Filter berdasarkan ID appointment
  */
-appointment_id?: number;
+appointment_id?: string;
 /**
  * Pencarian umum (berlaku untuk field SOAP: Subjective, Objective, Assessment, Plan)
  */

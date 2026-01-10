@@ -8,7 +8,7 @@
 
 export interface TreatmentCategoryResponseDto {
   /** ID kategori */
-  id: number;
+  id: string;
   /** Nama kategori */
   namaKategori: string;
   /**

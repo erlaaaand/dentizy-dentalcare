@@ -8,7 +8,7 @@
 
 export interface UpdateTreatmentDto {
   /** ID kategori perawatan */
-  categoryId?: number;
+  categoryId?: string;
   /**
    * Nama perawatan
    * @maxLength 250

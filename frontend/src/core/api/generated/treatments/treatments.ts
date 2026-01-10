@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   CreateTreatmentDto,
   PaginatedTreatmentResponseDto,
@@ -17,61 +36,357 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getTreatments = () => {
+
 /**
  * @summary Create new treatment
  */
-const treatmentsControllerCreate = (
+export const treatmentsControllerCreate = (
     createTreatmentDto: CreateTreatmentDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
       {url: `/treatments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: createTreatmentDto
+      data: createTreatmentDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getTreatmentsControllerCreateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerCreate>>, TError,{data: CreateTreatmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerCreate>>, TError,{data: CreateTreatmentDto}, TContext> => {
+
+const mutationKey = ['treatmentsControllerCreate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerCreate>>, {data: CreateTreatmentDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  treatmentsControllerCreate(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerCreate>>>
+    export type TreatmentsControllerCreateMutationBody = CreateTreatmentDto
+    export type TreatmentsControllerCreateMutationError = void
+
+    /**
+ * @summary Create new treatment
+ */
+export const useTreatmentsControllerCreate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerCreate>>, TError,{data: CreateTreatmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerCreate>>,
+        TError,
+        {data: CreateTreatmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Get all treatments with pagination and filters
  */
-const treatmentsControllerFindAll = (
+export const treatmentsControllerFindAll = (
     params?: TreatmentsControllerFindAllParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaginatedTreatmentResponseDto>(
       {url: `/treatments`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getTreatmentsControllerFindAllQueryKey = (params?: TreatmentsControllerFindAllParams,) => {
+    return [
+    `/treatments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getTreatmentsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError = void>(params?: TreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTreatmentsControllerFindAllQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof treatmentsControllerFindAll>>> = ({ signal }) => treatmentsControllerFindAll(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TreatmentsControllerFindAllQueryResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerFindAll>>>
+export type TreatmentsControllerFindAllQueryError = void
+
+
+export function useTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError = void>(
+ params: undefined |  TreatmentsControllerFindAllParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError = void>(
+ params?: TreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError = void>(
+ params?: TreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get all treatments with pagination and filters
+ */
+
+export function useTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError = void>(
+ params?: TreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getTreatmentsControllerFindAllQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Get treatment by code
  */
-const treatmentsControllerFindByKode = (
+export const treatmentsControllerFindByKode = (
     kode: string,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
-      {url: `/treatments/kode/${kode}`, method: 'GET'
+      {url: `/treatments/kode/${kode}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getTreatmentsControllerFindByKodeQueryKey = (kode?: string,) => {
+    return [
+    `/treatments/kode/${kode}`
+    ] as const;
+    }
+
+    
+export const getTreatmentsControllerFindByKodeQueryOptions = <TData = Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError = void>(kode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTreatmentsControllerFindByKodeQueryKey(kode);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>> = ({ signal }) => treatmentsControllerFindByKode(kode, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(kode), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TreatmentsControllerFindByKodeQueryResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>>
+export type TreatmentsControllerFindByKodeQueryError = void
+
+
+export function useTreatmentsControllerFindByKode<TData = Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError = void>(
+ kode: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindByKode>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindByKode>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindByKode<TData = Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError = void>(
+ kode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindByKode>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindByKode>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindByKode<TData = Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError = void>(
+ kode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get treatment by code
+ */
+
+export function useTreatmentsControllerFindByKode<TData = Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError = void>(
+ kode: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindByKode>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getTreatmentsControllerFindByKodeQueryOptions(kode,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Get treatment by ID
  */
-const treatmentsControllerFindOne = (
+export const treatmentsControllerFindOne = (
     id: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
-      {url: `/treatments/${id}`, method: 'GET'
+      {url: `/treatments/${id}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getTreatmentsControllerFindOneQueryKey = (id?: number,) => {
+    return [
+    `/treatments/${id}`
+    ] as const;
+    }
+
+    
+export const getTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getTreatmentsControllerFindOneQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof treatmentsControllerFindOne>>> = ({ signal }) => treatmentsControllerFindOne(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type TreatmentsControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerFindOne>>>
+export type TreatmentsControllerFindOneQueryError = void
+
+
+export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof treatmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof treatmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get treatment by ID
+ */
+
+export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getTreatmentsControllerFindOneQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Update treatment
  */
-const treatmentsControllerUpdate = (
+export const treatmentsControllerUpdate = (
     id: number,
     updateTreatmentDto: UpdateTreatmentDto,
  ) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
       {url: `/treatments/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -79,57 +394,296 @@ const treatmentsControllerUpdate = (
     },
       );
     }
-  /**
+  
+
+
+export const getTreatmentsControllerUpdateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext> => {
+
+const mutationKey = ['treatmentsControllerUpdate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, {id: number;data: UpdateTreatmentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  treatmentsControllerUpdate(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerUpdate>>>
+    export type TreatmentsControllerUpdateMutationBody = UpdateTreatmentDto
+    export type TreatmentsControllerUpdateMutationError = void
+
+    /**
+ * @summary Update treatment
+ */
+export const useTreatmentsControllerUpdate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerUpdate>>,
+        TError,
+        {id: number;data: UpdateTreatmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Soft delete treatment
  */
-const treatmentsControllerRemove = (
+export const treatmentsControllerRemove = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<unknown>(
       {url: `/treatments/${id}`, method: 'DELETE'
     },
       );
     }
-  /**
+  
+
+
+export const getTreatmentsControllerRemoveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['treatmentsControllerRemove'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRemove>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  treatmentsControllerRemove(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerRemove>>>
+    
+    export type TreatmentsControllerRemoveMutationError = void
+
+    /**
+ * @summary Soft delete treatment
+ */
+export const useTreatmentsControllerRemove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerRemove>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerRemoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Restore soft deleted treatment
  */
-const treatmentsControllerRestore = (
+export const treatmentsControllerRestore = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
       {url: `/treatments/${id}/restore`, method: 'PATCH'
     },
       );
     }
-  /**
+  
+
+
+export const getTreatmentsControllerRestoreMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['treatmentsControllerRestore'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRestore>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  treatmentsControllerRestore(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerRestoreMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerRestore>>>
+    
+    export type TreatmentsControllerRestoreMutationError = void
+
+    /**
+ * @summary Restore soft deleted treatment
+ */
+export const useTreatmentsControllerRestore = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerRestore>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerRestoreMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Activate treatment
  */
-const treatmentsControllerActivate = (
+export const treatmentsControllerActivate = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
       {url: `/treatments/${id}/activate`, method: 'PATCH'
     },
       );
     }
-  /**
+  
+
+
+export const getTreatmentsControllerActivateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['treatmentsControllerActivate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerActivate>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  treatmentsControllerActivate(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerActivateMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerActivate>>>
+    
+    export type TreatmentsControllerActivateMutationError = void
+
+    /**
+ * @summary Activate treatment
+ */
+export const useTreatmentsControllerActivate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerActivate>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerActivateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Deactivate treatment
  */
-const treatmentsControllerDeactivate = (
+export const treatmentsControllerDeactivate = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<TreatmentResponseDto>(
       {url: `/treatments/${id}/deactivate`, method: 'PATCH'
     },
       );
     }
-  return {treatmentsControllerCreate,treatmentsControllerFindAll,treatmentsControllerFindByKode,treatmentsControllerFindOne,treatmentsControllerUpdate,treatmentsControllerRemove,treatmentsControllerRestore,treatmentsControllerActivate,treatmentsControllerDeactivate}};
-export type TreatmentsControllerCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerCreate']>>>
-export type TreatmentsControllerFindAllResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerFindAll']>>>
-export type TreatmentsControllerFindByKodeResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerFindByKode']>>>
-export type TreatmentsControllerFindOneResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerFindOne']>>>
-export type TreatmentsControllerUpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerUpdate']>>>
-export type TreatmentsControllerRemoveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerRemove']>>>
-export type TreatmentsControllerRestoreResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerRestore']>>>
-export type TreatmentsControllerActivateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerActivate']>>>
-export type TreatmentsControllerDeactivateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getTreatments>['treatmentsControllerDeactivate']>>>
+  
+
+
+export const getTreatmentsControllerDeactivateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['treatmentsControllerDeactivate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  treatmentsControllerDeactivate(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TreatmentsControllerDeactivateMutationResult = NonNullable<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>>
+    
+    export type TreatmentsControllerDeactivateMutationError = void
+
+    /**
+ * @summary Deactivate treatment
+ */
+export const useTreatmentsControllerDeactivate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof treatmentsControllerDeactivate>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getTreatmentsControllerDeactivateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

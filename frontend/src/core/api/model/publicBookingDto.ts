@@ -22,7 +22,7 @@ export interface PublicBookingDto {
   /** Email (Opsional) */
   email?: string;
   /** ID Dokter yang dipilih */
-  doctor_id: number;
+  doctor_id: string;
   /** Tanggal Janji (YYYY-MM-DD) */
   tanggal_janji: string;
   /** Jam Janji (HH:mm) */

@@ -9,7 +9,7 @@ import type { PatientResponseDtoJenisKelamin } from './patientResponseDtoJenisKe
 
 export interface PatientResponseDto {
   /** ID unik pasien */
-  id: number;
+  id: string;
   /** Nomor rekam medis pasien */
   nomor_rekam_medis: string;
   /** Nomor Induk Kependudukan */

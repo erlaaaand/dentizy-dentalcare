@@ -7,7 +7,7 @@
  */
 
 export interface PatientSubsetDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
   nomor_rekam_medis: string;
   /** @nullable */

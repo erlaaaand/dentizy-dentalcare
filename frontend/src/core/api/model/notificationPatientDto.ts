@@ -7,7 +7,7 @@
  */
 
 export interface NotificationPatientDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
   email: string;
 }

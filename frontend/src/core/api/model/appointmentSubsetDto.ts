@@ -9,7 +9,7 @@ import type { AppointmentSubsetDtoStatus } from './appointmentSubsetDtoStatus';
 import type { PatientSubsetDto } from './patientSubsetDto';
 
 export interface AppointmentSubsetDto {
-  id: number;
+  id: string;
   appointment_date: string;
   status: AppointmentSubsetDtoStatus;
   patient?: PatientSubsetDto;

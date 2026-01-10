@@ -8,9 +8,9 @@
 
 export interface UpdateMedicalRecordTreatmentDto {
   /** ID Rekam Medis */
-  medicalRecordId?: number;
+  medicalRecordId?: string;
   /** ID Perawatan */
-  treatmentId?: number;
+  treatmentId?: string;
   /**
    * Jumlah perawatan
    * @minimum 1

@@ -11,8 +11,8 @@ import type { AppointmentMedicalRecordDtoAssessment } from './appointmentMedical
 import type { AppointmentMedicalRecordDtoPlan } from './appointmentMedicalRecordDtoPlan';
 
 export interface AppointmentMedicalRecordDto {
-  id: number;
-  appointment_id: number;
+  id: string;
+  appointment_id: string;
   /** Subjective (Keluhan Pasien) */
   subjektif?: AppointmentMedicalRecordDtoSubjektif;
   /** Objective (Pemeriksaan Fisik) */

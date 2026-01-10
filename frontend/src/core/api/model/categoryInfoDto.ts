@@ -7,6 +7,6 @@
  */
 
 export interface CategoryInfoDto {
-  id: number;
+  id: string;
   namaKategori: string;
 }

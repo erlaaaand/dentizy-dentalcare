@@ -30,7 +30,7 @@ async function bootstrap() {
       prefix: '/uploads/', // url: http://localhost:3000/uploads/profiles/...
     });
 
-    // ✅ Get ConfigService
+    // ✅ Get ConfigService``
     const configService = app.get(ConfigService);
     const nodeEnv = configService.get<string>('NODE_ENV', 'production');
     const port = configService.get<number>('PORT', 3000);
@@ -126,7 +126,7 @@ async function bootstrap() {
       }),
     );
 
-    // ✅ 4. SWAGGER (hanya untuk development)
+    // 4. SWAGGER (hanya untuk development)
     if (nodeEnv !== 'production') {
       const config = new DocumentBuilder()
         .setTitle('Dentizy API')

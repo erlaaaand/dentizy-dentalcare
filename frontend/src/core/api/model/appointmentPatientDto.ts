@@ -7,7 +7,7 @@
  */
 
 export interface AppointmentPatientDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
   nomor_rekam_medis: string;
   nik?: string;

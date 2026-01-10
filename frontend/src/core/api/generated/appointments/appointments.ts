@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   AppointmentResponseDto,
   AppointmentsControllerFindAllParams,
@@ -17,78 +36,395 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getAppointments = () => {
+
 /**
  * Membuat janji temu baru dengan validasi waktu dan conflict detection
  * @summary Buat appointment baru
  */
-const appointmentsControllerCreate = (
+export const appointmentsControllerCreate = (
     createAppointmentDto: CreateAppointmentDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
       {url: `/appointments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: createAppointmentDto
+      data: createAppointmentDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getAppointmentsControllerCreateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCreate>>, TError,{data: CreateAppointmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCreate>>, TError,{data: CreateAppointmentDto}, TContext> => {
+
+const mutationKey = ['appointmentsControllerCreate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsControllerCreate>>, {data: CreateAppointmentDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  appointmentsControllerCreate(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerCreate>>>
+    export type AppointmentsControllerCreateMutationBody = CreateAppointmentDto
+    export type AppointmentsControllerCreateMutationError = void
+
+    /**
+ * @summary Buat appointment baru
+ */
+export const useAppointmentsControllerCreate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCreate>>, TError,{data: CreateAppointmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsControllerCreate>>,
+        TError,
+        {data: CreateAppointmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsControllerCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Mengambil daftar appointments dengan pagination dan filter
  * @summary Daftar appointments dengan filter
  */
-const appointmentsControllerFindAll = (
+export const appointmentsControllerFindAll = (
     params?: AppointmentsControllerFindAllParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<PaginatedAppointmentResponseDto>(
       {url: `/appointments`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getAppointmentsControllerFindAllQueryKey = (params?: AppointmentsControllerFindAllParams,) => {
+    return [
+    `/appointments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getAppointmentsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError = void>(params?: AppointmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAppointmentsControllerFindAllQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointmentsControllerFindAll>>> = ({ signal }) => appointmentsControllerFindAll(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AppointmentsControllerFindAllQueryResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerFindAll>>>
+export type AppointmentsControllerFindAllQueryError = void
+
+
+export function useAppointmentsControllerFindAll<TData = Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError = void>(
+ params: undefined |  AppointmentsControllerFindAllParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsControllerFindAll<TData = Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError = void>(
+ params?: AppointmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsControllerFindAll<TData = Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError = void>(
+ params?: AppointmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Daftar appointments dengan filter
+ */
+
+export function useAppointmentsControllerFindAll<TData = Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError = void>(
+ params?: AppointmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAppointmentsControllerFindAllQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Mengubah status appointment menjadi SELESAI
  * @summary Selesaikan appointment
  */
-const appointmentsControllerComplete = (
-    id: number,
- ) => {
+export const appointmentsControllerComplete = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
-      {url: `/appointments/${id}/complete`, method: 'POST'
+      {url: `/appointments/${id}/complete`, method: 'POST', signal
     },
       );
     }
-  /**
+  
+
+
+export const getAppointmentsControllerCompleteMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerComplete>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerComplete>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsControllerComplete'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsControllerComplete>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsControllerComplete(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsControllerCompleteMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerComplete>>>
+    
+    export type AppointmentsControllerCompleteMutationError = void
+
+    /**
+ * @summary Selesaikan appointment
+ */
+export const useAppointmentsControllerComplete = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerComplete>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsControllerComplete>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsControllerCompleteMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Membatalkan appointment dengan validasi business rules (< 24 jam hanya Kepala Klinik)
  * @summary Batalkan appointment
  */
-const appointmentsControllerCancel = (
-    id: number,
- ) => {
+export const appointmentsControllerCancel = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
-      {url: `/appointments/${id}/cancel`, method: 'POST'
+      {url: `/appointments/${id}/cancel`, method: 'POST', signal
     },
       );
     }
-  /**
+  
+
+
+export const getAppointmentsControllerCancelMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCancel>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCancel>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsControllerCancel'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsControllerCancel>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsControllerCancel(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsControllerCancelMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerCancel>>>
+    
+    export type AppointmentsControllerCancelMutationError = void
+
+    /**
+ * @summary Batalkan appointment
+ */
+export const useAppointmentsControllerCancel = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerCancel>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsControllerCancel>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsControllerCancelMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Mengambil detail appointment berdasarkan ID
  * @summary Detail appointment by ID
  */
-const appointmentsControllerFindOne = (
-    id: number,
- ) => {
+export const appointmentsControllerFindOne = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
-      {url: `/appointments/${id}`, method: 'GET'
+      {url: `/appointments/${id}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getAppointmentsControllerFindOneQueryKey = (id?: string,) => {
+    return [
+    `/appointments/${id}`
+    ] as const;
+    }
+
+    
+export const getAppointmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAppointmentsControllerFindOneQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof appointmentsControllerFindOne>>> = ({ signal }) => appointmentsControllerFindOne(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AppointmentsControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerFindOne>>>
+export type AppointmentsControllerFindOneQueryError = void
+
+
+export function useAppointmentsControllerFindOne<TData = Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError = void>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsControllerFindOne<TData = Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof appointmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof appointmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAppointmentsControllerFindOne<TData = Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Detail appointment by ID
+ */
+
+export function useAppointmentsControllerFindOne<TData = Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof appointmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAppointmentsControllerFindOneQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Mengupdate data appointment. Jika status SELESAI & ada medical_record, akan memicu transaksi rekam medis.
  * @summary Update appointment
  */
-const appointmentsControllerUpdate = (
-    id: number,
+export const appointmentsControllerUpdate = (
+    id: string,
     updateAppointmentDto: UpdateAppointmentDto,
  ) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
       {url: `/appointments/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -96,23 +432,114 @@ const appointmentsControllerUpdate = (
     },
       );
     }
-  /**
+  
+
+
+export const getAppointmentsControllerUpdateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerUpdate>>, TError,{id: string;data: UpdateAppointmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerUpdate>>, TError,{id: string;data: UpdateAppointmentDto}, TContext> => {
+
+const mutationKey = ['appointmentsControllerUpdate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsControllerUpdate>>, {id: string;data: UpdateAppointmentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  appointmentsControllerUpdate(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsControllerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerUpdate>>>
+    export type AppointmentsControllerUpdateMutationBody = UpdateAppointmentDto
+    export type AppointmentsControllerUpdateMutationError = void
+
+    /**
+ * @summary Update appointment
+ */
+export const useAppointmentsControllerUpdate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerUpdate>>, TError,{id: string;data: UpdateAppointmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsControllerUpdate>>,
+        TError,
+        {id: string;data: UpdateAppointmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsControllerUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * Menghapus appointment (hanya jika belum ada medical record)
  * @summary Hapus appointment
  */
-const appointmentsControllerRemove = (
-    id: number,
+export const appointmentsControllerRemove = (
+    id: string,
  ) => {
+      
+      
       return orvalAxios<unknown>(
       {url: `/appointments/${id}`, method: 'DELETE'
     },
       );
     }
-  return {appointmentsControllerCreate,appointmentsControllerFindAll,appointmentsControllerComplete,appointmentsControllerCancel,appointmentsControllerFindOne,appointmentsControllerUpdate,appointmentsControllerRemove}};
-export type AppointmentsControllerCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerCreate']>>>
-export type AppointmentsControllerFindAllResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerFindAll']>>>
-export type AppointmentsControllerCompleteResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerComplete']>>>
-export type AppointmentsControllerCancelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerCancel']>>>
-export type AppointmentsControllerFindOneResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerFindOne']>>>
-export type AppointmentsControllerUpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerUpdate']>>>
-export type AppointmentsControllerRemoveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAppointments>['appointmentsControllerRemove']>>>
+  
+
+
+export const getAppointmentsControllerRemoveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerRemove>>, TError,{id: string}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerRemove>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['appointmentsControllerRemove'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof appointmentsControllerRemove>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  appointmentsControllerRemove(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AppointmentsControllerRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof appointmentsControllerRemove>>>
+    
+    export type AppointmentsControllerRemoveMutationError = void
+
+    /**
+ * @summary Hapus appointment
+ */
+export const useAppointmentsControllerRemove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof appointmentsControllerRemove>>, TError,{id: string}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof appointmentsControllerRemove>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+
+      const mutationOptions = getAppointmentsControllerRemoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

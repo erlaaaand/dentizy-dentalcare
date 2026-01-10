@@ -12,11 +12,11 @@ import type { AppointmentMedicalRecordDto } from './appointmentMedicalRecordDto'
 
 export interface AppointmentResponseDto {
   /** ID unik appointment */
-  id: number;
+  id: string;
   /** ID Pasien */
-  patient_id: number;
+  patient_id: string;
   /** ID Dokter */
-  doctor_id: number;
+  doctor_id: string;
   /** Status appointment saat ini */
   status: AppointmentResponseDtoStatus;
   /** Tanggal kunjungan */

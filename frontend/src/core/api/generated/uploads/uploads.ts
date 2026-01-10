@@ -5,6 +5,16 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation
+} from '@tanstack/react-query';
+import type {
+  MutationFunction,
+  QueryClient,
+  UseMutationOptions,
+  UseMutationResult
+} from '@tanstack/react-query';
+
 import type {
   UploadsControllerUploadFileBody
 } from '../../model';
@@ -13,13 +23,16 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getUploads = () => {
+
 /**
  * @summary Upload foto profil (Max 2MB, JPG/PNG)
  */
-const uploadsControllerUploadFile = (
+export const uploadsControllerUploadFile = (
     uploadsControllerUploadFileBody: UploadsControllerUploadFileBody,
- ) => {const formData = new FormData();
+ signal?: AbortSignal
+) => {
+      
+      const formData = new FormData();
 if(uploadsControllerUploadFileBody.file !== undefined) {
  formData.append(`file`, uploadsControllerUploadFileBody.file)
  }
@@ -27,9 +40,56 @@ if(uploadsControllerUploadFileBody.file !== undefined) {
       return orvalAxios<void>(
       {url: `/uploads/profile-photo`, method: 'POST',
       headers: {'Content-Type': 'multipart/form-data', },
-       data: formData
+       data: formData, signal
     },
       );
     }
-  return {uploadsControllerUploadFile}};
-export type UploadsControllerUploadFileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUploads>['uploadsControllerUploadFile']>>>
+  
+
+
+export const getUploadsControllerUploadFileMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: UploadsControllerUploadFileBody}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: UploadsControllerUploadFileBody}, TContext> => {
+
+const mutationKey = ['uploadsControllerUploadFile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, {data: UploadsControllerUploadFileBody}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadsControllerUploadFile(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadsControllerUploadFileMutationResult = NonNullable<Awaited<ReturnType<typeof uploadsControllerUploadFile>>>
+    export type UploadsControllerUploadFileMutationBody = UploadsControllerUploadFileBody
+    export type UploadsControllerUploadFileMutationError = unknown
+
+    /**
+ * @summary Upload foto profil (Max 2MB, JPG/PNG)
+ */
+export const useUploadsControllerUploadFile = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: UploadsControllerUploadFileBody}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof uploadsControllerUploadFile>>,
+        TError,
+        {data: UploadsControllerUploadFileBody},
+        TContext
+      > => {
+
+      const mutationOptions = getUploadsControllerUploadFileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

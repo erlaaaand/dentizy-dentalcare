@@ -10,9 +10,9 @@ import type { CreatePaymentDtoStatusPembayaran } from './createPaymentDtoStatusP
 
 export interface CreatePaymentDto {
   /** ID Rekam Medis */
-  medicalRecordId: number;
+  medicalRecordId: string;
   /** ID Pasien */
-  patientId: number;
+  patientId: string;
   /** Tanggal pembayaran */
   tanggalPembayaran: string;
   /**
@@ -37,5 +37,5 @@ export interface CreatePaymentDto {
   /** Keterangan tambahan */
   keterangan?: string;
   /** ID user yang membuat */
-  createdBy?: number;
+  createdBy?: string;
 }

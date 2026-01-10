@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   LoginDto,
   UpdateProfileDto,
@@ -15,73 +34,360 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getAuth = () => {
+
 /**
  * Autentikasi via email/password dan dapatkan token
  * @summary Login pengguna
  */
-const authControllerLogin = (
+export const authControllerLogin = (
     loginDto: LoginDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
       {url: `/auth/login`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: loginDto
+      data: loginDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getAuthControllerLoginMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogin>>, TError,{data: LoginDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof authControllerLogin>>, TError,{data: LoginDto}, TContext> => {
+
+const mutationKey = ['authControllerLogin'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerLogin>>, {data: LoginDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authControllerLogin(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthControllerLoginMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerLogin>>>
+    export type AuthControllerLoginMutationBody = LoginDto
+    export type AuthControllerLoginMutationError = void
+
+    /**
+ * @summary Login pengguna
+ */
+export const useAuthControllerLogin = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogin>>, TError,{data: LoginDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authControllerLogin>>,
+        TError,
+        {data: LoginDto},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthControllerLoginMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Refresh access token
  */
-const authControllerRefresh = (
+export const authControllerRefresh = (
     
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
-      {url: `/auth/refresh`, method: 'POST'
+      {url: `/auth/refresh`, method: 'POST', signal
     },
       );
     }
-  /**
+  
+
+
+export const getAuthControllerRefreshMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRefresh>>, TError,void, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof authControllerRefresh>>, TError,void, TContext> => {
+
+const mutationKey = ['authControllerRefresh'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerRefresh>>, void> = () => {
+          
+
+          return  authControllerRefresh()
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthControllerRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerRefresh>>>
+    
+    export type AuthControllerRefreshMutationError = void
+
+    /**
+ * @summary Refresh access token
+ */
+export const useAuthControllerRefresh = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerRefresh>>, TError,void, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authControllerRefresh>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getAuthControllerRefreshMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Verifikasi validitas token
  */
-const authControllerVerify = (
+export const authControllerVerify = (
     verifyTokenDto: VerifyTokenDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
       {url: `/auth/verify`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: verifyTokenDto
+      data: verifyTokenDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getAuthControllerVerifyMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError,{data: VerifyTokenDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError,{data: VerifyTokenDto}, TContext> => {
+
+const mutationKey = ['authControllerVerify'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerVerify>>, {data: VerifyTokenDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authControllerVerify(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthControllerVerifyMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerVerify>>>
+    export type AuthControllerVerifyMutationBody = VerifyTokenDto
+    export type AuthControllerVerifyMutationError = unknown
+
+    /**
+ * @summary Verifikasi validitas token
+ */
+export const useAuthControllerVerify = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerVerify>>, TError,{data: VerifyTokenDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authControllerVerify>>,
+        TError,
+        {data: VerifyTokenDto},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthControllerVerifyMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Logout pengguna
  */
-const authControllerLogout = (
+export const authControllerLogout = (
     
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
-      {url: `/auth/logout`, method: 'POST'
+      {url: `/auth/logout`, method: 'POST', signal
     },
       );
     }
-  /**
+  
+
+
+export const getAuthControllerLogoutMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext> => {
+
+const mutationKey = ['authControllerLogout'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerLogout>>, void> = () => {
+          
+
+          return  authControllerLogout()
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthControllerLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerLogout>>>
+    
+    export type AuthControllerLogoutMutationError = void
+
+    /**
+ * @summary Logout pengguna
+ */
+export const useAuthControllerLogout = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerLogout>>, TError,void, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authControllerLogout>>,
+        TError,
+        void,
+        TContext
+      > => {
+
+      const mutationOptions = getAuthControllerLogoutMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Dapatkan profil pengguna saat ini
  */
-const authControllerGetProfile = (
+export const authControllerGetProfile = (
     
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
-      {url: `/auth/me`, method: 'GET'
+      {url: `/auth/me`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getAuthControllerGetProfileQueryKey = () => {
+    return [
+    `/auth/me`
+    ] as const;
+    }
+
+    
+export const getAuthControllerGetProfileQueryOptions = <TData = Awaited<ReturnType<typeof authControllerGetProfile>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getAuthControllerGetProfileQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof authControllerGetProfile>>> = ({ signal }) => authControllerGetProfile(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type AuthControllerGetProfileQueryResult = NonNullable<Awaited<ReturnType<typeof authControllerGetProfile>>>
+export type AuthControllerGetProfileQueryError = void
+
+
+export function useAuthControllerGetProfile<TData = Awaited<ReturnType<typeof authControllerGetProfile>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerGetProfile>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerGetProfile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAuthControllerGetProfile<TData = Awaited<ReturnType<typeof authControllerGetProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof authControllerGetProfile>>,
+          TError,
+          Awaited<ReturnType<typeof authControllerGetProfile>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useAuthControllerGetProfile<TData = Awaited<ReturnType<typeof authControllerGetProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dapatkan profil pengguna saat ini
+ */
+
+export function useAuthControllerGetProfile<TData = Awaited<ReturnType<typeof authControllerGetProfile>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof authControllerGetProfile>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getAuthControllerGetProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Update profil pengguna saat ini
  */
-const authControllerUpdateMyProfile = (
+export const authControllerUpdateMyProfile = (
     updateProfileDto: UpdateProfileDto,
  ) => {
+      
+      
       return orvalAxios<unknown>(
       {url: `/auth/me`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -89,10 +395,52 @@ const authControllerUpdateMyProfile = (
     },
       );
     }
-  return {authControllerLogin,authControllerRefresh,authControllerVerify,authControllerLogout,authControllerGetProfile,authControllerUpdateMyProfile}};
-export type AuthControllerLoginResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerLogin']>>>
-export type AuthControllerRefreshResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerRefresh']>>>
-export type AuthControllerVerifyResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerVerify']>>>
-export type AuthControllerLogoutResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerLogout']>>>
-export type AuthControllerGetProfileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerGetProfile']>>>
-export type AuthControllerUpdateMyProfileResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getAuth>['authControllerUpdateMyProfile']>>>
+  
+
+
+export const getAuthControllerUpdateMyProfileMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerUpdateMyProfile>>, TError,{data: UpdateProfileDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof authControllerUpdateMyProfile>>, TError,{data: UpdateProfileDto}, TContext> => {
+
+const mutationKey = ['authControllerUpdateMyProfile'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof authControllerUpdateMyProfile>>, {data: UpdateProfileDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  authControllerUpdateMyProfile(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AuthControllerUpdateMyProfileMutationResult = NonNullable<Awaited<ReturnType<typeof authControllerUpdateMyProfile>>>
+    export type AuthControllerUpdateMyProfileMutationBody = UpdateProfileDto
+    export type AuthControllerUpdateMyProfileMutationError = void
+
+    /**
+ * @summary Update profil pengguna saat ini
+ */
+export const useAuthControllerUpdateMyProfile = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof authControllerUpdateMyProfile>>, TError,{data: UpdateProfileDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof authControllerUpdateMyProfile>>,
+        TError,
+        {data: UpdateProfileDto},
+        TContext
+      > => {
+
+      const mutationOptions = getAuthControllerUpdateMyProfileMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

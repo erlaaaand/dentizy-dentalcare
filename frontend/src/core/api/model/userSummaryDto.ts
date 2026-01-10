@@ -7,6 +7,6 @@
  */
 
 export interface UserSummaryDto {
-  id: number;
+  id: string;
   username: string;
 }

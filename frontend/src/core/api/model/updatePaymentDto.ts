@@ -32,6 +32,4 @@ export interface UpdatePaymentDto {
   statusPembayaran?: UpdatePaymentDtoStatusPembayaran;
   /** Keterangan tambahan */
   keterangan?: string;
-  /** ID user yang membuat */
-  createdBy?: number;
 }

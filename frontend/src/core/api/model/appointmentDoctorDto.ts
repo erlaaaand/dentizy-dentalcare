@@ -7,7 +7,7 @@
  */
 
 export interface AppointmentDoctorDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
   roles?: string[];
 }

@@ -12,11 +12,11 @@ export type PaymentsControllerFindAllParams = {
 /**
  * Filter berdasarkan Medical Record ID
  */
-medicalRecordId?: number;
+medicalRecordId?: string;
 /**
  * Filter berdasarkan Patient ID
  */
-patientId?: number;
+patientId?: string;
 /**
  * Filter berdasarkan status pembayaran
  */

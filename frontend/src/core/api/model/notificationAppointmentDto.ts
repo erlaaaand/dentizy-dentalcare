@@ -9,7 +9,7 @@ import type { NotificationPatientDto } from './notificationPatientDto';
 import type { NotificationDoctorDto } from './notificationDoctorDto';
 
 export interface NotificationAppointmentDto {
-  id: number;
+  id: string;
   /** Tanggal janji temu */
   tanggal_janji: string;
   /** Jam janji temu */

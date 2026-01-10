@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   AppointmentResponseDto,
   PublicBookingDto
@@ -14,32 +33,162 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getPublicAppointments = () => {
+
 /**
  * @summary Dapatkan daftar dokter dan kepala klinik aktif
  */
-const publicAppointmentsControllerGetDoctors = (
+export const publicAppointmentsControllerGetDoctors = (
     
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<unknown>(
-      {url: `/public/appointments/doctors`, method: 'GET'
+      {url: `/public/appointments/doctors`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getPublicAppointmentsControllerGetDoctorsQueryKey = () => {
+    return [
+    `/public/appointments/doctors`
+    ] as const;
+    }
+
+    
+export const getPublicAppointmentsControllerGetDoctorsQueryOptions = <TData = Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getPublicAppointmentsControllerGetDoctorsQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>> = ({ signal }) => publicAppointmentsControllerGetDoctors(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type PublicAppointmentsControllerGetDoctorsQueryResult = NonNullable<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>>
+export type PublicAppointmentsControllerGetDoctorsQueryError = unknown
+
+
+export function usePublicAppointmentsControllerGetDoctors<TData = Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>,
+          TError,
+          Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicAppointmentsControllerGetDoctors<TData = Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>,
+          TError,
+          Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function usePublicAppointmentsControllerGetDoctors<TData = Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Dapatkan daftar dokter dan kepala klinik aktif
+ */
+
+export function usePublicAppointmentsControllerGetDoctors<TData = Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof publicAppointmentsControllerGetDoctors>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getPublicAppointmentsControllerGetDoctorsQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * Jika NIK baru, akan membuat data pasien sementara (perlu verifikasi di klinik).
  * @summary Booking janji temu untuk pasien umum (Tanpa Login)
  */
-const publicAppointmentsControllerBook = (
+export const publicAppointmentsControllerBook = (
     publicBookingDto: PublicBookingDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<AppointmentResponseDto>(
       {url: `/public/appointments/book`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: publicBookingDto
+      data: publicBookingDto, signal
     },
       );
     }
-  return {publicAppointmentsControllerGetDoctors,publicAppointmentsControllerBook}};
-export type PublicAppointmentsControllerGetDoctorsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPublicAppointments>['publicAppointmentsControllerGetDoctors']>>>
-export type PublicAppointmentsControllerBookResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getPublicAppointments>['publicAppointmentsControllerBook']>>>
+  
+
+
+export const getPublicAppointmentsControllerBookMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicAppointmentsControllerBook>>, TError,{data: PublicBookingDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof publicAppointmentsControllerBook>>, TError,{data: PublicBookingDto}, TContext> => {
+
+const mutationKey = ['publicAppointmentsControllerBook'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof publicAppointmentsControllerBook>>, {data: PublicBookingDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  publicAppointmentsControllerBook(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PublicAppointmentsControllerBookMutationResult = NonNullable<Awaited<ReturnType<typeof publicAppointmentsControllerBook>>>
+    export type PublicAppointmentsControllerBookMutationBody = PublicBookingDto
+    export type PublicAppointmentsControllerBookMutationError = void
+
+    /**
+ * @summary Booking janji temu untuk pasien umum (Tanpa Login)
+ */
+export const usePublicAppointmentsControllerBook = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof publicAppointmentsControllerBook>>, TError,{data: PublicBookingDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof publicAppointmentsControllerBook>>,
+        TError,
+        {data: PublicBookingDto},
+        TContext
+      > => {
+
+      const mutationOptions = getPublicAppointmentsControllerBookMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

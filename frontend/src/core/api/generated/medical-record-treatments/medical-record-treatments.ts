@@ -5,6 +5,25 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useMutation,
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import type {
   CreateMedicalRecordTreatmentDto,
   MedicalRecordTreatmentResponseDto,
@@ -19,84 +38,542 @@ import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getMedicalRecordTreatments = () => {
+
 /**
  * @summary Tambah perawatan ke rekam medis
  */
-const medicalRecordTreatmentsControllerCreate = (
+export const medicalRecordTreatmentsControllerCreate = (
     createMedicalRecordTreatmentDto: CreateMedicalRecordTreatmentDto,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentResponseDto>(
       {url: `/medical-record-treatments`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: createMedicalRecordTreatmentDto
+      data: createMedicalRecordTreatmentDto, signal
     },
       );
     }
-  /**
+  
+
+
+export const getMedicalRecordTreatmentsControllerCreateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>, TError,{data: CreateMedicalRecordTreatmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>, TError,{data: CreateMedicalRecordTreatmentDto}, TContext> => {
+
+const mutationKey = ['medicalRecordTreatmentsControllerCreate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>, {data: CreateMedicalRecordTreatmentDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  medicalRecordTreatmentsControllerCreate(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MedicalRecordTreatmentsControllerCreateMutationResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>>
+    export type MedicalRecordTreatmentsControllerCreateMutationBody = CreateMedicalRecordTreatmentDto
+    export type MedicalRecordTreatmentsControllerCreateMutationError = void
+
+    /**
+ * @summary Tambah perawatan ke rekam medis
+ */
+export const useMedicalRecordTreatmentsControllerCreate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>, TError,{data: CreateMedicalRecordTreatmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof medicalRecordTreatmentsControllerCreate>>,
+        TError,
+        {data: CreateMedicalRecordTreatmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getMedicalRecordTreatmentsControllerCreateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Ambil semua data perawatan rekam medis
  */
-const medicalRecordTreatmentsControllerFindAll = (
+export const medicalRecordTreatmentsControllerFindAll = (
     params?: MedicalRecordTreatmentsControllerFindAllParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentResponseDto[]>(
       {url: `/medical-record-treatments`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerFindAllQueryKey = (params?: MedicalRecordTreatmentsControllerFindAllParams,) => {
+    return [
+    `/medical-record-treatments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError = void>(params?: MedicalRecordTreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerFindAllQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>> = ({ signal }) => medicalRecordTreatmentsControllerFindAll(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerFindAllQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>>
+export type MedicalRecordTreatmentsControllerFindAllQueryError = void
+
+
+export function useMedicalRecordTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError = void>(
+ params: undefined |  MedicalRecordTreatmentsControllerFindAllParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Ambil semua data perawatan rekam medis
+ */
+
+export function useMedicalRecordTreatmentsControllerFindAll<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerFindAllParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerFindAllQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Statistik layanan terlaris
  */
-const medicalRecordTreatmentsControllerGetTopTreatments = (
+export const medicalRecordTreatmentsControllerGetTopTreatments = (
     params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
       {url: `/medical-record-treatments/stats/top-treatments`, method: 'GET',
-        params
+        params, signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryKey = (params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams,) => {
+    return [
+    `/medical-record-treatments/stats/top-treatments`, ...(params ? [params]: [])
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void>(params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>> = ({ signal }) => medicalRecordTreatmentsControllerGetTopTreatments(params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerGetTopTreatmentsQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>>
+export type MedicalRecordTreatmentsControllerGetTopTreatmentsQueryError = void
+
+
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void>(
+ params: undefined |  MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Statistik layanan terlaris
+ */
+
+export function useMedicalRecordTreatmentsControllerGetTopTreatments<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError = void>(
+ params?: MedicalRecordTreatmentsControllerGetTopTreatmentsParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTopTreatments>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerGetTopTreatmentsQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Ambil semua perawatan berdasarkan Medical Record ID
  */
-const medicalRecordTreatmentsControllerFindByMedicalRecordId = (
+export const medicalRecordTreatmentsControllerFindByMedicalRecordId = (
     medicalRecordId: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentResponseDto[]>(
-      {url: `/medical-record-treatments/medical-record/${medicalRecordId}`, method: 'GET'
+      {url: `/medical-record-treatments/medical-record/${medicalRecordId}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+    return [
+    `/medical-record-treatments/medical-record/${medicalRecordId}`
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryKey(medicalRecordId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>> = ({ signal }) => medicalRecordTreatmentsControllerFindByMedicalRecordId(medicalRecordId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(medicalRecordId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>>
+export type MedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryError = void
+
+
+export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Ambil semua perawatan berdasarkan Medical Record ID
+ */
+
+export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryOptions(medicalRecordId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Hitung total biaya perawatan berdasarkan Medical Record ID
  */
-const medicalRecordTreatmentsControllerGetTotalByMedicalRecordId = (
+export const medicalRecordTreatmentsControllerGetTotalByMedicalRecordId = (
     medicalRecordId: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentsControllerGetTotalByMedicalRecordId200>(
-      {url: `/medical-record-treatments/medical-record/${medicalRecordId}/total`, method: 'GET'
+      {url: `/medical-record-treatments/medical-record/${medicalRecordId}/total`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+    return [
+    `/medical-record-treatments/medical-record/${medicalRecordId}/total`
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryKey(medicalRecordId);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>> = ({ signal }) => medicalRecordTreatmentsControllerGetTotalByMedicalRecordId(medicalRecordId, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(medicalRecordId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>>
+export type MedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryError = void
+
+
+export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Hitung total biaya perawatan berdasarkan Medical Record ID
+ */
+
+export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
+ medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryOptions(medicalRecordId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Ambil detail perawatan rekam medis berdasarkan ID
  */
-const medicalRecordTreatmentsControllerFindOne = (
+export const medicalRecordTreatmentsControllerFindOne = (
     id: number,
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentResponseDto>(
-      {url: `/medical-record-treatments/${id}`, method: 'GET'
+      {url: `/medical-record-treatments/${id}`, method: 'GET', signal
     },
       );
     }
-  /**
+  
+
+
+
+export const getMedicalRecordTreatmentsControllerFindOneQueryKey = (id?: number,) => {
+    return [
+    `/medical-record-treatments/${id}`
+    ] as const;
+    }
+
+    
+export const getMedicalRecordTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getMedicalRecordTreatmentsControllerFindOneQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>> = ({ signal }) => medicalRecordTreatmentsControllerFindOne(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type MedicalRecordTreatmentsControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>>
+export type MedicalRecordTreatmentsControllerFindOneQueryError = void
+
+
+export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Ambil detail perawatan rekam medis berdasarkan ID
+ */
+
+export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getMedicalRecordTreatmentsControllerFindOneQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+/**
  * @summary Update perawatan rekam medis
  */
-const medicalRecordTreatmentsControllerUpdate = (
+export const medicalRecordTreatmentsControllerUpdate = (
     id: number,
     updateMedicalRecordTreatmentDto: UpdateMedicalRecordTreatmentDto,
  ) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentResponseDto>(
       {url: `/medical-record-treatments/${id}`, method: 'PATCH',
       headers: {'Content-Type': 'application/json', },
@@ -104,23 +581,113 @@ const medicalRecordTreatmentsControllerUpdate = (
     },
       );
     }
-  /**
+  
+
+
+export const getMedicalRecordTreatmentsControllerUpdateMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext> => {
+
+const mutationKey = ['medicalRecordTreatmentsControllerUpdate'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, {id: number;data: UpdateMedicalRecordTreatmentDto}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  medicalRecordTreatmentsControllerUpdate(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MedicalRecordTreatmentsControllerUpdateMutationResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>>
+    export type MedicalRecordTreatmentsControllerUpdateMutationBody = UpdateMedicalRecordTreatmentDto
+    export type MedicalRecordTreatmentsControllerUpdateMutationError = void
+
+    /**
+ * @summary Update perawatan rekam medis
+ */
+export const useMedicalRecordTreatmentsControllerUpdate = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>,
+        TError,
+        {id: number;data: UpdateMedicalRecordTreatmentDto},
+        TContext
+      > => {
+
+      const mutationOptions = getMedicalRecordTreatmentsControllerUpdateMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    /**
  * @summary Hapus perawatan rekam medis (soft delete)
  */
-const medicalRecordTreatmentsControllerRemove = (
+export const medicalRecordTreatmentsControllerRemove = (
     id: number,
  ) => {
+      
+      
       return orvalAxios<MedicalRecordTreatmentsControllerRemove200>(
       {url: `/medical-record-treatments/${id}`, method: 'DELETE'
     },
       );
     }
-  return {medicalRecordTreatmentsControllerCreate,medicalRecordTreatmentsControllerFindAll,medicalRecordTreatmentsControllerGetTopTreatments,medicalRecordTreatmentsControllerFindByMedicalRecordId,medicalRecordTreatmentsControllerGetTotalByMedicalRecordId,medicalRecordTreatmentsControllerFindOne,medicalRecordTreatmentsControllerUpdate,medicalRecordTreatmentsControllerRemove}};
-export type MedicalRecordTreatmentsControllerCreateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerCreate']>>>
-export type MedicalRecordTreatmentsControllerFindAllResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerFindAll']>>>
-export type MedicalRecordTreatmentsControllerGetTopTreatmentsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerGetTopTreatments']>>>
-export type MedicalRecordTreatmentsControllerFindByMedicalRecordIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerFindByMedicalRecordId']>>>
-export type MedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerGetTotalByMedicalRecordId']>>>
-export type MedicalRecordTreatmentsControllerFindOneResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerFindOne']>>>
-export type MedicalRecordTreatmentsControllerUpdateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerUpdate']>>>
-export type MedicalRecordTreatmentsControllerRemoveResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getMedicalRecordTreatments>['medicalRecordTreatmentsControllerRemove']>>>
+  
+
+
+export const getMedicalRecordTreatmentsControllerRemoveMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['medicalRecordTreatmentsControllerRemove'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  medicalRecordTreatmentsControllerRemove(id,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MedicalRecordTreatmentsControllerRemoveMutationResult = NonNullable<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>>
+    
+    export type MedicalRecordTreatmentsControllerRemoveMutationError = void
+
+    /**
+ * @summary Hapus perawatan rekam medis (soft delete)
+ */
+export const useMedicalRecordTreatmentsControllerRemove = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+
+      const mutationOptions = getMedicalRecordTreatmentsControllerRemoveMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    

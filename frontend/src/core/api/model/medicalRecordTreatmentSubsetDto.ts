@@ -8,7 +8,7 @@
 import type { TreatmentSubsetDto } from './treatmentSubsetDto';
 
 export interface MedicalRecordTreatmentSubsetDto {
-  id: number;
+  id: string;
   jumlah: number;
   price_snapshot: number;
   treatment?: TreatmentSubsetDto;

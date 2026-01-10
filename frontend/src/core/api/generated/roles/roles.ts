@@ -5,27 +5,195 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import {
+  useQuery
+} from '@tanstack/react-query';
+import type {
+  DataTag,
+  DefinedInitialDataOptions,
+  DefinedUseQueryResult,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
+  UndefinedInitialDataOptions,
+  UseQueryOptions,
+  UseQueryResult
+} from '@tanstack/react-query';
+
 import { orvalAxios } from '../../custom-axios';
 
 
 
-  export const getRoles = () => {
-const rolesControllerFindAll = (
+
+export const rolesControllerFindAll = (
     
- ) => {
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
-      {url: `/roles`, method: 'GET'
+      {url: `/roles`, method: 'GET', signal
     },
       );
     }
-  const rolesControllerFindOne = (
-    id: number,
- ) => {
+  
+
+
+
+export const getRolesControllerFindAllQueryKey = () => {
+    return [
+    `/roles`
+    ] as const;
+    }
+
+    
+export const getRolesControllerFindAllQueryOptions = <TData = Awaited<ReturnType<typeof rolesControllerFindAll>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRolesControllerFindAllQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rolesControllerFindAll>>> = ({ signal }) => rolesControllerFindAll(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RolesControllerFindAllQueryResult = NonNullable<Awaited<ReturnType<typeof rolesControllerFindAll>>>
+export type RolesControllerFindAllQueryError = void
+
+
+export function useRolesControllerFindAll<TData = Awaited<ReturnType<typeof rolesControllerFindAll>>, TError = void>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rolesControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof rolesControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRolesControllerFindAll<TData = Awaited<ReturnType<typeof rolesControllerFindAll>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rolesControllerFindAll>>,
+          TError,
+          Awaited<ReturnType<typeof rolesControllerFindAll>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRolesControllerFindAll<TData = Awaited<ReturnType<typeof rolesControllerFindAll>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useRolesControllerFindAll<TData = Awaited<ReturnType<typeof rolesControllerFindAll>>, TError = void>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindAll>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRolesControllerFindAllQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const rolesControllerFindOne = (
+    id: string,
+ signal?: AbortSignal
+) => {
+      
+      
       return orvalAxios<void>(
-      {url: `/roles/${id}`, method: 'GET'
+      {url: `/roles/${id}`, method: 'GET', signal
     },
       );
     }
-  return {rolesControllerFindAll,rolesControllerFindOne}};
-export type RolesControllerFindAllResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getRoles>['rolesControllerFindAll']>>>
-export type RolesControllerFindOneResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getRoles>['rolesControllerFindOne']>>>
+  
+
+
+
+export const getRolesControllerFindOneQueryKey = (id?: string,) => {
+    return [
+    `/roles/${id}`
+    ] as const;
+    }
+
+    
+export const getRolesControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof rolesControllerFindOne>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getRolesControllerFindOneQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof rolesControllerFindOne>>> = ({ signal }) => rolesControllerFindOne(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type RolesControllerFindOneQueryResult = NonNullable<Awaited<ReturnType<typeof rolesControllerFindOne>>>
+export type RolesControllerFindOneQueryError = void
+
+
+export function useRolesControllerFindOne<TData = Awaited<ReturnType<typeof rolesControllerFindOne>>, TError = void>(
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rolesControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof rolesControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRolesControllerFindOne<TData = Awaited<ReturnType<typeof rolesControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof rolesControllerFindOne>>,
+          TError,
+          Awaited<ReturnType<typeof rolesControllerFindOne>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useRolesControllerFindOne<TData = Awaited<ReturnType<typeof rolesControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useRolesControllerFindOne<TData = Awaited<ReturnType<typeof rolesControllerFindOne>>, TError = void>(
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof rolesControllerFindOne>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getRolesControllerFindOneQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+

@@ -17,10 +17,10 @@ import type { MedicalRecordTreatmentSubsetDto } from './medicalRecordTreatmentSu
 
 export interface MedicalRecordResponseDto {
   /** ID unik rekam medis */
-  id: number;
-  appointment_id: number;
-  doctor_id: number;
-  patient_id: number;
+  id: string;
+  appointment_id: string;
+  doctor_id: string;
+  patient_id: string;
   /** @nullable */
   subjektif?: MedicalRecordResponseDtoSubjektif;
   /** @nullable */

@@ -8,7 +8,7 @@
 import type { UserRoleDto } from './userRoleDto';
 
 export interface UserResponseDto {
-  id: number;
+  id: string;
   username: string;
   nama_lengkap: string;
   /** @nullable */

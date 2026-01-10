@@ -9,11 +9,11 @@ import type { TreatmentDetailDto } from './treatmentDetailDto';
 
 export interface MedicalRecordTreatmentResponseDto {
   /** ID Medical Record Treatment */
-  id: number;
+  id: string;
   /** ID Rekam Medis */
-  medicalRecordId: number;
+  medicalRecordId: string;
   /** ID Perawatan */
-  treatmentId: number;
+  treatmentId: string;
   /** Jumlah perawatan */
   jumlah: number;
   /** Harga satuan */

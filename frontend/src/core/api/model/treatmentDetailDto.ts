@@ -7,7 +7,7 @@
  */
 
 export interface TreatmentDetailDto {
-  id: number;
+  id: string;
   kodePerawatan: string;
   namaPerawatan: string;
   harga: number;

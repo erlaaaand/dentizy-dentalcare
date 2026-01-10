@@ -7,6 +7,6 @@
  */
 
 export interface DoctorSubsetDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
 }

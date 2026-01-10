@@ -7,7 +7,7 @@
  */
 
 export interface UserRoleDto {
-  id: number;
+  id: string;
   name: string;
   description: string;
 }

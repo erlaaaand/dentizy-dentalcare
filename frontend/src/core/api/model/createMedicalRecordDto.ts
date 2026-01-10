@@ -8,9 +8,9 @@
 
 export interface CreateMedicalRecordDto {
   /** ID dari appointment yang terkait dengan rekam medis */
-  appointment_id: number;
+  appointment_id: string;
   /** ID user staff (perawat/dokter) yang membuat rekam medis */
-  user_id_staff: number;
+  user_id_staff: string;
   /**
    * Bagian Subjektif dari SOAP (keluhan pasien)
    * @maxLength 5000

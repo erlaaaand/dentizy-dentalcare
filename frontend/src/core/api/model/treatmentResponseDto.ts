@@ -8,8 +8,8 @@
 import type { CategoryInfoDto } from './categoryInfoDto';
 
 export interface TreatmentResponseDto {
-  id: number;
-  categoryId: number;
+  id: string;
+  categoryId: string;
   kodePerawatan: string;
   namaPerawatan: string;
   deskripsi?: string;

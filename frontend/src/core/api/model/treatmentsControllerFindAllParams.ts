@@ -16,7 +16,7 @@ search?: string;
 /**
  * Filter berdasarkan ID kategori
  */
-categoryId?: number;
+categoryId?: string;
 /**
  * Filter berdasarkan status aktif
  */

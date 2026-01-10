@@ -7,5 +7,5 @@
  */
 
 export interface MedicalRecordSubsetDto {
-  id: number;
+  id: string;
 }

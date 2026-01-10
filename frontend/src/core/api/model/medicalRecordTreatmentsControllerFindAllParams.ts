@@ -10,11 +10,11 @@ export type MedicalRecordTreatmentsControllerFindAllParams = {
 /**
  * Filter berdasarkan Medical Record ID
  */
-medicalRecordId?: number;
+medicalRecordId?: string;
 /**
  * Filter berdasarkan Treatment ID
  */
-treatmentId?: number;
+treatmentId?: string;
 /**
  * Nomor halaman
  * @minimum 1

@@ -7,6 +7,6 @@
  */
 
 export interface NotificationDoctorDto {
-  id: number;
+  id: string;
   nama_lengkap: string;
 }

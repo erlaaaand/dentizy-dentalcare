@@ -10,11 +10,11 @@ import type { MedicalRecordSubsetDto } from './medicalRecordSubsetDto';
 
 export interface PaymentResponseDto {
   /** ID Pembayaran */
-  id: number;
+  id: string;
   /** ID Rekam Medis */
-  medicalRecordId: number;
+  medicalRecordId: string;
   /** ID Pasien */
-  patientId: number;
+  patientId: string;
   /** Nomor Invoice */
   nomorInvoice: string;
   /** Tanggal Pembayaran */
@@ -36,7 +36,7 @@ export interface PaymentResponseDto {
   /** Keterangan */
   keterangan?: string;
   /** ID Pembuat */
-  createdBy?: number;
+  createdBy?: string;
   /** Tanggal Dibuat */
   createdAt: string;
   /** Tanggal Diupdate */

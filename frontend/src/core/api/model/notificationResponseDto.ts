@@ -10,8 +10,8 @@ import type { NotificationResponseDtoStatus } from './notificationResponseDtoSta
 import type { NotificationAppointmentDto } from './notificationAppointmentDto';
 
 export interface NotificationResponseDto {
-  id: number;
-  appointment_id: number;
+  id: string;
+  appointment_id: string;
   /** Jenis notifikasi (Email/WA) */
   type: NotificationResponseDtoType;
   /** Status pengiriman */
