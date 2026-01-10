@@ -395,6 +395,7 @@ export function getStorageInfo(): {
                 }
             }
         } catch (e) {
+            console.log(e);
             return 0;
         }
         return size;

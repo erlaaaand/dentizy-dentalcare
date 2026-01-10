@@ -1,9 +1,8 @@
 // frontend/src/app/layout.tsx
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
-import { Providers } from '@/components/providers/Providers'; //
-import { cn } from '@/core'; //
-import { ToastContainer } from '@/components';
+import { Providers } from '@/components/providers/Providers';
+import { cn } from '@/core';
 
 // Global Styles
 import './globals.css';
@@ -53,7 +52,6 @@ export default function RootLayout({
       >
         <Providers>
           {children}
-          {/* <ToastContainer position="top-right" /> */}
         </Providers>
       </body>
     </html>

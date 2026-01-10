@@ -9,21 +9,28 @@ export function isEmpty(value: unknown): boolean {
     return false;
 }
 
-export function isValidEmail(email: string): boolean {
-    return VALIDATION_RULES.EMAIL.PATTERN.test(email);
+export function isValidEmail(email: string): { valid: boolean; message?: string } {
+    const valid = VALIDATION_RULES.EMAIL.PATTERN.test(email);
+    return valid
+        ? { valid }
+        : { valid, message: VALIDATION_MESSAGES.EMAIL_INVALID };
 }
 
-export function isValidPhone(phone: string): boolean {
+export function isValidPhone(phone: string): { valid: boolean, message?: string } {
     const cleaned = phone.replace(/\D/g, '');
-    return VALIDATION_RULES.PHONE.PATTERN.test(cleaned);
+    const valid = VALIDATION_RULES.PHONE.PATTERN.test(cleaned);
+    return valid
+        ? { valid }
+        : { valid, message: VALIDATION_MESSAGES.PHONE_INVALID }
 }
 
-export function isValidNIK(nik: string): boolean {
+export function isValidNIK(nik: string): { valid: boolean, message?: string } {
     const cleaned = nik.replace(/\D/g, '');
-    return (
-        cleaned.length === VALIDATION_RULES.NIK.LENGTH &&
+    const valid = cleaned.length === VALIDATION_RULES.NIK.LENGTH &&
         VALIDATION_RULES.NIK.PATTERN.test(cleaned)
-    );
+    return valid
+        ? { valid }
+        : { valid, message: VALIDATION_MESSAGES.NIK_INVALID }
 }
 
 export function isStrongPassword(
@@ -35,7 +42,7 @@ export function isStrongPassword(
         requireNumbers?: boolean;
         requireSpecialChars?: boolean;
     } = {}
-): boolean {
+): { valid: boolean; message?: string } {
     const {
         minLength = VALIDATION_RULES.PASSWORD.MIN_LENGTH,
         requireUppercase = true,
@@ -44,18 +51,29 @@ export function isStrongPassword(
         requireSpecialChars = true,
     } = options;
 
-    if (password.length < minLength) return false;
-    if (requireUppercase && !/[A-Z]/.test(password)) return false;
-    if (requireLowercase && !/[a-z]/.test(password)) return false;
-    if (requireNumbers && !/\d/.test(password)) return false;
-    if (requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) return false;
+    if (password.length < minLength) {
+        return { valid: false, message: VALIDATION_MESSAGES.PASSWORD_TOO_SHORT };
+    }
+    if (requireUppercase && !/[A-Z]/.test(password)) {
+        return { valid: false, message: VALIDATION_MESSAGES.PASSWORD_WEAK };
+    }
+    if (requireLowercase && !/[a-z]/.test(password)) {
+        return { valid: false, message: VALIDATION_MESSAGES.PASSWORD_WEAK };
+    }
+    if (requireNumbers && !/\d/.test(password)) {
+        return { valid: false, message: VALIDATION_MESSAGES.PASSWORD_WEAK };
+    }
+    if (requireSpecialChars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return { valid: false, message: VALIDATION_MESSAGES.PASSWORD_WEAK };
+    }
 
-    return true;
+    return { valid: true };
 }
 
 export function getPasswordStrength(password: string): {
     score: number;
     label: 'Sangat Lemah' | 'Lemah' | 'Sedang' | 'Kuat' | 'Sangat Kuat';
+    message?: string;
 } {
     let score = 0;
 
@@ -68,27 +86,44 @@ export function getPasswordStrength(password: string): {
     const labels = ['Sangat Lemah', 'Lemah', 'Sedang', 'Kuat', 'Sangat Kuat'] as const;
     const normalizedScore = Math.min(Math.floor(score / 1.25), 4);
 
-    return {
-        score: normalizedScore,
-        label: labels[normalizedScore],
-    };
+    const label = labels[normalizedScore];
+    const message =
+        normalizedScore < 3 ? VALIDATION_MESSAGES.PASSWORD_WEAK : undefined;
+
+    return { score: normalizedScore, label, message };
 }
 
-export function isValidDate(date: string): boolean {
+export function validateDate(date: string): { valid: boolean; message?: string } {
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(date)) return false;
+    if (!dateRegex.test(date)) {
+        return { valid: false, message: VALIDATION_MESSAGES.DATE_INVALID };
+    }
 
     const dateObj = new Date(date);
-    return !isNaN(dateObj.getTime());
+    if (isNaN(dateObj.getTime())) {
+        return { valid: false, message: VALIDATION_MESSAGES.DATE_INVALID };
+    }
+
+    return { valid: true };
 }
 
-export function isValidTime(time: string): boolean {
+export function validateTime(time: string): { valid: boolean; message?: string } {
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    return timeRegex.test(time);
+    const valid = timeRegex.test(time);
+    return valid
+        ? { valid }
+        : { valid, message: VALIDATION_MESSAGES.TIME_INVALID };
 }
 
-export function isValidAge(birthDate: string, minAge = 0, maxAge = 150): boolean {
-    if (!isValidDate(birthDate)) return false;
+export function validateAge(
+    birthDate: string,
+    minAge = 0,
+    maxAge = 150
+): { valid: boolean; message?: string } {
+    const dateCheck = validateDate(birthDate);
+    if (!dateCheck.valid) {
+        return { valid: false, message: VALIDATION_MESSAGES.DATE_INVALID };
+    }
 
     const today = new Date();
     const birth = new Date(birthDate);
@@ -100,15 +135,27 @@ export function isValidAge(birthDate: string, minAge = 0, maxAge = 150): boolean
         age--;
     }
 
-    return age >= minAge && age <= maxAge;
+    const valid = age >= minAge && age <= maxAge;
+    return valid
+        ? { valid }
+        : { valid, message: VALIDATION_MESSAGES.AGE_INVALID };
 }
 
 export function hasRequiredFields<T extends object>(
     obj: T,
     requiredFields: (keyof T)[]
-): boolean {
-    return requiredFields.every((field) => {
+): { valid: boolean; message?: string } {
+    const missing = requiredFields.filter((field) => {
         const value = obj[field];
-        return value !== null && value !== undefined && value !== '';
+        return value === null || value === undefined || value === '';
     });
+
+    if (missing.length > 0) {
+        return {
+            valid: false,
+            message: `${VALIDATION_MESSAGES.REQUIRED_FIELD}: ${missing.join(', ')}`,
+        };
+    }
+
+    return { valid: true };
 }

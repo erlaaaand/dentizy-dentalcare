@@ -34,9 +34,13 @@ export const VALIDATION_RULES = {
 } as const;
 
 export const VALIDATION_MESSAGES = {
+  DATE_INVALID: 'Tanggal tidak valid',
+  TIME_INVALID: 'Waktu tidak valid',
   NIK_INVALID: `NIK harus ${VALIDATION_RULES.NIK.LENGTH} digit`,
   PHONE_INVALID: 'Format nomor telepon tidak valid',
   EMAIL_INVALID: 'Format email tidak valid',
+  AGE_INVALID: 'Umur tidak valid',
+  PASSWORD_TOO_SHORT: 'Password yang anda tulis terlalu pendek',
   PASSWORD_WEAK: 'Password harus mengandung huruf besar, huruf kecil, angka, dan karakter khusus',
   USERNAME_INVALID: 'Username hanya boleh mengandung huruf, angka, dan underscore',
   NAME_TOO_SHORT: `Nama minimal ${VALIDATION_RULES.NAME.MIN_LENGTH} karakter`,

@@ -6,6 +6,8 @@
 orval.config.ts
 swagger.json
 documentation-core.md
+mapping.endpoint.ts
+mapping.routes.ts
 
 # Build artifacts
 /frontend/dist
