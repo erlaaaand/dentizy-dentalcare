@@ -8,7 +8,7 @@ import {
 
 class NotificationPatientDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'Budi Santoso' })
   nama_lengkap: string;
@@ -19,7 +19,7 @@ class NotificationPatientDto {
 
 class NotificationDoctorDto {
   @ApiProperty({ example: 101 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'dr. Tirta' })
   nama_lengkap: string;
@@ -27,7 +27,7 @@ class NotificationDoctorDto {
 
 class NotificationAppointmentDto {
   @ApiProperty({ example: 50 })
-  id: number;
+  id: string;
 
   @ApiProperty({
     description: 'Tanggal janji temu',
@@ -50,10 +50,10 @@ class NotificationAppointmentDto {
 
 export class NotificationResponseDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 50 })
-  appointment_id: number;
+  appointment_id: string;
 
   @ApiProperty({
     description: 'Jenis notifikasi (Email/WA)',

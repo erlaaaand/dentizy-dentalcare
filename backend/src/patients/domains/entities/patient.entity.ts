@@ -23,8 +23,8 @@ export enum Gender {
 @Index('idx_patient_search', ['nama_lengkap', 'nik', 'email'])
 @Index('idx_patient_active', ['is_active', 'deleted_at'])
 export class Patient {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ length: 50, unique: true })
   @Index('idx_patient_nomor_rekam_medis')

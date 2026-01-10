@@ -14,12 +14,12 @@ import { AppointmentStatus } from '../../domains/entities/appointment.entity';
 
 export class CreateAppointmentDto {
   @IsNotEmpty({ message: 'Patient ID harus diisi' })
-  @IsNumber()
-  patient_id: number;
+  @IsString()
+  patient_id: string;
 
   @IsNotEmpty({ message: 'Doctor ID harus diisi' })
-  @IsNumber()
-  doctor_id: number;
+  @IsString()
+  doctor_id: string;
 
   @IsNotEmpty({ message: 'Tanggal janji harus diisi' })
   @IsDateString({}, { message: 'Format tanggal tidak valid (YYYY-MM-DD)' })

@@ -4,18 +4,18 @@ import { NotificationResponseDto } from '../../applications/dto/notification-res
 
 // Define proper types for nested objects
 interface PatientData {
-  id: number;
+  id: string;
   nama_lengkap: string;
   email: string | null;
 }
 
 interface DoctorData {
-  id: number;
+  id: string;
   nama_lengkap: string;
 }
 
 interface AppointmentData {
-  id: number;
+  id: string;
   tanggal_janji: Date;
   jam_janji: string;
   patient?: PatientData;

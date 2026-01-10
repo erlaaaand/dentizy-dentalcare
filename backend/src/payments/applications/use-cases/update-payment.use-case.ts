@@ -22,9 +22,9 @@ export class UpdatePaymentUseCase {
   ) {}
 
   async execute(
-    id: number,
+    id: string,
     dto: UpdatePaymentDto,
-    updatedBy?: number,
+    updatedBy?: string,
   ): Promise<PaymentResponseDto> {
     const payment = await this.paymentRepository.findOne(id);
 

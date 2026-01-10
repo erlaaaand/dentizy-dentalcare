@@ -16,7 +16,7 @@ export class AppointmentValidator {
   /**
    * Validasi appointment exists
    */
-  validateAppointmentExists(appointment: Appointment | null, id: number): void {
+  validateAppointmentExists(appointment: Appointment | null, id: string): void {
     if (!appointment) {
       throw new NotFoundException(
         `Janji temu dengan ID #${id} tidak ditemukan`,

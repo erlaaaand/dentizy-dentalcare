@@ -23,7 +23,7 @@ export class MedicalRecordAppointmentFinderService {
    * Find medical record by appointment ID with authorization
    */
   async execute(
-    appointmentId: number,
+    appointmentId: string,
     user: User,
   ): Promise<MedicalRecord | null> {
     // Validate input
@@ -66,7 +66,7 @@ export class MedicalRecordAppointmentFinderService {
   /**
    * Check if medical record exists for appointment (without loading full data)
    */
-  async exists(appointmentId: number): Promise<boolean> {
+  async exists(appointmentId: string): Promise<boolean> {
     this.validator.validateAppointmentId(appointmentId);
 
     const count = await this.repository.count({

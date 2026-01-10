@@ -72,7 +72,7 @@ export class PaymentsService {
     return await this.getPaymentListUseCase.execute(query);
   }
 
-  async findOne(id: number): Promise<PaymentResponseDto> {
+  async findOne(id: string): Promise<PaymentResponseDto> {
     return await this.getPaymentDetailUseCase.execute(id);
   }
 
@@ -82,7 +82,7 @@ export class PaymentsService {
   }
 
   async findByMedicalRecordId(
-    medicalRecordId: number,
+    medicalRecordId: string,
   ): Promise<PaymentResponseDto> {
     const payment =
       await this.getPaymentByMedicalRecordQuery.execute(medicalRecordId);
@@ -97,7 +97,7 @@ export class PaymentsService {
   }
 
   async findByPatientId(
-    patientId: number,
+    patientId: string,
     limit: number = 10,
   ): Promise<PaymentResponseDto[]> {
     const payments = await this.getPaymentsByPatientQuery.execute(
@@ -108,18 +108,18 @@ export class PaymentsService {
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdatePaymentDto,
-    updatedBy?: number,
+    updatedBy?: string,
   ): Promise<PaymentResponseDto> {
     return await this.updatePaymentUseCase.execute(id, dto, updatedBy);
   }
 
-  async cancel(id: number, cancelledBy?: number): Promise<PaymentResponseDto> {
+  async cancel(id: string, cancelledBy?: string): Promise<PaymentResponseDto> {
     return await this.cancelPaymentUseCase.execute(id, cancelledBy);
   }
 
-  async remove(id: number, deletedBy?: number): Promise<void> {
+  async remove(id: string, deletedBy?: string): Promise<void> {
     await this.deletePaymentUseCase.execute(id, deletedBy);
   }
 
@@ -144,9 +144,9 @@ export class PaymentsService {
   }
 
   async processPayment(
-    id: number,
+    id: string,
     dto: ProcessPaymentDto,
-    userId: number,
+    userId: string,
   ): Promise<PaymentResponseDto> {
     const payment = await this.findOne(id);
 

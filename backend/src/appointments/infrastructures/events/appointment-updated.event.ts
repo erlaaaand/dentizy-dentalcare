@@ -8,6 +8,6 @@ export class AppointmentUpdatedEvent {
   constructor(
     public readonly appointment: Appointment,
     public readonly isTimeUpdated: boolean, // apakah waktu berubah (perlu reschedule)
-    public readonly updatedBy?: number,
+    public readonly updatedBy?: string,
   ) {}
 }

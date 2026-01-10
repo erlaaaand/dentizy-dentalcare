@@ -1,4 +1,4 @@
-import { IsDate, IsEnum, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsDate, IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { NotificationType } from '../../domains/entities/notification.entity';
@@ -8,11 +8,11 @@ export class CreateNotificationDto {
     description: 'ID Appointment yang menjadi sumber notifikasi',
     example: 1502,
     required: true,
-    type: Number,
+    type: String,
   })
   @IsNotEmpty()
-  @IsNumber()
-  appointment_id: number;
+  @IsString()
+  appointment_id: string;
 
   @ApiProperty({
     description: 'Jenis notifikasi yang dikirim',

@@ -14,34 +14,31 @@ export class SearchMedicalRecordDto {
     description: 'Filter berdasarkan ID pasien',
     example: 12,
     required: false,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  patient_id?: number;
+  @IsString()
+  patient_id?: string;
 
   @ApiProperty({
     description: 'Filter berdasarkan ID dokter',
     example: 5,
     required: false,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  doctor_id?: number;
+  @IsString()
+  doctor_id?: string;
 
   @ApiProperty({
     description: 'Filter berdasarkan ID appointment',
     example: 1001,
     required: false,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  appointment_id?: number;
+  @IsString()
+  appointment_id?: string;
 
   @ApiProperty({
     description:

@@ -54,7 +54,7 @@ export class TreatmentCategoryQueries {
     return { data, total };
   }
 
-  async findById(id: number): Promise<TreatmentCategory | null> {
+  async findById(id: string): Promise<TreatmentCategory | null> {
     return await this.repository
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.treatments', 'treatments')
@@ -76,7 +76,7 @@ export class TreatmentCategoryQueries {
       .getMany();
   }
 
-  async countTreatmentsByCategory(categoryId: number): Promise<number> {
+  async countTreatmentsByCategory(categoryId: string): Promise<number> {
     const result = await this.repository
       .createQueryBuilder('category')
       .leftJoin('category.treatments', 'treatments')

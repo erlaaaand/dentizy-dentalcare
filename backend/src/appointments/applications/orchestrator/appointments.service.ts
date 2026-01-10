@@ -5,7 +5,7 @@ import {
   ConflictException,
   Logger,
 } from '@nestjs/common';
-import { DataSource, DeepPartial, QueryRunner } from 'typeorm';
+import { DataSource, DeepPartial, QueryRunner, In } from 'typeorm';
 
 // DTOs
 import { CreateAppointmentDto } from '../dto/create-appointment.dto';
@@ -29,6 +29,7 @@ import {
   MetodePembayaran,
   StatusPembayaran,
 } from '../../../payments/domains/entities/payments.entity';
+import { Treatment } from '../../../treatments/domains/entities/treatments.entity';
 
 // Use Cases
 import { AppointmentCreationService } from '../use-cases/appointment-creation.service';
@@ -42,52 +43,6 @@ import { AppointmentMapper } from '../../domains/mappers/appointment.mapper';
 
 // Service External
 import { TreatmentsService } from '../../../treatments/applications/orchestrator/treatments.service';
-
-/**
- * Interface untuk Medical Record creation payload
- */
-interface MedicalRecordCreationData {
-  appointment_id: number;
-  doctor_id: number;
-  patient_id: number;
-  subjektif?: string;
-  objektif?: string;
-  assessment?: string;
-  plan?: string;
-}
-
-/**
- * Interface untuk Medical Record Treatment creation
- */
-interface MedicalRecordTreatmentCreationData {
-  medicalRecord: MedicalRecord;
-  treatmentId: number;
-  jumlah: number;
-  hargaSatuan: number;
-  diskon: number;
-  subtotal: number;
-  total: number;
-  keterangan: string;
-}
-
-/**
- * Interface untuk Payment creation
- */
-interface PaymentCreationData {
-  medicalRecordId: number;
-  patientId: number;
-  nomorInvoice: string;
-  tanggalPembayaran: string;
-  totalBiaya: number;
-  diskonTotal: number;
-  totalAkhir: number;
-  jumlahBayar: number;
-  kembalian: number;
-  metodePembayaran: string;
-  statusPembayaran: string;
-  keterangan: string;
-  createdBy: number;
-}
 
 @Injectable()
 export class AppointmentsService {
@@ -112,12 +67,12 @@ export class AppointmentsService {
     return this.mapper.toResponseDto(appointment);
   }
 
-  async complete(id: number, user: User): Promise<AppointmentResponseDto> {
+  async complete(id: string, user: User): Promise<AppointmentResponseDto> {
     const appointment = await this.completionService.execute(id, user);
     return this.mapper.toResponseDto(appointment);
   }
 
-  async cancel(id: number, user: User): Promise<AppointmentResponseDto> {
+  async cancel(id: string, user: User): Promise<AppointmentResponseDto> {
     const appointment = await this.cancellationService.execute(id, user);
     return this.mapper.toResponseDto(appointment);
   }
@@ -135,13 +90,13 @@ export class AppointmentsService {
     );
   }
 
-  async findOne(id: number, user: User): Promise<AppointmentResponseDto> {
+  async findOne(id: string, user: User): Promise<AppointmentResponseDto> {
     const appointment = await this.findService.execute(id, user);
     return this.mapper.toResponseDto(appointment);
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdateAppointmentDto,
     user?: User,
   ): Promise<AppointmentResponseDto> {
@@ -156,14 +111,14 @@ export class AppointmentsService {
     return this.mapper.toResponseDto(appointment);
   }
 
-  async remove(id: number, user: User): Promise<void> {
+  async remove(id: string, user: User): Promise<void> {
     await this.deletionService.execute(id, user);
   }
 
   // --- PRIVATE METHODS (FULL DIRECT TRANSACTION) ---
 
   private async handleCompletionWithMedicalRecord(
-    id: number,
+    id: string,
     dto: UpdateAppointmentDto,
     user: User,
   ): Promise<AppointmentResponseDto> {
@@ -190,19 +145,21 @@ export class AppointmentsService {
       );
 
       // 4. Process Treatments and Calculate Total
+      // Note: Menggunakan array kosong sebagai fallback jika undefined
+      const treatmentIds = dto.medical_record?.treatment_ids || [];
       const totalAmount = await this.processTreatments(
         queryRunner,
         savedMedicalRecord,
-        dto.medical_record?.treatment_ids || [],
+        treatmentIds,
       );
 
       // 5. Create Payment
       await this.createPayment(
         queryRunner,
-        savedMedicalRecord.id,
+        savedMedicalRecord.id, // ID Medical Record (String UUID)
         existingAppt,
         totalAmount,
-        user.id,
+        user.id, // ID User pembuat (String UUID)
       );
 
       // 6. Update Appointment Status
@@ -228,7 +185,8 @@ export class AppointmentsService {
 
       if (
         error instanceof ConflictException ||
-        error instanceof NotFoundException
+        error instanceof NotFoundException ||
+        error instanceof BadRequestException
       ) {
         throw error;
       }
@@ -246,7 +204,7 @@ export class AppointmentsService {
    */
   private async findAppointmentInTransaction(
     queryRunner: QueryRunner,
-    id: number,
+    id: string, // [UUID] String
   ): Promise<Appointment> {
     const appointment = await queryRunner.manager.findOne(Appointment, {
       where: { id },
@@ -274,11 +232,12 @@ export class AppointmentsService {
    */
   private async createMedicalRecord(
     queryRunner: QueryRunner,
-    appointmentId: number,
+    appointmentId: string, // [UUID] String
     appointment: Appointment,
     dto: UpdateAppointmentDto,
   ): Promise<MedicalRecord> {
-    const medicalRecordData: MedicalRecordCreationData = {
+    // Gunakan DeepPartial agar sesuai dengan entity
+    const medicalRecordData: DeepPartial<MedicalRecord> = {
       appointment_id: appointmentId,
       doctor_id: appointment.doctor_id,
       patient_id: appointment.patient_id,
@@ -298,63 +257,66 @@ export class AppointmentsService {
 
   /**
    * Process treatments and calculate total amount
+   * [OPTIMIZED]: Menggunakan Single Query + Bulk Insert
+   * [MIGRATED]: treatmentIds sekarang string[] (UUID)
    */
   private async processTreatments(
     queryRunner: QueryRunner,
     medicalRecord: MedicalRecord,
-    treatmentIds: number[],
+    treatmentIds: string[], // [UUID] Ubah ke string[]
   ): Promise<number> {
+    if (!treatmentIds || treatmentIds.length === 0) {
+      return 0;
+    }
+
+    // 1. Fetch semua treatment sekaligus
+    // TypeORM 'In' operator otomatis support string UUID
+    const treatments = await queryRunner.manager.find(Treatment, {
+      where: { id: In(treatmentIds) },
+    });
+
+    // 2. Validasi kelengkapan data
+    if (treatments.length !== treatmentIds.length) {
+      const foundIds = treatments.map((t) => t.id);
+      const missingIds = treatmentIds.filter((id) => !foundIds.includes(id));
+      throw new BadRequestException(
+        `Treatment ID berikut tidak valid: ${missingIds.join(', ')}`,
+      );
+    }
+
     let totalAmount = 0;
+    const treatmentEntities: MedicalRecordTreatment[] = [];
 
-    if (treatmentIds.length === 0) {
-      return totalAmount;
+    // 3. Prepare entities in memory
+    for (const treatment of treatments) {
+      const hargaFix = Number(treatment.harga) || 0;
+      const qty = 1;
+      const subtotal = hargaFix * qty;
+      const diskon = 0;
+      const total = subtotal - diskon;
+
+      const mrt = queryRunner.manager.create(MedicalRecordTreatment, {
+        medicalRecord: medicalRecord,
+        treatment: treatment, // Relasi object langsung
+        treatmentId: treatment.id, // ID sekarang string (UUID)
+        jumlah: qty,
+        hargaSatuan: hargaFix,
+        diskon: diskon,
+        subtotal: subtotal,
+        total: total,
+        keterangan: treatment.namaPerawatan,
+      });
+
+      treatmentEntities.push(mrt);
+      totalAmount += total;
     }
 
-    for (const treatmentId of treatmentIds) {
-      try {
-        const treatmentMaster =
-          await this.treatmentsService.findOne(treatmentId);
-        const hargaFix = treatmentMaster.harga
-          ? Number(treatmentMaster.harga)
-          : 0;
-
-        // Calculate amounts
-        const qty = 1;
-        const subtotal = hargaFix * qty;
-        const diskon = 0;
-        const total = subtotal - diskon;
-
-        // Create treatment record data
-        const treatmentData: MedicalRecordTreatmentCreationData = {
-          medicalRecord: medicalRecord,
-          treatmentId: treatmentId,
-          jumlah: qty,
-          hargaSatuan: hargaFix,
-          diskon: diskon,
-          subtotal: subtotal,
-          total: total,
-          keterangan: '',
-        };
-
-        const mrt = queryRunner.manager.create(
-          MedicalRecordTreatment,
-          treatmentData,
-        );
-        await queryRunner.manager.save(mrt);
-
-        totalAmount += total;
-      } catch (error) {
-        this.logger.error(
-          `Failed to process treatment ${treatmentId}:`,
-          error instanceof Error ? error.message : 'Unknown error',
-        );
-        throw new BadRequestException(
-          `Treatment dengan ID ${treatmentId} tidak valid`,
-        );
-      }
+    // 4. Bulk Save
+    if (treatmentEntities.length > 0) {
+      await queryRunner.manager.save(MedicalRecordTreatment, treatmentEntities);
     }
 
-    return isNaN(totalAmount) ? 0 : totalAmount;
+    return totalAmount;
   }
 
   /**
@@ -362,16 +324,17 @@ export class AppointmentsService {
    */
   private async createPayment(
     queryRunner: QueryRunner,
-    medicalRecordId: number,
+    medicalRecordId: string, // [UUID] String
     appointment: Appointment,
     totalAmount: number,
-    userId: number,
+    userId: string, // [UUID] String
   ): Promise<Payment> {
     const paymentData: DeepPartial<Payment> = {
       medicalRecordId: medicalRecordId,
       patientId: appointment.patient_id,
       nomorInvoice: `INV/${Date.now()}`,
 
+      // Menggunakan Date Object agar TypeORM yang handle formatting
       tanggalPembayaran: new Date(),
 
       totalBiaya: totalAmount,
@@ -383,7 +346,7 @@ export class AppointmentsService {
       metodePembayaran: MetodePembayaran.TUNAI,
       statusPembayaran: StatusPembayaran.PENDING,
       keterangan: `Kunjungan tgl ${appointment.tanggal_janji}`,
-      createdBy: userId,
+      createdBy: userId, // Pastikan tipe kolom di entity Payment compatible dengan string UUID
     };
 
     const payment = queryRunner.manager.create(Payment, paymentData);

@@ -16,7 +16,7 @@ export class CreateFingerprintDto {
   @ApiProperty({ description: 'ID Pasien', example: 1 })
   @IsNotEmpty({ message: 'Patient ID harus diisi' })
   @IsNumber({}, { message: 'Patient ID harus berupa angka' })
-  patient_id: number;
+  patient_id: string;
 
   @ApiProperty({
     description: 'Posisi jari',

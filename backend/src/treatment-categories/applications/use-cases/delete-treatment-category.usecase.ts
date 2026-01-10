@@ -13,7 +13,7 @@ export class DeleteTreatmentCategoryUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number): Promise<void> {
+  async execute(id: string): Promise<void> {
     // Check existence
     const category = await this.repository.findOne(id);
     if (!category) {

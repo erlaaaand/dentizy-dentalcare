@@ -23,7 +23,7 @@ export class AppointmentDeletionService {
    * Execute: Delete appointment
    * Note: Hanya bisa delete jika belum ada medical record
    */
-  async execute(id: number, user: User): Promise<void> {
+  async execute(id: string, user: User): Promise<void> {
     try {
       // 1. FIND APPOINTMENT
       const appointment = await this.repository.findById(id);

@@ -70,11 +70,11 @@ export class VerifyFingerprintResponseDto {
 
   @ApiProperty()
   @Expose()
-  patient_id: number | null;
+  patient_id: string | null;
 
   @ApiProperty()
   @Expose()
-  fingerprint_id: number | null;
+  fingerprint_id: string | null;
 
   @ApiProperty()
   @Expose()

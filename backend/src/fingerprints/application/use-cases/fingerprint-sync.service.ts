@@ -10,8 +10,8 @@ export interface SyncResult {
   synced: number;
   failed: number;
   details: {
-    fingerprintId: number;
-    patientId: number;
+    fingerprintId: string;
+    patientId: string;
     status: 'success' | 'failed';
     error?: string;
   }[];
@@ -91,7 +91,7 @@ export class FingerprintSyncService {
   /**
    * Sync fingerprints for specific patient
    */
-  async syncPatientToDevice(patientId: number): Promise<SyncResult> {
+  async syncPatientToDevice(patientId: string): Promise<SyncResult> {
     this.logger.log(`🔄 Syncing fingerprints for patient #${patientId}...`);
 
     const device = this.deviceFactory.getDevice();

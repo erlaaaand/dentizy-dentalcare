@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 class CategoryInfoDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'Perawatan Gigi' })
   namaKategori: string;
@@ -11,10 +11,10 @@ class CategoryInfoDto {
 
 export class TreatmentResponseDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 1 })
-  categoryId: number;
+  categoryId: string;
 
   @ApiProperty({ example: 'TRT-001' })
   kodePerawatan: string;

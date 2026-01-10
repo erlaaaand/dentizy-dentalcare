@@ -11,7 +11,7 @@ export class GetPaymentDetailUseCase {
     private readonly paymentMapper: PaymentMapper,
   ) {}
 
-  async execute(id: number): Promise<PaymentResponseDto> {
+  async execute(id: string): Promise<PaymentResponseDto> {
     const payment = await this.paymentRepository.findOne(id);
 
     if (!payment) {

@@ -5,7 +5,6 @@ import {
   Param,
   Query,
   UseGuards,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
   UseInterceptors,
@@ -124,7 +123,7 @@ export class NotificationsController {
   })
   async getFailedNotifications(
     // Diperbaiki: Menggunakan DefaultValuePipe
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(50)) limit: number,
   ): Promise<NotificationResponseDto[]> {
     return this.notificationsService.getFailedNotifications(limit);
   }
@@ -156,7 +155,7 @@ export class NotificationsController {
   })
   @ApiResponse({ status: 404, description: 'Notifikasi tidak ditemukan' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<NotificationResponseDto> {
     return this.notificationsService.findOne(id);
   }
@@ -182,7 +181,7 @@ export class NotificationsController {
       'Notifikasi tidak dalam status FAILED atau sudah melebihi batas retry',
   })
   async retryNotification(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     await this.notificationsService.retryNotification(id);
     return { message: `Notification #${id} queued for retry` };
@@ -209,7 +208,7 @@ export class NotificationsController {
   })
   async retryAllFailed(
     // Diperbaiki: Menggunakan DefaultValuePipe
-    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(50)) limit: number,
   ): Promise<{ message: string; count: number }> {
     const count = await this.notificationsService.retryAllFailed(limit);
     return {

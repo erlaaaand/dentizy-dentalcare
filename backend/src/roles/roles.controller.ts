@@ -46,7 +46,7 @@ export class RolesController {
 
   @Get(':id')
   @Roles(UserRole.KEPALA_KLINIK)
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseIntPipe) id: string) {
     return this.rolesService.findOne(id);
   }
 }

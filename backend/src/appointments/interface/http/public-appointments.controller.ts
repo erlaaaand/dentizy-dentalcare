@@ -20,7 +20,7 @@ import { FindUsersQueryDto } from '../../../users/applications/dto/find-users-qu
  * Interface untuk doctor response yang simplified
  */
 interface DoctorPublicInfo {
-  id: number;
+  id: string;
   nama_lengkap: string;
 }
 

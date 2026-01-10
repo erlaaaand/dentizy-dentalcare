@@ -3,7 +3,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class TreatmentListResponseDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'TRT-001' })
   kodePerawatan: string;

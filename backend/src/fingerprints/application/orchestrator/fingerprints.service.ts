@@ -54,7 +54,7 @@ export class FingerprintsService {
   /**
    * Get fingerprints by patient
    */
-  async findByPatient(patientId: number): Promise<FingerprintResponseDto[]> {
+  async findByPatient(patientId: string): Promise<FingerprintResponseDto[]> {
     this.logger.log(`🔍 Finding fingerprints for patient #${patientId}`);
 
     // Try to get from cache first
@@ -67,7 +67,7 @@ export class FingerprintsService {
   /**
    * Get single fingerprint by ID
    */
-  async findOne(id: number): Promise<FingerprintResponseDto> {
+  async findOne(id: string): Promise<FingerprintResponseDto> {
     const fingerprint = await this.fingerprintRepository.findOne({
       where: { id, is_active: true },
     });
@@ -82,7 +82,7 @@ export class FingerprintsService {
   /**
    * Delete fingerprint
    */
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(id: string): Promise<{ message: string }> {
     this.logger.log(`🗑️ Deleting fingerprint #${id}`);
     return this.deletionService.execute(id);
   }
@@ -90,7 +90,7 @@ export class FingerprintsService {
   /**
    * Delete all fingerprints for a patient
    */
-  async removeByPatient(patientId: number): Promise<{ deleted: number }> {
+  async removeByPatient(patientId: string): Promise<{ deleted: number }> {
     this.logger.log(`🗑️ Deleting all fingerprints for patient #${patientId}`);
     return this.deletionService.deleteByPatient(patientId);
   }
@@ -106,7 +106,7 @@ export class FingerprintsService {
   /**
    * Sync fingerprints to device
    */
-  async syncToDevice(patientId?: number): Promise<any> {
+  async syncToDevice(patientId?: string): Promise<any> {
     if (patientId) {
       this.logger.log(
         `🔄 Syncing fingerprints for patient #${patientId} to device`,

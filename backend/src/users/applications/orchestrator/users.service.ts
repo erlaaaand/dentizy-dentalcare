@@ -72,7 +72,7 @@ export class UsersService {
     return this.findUsersService.findAll(query);
   }
 
-  async findOne(userId: number): Promise<UserResponseDto> {
+  async findOne(userId: string): Promise<UserResponseDto> {
     this.logger.debug(`Finding user by ID: ${userId}`);
     return this.findUsersService.findOne(userId);
   }
@@ -82,26 +82,26 @@ export class UsersService {
     return this.findUsersService.findByUsernameOrEmailForAuth(username);
   }
 
-  async findOneForAuth(userId: number): Promise<User | null> {
+  async findOneForAuth(userId: string): Promise<User | null> {
     this.logger.debug(`Finding user for auth by ID: ${userId}`);
     return this.findUsersService.findOneForAuth(userId);
   }
 
   async update(
-    userId: number,
+    userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     this.logger.debug(`Updating user ID: ${userId}`);
     return this.updateUserService.execute(userId, updateUserDto);
   }
 
-  async remove(userId: number): Promise<DeleteResponse> {
+  async remove(userId: string): Promise<DeleteResponse> {
     this.logger.debug(`Deleting user ID: ${userId}`);
     return this.deleteUserService.execute(userId);
   }
 
   async changePassword(
-    userId: number,
+    userId: string,
     oldPassword: string,
     newPassword: string,
   ): Promise<PasswordChangeResponseDto> {
@@ -110,7 +110,7 @@ export class UsersService {
   }
 
   async resetPassword(
-    userId: number,
+    userId: string,
     newPassword: string,
   ): Promise<PasswordChangeResponseDto> {
     this.logger.debug(`Resetting password for user ID: ${userId} by admin`);
@@ -118,7 +118,7 @@ export class UsersService {
   }
 
   async generateTemporaryPassword(
-    userId: number,
+    userId: string,
   ): Promise<TemporaryPasswordResponse> {
     this.logger.debug(`Generating temporary password for user ID: ${userId}`);
     return this.resetPasswordService.generateTemporaryPassword(userId);

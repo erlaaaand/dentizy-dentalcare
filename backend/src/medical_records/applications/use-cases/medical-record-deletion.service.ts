@@ -21,7 +21,7 @@ export class MedicalRecordDeletionService {
    * Delete (soft delete) medical record
    * Only Kepala Klinik can delete
    */
-  async execute(id: number, user: User): Promise<void> {
+  async execute(id: string, user: User): Promise<void> {
     // Validate input
     this.validator.validateId(id);
     this.validator.validateUserId(user.id);
@@ -57,7 +57,7 @@ export class MedicalRecordDeletionService {
    * Hard delete medical record (permanent removal)
    * Use with extreme caution
    */
-  async hardDelete(id: number, user: User): Promise<void> {
+  async hardDelete(id: string, user: User): Promise<void> {
     // Validate input
     this.validator.validateId(id);
     this.validator.validateUserId(user.id);
@@ -91,7 +91,7 @@ export class MedicalRecordDeletionService {
   /**
    * Restore soft-deleted medical record
    */
-  async restore(id: number, user: User): Promise<MedicalRecord> {
+  async restore(id: string, user: User): Promise<MedicalRecord> {
     // Validate input
     this.validator.validateId(id);
     this.validator.validateUserId(user.id);

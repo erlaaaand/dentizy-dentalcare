@@ -23,7 +23,7 @@ export class ChangePasswordService {
   ) {}
 
   async execute(
-    userId: number,
+    userId: string,
     oldPassword: string,
     newPassword: string,
   ): Promise<PasswordChangeResponseDto> {

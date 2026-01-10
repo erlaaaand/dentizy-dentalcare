@@ -19,7 +19,7 @@ export class PatientRestoreService {
   /**
    * Restore soft-deleted patient
    */
-  async execute(id: number): Promise<{ message: string }> {
+  async execute(id: string): Promise<{ message: string }> {
     try {
       const patient =
         await this.customPatientRepository.findSoftDeletedById(id);

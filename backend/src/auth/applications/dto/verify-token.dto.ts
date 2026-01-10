@@ -23,7 +23,7 @@ export class VerifyTokenResponseDto {
     description: 'ID User (Hanya muncul jika token valid)',
     example: 1,
   })
-  userId?: number;
+  userId?: string;
 
   @ApiPropertyOptional({
     description: 'Username (Hanya muncul jika token valid)',

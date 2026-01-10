@@ -21,12 +21,12 @@ import {
 
 export class CreatePaymentDto {
   @ApiProperty({ description: 'ID Rekam Medis', example: 1 })
-  @IsInt({ message: 'Medical Record ID harus berupa angka' })
-  medicalRecordId: number;
+  @IsString({ message: 'Medical Record ID harus berupa UUID' })
+  medicalRecordId: string;
 
   @ApiProperty({ description: 'ID Pasien', example: 1 })
-  @IsInt({ message: 'Patient ID harus berupa angka' })
-  patientId: number;
+  @IsString({ message: 'Patient ID harus berupa UUID' })
+  patientId: string;
 
   @ApiProperty({
     description: 'Tanggal pembayaran',
@@ -95,6 +95,6 @@ export class CreatePaymentDto {
 
   @ApiPropertyOptional({ description: 'ID user yang membuat', example: 1 })
   @IsOptional()
-  @IsInt({ message: 'Created By harus berupa angka' })
-  createdBy?: number;
+  @IsInt({ message: 'Created By harus berupa UUID' })
+  createdBy?: string;
 }

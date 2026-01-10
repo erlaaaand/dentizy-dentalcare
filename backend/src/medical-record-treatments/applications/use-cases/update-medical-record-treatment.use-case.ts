@@ -24,7 +24,7 @@ export class UpdateMedicalRecordTreatmentUseCase {
   ) {}
 
   async execute(
-    id: number,
+    id: string,
     dto: UpdateMedicalRecordTreatmentDto,
   ): Promise<MedicalRecordTreatmentResponseDto> {
     const exists = await this.repository.findOne(id);

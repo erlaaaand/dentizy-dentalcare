@@ -14,7 +14,7 @@ export class FingerprintDeletionService {
     private readonly cacheService: FingerprintCacheService,
   ) {}
 
-  async execute(id: number): Promise<{ message: string }> {
+  async execute(id: string): Promise<{ message: string }> {
     // Find fingerprint
     const fingerprint = await this.fingerprintRepository.findOne({
       where: { id },
@@ -45,7 +45,7 @@ export class FingerprintDeletionService {
     };
   }
 
-  async deleteByPatient(patientId: number): Promise<{ deleted: number }> {
+  async deleteByPatient(patientId: string): Promise<{ deleted: number }> {
     const result = await this.fingerprintRepository.update(
       { patient_id: patientId, is_active: true },
       { is_active: false },
@@ -62,7 +62,7 @@ export class FingerprintDeletionService {
   }
 
   async deleteByFingerPosition(
-    patientId: number,
+    patientId: string,
     fingerPosition: string,
   ): Promise<{ message: string }> {
     const fingerprint = await this.fingerprintRepository.findOne({

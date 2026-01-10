@@ -36,7 +36,7 @@ export class TreatmentCategoryValidator {
   }
 
   async validateUpdate(
-    id: number,
+    id: string,
     dto: UpdateTreatmentCategoryDto,
   ): Promise<void> {
     // Check duplicate name (excluding current category)
@@ -60,7 +60,7 @@ export class TreatmentCategoryValidator {
     }
   }
 
-  async validateDelete(id: number): Promise<void> {
+  async validateDelete(id: string): Promise<void> {
     // Check if category has associated treatments
     const hasActiveTreatments =
       await this.domainService.hasActiveTreatments(id);

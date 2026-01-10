@@ -16,7 +16,7 @@ interface DoctorEntity {
 
 interface AppointmentWithDoctor {
   doctor?: DoctorEntity;
-  doctor_id?: string | number;
+  doctor_id?: string;
   [key: string]: unknown;
 }
 

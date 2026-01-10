@@ -17,7 +17,7 @@ export class DeleteTreatmentUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number): Promise<void> {
+  async execute(id: string): Promise<void> {
     const treatment = await this.treatmentRepository.findOne(id);
     if (!treatment) {
       throw new NotFoundException(`Perawatan dengan ID ${id} tidak ditemukan`);

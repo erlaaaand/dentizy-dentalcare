@@ -31,7 +31,7 @@ export class MedicalRecordsRepository {
    * Find by appointment ID
    */
   async findByAppointmentId(
-    appointmentId: number,
+    appointmentId: string,
   ): Promise<MedicalRecord | null> {
     return await this.repository.findOne({
       where: { appointment_id: appointmentId },
@@ -42,7 +42,7 @@ export class MedicalRecordsRepository {
   /**
    * Find all by patient ID
    */
-  async findByPatientId(patientId: number): Promise<MedicalRecord[]> {
+  async findByPatientId(patientId: string): Promise<MedicalRecord[]> {
     return await this.repository.find({
       where: { patient_id: patientId },
       relations: ['appointment', 'doctor'],
@@ -53,7 +53,7 @@ export class MedicalRecordsRepository {
   /**
    * Find all by doctor ID
    */
-  async findByDoctorId(doctorId: number): Promise<MedicalRecord[]> {
+  async findByDoctorId(doctorId: string): Promise<MedicalRecord[]> {
     return await this.repository.find({
       where: { doctor_id: doctorId },
       relations: ['appointment', 'patient'],
@@ -80,7 +80,7 @@ export class MedicalRecordsRepository {
   /**
    * Count records by patient
    */
-  async countByPatientId(patientId: number): Promise<number> {
+  async countByPatientId(patientId: string): Promise<number> {
     return await this.repository.count({
       where: { patient_id: patientId },
     });
@@ -89,7 +89,7 @@ export class MedicalRecordsRepository {
   /**
    * Count records by doctor
    */
-  async countByDoctorId(doctorId: number): Promise<number> {
+  async countByDoctorId(doctorId: string): Promise<number> {
     return await this.repository.count({
       where: { doctor_id: doctorId },
     });

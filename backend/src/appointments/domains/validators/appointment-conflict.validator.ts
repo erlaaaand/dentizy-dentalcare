@@ -16,7 +16,7 @@ export class AppointmentConflictValidator {
    */
   async validateDoctorNoConflict(
     queryRunner: QueryRunner,
-    doctorId: number,
+    doctorId: string,
     tanggalJanji: Date,
     jamJanji: string,
     bufferStart: string,
@@ -61,7 +61,7 @@ export class AppointmentConflictValidator {
    */
   async validatePatientNoConflict(
     queryRunner: QueryRunner,
-    patientId: number,
+    patientId: string,
     tanggalJanji: Date,
     jamJanji: string,
     bufferStart: string,
@@ -84,8 +84,7 @@ export class AppointmentConflictValidator {
               bufferEnd,
             },
           ).orWhere(
-            `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) 
-                         BETWEEN -1800 AND 1800`,
+            `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) BETWEEN -1800 AND 1800`,
             { requestedTime: jamJanji },
           );
         }),
@@ -107,8 +106,8 @@ export class AppointmentConflictValidator {
    */
   async validateNoConflictForUpdate(
     queryRunner: QueryRunner,
-    appointmentId: number,
-    doctorId: number,
+    appointmentId: string,
+    doctorId: string,
     tanggalJanji: Date,
     jamJanji: string,
     bufferStart: string,
@@ -133,8 +132,7 @@ export class AppointmentConflictValidator {
               bufferEnd,
             },
           ).orWhere(
-            `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) 
-                             BETWEEN -1800 AND 1800`,
+            `TIME_TO_SEC(appointment.jam_janji) - TIME_TO_SEC(:requestedTime) BETWEEN -1800 AND 1800`,
             { requestedTime: jamJanji },
           );
         }),

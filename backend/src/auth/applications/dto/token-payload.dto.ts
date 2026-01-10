@@ -6,7 +6,7 @@ export class TokenPayloadDto {
       'ID User (biasanya diambil dari claim "sub" atau "id" di token)',
     example: 1,
   })
-  userId: number;
+  userId: string;
 
   @ApiProperty({
     description: 'Username pengguna',

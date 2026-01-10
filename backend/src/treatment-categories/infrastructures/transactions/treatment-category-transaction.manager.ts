@@ -38,7 +38,7 @@ export class TreatmentCategoryTransactionManager {
   }
 
   async updateWithTransaction(
-    id: number,
+    id: string,
     data: Partial<TreatmentCategory>,
   ): Promise<TreatmentCategory> {
     return this.runInTransaction(async (queryRunner) => {

@@ -14,27 +14,24 @@ export class FindAllMedicalRecordQueryDto {
     example: 1,
   })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number) // Mengubah "1" (string) menjadi 1 (number)
-  patientId?: number;
+  @IsString()
+  patientId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter berdasarkan ID Dokter',
     example: 2,
   })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  doctorId?: number;
+  @IsString()
+  doctorId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter berdasarkan ID Appointment',
     example: 100,
   })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  appointmentId?: number;
+  @IsString()
+  appointmentId?: string;
 
   @ApiPropertyOptional({
     description: 'Pencarian teks bebas (misal: diagnosa/keluhan)',

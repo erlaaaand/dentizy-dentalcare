@@ -60,9 +60,8 @@ export class PublicBookingDto {
   // --- Data Appointment ---
   @ApiProperty({ description: 'ID Dokter yang dipilih', example: 1 })
   @IsNotEmpty()
-  @Type(() => Number)
-  @IsNumber()
-  doctor_id: number;
+  @IsString()
+  doctor_id: string;
 
   @ApiProperty({
     description: 'Tanggal Janji (YYYY-MM-DD)',

@@ -194,7 +194,7 @@ export class UsersController {
     type: [UserResponseDto],
   })
   async getRecentUsers(
-    @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit: number,
+    @Query('limit', new DefaultValuePipe(10)) limit: number,
   ): Promise<UserResponseDto[]> {
     if (limit < 1 || limit > 50) {
       throw new BadRequestException('Limit harus antara 1 dan 50');
@@ -235,7 +235,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<UserResponseDto> {
     return this.usersService.findOne(id);
   }
@@ -256,7 +256,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
   @ApiResponse({ status: 409, description: 'Username sudah digunakan' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     return this.usersService.update(id, updateUserDto);
@@ -278,7 +278,7 @@ export class UsersController {
     },
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<DeleteResponse> {
+  async remove(@Param('id') id: string): Promise<DeleteResponse> {
     return this.usersService.remove(id);
   }
 
@@ -328,7 +328,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
   async resetPassword(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() resetPasswordDto: ResetPasswordDto,
   ): Promise<PasswordChangeResponseDto> {
     return this.usersService.resetPassword(id, resetPasswordDto.newPassword);
@@ -355,7 +355,7 @@ export class UsersController {
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
   async generateTempPassword(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<TemporaryPasswordResponse> {
     return this.usersService.generateTemporaryPassword(id);
   }

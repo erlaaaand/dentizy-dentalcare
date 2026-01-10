@@ -4,7 +4,7 @@
  * Type for tracking changes made to user
  * Represents possible values that can be changed in user entity
  */
-export type UserChangeValue = string | number[] | null | undefined;
+export type UserChangeValue = string | string[] | null | undefined;
 
 /**
  * Interface for user changes
@@ -15,7 +15,7 @@ export interface UserChanges {
   nama_lengkap?: string;
   email?: string | null;
   password?: string; // Will be masked as '***CHANGED***'
-  roles?: number[];
+  roles?: string[];
   [key: string]: UserChangeValue;
 }
 
@@ -24,7 +24,7 @@ export interface UserChanges {
  */
 export class UserUpdatedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly username: string,
     public readonly changes: UserChanges,
     public readonly timestamp: Date = new Date(),

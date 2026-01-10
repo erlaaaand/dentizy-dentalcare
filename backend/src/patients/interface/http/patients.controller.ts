@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
   Query,
   HttpCode,
   HttpStatus,
@@ -169,7 +168,7 @@ export class PatientsController {
     type: [PatientResponseDto],
   })
   async findByDoctor(
-    @Param('doctorId', ParseIntPipe) doctorId: number,
+    @Param('doctorId') doctorId: string,
     @Query() query: SearchPatientDto,
   ) {
     return this.patientsService.findByDoctor(doctorId, query);
@@ -188,7 +187,7 @@ export class PatientsController {
   })
   @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<PatientResponseDto> {
     return this.patientsService.findOne(id);
   }
@@ -208,7 +207,7 @@ export class PatientsController {
   @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan' })
   @ApiResponse({ status: 409, description: 'NIK atau email sudah digunakan' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updatePatientDto: UpdatePatientDto,
   ): Promise<PatientResponseDto> {
     return this.patientsService.update(id, updatePatientDto);
@@ -232,7 +231,7 @@ export class PatientsController {
   })
   @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan' })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     return this.patientsService.remove(id);
   }
@@ -251,7 +250,7 @@ export class PatientsController {
     type: PatientResponseDto,
   })
   async activatePatient(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<PatientResponseDto> {
     return this.patientsService.update(id, { is_active: true });
   }
@@ -277,7 +276,7 @@ export class PatientsController {
     description: 'Pasien tidak ditemukan atau tidak dihapus',
   })
   async restore(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     return this.patientsService.restore(id);
   }

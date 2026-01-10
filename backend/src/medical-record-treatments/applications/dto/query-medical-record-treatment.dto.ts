@@ -1,5 +1,5 @@
 // backend/src/medical-record-treatments/interface/http/dto/query-medical-record-treatment.dto.ts
-import { IsOptional, IsInt, Min } from 'class-validator';
+import { IsOptional, IsInt, Min, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -7,22 +7,20 @@ export class QueryMedicalRecordTreatmentDto {
   @ApiPropertyOptional({
     description: 'Filter berdasarkan Medical Record ID',
     example: 1,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @IsInt({ message: 'Medical Record ID harus berupa bilangan bulat' })
-  @Type(() => Number)
-  medicalRecordId?: number;
+  @IsString({ message: 'Medical Record ID harus berupa UUID' })
+  medicalRecordId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter berdasarkan Treatment ID',
     example: 1,
-    type: Number,
+    type: String,
   })
   @IsOptional()
-  @IsInt({ message: 'Treatment ID harus berupa bilangan bulat' })
-  @Type(() => Number)
-  treatmentId?: number;
+  @IsString({ message: 'Treatment ID harus berupa UUID' })
+  treatmentId?: string;
 
   @ApiPropertyOptional({
     description: 'Nomor halaman',

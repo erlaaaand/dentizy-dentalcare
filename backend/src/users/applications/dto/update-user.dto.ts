@@ -65,5 +65,5 @@ export class UpdateUserDto {
   @IsOptional()
   @IsArray({ message: 'Roles harus berupa array' })
   @IsNumber({}, { each: true, message: 'Setiap role harus berupa angka (ID)' })
-  roles?: number[];
+  roles?: string[];
 }

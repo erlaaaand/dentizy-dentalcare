@@ -27,7 +27,7 @@ export class AppointmentCancellationService {
   /**
    * Execute: Cancel appointment
    */
-  async execute(id: number, user: User, reason?: string): Promise<Appointment> {
+  async execute(id: string, user: User, reason?: string): Promise<Appointment> {
     const queryRunner = this.repository.createQueryRunner();
 
     try {

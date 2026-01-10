@@ -20,7 +20,7 @@ export class PatientUpdateValidator {
   /**
    * Validate update patient data
    */
-  async validate(id: number, dto: UpdatePatientDto): Promise<void> {
+  async validate(id: string, dto: UpdatePatientDto): Promise<void> {
     const patient = await this.patientRepository.findOneBy({ id });
 
     if (!patient) {
@@ -49,7 +49,7 @@ export class PatientUpdateValidator {
   /**
    * Validate NIK uniqueness for update
    */
-  private async validateNikUniqueness(id: number, nik: string): Promise<void> {
+  private async validateNikUniqueness(id: string, nik: string): Promise<void> {
     const existing = await this.patientRepository.findOne({
       where: { nik },
     });
@@ -63,7 +63,7 @@ export class PatientUpdateValidator {
    * Validate email uniqueness for update
    */
   private async validateEmailUniqueness(
-    id: number,
+    id: string,
     email: string,
   ): Promise<void> {
     const existing = await this.patientRepository.findOne({

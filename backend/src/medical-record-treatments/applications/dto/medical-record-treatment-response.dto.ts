@@ -1,9 +1,11 @@
 // backend/src/medical-record-treatments/interface/http/dto/medical-record-treatment-response.dto.ts
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsString } from 'class-validator';
 
 class TreatmentDetailDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  @IsString()
+  id: string;
 
   @ApiProperty({ example: 'PRW001' })
   kodePerawatan: string;
@@ -17,13 +19,13 @@ class TreatmentDetailDto {
 
 export class MedicalRecordTreatmentResponseDto {
   @ApiProperty({ example: 1, description: 'ID Medical Record Treatment' })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 1, description: 'ID Rekam Medis' })
-  medicalRecordId: number;
+  medicalRecordId: string;
 
   @ApiProperty({ example: 1, description: 'ID Perawatan' })
-  treatmentId: number;
+  treatmentId: string;
 
   @ApiProperty({ example: 2, description: 'Jumlah perawatan' })
   jumlah: number;

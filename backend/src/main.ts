@@ -32,7 +32,7 @@ async function bootstrap() {
 
     // ✅ Get ConfigService
     const configService = app.get(ConfigService);
-    const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+    const nodeEnv = configService.get<string>('NODE_ENV', 'production');
     const port = configService.get<number>('PORT', 3000);
     const frontendUrl = configService.get<string>('FRONTEND_URL');
 

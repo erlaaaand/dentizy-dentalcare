@@ -8,7 +8,7 @@ import { TokenPayloadDto } from '../../applications/dto/token-payload.dto';
  */
 interface JwtPayload {
   username: string;
-  sub: number;
+  sub: string;
   roles: string[];
   iat?: number;
   exp?: number;

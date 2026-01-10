@@ -27,7 +27,7 @@ export class MedicalRecordFindService {
   /**
    * Find medical record by ID with authorization check
    */
-  async execute(id: number, user: User): Promise<MedicalRecord> {
+  async execute(id: string, user: User): Promise<MedicalRecord> {
     // Validate input
     this.validator.validateId(id);
     this.validator.validateUserId(user.id);

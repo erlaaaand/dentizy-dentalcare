@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 // Ini agar Swagger bisa membaca properti di dalamnya (id, username, dll)
 class LoginUserDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'dokter_tirta' })
   username: string;

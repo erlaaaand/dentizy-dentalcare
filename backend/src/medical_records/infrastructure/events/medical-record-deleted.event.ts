@@ -20,11 +20,11 @@ export type DeletionType = 'soft' | 'hard';
 export interface MedicalRecordDeletedEventJson {
   eventName: string;
   eventVersion: string;
-  medicalRecordId: number;
-  appointmentId: number;
-  patientId: number;
-  doctorId: number;
-  deletedBy: number;
+  medicalRecordId: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  deletedBy: string;
   timestamp: string; // Serialized Date
   deletionType: DeletionType;
   reason?: string;
@@ -37,11 +37,11 @@ export interface MedicalRecordDeletedEventJson {
  */
 export class MedicalRecordDeletedEvent {
   constructor(
-    public readonly medicalRecordId: number,
-    public readonly appointmentId: number,
-    public readonly patientId: number,
-    public readonly doctorId: number,
-    public readonly deletedBy: number,
+    public readonly medicalRecordId: string,
+    public readonly appointmentId: string,
+    public readonly patientId: string,
+    public readonly doctorId: string,
+    public readonly deletedBy: string,
     public readonly timestamp: Date = new Date(),
     public readonly deletionType: DeletionType = 'soft',
     public readonly reason?: string,

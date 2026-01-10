@@ -5,7 +5,7 @@
  */
 export class UserDeletedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly username: string,
     public readonly timestamp: Date = new Date(),
   ) {}

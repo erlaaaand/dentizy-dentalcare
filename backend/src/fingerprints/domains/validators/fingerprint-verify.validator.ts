@@ -119,8 +119,8 @@ export class FingerprintVerifyValidator {
   /**
    * Validate 1:1 verification (with patient_id)
    */
-  private async validate1to1Verification(patientId: number): Promise<void> {
-    if (!patientId || patientId <= 0) {
+  private async validate1to1Verification(patientId: string): Promise<void> {
+    if (!patientId) {
       throw new BadRequestException(
         'Patient ID harus berupa angka positif yang valid',
       );

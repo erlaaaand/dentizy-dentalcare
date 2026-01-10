@@ -28,7 +28,7 @@ export class MedicalRecordUpdateService {
    * Update medical record with transaction
    */
   async execute(
-    id: number,
+    id: string,
     dto: UpdateMedicalRecordDto,
     user: User,
   ): Promise<MedicalRecord> {
@@ -100,7 +100,7 @@ export class MedicalRecordUpdateService {
    */
   private async fetchRecordWithRelations(
     manager: EntityManager,
-    id: number,
+    id: string,
   ): Promise<MedicalRecord | null> {
     return await manager.findOne(MedicalRecord, {
       where: { id },

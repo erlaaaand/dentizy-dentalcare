@@ -92,7 +92,7 @@ export class MedicalRecordQueryBuilder {
    */
   filterByPatient(
     query: SelectQueryBuilder<MedicalRecord>,
-    patientId: number,
+    patientId: string,
   ): SelectQueryBuilder<MedicalRecord> {
     return query.andWhere('record.patient_id = :patientId', { patientId });
   }
@@ -102,7 +102,7 @@ export class MedicalRecordQueryBuilder {
    */
   filterByDoctor(
     query: SelectQueryBuilder<MedicalRecord>,
-    doctorId: number,
+    doctorId: string,
   ): SelectQueryBuilder<MedicalRecord> {
     return query.andWhere('record.doctor_id = :doctorId', { doctorId });
   }
@@ -112,7 +112,7 @@ export class MedicalRecordQueryBuilder {
    */
   filterByAppointment(
     query: SelectQueryBuilder<MedicalRecord>,
-    appointmentId: number,
+    appointmentId: string,
   ): SelectQueryBuilder<MedicalRecord> {
     return query.andWhere('record.appointment_id = :appointmentId', {
       appointmentId,
@@ -248,9 +248,9 @@ export class MedicalRecordQueryBuilder {
   buildFindAllQuery(
     user: User,
     filters?: {
-      patientId?: number;
-      doctorId?: number;
-      appointmentId?: number;
+      patientId?: string;
+      doctorId?: string;
+      appointmentId?: string;
       search?: string;
       startDate?: Date;
       endDate?: Date;

@@ -7,7 +7,7 @@ import { Expose, Type } from 'class-transformer';
 export class UserRoleDto {
   @ApiProperty({ example: 1 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'DOCTOR' })
   @Expose()
@@ -22,7 +22,7 @@ export class UserRoleDto {
 export class UserResponseDto {
   @ApiProperty({ example: 1 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'johndoe' })
   @Expose()

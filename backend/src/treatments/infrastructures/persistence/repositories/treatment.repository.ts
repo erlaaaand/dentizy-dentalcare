@@ -19,7 +19,7 @@ export interface TreatmentStatistics {
 }
 
 export interface BulkPriceUpdate {
-  id: number;
+  id: string;
   harga: number;
 }
 
@@ -79,7 +79,7 @@ export class TreatmentRepository {
     return { data, total };
   }
 
-  async findOne(id: number): Promise<Treatment | null> {
+  async findOne(id: string): Promise<Treatment | null> {
     return await this.repository.findOne({
       where: { id },
       relations: ['category'],
@@ -93,14 +93,14 @@ export class TreatmentRepository {
     });
   }
 
-  async findByIds(ids: number[]): Promise<Treatment[]> {
+  async findByIds(ids: string[]): Promise<Treatment[]> {
     return await this.repository.find({
       where: { id: In(ids) },
       relations: ['category'],
     });
   }
 
-  async findByCategory(categoryId: number): Promise<Treatment[]> {
+  async findByCategory(categoryId: string): Promise<Treatment[]> {
     return await this.repository.find({
       where: { categoryId, isActive: true },
       relations: ['category'],
@@ -129,31 +129,31 @@ export class TreatmentRepository {
     });
   }
 
-  async update(id: number, dto: UpdateTreatmentDto): Promise<Treatment | null> {
+  async update(id: string, dto: UpdateTreatmentDto): Promise<Treatment | null> {
     await this.repository.update(id, dto);
     return await this.findOne(id);
   }
 
-  async softDelete(id: number): Promise<void> {
+  async softDelete(id: string): Promise<void> {
     await this.repository.softDelete(id);
   }
 
-  async restore(id: number): Promise<void> {
+  async restore(id: string): Promise<void> {
     await this.repository.restore(id);
   }
 
-  async hardDelete(id: number): Promise<void> {
+  async hardDelete(id: string): Promise<void> {
     await this.repository.delete(id);
   }
 
-  async exists(id: number): Promise<boolean> {
+  async exists(id: string): Promise<boolean> {
     const count = await this.repository.count({ where: { id } });
     return count > 0;
   }
 
   async isKodeExists(
     kodePerawatan: string,
-    excludeId?: number,
+    excludeId?: string,
   ): Promise<boolean> {
     const queryBuilder = this.repository
       .createQueryBuilder('treatment')
@@ -168,7 +168,7 @@ export class TreatmentRepository {
   }
 
   async count(filters?: {
-    categoryId?: number;
+    categoryId?: string;
     isActive?: boolean;
   }): Promise<number> {
     const where: FindOptionsWhere<Treatment> = {};

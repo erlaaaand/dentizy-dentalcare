@@ -21,7 +21,7 @@ export class ResetPasswordService {
   ) {}
 
   async execute(
-    userId: number,
+    userId: string,
     newPassword: string,
     resetByAdmin: boolean = true,
   ): Promise<PasswordChangeResponseDto> {
@@ -82,7 +82,7 @@ export class ResetPasswordService {
   /**
    * Generate and set temporary password
    */
-  async generateTemporaryPassword(userId: number): Promise<{
+  async generateTemporaryPassword(userId: string): Promise<{
     temporaryPassword: string;
     message: string;
   }> {

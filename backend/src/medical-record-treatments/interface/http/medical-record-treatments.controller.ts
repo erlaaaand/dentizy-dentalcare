@@ -10,7 +10,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
   UseGuards,
   ClassSerializerInterceptor,
   UseInterceptors,
@@ -134,7 +133,7 @@ export class MedicalRecordTreatmentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async findByMedicalRecordId(
-    @Param('medicalRecordId', ParseIntPipe) medicalRecordId: number,
+    @Param('medicalRecordId') medicalRecordId: string,
   ) {
     const data =
       await this.medicalRecordTreatmentsService.findByMedicalRecordId(
@@ -179,7 +178,7 @@ export class MedicalRecordTreatmentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getTotalByMedicalRecordId(
-    @Param('medicalRecordId', ParseIntPipe) medicalRecordId: number,
+    @Param('medicalRecordId') medicalRecordId: string,
   ) {
     const total =
       await this.medicalRecordTreatmentsService.getTotalByMedicalRecordId(
@@ -210,7 +209,7 @@ export class MedicalRecordTreatmentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Data not found' })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id') id: string) {
     const data = await this.medicalRecordTreatmentsService.findOne(id);
     return {
       statusCode: HttpStatus.OK,
@@ -237,7 +236,7 @@ export class MedicalRecordTreatmentsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Data not found' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateDto: UpdateMedicalRecordTreatmentDto,
   ) {
     const data = await this.medicalRecordTreatmentsService.update(
@@ -275,7 +274,7 @@ export class MedicalRecordTreatmentsController {
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 404, description: 'Data not found' })
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id') id: string) {
     await this.medicalRecordTreatmentsService.remove(id);
     return {
       statusCode: HttpStatus.OK,

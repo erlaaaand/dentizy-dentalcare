@@ -85,7 +85,7 @@ export class PatientRepository extends Repository<Patient> {
    * Get patients by doctor with pagination
    */
   async findByDoctorId(
-    doctorId: number,
+    doctorId: string,
     page: number = 1,
     limit: number = 10,
   ): Promise<[Patient[], number]> {
@@ -137,7 +137,7 @@ export class PatientRepository extends Repository<Patient> {
   /**
    * Soft delete patient (lebih aman dari hard delete)
    */
-  async findSoftDeletedById(id: number): Promise<Patient | null> {
+  async findSoftDeletedById(id: string): Promise<Patient | null> {
     return this.findOne({
       where: { id },
       withDeleted: true,
@@ -147,7 +147,7 @@ export class PatientRepository extends Repository<Patient> {
   /**
    * Restore soft-deleted patient
    */
-  async restoreById(id: number): Promise<void> {
+  async restoreById(id: string): Promise<void> {
     await this.createQueryBuilder()
       .restore()
       .where('id = :id', { id })
@@ -170,7 +170,12 @@ export class PatientRepository extends Repository<Patient> {
   /**
    * Bulk update patient status
    */
-  async bulkUpdateStatus(ids: number[], isActive: boolean): Promise<void> {
+  async bulkUpdateStatus(ids: string[], isActive: boolean): Promise<void> {
+
+    if (!ids || ids.length === 0){
+      return;
+    }
+
     await this.createQueryBuilder()
       .update(Patient)
       .set({ is_active: isActive })

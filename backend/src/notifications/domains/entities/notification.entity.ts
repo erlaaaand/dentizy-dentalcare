@@ -27,11 +27,11 @@ export enum NotificationStatus {
 @Index(['status', 'send_at']) // Composite index untuk cron job query
 @Index(['appointment_id', 'status']) // Index untuk cancel operations
 export class Notification {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  appointment_id: number;
+  appointment_id: string;
 
   @Column({
     type: 'enum',

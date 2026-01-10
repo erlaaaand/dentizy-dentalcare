@@ -7,7 +7,7 @@ import { UserRole } from '../../../roles/entities/role.entity';
 
 interface AccessFilter {
   field: string;
-  value: number;
+  value: string;
   operator: 'eq' | 'in' | 'ne';
 }
 
@@ -194,7 +194,7 @@ export class MedicalRecordAuthorizationService {
     // Default: no access
     return {
       field: 'id',
-      value: -1,
+      value: '00000000-0000-0000-0000-000000000000',
       operator: 'eq',
     };
   }

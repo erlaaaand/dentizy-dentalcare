@@ -67,8 +67,8 @@ export class FingerprintCreateValidator {
   /**
    * Validate patient exists in database
    */
-  private async validatePatientExists(patientId: number): Promise<void> {
-    if (!patientId || patientId <= 0) {
+  private async validatePatientExists(patientId: string): Promise<void> {
+    if (!patientId) {
       throw new BadRequestException('Patient ID harus berupa angka positif');
     }
 
@@ -143,7 +143,7 @@ export class FingerprintCreateValidator {
    * Validate no duplicate enrollment for same finger
    */
   private async validateNoDuplicate(
-    patientId: number,
+    patientId: string,
     fingerPosition: FingerPosition,
   ): Promise<void> {
     const existing = await this.fingerprintRepository.findOne({
@@ -234,7 +234,7 @@ export class FingerprintCreateValidator {
   /**
    * Check if patient has reached maximum fingerprints
    */
-  async validateMaxFingerprintsPerPatient(patientId: number): Promise<void> {
+  async validateMaxFingerprintsPerPatient(patientId: string): Promise<void> {
     const MAX_FINGERPRINTS = 10; // All 10 fingers
 
     const count = await this.fingerprintRepository.count({

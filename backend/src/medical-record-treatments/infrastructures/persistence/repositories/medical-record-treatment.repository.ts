@@ -77,7 +77,7 @@ export class MedicalRecordTreatmentRepository {
     return { data, total };
   }
 
-  async findOne(id: number): Promise<MedicalRecordTreatment | null> {
+  async findOne(id: string): Promise<MedicalRecordTreatment | null> {
     return await this.repository.findOne({
       where: { id },
       relations: ['treatment', 'treatment.category'],
@@ -85,7 +85,7 @@ export class MedicalRecordTreatmentRepository {
   }
 
   async findByMedicalRecordId(
-    medicalRecordId: number,
+    medicalRecordId: string,
   ): Promise<MedicalRecordTreatment[]> {
     return await this.repository.find({
       where: { medicalRecordId },
@@ -95,7 +95,7 @@ export class MedicalRecordTreatmentRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdateMedicalRecordTreatmentDto,
   ): Promise<MedicalRecordTreatment> {
     const existing = await this.findOne(id);
@@ -129,15 +129,15 @@ export class MedicalRecordTreatmentRepository {
     return updated;
   }
 
-  async softDelete(id: number): Promise<void> {
+  async softDelete(id: string): Promise<void> {
     await this.repository.softDelete(id);
   }
 
-  async restore(id: number): Promise<void> {
+  async restore(id: string): Promise<void> {
     await this.repository.restore(id);
   }
 
-  async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
+  async getTotalByMedicalRecordId(medicalRecordId: string): Promise<number> {
     // Gunakan Generic Type <RawTotalResult> agar result.total dikenali
     const result = await this.repository
       .createQueryBuilder('mrt')
@@ -150,7 +150,7 @@ export class MedicalRecordTreatmentRepository {
     return result && result.total ? parseFloat(result.total) : 0;
   }
 
-  async exists(id: number): Promise<boolean> {
+  async exists(id: string): Promise<boolean> {
     const count = await this.repository.count({ where: { id } });
     return count > 0;
   }

@@ -67,7 +67,7 @@ export class TreatmentsService {
     };
   }
 
-  async findOne(id: number): Promise<TreatmentResponseDto> {
+  async findOne(id: string): Promise<TreatmentResponseDto> {
     const treatment = await this.treatmentRepository.findOne(id);
 
     if (!treatment) {
@@ -90,7 +90,7 @@ export class TreatmentsService {
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdateTreatmentDto,
   ): Promise<TreatmentResponseDto> {
     const exists = await this.treatmentRepository.exists(id);
@@ -127,7 +127,7 @@ export class TreatmentsService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     const exists = await this.treatmentRepository.exists(id);
 
     if (!exists) {
@@ -137,7 +137,7 @@ export class TreatmentsService {
     await this.treatmentRepository.softDelete(id);
   }
 
-  async restore(id: number): Promise<TreatmentResponseDto> {
+  async restore(id: string): Promise<TreatmentResponseDto> {
     await this.treatmentRepository.restore(id);
     const treatment = await this.treatmentRepository.findOne(id);
 

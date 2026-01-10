@@ -22,7 +22,7 @@ export class UpdateTreatmentCategoryUseCase {
   ) {}
 
   async execute(
-    id: number,
+    id: string,
     dto: UpdateTreatmentCategoryDto,
   ): Promise<TreatmentCategoryResponseDto> {
     // Check existence

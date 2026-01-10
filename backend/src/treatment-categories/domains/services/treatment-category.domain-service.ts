@@ -6,7 +6,7 @@ import { TreatmentCategoryRepository } from '../../infrastructures/persistence/r
 export class TreatmentCategoryDomainService {
   constructor(private readonly repository: TreatmentCategoryRepository) {}
 
-  async isNameDuplicate(name: string, excludeId?: number): Promise<boolean> {
+  async isNameDuplicate(name: string, excludeId?: string): Promise<boolean> {
     const existing = await this.repository.findByName(name);
 
     if (!existing) {
@@ -41,16 +41,16 @@ export class TreatmentCategoryDomainService {
     return true;
   }
 
-  async hasActiveTreatments(categoryId: number): Promise<boolean> {
+  async hasActiveTreatments(categoryId: string): Promise<boolean> {
     return await this.repository.hasActiveTreatments(categoryId);
   }
 
-  async canBeDeleted(categoryId: number): Promise<boolean> {
+  async canBeDeleted(categoryId: string): Promise<boolean> {
     const hasActive = await this.hasActiveTreatments(categoryId);
     return !hasActive;
   }
 
-  async canBeDeactivated(categoryId: number): Promise<boolean> {
+  async canBeDeactivated(categoryId: string): Promise<boolean> {
     // Business rule: Can deactivate even if has treatments
     // Treatments will remain but new ones cannot be assigned
     return true;

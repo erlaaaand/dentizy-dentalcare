@@ -16,7 +16,7 @@ export class RolesService {
     return this.roleRepository.find();
   }
 
-  async findOne(id: number): Promise<Role> {
+  async findOne(id: string): Promise<Role> {
     const role = await this.roleRepository.findOneBy({ id });
     if (!role) {
       throw new NotFoundException(`Peran dengan ID #${id} tidak ditemukan`);

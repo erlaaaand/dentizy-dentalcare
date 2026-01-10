@@ -28,7 +28,7 @@ export class PatientDeletionService {
   /**
    * Soft delete patient
    */
-  async execute(id: number): Promise<{ message: string }> {
+  async execute(id: string): Promise<{ message: string }> {
     try {
       const patient = await this.patientRepository.findOne({
         where: { id },

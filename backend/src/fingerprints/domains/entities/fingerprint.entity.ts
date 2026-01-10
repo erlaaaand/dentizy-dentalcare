@@ -34,11 +34,11 @@ export enum FingerPosition {
 @Index('idx_fingerprint_patient', ['patient_id'])
 @Index('idx_fingerprint_active', ['is_active'])
 export class Fingerprint {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'int' })
-  patient_id: number;
+  patient_id: string;
 
   @ManyToOne(() => Patient, (patient) => patient.id, {
     onDelete: 'CASCADE',

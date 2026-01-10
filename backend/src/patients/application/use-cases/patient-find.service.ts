@@ -77,7 +77,7 @@ export class PatientFindService {
   /**
    * Find patient by ID
    */
-  async findOne(id: number): Promise<PatientResponseDto> {
+  async findOne(id: string): Promise<PatientResponseDto> {
     return this.cacheService.getCachedPatient(id, async () => {
       try {
         const patient = await this.patientRepository.findOne({
@@ -126,7 +126,7 @@ export class PatientFindService {
    * Find patients by doctor
    */
   async findByDoctor(
-    doctorId: number,
+    doctorId: string,
     query: SearchPatientDto,
   ): Promise<PaginatedPatients> {
     try {

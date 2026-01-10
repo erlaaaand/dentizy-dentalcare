@@ -15,7 +15,7 @@ export class AppointmentCreateValidator {
   /**
    * Validasi patient exists
    */
-  validatePatientExists(patient: Patient | null, patientId: number): void {
+  validatePatientExists(patient: Patient | null, patientId: string): void {
     if (!patient) {
       throw new NotFoundException(
         `Pasien dengan ID #${patientId} tidak ditemukan`,
@@ -26,7 +26,7 @@ export class AppointmentCreateValidator {
   /**
    * Validasi doctor exists
    */
-  validateDoctorExists(doctor: User | null, doctorId: number): void {
+  validateDoctorExists(doctor: User | null, doctorId: string): void {
     if (!doctor) {
       throw new NotFoundException(
         `Dokter dengan ID #${doctorId} tidak ditemukan`,
@@ -37,7 +37,7 @@ export class AppointmentCreateValidator {
   /**
    * Validasi user adalah dokter atau kepala klinik
    */
-  validateDoctorRole(doctor: User, doctorId: number): void {
+  validateDoctorRole(doctor: User, doctorId: string): void {
     const isDokter =
       doctor.roles?.some((role) => role.name === UserRole.DOKTER) ?? false;
     const isKepalaKlinik =
@@ -56,9 +56,9 @@ export class AppointmentCreateValidator {
    */
   validateCreateAppointment(
     patient: Patient | null,
-    patientId: number,
+    patientId: string,
     doctor: User | null,
-    doctorId: number,
+    doctorId: string,
   ): void {
     this.validatePatientExists(patient, patientId);
     this.validateDoctorExists(doctor, doctorId);

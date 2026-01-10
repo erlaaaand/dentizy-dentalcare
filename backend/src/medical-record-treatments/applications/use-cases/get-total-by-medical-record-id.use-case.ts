@@ -6,7 +6,7 @@ import { MedicalRecordTreatmentRepository } from '../../infrastructures/persiste
 export class GetTotalByMedicalRecordIdUseCase {
   constructor(private readonly repository: MedicalRecordTreatmentRepository) {}
 
-  async execute(medicalRecordId: number): Promise<number> {
+  async execute(medicalRecordId: string): Promise<number> {
     return await this.repository.getTotalByMedicalRecordId(medicalRecordId);
   }
 }

@@ -10,7 +10,6 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
   UseInterceptors,
@@ -142,7 +141,7 @@ export class MedicalRecordsController {
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async findByAppointmentId(
-    @Param('appointmentId', ParseIntPipe) appointmentId: number,
+    @Param('appointmentId') appointmentId: string,
     @GetUser() user: User,
   ): Promise<MedicalRecordResponseDto | null> {
     return await this.medicalRecordsService.findByAppointmentId(
@@ -187,7 +186,7 @@ export class MedicalRecordsController {
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<MedicalRecordResponseDto> {
     return await this.medicalRecordsService.findOne(id, user);
@@ -205,7 +204,7 @@ export class MedicalRecordsController {
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   @ApiResponse({ status: 400, description: 'Data tidak valid' })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body(ValidationPipe) updateDto: UpdateMedicalRecordDto,
     @GetUser() user: User,
   ): Promise<MedicalRecordResponseDto> {
@@ -229,7 +228,7 @@ export class MedicalRecordsController {
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<MessageResponse> {
     await this.medicalRecordsService.remove(id, user);
@@ -253,7 +252,7 @@ export class MedicalRecordsController {
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async restore(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<MessageResponse> {
     await this.medicalRecordsService.restore(id, user);
@@ -275,7 +274,7 @@ export class MedicalRecordsController {
   })
   @ApiResponse({ status: 404, description: 'Rekam medis tidak ditemukan' })
   async hardDelete(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<void> {
     await this.medicalRecordsService.hardDelete(id, user);

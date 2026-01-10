@@ -23,5 +23,5 @@ export class VerifyFingerprintDto {
   })
   @IsOptional()
   @IsNumber()
-  patient_id?: number;
+  patient_id?: string;
 }

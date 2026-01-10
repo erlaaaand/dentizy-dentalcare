@@ -12,7 +12,7 @@ export class FindByMedicalRecordIdUseCase {
   ) {}
 
   async execute(
-    medicalRecordId: number,
+    medicalRecordId: string,
   ): Promise<MedicalRecordTreatmentResponseDto[]> {
     const results =
       await this.repository.findByMedicalRecordId(medicalRecordId);

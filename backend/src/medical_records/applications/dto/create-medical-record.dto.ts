@@ -13,21 +13,21 @@ export class CreateMedicalRecordDto {
     description: 'ID dari appointment yang terkait dengan rekam medis',
     example: 1203,
     required: true,
-    type: Number,
+    type: String,
   })
   @IsNotEmpty({ message: 'Appointment ID harus diisi' })
   @IsNumber()
-  appointment_id: number;
+  appointment_id: string;
 
   @ApiProperty({
     description: 'ID user staff (perawat/dokter) yang membuat rekam medis',
     example: 7,
     required: true,
-    type: Number,
+    type: String,
   })
   @IsNotEmpty({ message: 'User ID staff harus diisi' })
   @IsNumber()
-  user_id_staff: number;
+  user_id_staff: string;
 
   @ApiProperty({
     description: 'Bagian Subjektif dari SOAP (keluhan pasien)',

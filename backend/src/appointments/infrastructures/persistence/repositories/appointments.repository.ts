@@ -33,7 +33,7 @@ export class AppointmentsRepository {
   /**
    * Find appointment by ID dengan relations
    */
-  async findById(id: number): Promise<Appointment | null> {
+  async findById(id: string): Promise<Appointment | null> {
     return await this.appointmentRepository.findOne({
       where: { id },
       relations: ['patient', 'doctor', 'doctor.roles', 'medical_record'],
@@ -45,7 +45,7 @@ export class AppointmentsRepository {
    */
   async findByIdInTransaction(
     queryRunner: QueryRunner,
-    id: number,
+    id: string,
   ): Promise<Appointment | null> {
     return await queryRunner.manager.findOne(Appointment, {
       where: { id },
@@ -56,7 +56,7 @@ export class AppointmentsRepository {
   /**
    * Find patient by ID
    */
-  async findPatientById(patientId: number): Promise<Patient | null> {
+  async findPatientById(patientId: string): Promise<Patient | null> {
     return await this.patientRepository.findOne({
       where: { id: patientId },
     });
@@ -67,7 +67,7 @@ export class AppointmentsRepository {
    */
   async findPatientByIdInTransaction(
     queryRunner: QueryRunner,
-    patientId: number,
+    patientId: string,
   ): Promise<Patient | null> {
     return await queryRunner.manager.findOne(Patient, {
       where: { id: patientId },
@@ -77,7 +77,7 @@ export class AppointmentsRepository {
   /**
    * Find doctor by ID dengan roles
    */
-  async findDoctorById(doctorId: number): Promise<User | null> {
+  async findDoctorById(doctorId: string): Promise<User | null> {
     return await this.userRepository.findOne({
       where: { id: doctorId },
       relations: ['roles'],
@@ -89,7 +89,7 @@ export class AppointmentsRepository {
    */
   async findDoctorByIdInTransaction(
     queryRunner: QueryRunner,
-    doctorId: number,
+    doctorId: string,
   ): Promise<User | null> {
     return await queryRunner.manager.findOne(User, {
       where: { id: doctorId },

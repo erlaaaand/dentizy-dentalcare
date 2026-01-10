@@ -31,13 +31,13 @@ export class UserValidationService {
     }
   }
 
-  validateUserExists(user: User | null, userId: number): void {
+  validateUserExists(user: User | null, userId: string): void {
     if (!user) {
       throw new NotFoundException(`User dengan ID #${userId} tidak ditemukan`);
     }
   }
 
-  validateRolesExist(requestedRoleIds: number[], foundRoles: Role[]): void {
+  validateRolesExist(requestedRoleIds: string[], foundRoles: Role[]): void {
     if (foundRoles.length !== requestedRoleIds.length) {
       const foundIds = foundRoles.map((r) => r.id);
       const missingIds = requestedRoleIds.filter(
@@ -93,7 +93,7 @@ export class UserValidationService {
 
   async validateUniqueEmail(
     email: string,
-    currentUserId?: number,
+    currentUserId?: string,
   ): Promise<void> {
     const existingUser = await this.userRepository.findByEmail(email);
 

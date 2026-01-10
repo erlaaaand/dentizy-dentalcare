@@ -64,8 +64,8 @@ export class TreatmentTransactionService {
   }
 
   async transferCategory(
-    fromCategoryId: number,
-    toCategoryId: number,
+    fromCategoryId: string,
+    toCategoryId: string,
   ): Promise<number> {
     return await this.withTransaction(async (queryRunner) => {
       const result = await queryRunner.manager.update(
@@ -79,7 +79,7 @@ export class TreatmentTransactionService {
   }
 
   async bulkPriceAdjustment(
-    categoryId: number,
+    categoryId: string,
     adjustmentPercentage: number,
   ): Promise<number> {
     return await this.withTransaction(async (queryRunner) => {
@@ -99,7 +99,7 @@ export class TreatmentTransactionService {
   }
 
   async cloneTreatment(
-    treatmentId: number,
+    treatmentId: string,
     newKodePerawatan: string,
     newNamaPerawatan: string,
   ): Promise<Treatment> {

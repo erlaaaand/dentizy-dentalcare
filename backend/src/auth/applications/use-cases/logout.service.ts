@@ -13,7 +13,7 @@ export class LogoutService {
    * Note: Since we're using stateless JWT, logout is handled client-side
    * This service is for future enhancements (token blacklist, etc.)
    */
-  async execute(userId: number): Promise<{ message: string }> {
+  async execute(userId: string): Promise<{ message: string }> {
     this.logger.log(`User logged out: ${userId}`);
 
     // Future: Add token to blacklist

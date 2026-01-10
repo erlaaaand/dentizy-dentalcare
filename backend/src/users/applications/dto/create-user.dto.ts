@@ -6,6 +6,7 @@ import {
   MinLength,
   IsEmail,
   IsOptional,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import {
@@ -60,7 +61,7 @@ export class CreateUserDto {
     type: [Number],
   })
   @IsNotEmpty({ message: 'Roles harus diisi' })
-  @IsArray({ message: 'Roles harus berupa array' })
-  @IsNumber({}, { each: true, message: 'Setiap role harus berupa angka (ID)' })
-  roles: number[];
+  @IsArray()
+  @IsUUID('4', { each: true }) // atau @IsString({ each: true })
+  roles: string[];
 }

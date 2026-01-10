@@ -9,7 +9,6 @@ import {
   Query,
   UseGuards,
   ValidationPipe,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
   UseInterceptors,
@@ -101,7 +100,7 @@ export class AppointmentsController {
     description: 'Status tidak valid untuk diselesaikan',
   })
   async complete(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<AppointmentResponseDto> {
     return await this.appointmentsService.complete(id, user);
@@ -131,7 +130,7 @@ export class AppointmentsController {
     description: 'Status tidak valid untuk dibatalkan',
   })
   async cancel(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<AppointmentResponseDto> {
     return await this.appointmentsService.cancel(id, user);
@@ -203,7 +202,7 @@ export class AppointmentsController {
   @ApiResponse({ status: 404, description: 'Appointment tidak ditemukan' })
   @ApiResponse({ status: 403, description: 'Tidak memiliki akses' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<AppointmentResponseDto> {
     return await this.appointmentsService.findOne(id, user);
@@ -229,7 +228,7 @@ export class AppointmentsController {
     description: 'Konflik jadwal atau status tidak valid',
   })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body(ValidationPipe) updateDto: UpdateAppointmentDto,
     @GetUser() user: User, // [BARU] Inject User dari token JWT
   ): Promise<AppointmentResponseDto> {
@@ -258,7 +257,7 @@ export class AppointmentsController {
     description: 'Tidak bisa dihapus karena sudah ada medical record',
   })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @GetUser() user: User,
   ): Promise<{ message: string }> {
     await this.appointmentsService.remove(id, user);

@@ -60,7 +60,7 @@ export class PatientCacheService {
    * Membungkus pengambilan data findOne dengan caching.
    */
   async getCachedPatient(
-    id: number,
+    id: string,
     fallback: () => Promise<PatientResponseDto>,
   ): Promise<PatientResponseDto> {
     const cacheKey = this.getCacheKey('detail', { id });
@@ -114,7 +114,7 @@ export class PatientCacheService {
   /**
    * Meng-invalidate cache untuk satu pasien (by ID).
    */
-  async invalidatePatientCache(id: number): Promise<void> {
+  async invalidatePatientCache(id: string): Promise<void> {
     try {
       const cacheKey = this.getCacheKey('detail', { id });
       await this.cacheManager.del(cacheKey);

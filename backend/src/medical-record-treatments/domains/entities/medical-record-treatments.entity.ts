@@ -15,16 +15,16 @@ import { MedicalRecord } from '../../../medical_records/domains/entities/medical
 
 @Entity('medical_record_treatments')
 export class MedicalRecordTreatment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'int', name: 'medical_record_id' })
   @Index('idx_mrt_medical_record')
-  medicalRecordId: number;
+  medicalRecordId: string;
 
   @Column({ type: 'int', name: 'treatment_id' })
   @Index('idx_mrt_treatment')
-  treatmentId: number;
+  treatmentId: string;
 
   @Column({ type: 'int', default: 1 })
   jumlah: number;

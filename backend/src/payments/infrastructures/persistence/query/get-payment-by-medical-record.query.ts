@@ -11,7 +11,7 @@ export class GetPaymentByMedicalRecordQuery {
     private readonly repository: Repository<Payment>,
   ) {}
 
-  async execute(medicalRecordId: number): Promise<Payment | null> {
+  async execute(medicalRecordId: string): Promise<Payment | null> {
     return await this.repository.findOne({
       where: { medicalRecordId },
       order: { createdAt: 'DESC' },

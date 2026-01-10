@@ -1,5 +1,6 @@
 // domains/validators/user-data.validator.ts
 import { BadRequestException } from '@nestjs/common';
+import { isUUID } from 'class-validator';
 
 export class UserDataValidator {
   /**
@@ -30,7 +31,7 @@ export class UserDataValidator {
   /**
    * Validate roles array
    */
-  static validateRoles(roles: number[]): void {
+  static validateRoles(roles: string[]): void {
     if (!roles || !Array.isArray(roles)) {
       throw new BadRequestException('Roles harus berupa array');
     }
@@ -47,8 +48,9 @@ export class UserDataValidator {
 
     // Validate all are positive integers
     for (const roleId of roles) {
-      if (!Number.isInteger(roleId) || roleId <= 0) {
-        throw new BadRequestException('Role ID harus berupa integer positif');
+      // Cek apakah string tersebut format UUID v4 yang valid
+      if (!isUUID(roleId)) {
+        throw new BadRequestException(`Role ID '${roleId}' tidak valid (harus berupa UUID)`);
       }
     }
   }

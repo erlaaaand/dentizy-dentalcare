@@ -41,7 +41,7 @@ export class GetNotificationsService {
     }
   }
 
-  async findOne(id: number): Promise<NotificationResponseDto> {
+  async findOne(id: string): Promise<NotificationResponseDto> {
     try {
       const notification = await this.notificationRepository.findById(id);
 

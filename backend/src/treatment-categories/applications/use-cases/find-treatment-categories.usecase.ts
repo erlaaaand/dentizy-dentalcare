@@ -30,7 +30,7 @@ export class FindTreatmentCategoriesUseCase {
     };
   }
 
-  async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
+  async findOne(id: string): Promise<TreatmentCategoryResponseDto> {
     const category = await this.repository.findOne(id);
 
     if (!category) {

@@ -16,7 +16,7 @@ export class IsCategoryExistsConstraint implements ValidatorConstraintInterface 
     private readonly categoryRepository: TreatmentCategoryRepository,
   ) {}
 
-  async validate(categoryId: number): Promise<boolean> {
+  async validate(categoryId: string): Promise<boolean> {
     if (!categoryId) return true;
     return await this.categoryRepository.exists(categoryId);
   }

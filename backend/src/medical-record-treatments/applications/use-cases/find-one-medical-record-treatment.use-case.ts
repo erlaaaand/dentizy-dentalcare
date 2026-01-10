@@ -11,7 +11,7 @@ export class FindOneMedicalRecordTreatmentUseCase {
     private readonly mapper: MedicalRecordTreatmentMapper,
   ) {}
 
-  async execute(id: number): Promise<MedicalRecordTreatmentResponseDto> {
+  async execute(id: string): Promise<MedicalRecordTreatmentResponseDto> {
     const result = await this.repository.findOne(id);
     if (!result) {
       throw new NotFoundException(

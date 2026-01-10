@@ -13,7 +13,7 @@ export class RetryFailedService {
     private readonly validator: NotificationValidatorService,
   ) {}
 
-  async execute(notificationId: number): Promise<void> {
+  async execute(notificationId: string): Promise<void> {
     try {
       // 1. Find notification
       const notification =

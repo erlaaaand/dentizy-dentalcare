@@ -32,7 +32,7 @@ export class PublicBookingService {
       // 1. Cek Apakah Pasien Sudah Ada (Read Only)
       const existingPatient = await this.patientRepository.findByNik(dto.nik);
 
-      let patientId: number;
+      let patientId: string;
 
       if (existingPatient) {
         // 2A. VALIDASI KEAMANAN (Mencegah penyalahgunaan NIK)

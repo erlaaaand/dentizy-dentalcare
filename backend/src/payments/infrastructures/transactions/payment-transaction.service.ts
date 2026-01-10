@@ -68,7 +68,7 @@ export class PaymentTransactionService {
   }
 
   async cancelPaymentWithRefund(
-    paymentId: number,
+    paymentId: string,
     refundData?: RefundData,
   ): Promise<Payment> {
     return await this.executeInTransaction(async (queryRunner) => {

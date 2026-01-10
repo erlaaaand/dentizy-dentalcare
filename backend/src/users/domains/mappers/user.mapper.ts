@@ -43,7 +43,7 @@ export class UserMapper {
    * Map user to summary (minimal info)
    */
   static toSummary(user: User): {
-    id: number;
+    id: string;
     username: string;
     nama_lengkap: string;
   } {

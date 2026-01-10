@@ -9,7 +9,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
   UseGuards,
   Req,
   UseInterceptors,
@@ -97,7 +96,7 @@ export class PaymentsController {
     type: PaymentResponseDto,
   })
   async process(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() dto: ProcessPaymentDto,
     @GetUser() user: User,
   ): Promise<StandardResponse<PaymentResponseDto>> {
@@ -211,7 +210,7 @@ export class PaymentsController {
   })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   async findByMedicalRecordId(
-    @Param('medicalRecordId', ParseIntPipe) medicalRecordId: number,
+    @Param('medicalRecordId') medicalRecordId: string,
   ): Promise<StandardResponse<PaymentResponseDto>> {
     const data =
       await this.paymentsService.findByMedicalRecordId(medicalRecordId);
@@ -246,7 +245,7 @@ export class PaymentsController {
     type: [PaymentResponseDto],
   })
   async findByPatientId(
-    @Param('patientId', ParseIntPipe) patientId: number,
+    @Param('patientId') patientId: string,
     @Query('limit') limit?: number,
   ): Promise<StandardResponse<PaymentResponseDto[]>> {
     const data = await this.paymentsService.findByPatientId(patientId, limit);
@@ -370,7 +369,7 @@ export class PaymentsController {
   })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<StandardResponse<PaymentResponseDto>> {
     const data = await this.paymentsService.findOne(id);
     return {
@@ -398,7 +397,7 @@ export class PaymentsController {
     description: 'Pembayaran yang dibatalkan tidak dapat diubah',
   })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateDto: UpdatePaymentDto,
     @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<PaymentResponseDto>> {
@@ -427,7 +426,7 @@ export class PaymentsController {
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   @ApiBadRequestResponse({ description: 'Pembayaran sudah dibatalkan' })
   async cancel(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<PaymentResponseDto>> {
     const cancelledBy = req.user?.id;
@@ -450,7 +449,7 @@ export class PaymentsController {
   @ApiOkResponse({ description: 'Pembayaran berhasil dihapus' })
   @ApiNotFoundResponse({ description: 'Pembayaran tidak ditemukan' })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Req() req: AuthenticatedRequest,
   ): Promise<StandardResponse<Record<string, never>>> {
     const deletedBy = req.user?.id;

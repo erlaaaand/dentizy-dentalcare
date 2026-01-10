@@ -17,15 +17,13 @@ import {
 export class QueryPaymentDto {
   @ApiPropertyOptional({ description: 'Filter berdasarkan Medical Record ID' })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  medicalRecordId?: number;
+  @IsString()
+  medicalRecordId?: string;
 
   @ApiPropertyOptional({ description: 'Filter berdasarkan Patient ID' })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  patientId?: number;
+  @IsString()
+  patientId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter berdasarkan status pembayaran',

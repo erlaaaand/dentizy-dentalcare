@@ -24,5 +24,5 @@ export class RetryNotificationDto {
   @IsDefined({ message: 'notification_id must be defined' })
   @IsNotEmpty({ message: 'notification_id must not be empty' })
   @IsNumber({}, { message: 'notification_id must be a number' })
-  notification_id: number;
+  notification_id: string;
 }

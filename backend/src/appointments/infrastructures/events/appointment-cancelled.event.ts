@@ -7,7 +7,7 @@ import { Appointment } from '../../domains/entities/appointment.entity';
 export class AppointmentCancelledEvent {
   constructor(
     public readonly appointment: Appointment,
-    public readonly cancelledBy: number, // user ID
+    public readonly cancelledBy: string, // user ID
     public readonly reason?: string,
   ) {}
 }

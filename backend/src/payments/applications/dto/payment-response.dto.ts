@@ -5,7 +5,7 @@ import { Type, Expose } from 'class-transformer';
 class PatientSubsetDto {
   @ApiProperty()
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty()
   @Expose()
@@ -19,18 +19,18 @@ class PatientSubsetDto {
 class MedicalRecordSubsetDto {
   @ApiProperty()
   @Expose()
-  id: number;
+  id: string;
 }
 
 export class PaymentResponseDto {
   @ApiProperty({ description: 'ID Pembayaran' })
-  id: number;
+  id: string;
 
   @ApiProperty({ description: 'ID Rekam Medis' })
-  medicalRecordId: number;
+  medicalRecordId: string;
 
   @ApiProperty({ description: 'ID Pasien' })
-  patientId: number;
+  patientId: string;
 
   @ApiProperty({ description: 'Nomor Invoice' })
   nomorInvoice: string;
@@ -63,7 +63,7 @@ export class PaymentResponseDto {
   keterangan?: string;
 
   @ApiPropertyOptional({ description: 'ID Pembuat' })
-  createdBy?: number;
+  createdBy?: string;
 
   @ApiProperty({ description: 'Tanggal Dibuat' })
   createdAt: Date;

@@ -6,7 +6,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
   HttpCode,
   HttpStatus,
   Query,
@@ -82,7 +81,7 @@ export class FingerprintsController {
     type: [FingerprintResponseDto],
   })
   async findByPatient(
-    @Param('patientId', ParseIntPipe) patientId: number,
+    @Param('patientId') patientId: string,
   ): Promise<FingerprintResponseDto[]> {
     return this.fingerprintsService.findByPatient(patientId);
   }
@@ -96,7 +95,7 @@ export class FingerprintsController {
     description: 'Sidik jari berhasil dihapus',
   })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<{ message: string }> {
     return this.fingerprintsService.remove(id);
   }

@@ -43,14 +43,14 @@ export class AuthService {
   /**
    * Refresh token
    */
-  async refreshToken(userId: number): Promise<{ access_token: string }> {
+  async refreshToken(userId: string): Promise<{ access_token: string }> {
     return this.tokenRefreshService.execute(userId);
   }
 
   /**
    * Logout user
    */
-  async logout(userId: number): Promise<{ message: string }> {
+  async logout(userId: string): Promise<{ message: string }> {
     return this.logoutService.execute(userId);
   }
 }

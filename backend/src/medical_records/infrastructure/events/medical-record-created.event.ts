@@ -17,11 +17,11 @@ export interface MedicalRecordMetadata {
 export interface MedicalRecordCreatedEventJson {
   eventName: string;
   eventVersion: string;
-  medicalRecordId: number;
-  appointmentId: number;
-  patientId: number;
-  doctorId: number;
-  createdBy: number;
+  medicalRecordId: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  createdBy: string;
   timestamp: string; // Serialized Date is string
   metadata?: MedicalRecordMetadata;
 }
@@ -32,11 +32,11 @@ export interface MedicalRecordCreatedEventJson {
  */
 export class MedicalRecordCreatedEvent {
   constructor(
-    public readonly medicalRecordId: number,
-    public readonly appointmentId: number,
-    public readonly patientId: number,
-    public readonly doctorId: number,
-    public readonly createdBy: number,
+    public readonly medicalRecordId: string,
+    public readonly appointmentId: string,
+    public readonly patientId: string,
+    public readonly doctorId: string,
+    public readonly createdBy: string,
     public readonly timestamp: Date = new Date(),
     public readonly metadata?: MedicalRecordMetadata,
   ) {}

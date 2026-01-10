@@ -10,7 +10,7 @@ export type PasswordChangeActor = 'self' | 'admin';
  */
 export class PasswordChangedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly username: string,
     public readonly changedBy: PasswordChangeActor,
     public readonly timestamp: Date = new Date(),

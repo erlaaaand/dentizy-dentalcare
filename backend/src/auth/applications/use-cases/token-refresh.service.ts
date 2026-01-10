@@ -20,7 +20,7 @@ export class TokenRefreshService {
   /**
    * Refresh user token
    */
-  async execute(userId: number): Promise<{ access_token: string }> {
+  async execute(userId: string): Promise<{ access_token: string }> {
     try {
       // 1. Find user - properly typed as User entity
       const user = await this.usersService.findOneForAuth(userId);

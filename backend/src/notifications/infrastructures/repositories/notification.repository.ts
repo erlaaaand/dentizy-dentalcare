@@ -36,7 +36,7 @@ export class NotificationRepository {
    * Find by ID with relations
    * ✅ FIXED: Menggunakan 'doctor' bukan 'doctor_id'
    */
-  async findById(id: number): Promise<Notification | null> {
+  async findById(id: string): Promise<Notification | null> {
     return this.repository.findOne({
       where: { id },
       relations: ['appointment', 'appointment.patient', 'appointment.doctor'],
@@ -82,7 +82,7 @@ export class NotificationRepository {
   /**
    * Cancel pending notifications for appointment
    */
-  async cancelForAppointment(appointmentId: number): Promise<number> {
+  async cancelForAppointment(appointmentId: string): Promise<number> {
     const result = await this.repository
       .createQueryBuilder()
       .update(Notification)
@@ -97,7 +97,7 @@ export class NotificationRepository {
   /**
    * Mark notifications as processing
    */
-  async markAsProcessing(notificationIds: number[]): Promise<void> {
+  async markAsProcessing(notificationIds: string[]): Promise<void> {
     await this.repository.update(
       { id: In(notificationIds) },
       { status: NotificationStatus.SENT, sent_at: new Date() },
@@ -107,7 +107,7 @@ export class NotificationRepository {
   /**
    * Mark notification as sent
    */
-  async markAsSent(notificationId: number): Promise<void> {
+  async markAsSent(notificationId: string): Promise<void> {
     await this.repository.update(notificationId, {
       status: NotificationStatus.SENT,
       sent_at: new Date(),
@@ -118,7 +118,7 @@ export class NotificationRepository {
    * Mark notification as failed
    */
   async markAsFailed(
-    notificationId: number,
+    notificationId: string,
     errorMessage?: string,
   ): Promise<void> {
     await this.repository.increment({ id: notificationId }, 'retry_count', 1);

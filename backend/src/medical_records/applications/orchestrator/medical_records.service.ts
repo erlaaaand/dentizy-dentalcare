@@ -87,7 +87,7 @@ export class MedicalRecordsService {
   /**
    * Find medical record by ID
    */
-  async findOne(id: number, user: User): Promise<MedicalRecordResponseDto> {
+  async findOne(id: string, user: User): Promise<MedicalRecordResponseDto> {
     const entity = await this.findService.execute(id, user);
     return this.mapper.toResponseDto(entity);
   }
@@ -96,7 +96,7 @@ export class MedicalRecordsService {
    * Find medical record by appointment ID
    */
   async findByAppointmentId(
-    appointmentId: number,
+    appointmentId: string,
     user: User,
   ): Promise<MedicalRecordResponseDto | null> {
     const entity = await this.appointmentFinderService.execute(
@@ -115,7 +115,7 @@ export class MedicalRecordsService {
    * Update medical record
    */
   async update(
-    id: number,
+    id: string,
     updateDto: UpdateMedicalRecordDto,
     user: User,
   ): Promise<MedicalRecordResponseDto> {
@@ -126,21 +126,21 @@ export class MedicalRecordsService {
   /**
    * Delete medical record (soft delete)
    */
-  async remove(id: number, user: User): Promise<void> {
+  async remove(id: string, user: User): Promise<void> {
     await this.deletionService.execute(id, user);
   }
 
   /**
    * Hard delete medical record (permanent)
    */
-  async hardDelete(id: number, user: User): Promise<void> {
+  async hardDelete(id: string, user: User): Promise<void> {
     await this.deletionService.hardDelete(id, user);
   }
 
   /**
    * Restore soft-deleted medical record
    */
-  async restore(id: number, user: User): Promise<MedicalRecordResponseDto> {
+  async restore(id: string, user: User): Promise<MedicalRecordResponseDto> {
     const entity = await this.deletionService.restore(id, user);
     return this.mapper.toResponseDto(entity);
   }
@@ -148,7 +148,7 @@ export class MedicalRecordsService {
   /**
    * Check if medical record exists for appointment
    */
-  async existsForAppointment(appointmentId: number): Promise<boolean> {
+  async existsForAppointment(appointmentId: string): Promise<boolean> {
     return await this.appointmentFinderService.exists(appointmentId);
   }
 

@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { TreatmentCategory } from '../../../treatment-categories/domains/entities/treatment-categories.entity';
 
 export interface TreatmentCategoryDto {
-  id: number;
+  id: string;
   namaKategori: string;
   kodeKategori?: string;
 }

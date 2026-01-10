@@ -5,7 +5,7 @@ import { Expose, Type } from 'class-transformer';
 class UserSummaryDto {
   @ApiProperty({ example: 1 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'johndoe' })
   @Expose()

@@ -25,16 +25,16 @@ export enum AppointmentStatus {
 @Index('idx_appointment_doctor_date', ['doctor_id', 'tanggal_janji', 'status'])
 @Index('idx_appointment_patient_date', ['patient_id', 'tanggal_janji'])
 export class Appointment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
   @Index('idx_appointment_patient') // Index untuk filter by patient
-  patient_id: number;
+  patient_id: string;
 
   @Column()
   @Index('idx_appointment_doctor') // Index untuk filter by doctor
-  doctor_id: number;
+  doctor_id: string;
 
   @Column({
     type: 'enum',

@@ -91,7 +91,7 @@ export class MedicalRecordTreatmentTransactionService {
   }
 
   async updateMedicalRecordTreatments(
-    medicalRecordId: number,
+    medicalRecordId: string,
     treatments: CreateMedicalRecordTreatmentDto[],
   ): Promise<MedicalRecordTreatment[]> {
     const queryRunner: QueryRunner = this.dataSource.createQueryRunner();

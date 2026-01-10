@@ -33,7 +33,7 @@ export class PatientUpdateService {
    * Update patient data
    */
   async execute(
-    id: number,
+    id: string,
     updatePatientDto: UpdatePatientDto,
   ): Promise<PatientResponseDto> {
     try {

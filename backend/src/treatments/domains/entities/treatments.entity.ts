@@ -18,12 +18,12 @@ import { MedicalRecordTreatment } from '../../../medical-record-treatments/domai
 @Index(['kodePerawatan', 'deletedAt'])
 @Index(['categoryId', 'isActive', 'deletedAt'])
 export class Treatment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'int', name: 'category_id' })
   @Index('idx_treatment_category')
-  categoryId: number;
+  categoryId: string;
 
   @Column({ type: 'varchar', length: 50, unique: true, name: 'kode_perawatan' })
   @Index('idx_treatment_kode')

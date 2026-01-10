@@ -7,6 +7,6 @@ import { Appointment } from '../../domains/entities/appointment.entity';
 export class AppointmentCompletedEvent {
   constructor(
     public readonly appointment: Appointment,
-    public readonly completedBy: number, // user ID
+    public readonly completedBy: string, // user ID
   ) {}
 }

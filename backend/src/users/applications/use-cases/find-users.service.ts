@@ -84,7 +84,7 @@ export class FindUsersService {
     }
   }
 
-  async findOne(userId: number): Promise<UserResponseDto> {
+  async findOne(userId: string): Promise<UserResponseDto> {
     try {
       const user = await this.userRepository.findById(userId);
 
@@ -105,7 +105,7 @@ export class FindUsersService {
     }
   }
 
-  async findOneForAuth(userId: number): Promise<User> {
+  async findOneForAuth(userId: string): Promise<User> {
     try {
       const user = await this.userRepository.findByIdWithPassword(userId);
 

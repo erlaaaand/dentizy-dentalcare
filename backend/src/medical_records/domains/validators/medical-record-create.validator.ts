@@ -50,15 +50,14 @@ export class MedicalRecordCreateValidator {
       throw new BadRequestException('ID janji temu harus diisi');
     }
 
-    if (dto.appointment_id <= 0) {
+    if (dto.appointment_id) {
       throw new BadRequestException('ID janji temu tidak valid');
     }
 
     if (!dto.user_id_staff) {
       throw new BadRequestException('ID user staff harus diisi');
     }
-
-    if (dto.user_id_staff <= 0) {
+    if (isNaN(Number(dto.user_id_staff))) {
       throw new BadRequestException('ID user staff tidak valid');
     }
   }

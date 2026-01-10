@@ -34,7 +34,7 @@ export class NotificationsService {
   /**
    * Cancel reminders for appointment
    */
-  async cancelRemindersFor(appointmentId: number): Promise<number> {
+  async cancelRemindersFor(appointmentId: string): Promise<number> {
     return this.cancelRemindersService.execute(appointmentId);
   }
 
@@ -56,7 +56,7 @@ export class NotificationsService {
   /**
    * Get notification by ID
    */
-  async findOne(id: number): Promise<NotificationResponseDto> {
+  async findOne(id: string): Promise<NotificationResponseDto> {
     return this.getNotificationsService.findOne(id);
   }
 
@@ -79,7 +79,7 @@ export class NotificationsService {
   /**
    * Retry single failed notification
    */
-  async retryNotification(notificationId: number): Promise<void> {
+  async retryNotification(notificationId: string): Promise<void> {
     return this.retryFailedService.execute(notificationId);
   }
 

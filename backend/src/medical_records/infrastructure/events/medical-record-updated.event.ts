@@ -33,11 +33,11 @@ export interface MedicalRecordUpdatedMetadata {
 export interface MedicalRecordUpdatedEventJson {
   eventName: string;
   eventVersion: string;
-  medicalRecordId: number;
-  appointmentId: number;
-  patientId: number;
-  doctorId: number;
-  updatedBy: number;
+  medicalRecordId: string;
+  appointmentId: string;
+  patientId: string;
+  doctorId: string;
+  updatedBy: string;
   timestamp: string; // Serialized Date
   changes?: MedicalRecordChanges;
   metadata?: MedicalRecordUpdatedMetadata;
@@ -49,11 +49,11 @@ export interface MedicalRecordUpdatedEventJson {
  */
 export class MedicalRecordUpdatedEvent {
   constructor(
-    public readonly medicalRecordId: number,
-    public readonly appointmentId: number,
-    public readonly patientId: number,
-    public readonly doctorId: number,
-    public readonly updatedBy: number,
+    public readonly medicalRecordId: string,
+    public readonly appointmentId: string,
+    public readonly patientId: string,
+    public readonly doctorId: string,
+    public readonly updatedBy: string,
     public readonly timestamp: Date = new Date(),
     public readonly changes?: MedicalRecordChanges,
     public readonly metadata?: MedicalRecordUpdatedMetadata,

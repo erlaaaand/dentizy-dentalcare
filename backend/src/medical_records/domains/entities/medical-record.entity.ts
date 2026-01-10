@@ -25,17 +25,17 @@ import {
 @Index('idx_medical_records_patient_id', ['patient_id'])
 @Index('idx_medical_records_doctor_id', ['doctor_id'])
 export class MedicalRecord {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column()
-  appointment_id: number;
+  appointment_id: string;
 
   @Column({ nullable: true })
-  doctor_id: number;
+  doctor_id: string;
 
   @Column()
-  patient_id: number;
+  patient_id: string;
 
   // SOAP fields
   @Column({ type: 'text', nullable: true })

@@ -9,6 +9,7 @@ import { AppointmentConflictValidator } from '../../domains/validators/appointme
 import { AppointmentDomainService } from '../../domains/services/appointment-domain.service';
 import { TransactionManager } from '../../infrastructures/transactions/transaction.manager';
 import { AppointmentUpdatedEvent } from '../../infrastructures/events';
+import { QueryRunner } from 'typeorm';
 
 /**
  * Use Case: Update Appointment
@@ -31,7 +32,7 @@ export class AppointmentUpdateService {
   /**
    * Execute: Update appointment
    */
-  async execute(id: number, dto: UpdateAppointmentDto): Promise<Appointment> {
+  async execute(id: string, dto: UpdateAppointmentDto): Promise<Appointment> {
     const queryRunner = this.repository.createQueryRunner();
 
     try {
@@ -96,8 +97,8 @@ export class AppointmentUpdateService {
    * Validate time update dengan conflict detection
    */
   private async validateTimeUpdate(
-    queryRunner: any,
-    appointmentId: number,
+    queryRunner: QueryRunner,
+    appointmentId: string,
     appointment: Appointment,
     dto: UpdateAppointmentDto,
   ): Promise<void> {

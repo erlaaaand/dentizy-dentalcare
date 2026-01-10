@@ -9,6 +9,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { UserCreatedEvent } from '../../infrastructures/events/user-created.event';
 import { Role } from '../../../roles/entities/role.entity';
 
+// Interface payload tetap sama, karena Role[] adalah array object
 interface CreateUserPayload {
   username: string;
   nama_lengkap: string;
@@ -26,11 +27,11 @@ export class CreateUserService {
     private readonly userValidation: UserValidationService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   async execute(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const {
-      roles: roleIds,
+      roles: roleIds, // [UUID Note]: Pastikan di DTO ini tipe datanya string[]
       password,
       username,
       nama_lengkap,
@@ -38,15 +39,21 @@ export class CreateUserService {
     } = createUserDto;
 
     try {
+      // 1. Validasi Username (existingUser.id nanti string, tapi logic ini aman)
       const existingUser =
         await this.userRepository.findByUsernameWithoutPassword(username);
       this.userValidation.validateUsernameUniqueness(existingUser, username);
 
+      // 2. Validasi Email
       if (email) {
         await this.userValidation.validateUniqueEmail(email);
       }
 
+      // 3. Validasi Roles (Bagian Kritis Migrasi UUID)
+      // [UUID Update]: Pastikan method findRolesByIds di repo menerima string[]
       const roles = await this.userRepository.findRolesByIds(roleIds);
+
+      // [UUID Update]: Pastikan method validateRolesExist menerima (string[], Role[])
       this.userValidation.validateRolesExist(roleIds, roles);
 
       const hashedPassword = await this.passwordHasher.hash(password);
@@ -59,12 +66,15 @@ export class CreateUserService {
         email: email || null,
       };
 
+      // 4. Create User
+      // newUser.id sekarang adalah string (UUID)
       const newUser = await this.userRepository.create(payload);
 
+      // 5. Emit Event
       this.eventEmitter.emit(
         'user.created',
         new UserCreatedEvent(
-          newUser.id,
+          newUser.id, // [UUID Update]: Parameter pertama harus string
           newUser.username,
           newUser.nama_lengkap,
           newUser.roles.map((r) => r.name),
@@ -74,6 +84,8 @@ export class CreateUserService {
       this.logger.log(
         `✅ User created: ${newUser.username} (ID: ${newUser.id})`,
       );
+
+      // Pastikan Mapper juga sudah disesuaikan untuk menerima UUID
       return UserMapper.toResponseDto(newUser);
     } catch (error) {
       this.logger.error(

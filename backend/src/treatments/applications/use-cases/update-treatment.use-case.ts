@@ -25,7 +25,7 @@ export class UpdateTreatmentUseCase {
   ) {}
 
   async execute(
-    id: number,
+    id: string,
     dto: UpdateTreatmentDto,
   ): Promise<TreatmentResponseDto> {
     // Check if treatment exists

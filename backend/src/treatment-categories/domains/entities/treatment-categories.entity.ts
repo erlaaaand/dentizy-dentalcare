@@ -13,8 +13,8 @@ import { Treatment } from '../../../treatments/domains/entities/treatments.entit
 
 @Entity('treatment_categories')
 export class TreatmentCategory {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar', length: 100, name: 'nama_kategori' })
   @Index('idx_treatment_category_nama')

@@ -14,7 +14,7 @@ export class RestoreTreatmentCategoryUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number): Promise<TreatmentCategoryResponseDto> {
+  async execute(id: string): Promise<TreatmentCategoryResponseDto> {
     // Restore
     await this.repository.restore(id);
 

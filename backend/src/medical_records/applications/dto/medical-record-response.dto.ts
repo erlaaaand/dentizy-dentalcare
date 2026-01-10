@@ -4,7 +4,7 @@ import { AppointmentStatus } from '../../../appointments/domains/entities/appoin
 export class PatientSubsetDto {
   @ApiProperty({ example: 1 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'Budi Santoso' })
   @Expose()
@@ -23,7 +23,7 @@ export class PatientSubsetDto {
 export class DoctorSubsetDto {
   @ApiProperty({ example: 101 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 'dr. Strange' })
   @Expose()
@@ -44,7 +44,7 @@ export class TreatmentSubsetDto {
 export class MedicalRecordTreatmentSubsetDto {
   @ApiProperty({ example: 1 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 1 })
   @Expose()
@@ -63,7 +63,7 @@ export class MedicalRecordTreatmentSubsetDto {
 export class AppointmentSubsetDto {
   @ApiProperty({ example: 500 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: '2023-11-20T09:00:00Z' })
   @Expose()
@@ -88,19 +88,19 @@ export class AppointmentSubsetDto {
 export class MedicalRecordResponseDto {
   @ApiProperty({ example: 1, description: 'ID unik rekam medis' })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({ example: 500 })
   @Expose()
-  appointment_id: number;
+  appointment_id: string;
 
   @ApiProperty({ example: 101 })
   @Expose()
-  doctor_id: number;
+  doctor_id: string;
 
   @ApiProperty({ example: 1 })
   @Expose()
-  patient_id: number;
+  patient_id: string;
 
   @ApiPropertyOptional({ example: 'Pasien mengeluh pusing', nullable: true })
   @Expose()

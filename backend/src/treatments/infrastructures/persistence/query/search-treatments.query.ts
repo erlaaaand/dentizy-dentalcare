@@ -2,6 +2,6 @@
 export class SearchTreatmentsQuery {
   constructor(
     public readonly keyword: string,
-    public readonly categoryId?: number,
+    public readonly categoryId?: string,
   ) {}
 }

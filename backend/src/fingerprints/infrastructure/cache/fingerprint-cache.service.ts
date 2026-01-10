@@ -21,7 +21,7 @@ export class FingerprintCacheService {
   /**
    * Get patient fingerprints from cache or database
    */
-  async getPatientFingerprints(patientId: number): Promise<Fingerprint[]> {
+  async getPatientFingerprints(patientId: string): Promise<Fingerprint[]> {
     const cacheKey = this.getCacheKey('patient', patientId);
 
     try {
@@ -86,7 +86,7 @@ export class FingerprintCacheService {
   /**
    * Cache verification result
    */
-  async cacheVerification(fingerprintId: number, score: number): Promise<void> {
+  async cacheVerification(fingerprintId: string, score: number): Promise<void> {
     const cacheKey = this.getCacheKey('verification', fingerprintId);
     try {
       await this.cacheManager.set(
@@ -102,7 +102,7 @@ export class FingerprintCacheService {
   /**
    * Invalidate patient cache
    */
-  async invalidatePatientCache(patientId: number): Promise<void> {
+  async invalidatePatientCache(patientId: string): Promise<void> {
     const cacheKey = this.getCacheKey('patient', patientId);
     try {
       await this.cacheManager.del(cacheKey);

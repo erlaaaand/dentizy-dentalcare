@@ -7,6 +7,7 @@ import {
   IsNumber,
   MaxLength,
   Min,
+  IsUUID,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -15,11 +16,10 @@ export class CreateTreatmentDto {
   @ApiProperty({
     description: 'ID kategori perawatan',
     example: 1,
-    type: Number,
+    type: String,
   })
-  @IsInt({ message: 'Category ID harus berupa angka' })
-  @Type(() => Number)
-  categoryId: number;
+  @IsUUID()
+  categoryId: string;
 
   @ApiProperty({
     description: 'Nama perawatan',

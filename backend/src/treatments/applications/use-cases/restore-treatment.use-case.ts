@@ -14,7 +14,7 @@ export class RestoreTreatmentUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number): Promise<TreatmentResponseDto> {
+  async execute(id: string): Promise<TreatmentResponseDto> {
     await this.treatmentRepository.restore(id);
     const treatment = await this.treatmentRepository.findOne(id);
 

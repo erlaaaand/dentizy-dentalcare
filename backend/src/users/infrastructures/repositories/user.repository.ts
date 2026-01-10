@@ -106,7 +106,7 @@ export class UserRepository {
     return qb.getManyAndCount();
   }
 
-  async findById(id: number): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     return this.repository.findOne({
       where: { id },
       relations: ['roles'],
@@ -123,7 +123,7 @@ export class UserRepository {
     });
   }
 
-  async findByIdWithPassword(id: number): Promise<User | null> {
+  async findByIdWithPassword(id: string): Promise<User | null> {
     return this.repository
       .createQueryBuilder('user')
       .leftJoinAndSelect('user.roles', 'role')
@@ -163,7 +163,8 @@ export class UserRepository {
     return count > 0;
   }
 
-  async findRolesByIds(roleIds: number[]): Promise<Role[]> {
+  async findRolesByIds(roleIds: string[]): Promise<Role[]> {
+    if(roleIds.length === 0) return [];
     return this.roleRepository.find({
       where: { id: In(roleIds) },
     });

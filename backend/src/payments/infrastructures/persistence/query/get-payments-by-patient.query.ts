@@ -11,7 +11,7 @@ export class GetPaymentsByPatientQuery {
     private readonly repository: Repository<Payment>,
   ) {}
 
-  async execute(patientId: number, limit: number = 10): Promise<Payment[]> {
+  async execute(patientId: string, limit: number = 10): Promise<Payment[]> {
     return await this.repository.find({
       where: { patientId },
       order: { tanggalPembayaran: 'DESC' },

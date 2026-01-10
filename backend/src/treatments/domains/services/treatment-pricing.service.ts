@@ -31,11 +31,18 @@ export class TreatmentPricingService {
   bulkPriceUpdate(
     treatments: Treatment[],
     adjustmentPercentage: number,
-  ): Map<number, number> {
-    const priceMap = new Map<number, number>();
+  ): Map<string, number> { // [FIX] Ubah Key dari number ke string
+
+    // [FIX] Inisialisasi Map dengan Key string
+    const priceMap = new Map<string, number>();
 
     for (const treatment of treatments) {
-      const newPrice = treatment.harga * (1 + adjustmentPercentage / 100);
+      // Best Practice: Pastikan harga dikonversi ke Number dulu untuk keamanan perhitungan
+      const currentPrice = Number(treatment.harga);
+
+      const newPrice = currentPrice * (1 + adjustmentPercentage / 100);
+
+      // treatment.id (string/UUID) sekarang cocok dengan Map<string, number>
       priceMap.set(treatment.id, Math.round(newPrice * 100) / 100);
     }
 

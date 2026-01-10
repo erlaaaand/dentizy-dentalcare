@@ -10,7 +10,7 @@ import {
 import { TreatmentRepository } from '../../infrastructures/persistence/repositories/treatment.repository';
 
 interface ObjectWithId {
-  id?: number;
+  id?: string;
 }
 
 @ValidatorConstraint({ name: 'IsTreatmentCodeUnique', async: true })

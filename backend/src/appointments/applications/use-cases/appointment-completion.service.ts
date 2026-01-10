@@ -25,7 +25,7 @@ export class AppointmentCompletionService {
   /**
    * Execute: Complete appointment
    */
-  async execute(id: number, user: User): Promise<Appointment> {
+  async execute(id: string, user: User): Promise<Appointment> {
     try {
       // 1. FIND APPOINTMENT
       const appointment = await this.repository.findById(id);

@@ -39,28 +39,28 @@ export class MedicalRecordTreatmentsService {
     return await this.findAllUseCase.execute(query);
   }
 
-  async findOne(id: number): Promise<MedicalRecordTreatmentResponseDto> {
+  async findOne(id: string): Promise<MedicalRecordTreatmentResponseDto> {
     return await this.findOneUseCase.execute(id);
   }
 
   async findByMedicalRecordId(
-    medicalRecordId: number,
+    medicalRecordId: string,
   ): Promise<MedicalRecordTreatmentResponseDto[]> {
     return await this.findByMedicalRecordIdUseCase.execute(medicalRecordId);
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdateMedicalRecordTreatmentDto,
   ): Promise<MedicalRecordTreatmentResponseDto> {
     return await this.updateUseCase.execute(id, dto);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     return await this.deleteUseCase.execute(id);
   }
 
-  async getTotalByMedicalRecordId(medicalRecordId: number): Promise<number> {
+  async getTotalByMedicalRecordId(medicalRecordId: string): Promise<number> {
     return await this.getTotalUseCase.execute(medicalRecordId);
   }
 

@@ -24,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * SETELAH token berhasil diverifikasi.
    * `payload` adalah isi dari token yang sudah di-decode.
    */
-  async validate(payload: { sub: number; username: string }): Promise<User> {
+  async validate(payload: { sub: string; username: string }): Promise<User> {
     // ✅ Gunakan findOneForAuth() yang return User entity (bukan DTO)
     // Ini penting karena Passport Strategy membutuhkan full User entity
     const user = await this.usersService.findOneForAuth(payload.sub);

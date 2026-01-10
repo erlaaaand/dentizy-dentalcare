@@ -65,7 +65,7 @@ export class PatientsService {
   /**
    * Find patient by ID
    */
-  async findOne(id: number): Promise<PatientResponseDto> {
+  async findOne(id: string): Promise<PatientResponseDto> {
     return this.findService.findOne(id);
   }
 
@@ -89,7 +89,7 @@ export class PatientsService {
    * Find patients by doctor
    */
   async findByDoctor(
-    doctorId: number,
+    doctorId: string,
     query: SearchPatientDto,
   ): Promise<PaginatedPatients> {
     return this.findService.findByDoctor(doctorId, query);
@@ -99,7 +99,7 @@ export class PatientsService {
    * Update patient data
    */
   async update(
-    id: number,
+    id: string,
     updatePatientDto: UpdatePatientDto,
   ): Promise<PatientResponseDto> {
     return this.updateService.execute(id, updatePatientDto);
@@ -108,14 +108,14 @@ export class PatientsService {
   /**
    * Soft delete patient
    */
-  async remove(id: number): Promise<{ message: string }> {
+  async remove(id: string): Promise<{ message: string }> {
     return this.deletionService.execute(id);
   }
 
   /**
    * Restore soft-deleted patient
    */
-  async restore(id: number): Promise<{ message: string }> {
+  async restore(id: string): Promise<{ message: string }> {
     return this.restoreService.execute(id);
   }
 }

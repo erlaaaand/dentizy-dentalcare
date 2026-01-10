@@ -4,7 +4,7 @@
  */
 export class AppointmentDeletedEvent {
   constructor(
-    public readonly appointmentId: number,
-    public readonly deletedBy: number,
+    public readonly appointmentId: string,
+    public readonly deletedBy: string,
   ) {}
 }

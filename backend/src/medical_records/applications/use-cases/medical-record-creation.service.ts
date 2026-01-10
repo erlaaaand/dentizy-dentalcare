@@ -115,7 +115,7 @@ export class MedicalRecordCreationService {
    */
   private async fetchAppointment(
     manager: EntityManager,
-    appointmentId: number,
+    appointmentId: string,
   ): Promise<Appointment | null> {
     return await manager.findOne(Appointment, {
       where: { id: appointmentId },
@@ -128,7 +128,7 @@ export class MedicalRecordCreationService {
    */
   private async checkExistingRecord(
     manager: EntityManager,
-    appointmentId: number,
+    appointmentId: string,
   ): Promise<MedicalRecord | null> {
     return await manager.findOne(MedicalRecord, {
       where: { appointment_id: appointmentId },
@@ -151,7 +151,7 @@ export class MedicalRecordCreationService {
   /**
    * Load medical record with all relations
    */
-  private async loadRecordWithRelations(id: number): Promise<MedicalRecord> {
+  private async loadRecordWithRelations(id: string): Promise<MedicalRecord> {
     const record = await this.dataSource.manager.findOne(MedicalRecord, {
       where: { id },
       relations: [

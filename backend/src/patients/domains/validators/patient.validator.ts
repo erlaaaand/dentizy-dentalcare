@@ -18,7 +18,7 @@ export class PatientValidator {
     return this.createValidator.validate(dto);
   }
 
-  async validateUpdate(id: number, dto: UpdatePatientDto): Promise<void> {
+  async validateUpdate(id: string, dto: UpdatePatientDto): Promise<void> {
     return this.updateValidator.validate(id, dto);
   }
 

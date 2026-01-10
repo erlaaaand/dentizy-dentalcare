@@ -10,7 +10,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -147,7 +146,7 @@ export class TreatmentsController {
     description: 'Treatment not found',
   })
   async findOne(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<TreatmentResponseDto> {
     return this.getTreatmentUseCase.execute(id);
   }
@@ -180,7 +179,7 @@ export class TreatmentsController {
     description: 'Treatment code already exists',
   })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateDto: UpdateTreatmentDto,
   ): Promise<TreatmentResponseDto> {
     return this.updateTreatmentUseCase.execute(id, updateDto);
@@ -212,7 +211,7 @@ export class TreatmentsController {
     description: 'Treatment cannot be deleted',
   })
   async remove(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<MessageResponse> {
     await this.deleteTreatmentUseCase.execute(id);
     return { message: 'Perawatan berhasil dihapus' };
@@ -238,7 +237,7 @@ export class TreatmentsController {
     description: 'Treatment not found',
   })
   async restore(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<TreatmentResponseDto> {
     return this.restoreTreatmentUseCase.execute(id);
   }
@@ -259,7 +258,7 @@ export class TreatmentsController {
     type: TreatmentResponseDto,
   })
   async activate(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<TreatmentResponseDto> {
     return this.updateTreatmentUseCase.execute(id, { isActive: true });
   }
@@ -280,7 +279,7 @@ export class TreatmentsController {
     type: TreatmentResponseDto,
   })
   async deactivate(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
   ): Promise<TreatmentResponseDto> {
     return this.updateTreatmentUseCase.execute(id, { isActive: false });
   }

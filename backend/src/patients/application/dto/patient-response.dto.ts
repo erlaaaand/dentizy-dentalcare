@@ -5,7 +5,7 @@ import { Gender } from '../../domains/entities/patient.entity';
 export class PatientResponseDto {
   @ApiProperty({ description: 'ID unik pasien', example: 101 })
   @Expose()
-  id: number;
+  id: string;
 
   @ApiProperty({
     description: 'Nomor rekam medis pasien',

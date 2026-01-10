@@ -15,7 +15,7 @@ export class DeleteUserService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(userId: number): Promise<{ message: string }> {
+  async execute(userId: string): Promise<{ message: string }> {
     try {
       // 1. Find user
       const user = await this.userRepository.findByIdWithPassword(userId);

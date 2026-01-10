@@ -25,7 +25,7 @@ export class PaymentRepository {
     private readonly repository: Repository<Payment>,
     private readonly invoiceGenerator: InvoiceGeneratorService,
     private readonly dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(dto: CreatePaymentDto): Promise<Payment> {
     return await this.dataSource.transaction(async (manager) => {
@@ -127,7 +127,7 @@ export class PaymentRepository {
     return { data, total };
   }
 
-  async findOne(id: number): Promise<Payment> {
+  async findOne(id: string): Promise<Payment> {
     const payment = await this.repository.findOne({
       where: { id },
       relations: ['patient', 'medicalRecord'],
@@ -148,7 +148,7 @@ export class PaymentRepository {
   }
 
   async findByMedicalRecordId(
-    medicalRecordId: number,
+    medicalRecordId: string,
   ): Promise<Payment | null> {
     return await this.repository.findOne({
       where: { medicalRecordId },
@@ -158,9 +158,9 @@ export class PaymentRepository {
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdatePaymentDto,
-    updatedBy?: number,
+    updatedBy?: string,
   ): Promise<Payment> {
     return await this.dataSource.transaction(async (manager) => {
       const paymentRepo = manager.getRepository(Payment);
@@ -170,21 +170,24 @@ export class PaymentRepository {
         throw new NotFoundException(`Payment with ID ${id} not found`);
       }
 
-      const totalBiaya = dto.totalBiaya ?? existing.totalBiaya;
-      const diskonTotal = dto.diskonTotal ?? existing.diskonTotal;
-      const jumlahBayar = dto.jumlahBayar ?? existing.jumlahBayar;
+      const totalBiaya = dto.totalBiaya ?? Number(existing.totalBiaya);
+      const diskonTotal = dto.diskonTotal ?? Number(existing.diskonTotal);
+      const jumlahBayar = dto.jumlahBayar ?? Number(existing.jumlahBayar);
 
-      const totalAkhir = Number(totalBiaya) - Number(diskonTotal);
-      const kembalian = Math.max(0, Number(jumlahBayar) - totalAkhir);
+      const totalAkhir = totalBiaya - diskonTotal;
+      const kembalian = Math.max(0, jumlahBayar - totalAkhir);
 
       await paymentRepo.update(id, {
         ...dto,
+        totalBiaya,
+        diskonTotal,
+        jumlahBayar,
         totalAkhir,
         kembalian,
-        updatedBy,
+        updatedBy: updatedBy, // Jika undefined, tidak akan mengupdate kolom (aman)
         tanggalPembayaran: dto.tanggalPembayaran
           ? new Date(dto.tanggalPembayaran)
-          : undefined,
+          : undefined, // Biarkan undefined jika tidak ada update tanggal (jangan null kecuali ingin menghapus)
       });
 
       // Return updated data dengan relasi
@@ -203,11 +206,11 @@ export class PaymentRepository {
     });
   }
 
-  async softDelete(id: number): Promise<void> {
+  async softDelete(id: string): Promise<void> {
     await this.repository.softDelete(id);
   }
 
-  async restore(id: number): Promise<void> {
+  async restore(id: string): Promise<void> {
     await this.repository.restore(id);
   }
 

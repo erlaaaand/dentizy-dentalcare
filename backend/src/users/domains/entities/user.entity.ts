@@ -16,8 +16,8 @@ import { MedicalRecord } from '../../../medical_records/domains/entities/medical
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ length: 250 })
   @Index('idx_user_nama') // Index untuk pencarian by nama

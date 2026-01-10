@@ -33,19 +33,17 @@ class MedicalRecordPayloadDto {
   @IsOptional()
   @IsArray()
   @IsNumber({}, { each: true })
-  treatment_ids?: number[];
+  treatment_ids?: string[];
 }
 
 export class UpdateAppointmentDto {
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  patient_id?: number;
+  @IsString()
+  patient_id?: string;
 
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  doctor_id?: number;
+  @IsString()
+  doctor_id?: string;
 
   @IsOptional()
   @IsEnum(AppointmentStatus)

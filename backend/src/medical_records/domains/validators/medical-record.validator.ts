@@ -1,14 +1,15 @@
 // domains/validators/medical-record.validator.ts
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { MedicalRecord } from '../entities/medical-record.entity';
+import { IsUUID, isUUID } from 'class-validator';
 
 @Injectable()
 export class MedicalRecordValidator {
   /**
    * Validate medical record ID
    */
-  validateId(id: number | null | undefined): void {
-    if (!id || id <= 0) {
+  validateId(id: string | null | undefined): void {
+    if (!id || !isUUID(id)) {
       throw new BadRequestException('ID rekam medis tidak valid');
     }
   }
@@ -16,8 +17,8 @@ export class MedicalRecordValidator {
   /**
    * Validate appointment ID
    */
-  validateAppointmentId(appointmentId: number | null | undefined): void {
-    if (!appointmentId || appointmentId <= 0) {
+  validateAppointmentId(appointmentId: string | null | undefined): void {
+    if (!appointmentId || !isUUID(appointmentId)) {
       throw new BadRequestException('ID janji temu tidak valid');
     }
   }
@@ -25,8 +26,8 @@ export class MedicalRecordValidator {
   /**
    * Validate user ID
    */
-  validateUserId(userId: number | null | undefined): void {
-    if (!userId || userId <= 0) {
+  validateUserId(userId: string | null | undefined): void {
+    if (!userId || !isUUID(userId)) {
       throw new BadRequestException('ID user tidak valid');
     }
   }

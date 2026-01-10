@@ -11,9 +11,8 @@ import { AppointmentStatus } from '../../domains/entities/appointment.entity';
 
 export class FindAppointmentsQueryDto {
   @IsOptional()
-  @IsNumber()
-  @Type(() => Number) // Transform query string to number
-  doctor_id?: number;
+  @IsString()
+  doctor_id?: string;
 
   @IsOptional()
   @IsDateString()

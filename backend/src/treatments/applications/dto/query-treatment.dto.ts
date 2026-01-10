@@ -6,6 +6,7 @@ import {
   IsInt,
   Min,
   IsIn,
+  IsUUID,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
@@ -24,9 +25,8 @@ export class QueryTreatmentDto {
     example: 1,
   })
   @IsOptional()
-  @IsInt()
-  @Type(() => Number)
-  categoryId?: number;
+  @IsUUID()
+  categoryId?: string;
 
   @ApiPropertyOptional({
     description: 'Filter berdasarkan status aktif',

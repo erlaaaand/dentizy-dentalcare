@@ -100,7 +100,7 @@ export class MedicalRecordMapper {
   // ... (sisa method toEntity, toUpdateEntity biarkan saja seperti semula)
   toEntity(
     dto: CreateMedicalRecordDto,
-    userId: number,
+    userId: string,
   ): Partial<MedicalRecord> {
     return {
       appointment_id: dto.appointment_id,

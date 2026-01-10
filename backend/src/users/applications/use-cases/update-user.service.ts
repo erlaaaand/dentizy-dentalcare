@@ -26,7 +26,7 @@ export class UpdateUserService {
   ) {}
 
   async execute(
-    userId: number,
+    userId: string,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponseDto> {
     const {

@@ -11,7 +11,7 @@ export class GetTreatmentUseCase {
     private readonly treatmentMapper: TreatmentMapper,
   ) {}
 
-  async execute(id: number): Promise<TreatmentResponseDto> {
+  async execute(id: string): Promise<TreatmentResponseDto> {
     const treatment = await this.treatmentRepository.findOne(id);
 
     if (!treatment) {

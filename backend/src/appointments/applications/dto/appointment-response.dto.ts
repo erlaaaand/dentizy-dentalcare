@@ -1,21 +1,26 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AppointmentStatus } from '../../domains/entities/appointment.entity';
+import { IsString } from 'class-validator';
 
 // --- SUB-DTOs (Objek Kecil untuk Relasi) ---
 // Didefinisikan terpisah agar rapi dan bisa dipakai ulang
 
 class AppointmentPatientDto {
   @ApiProperty({ example: 1 })
-  id: number;
+  @IsString()
+  id: string;
 
   @ApiProperty({ example: 'Budi Santoso' })
+  @IsString()
   nama_lengkap: string;
 
   @ApiProperty({ example: 'RM-123456' })
+  @IsString()
   nomor_rekam_medis: string;
 
   // [BARU] Tambahkan NIK untuk verifikasi
   @ApiPropertyOptional({ example: '3201123456789001' })
+  @IsString()
   nik?: string;
 
   // [BARU] Tambahkan status aktif untuk indikator
@@ -23,53 +28,64 @@ class AppointmentPatientDto {
   is_active?: boolean;
 
   @ApiPropertyOptional({ example: 'budi@example.com' })
+  @IsString()
   email?: string;
 
   @ApiPropertyOptional({ example: '08123456789' })
+  @IsString()
   nomor_telepon?: string;
 }
 
 class AppointmentDoctorDto {
   @ApiProperty({ example: 101 })
-  id: number;
+  @IsString()
+  id: string;
 
   @ApiProperty({ example: 'dr. Tirta' })
+  @IsString()
   nama_lengkap: string;
 
   @ApiPropertyOptional({ example: ['dokter_umum', 'admin'] })
+  @IsString()
   roles?: string[];
 }
 
 class AppointmentMedicalRecordDto {
   @ApiProperty({ example: 50 })
-  id: number;
+  @IsString()
+  id: string;
 
   @ApiProperty({ example: 1 })
-  appointment_id: number;
+  @IsString()
+  appointment_id: string;
 
   // Menggunakan format SOAP sesuai type definition Anda sebelumnya
   @ApiPropertyOptional({
     description: 'Subjective (Keluhan Pasien)',
     example: 'Sakit kepala berdenyut',
   })
+  @IsString()
   subjektif: string | null;
 
   @ApiPropertyOptional({
     description: 'Objective (Pemeriksaan Fisik)',
     example: 'Tensi 120/80',
   })
+  @IsString()
   objektif: string | null;
 
   @ApiPropertyOptional({
     description: 'Assessment (Diagnosa)',
     example: 'Migrain',
   })
+  @IsString()
   assessment: string | null;
 
   @ApiPropertyOptional({
     description: 'Plan (Rencana Pengobatan)',
     example: 'Paracetamol 3x1',
   })
+  @IsString()
   plan: string | null;
 
   @ApiProperty({ type: Date })
@@ -86,13 +102,13 @@ class AppointmentMedicalRecordDto {
  */
 export class AppointmentResponseDto {
   @ApiProperty({ description: 'ID unik appointment', example: 1 })
-  id: number;
+  id: string;
 
   @ApiProperty({ description: 'ID Pasien', example: 1 })
-  patient_id: number;
+  patient_id: string;
 
   @ApiProperty({ description: 'ID Dokter', example: 2 })
-  doctor_id: number;
+  doctor_id: string;
 
   @ApiProperty({
     description: 'Status appointment saat ini',

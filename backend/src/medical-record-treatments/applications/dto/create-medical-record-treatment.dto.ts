@@ -7,20 +7,18 @@ export class CreateMedicalRecordTreatmentDto {
   @ApiProperty({
     description: 'ID Rekam Medis',
     example: 1,
-    type: Number,
+    type: String,
   })
-  @IsInt({ message: 'Medical Record ID harus berupa bilangan bulat' })
-  @Type(() => Number)
-  medicalRecordId: number;
+  @IsString({ message: 'Medical Record ID harus berupa UUID' })
+  medicalRecordId: string;
 
   @ApiProperty({
     description: 'ID Perawatan',
     example: 1,
-    type: Number,
+    type: String,
   })
-  @IsInt({ message: 'Treatment ID harus berupa bilangan bulat' })
-  @Type(() => Number)
-  treatmentId: number;
+  @IsInt({ message: 'Treatment ID harus berupa UUID' })
+  treatmentId: string;
 
   @ApiProperty({
     description: 'Jumlah perawatan',

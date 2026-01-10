@@ -46,17 +46,17 @@ export enum StatusPembayaran {
 @Index(['medicalRecordId', 'deletedAt'])
 @Index(['patientId', 'statusPembayaran'])
 export class Payment {
-  @PrimaryGeneratedColumn()
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   // --- KOLOM ID (Foreign Keys) ---
   @Column({ type: 'int', name: 'medical_record_id' })
   @Index('idx_payment_medical_record')
-  medicalRecordId: number;
+  medicalRecordId: string;
 
   @Column({ type: 'int', name: 'patient_id' })
   @Index('idx_payment_patient')
-  patientId: number;
+  patientId: string;
 
   // --- DATA UTAMA ---
   @Column({ type: 'varchar', length: 50, unique: true, name: 'nomor_invoice' })
@@ -138,10 +138,10 @@ export class Payment {
   // --- AUDIT TRAIL ---
   @Column({ type: 'int', nullable: true, name: 'created_by' })
   @Index('idx_payment_created_by')
-  createdBy: number | null;
+  createdBy: string | null;
 
   @Column({ type: 'int', nullable: true, name: 'updated_by' })
-  updatedBy: number | null;
+  updatedBy: string | null;
 
   @CreateDateColumn({ type: 'datetime', precision: 6, name: 'created_at' })
   createdAt: Date;

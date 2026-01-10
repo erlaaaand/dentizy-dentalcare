@@ -8,10 +8,17 @@ export class CancelRemindersService {
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
-  ) {}
+  ) { }
 
-  async execute(appointmentId: number): Promise<number> {
+  /**
+   * Cancel reminders for a specific appointment
+   * @param appointmentId UUID String
+   * @returns number of cancelled notifications
+   */
+  // [FIX] Ubah Return Type menjadi Promise<number> karena mengembalikan jumlah (count)
+  async execute(appointmentId: string): Promise<number> {
     try {
+      // Pastikan repository method 'cancelForAppointment' menerima parameter string (UUID)
       const cancelledCount =
         await this.notificationRepository.cancelForAppointment(appointmentId);
 
@@ -27,9 +34,11 @@ export class CancelRemindersService {
 
       return cancelledCount;
     } catch (error) {
+      // [FIX] Type-safe error handling (menghindari penggunaan any implisit)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
       this.logger.error(
-        `❌ Error cancelling reminders for appointment #${appointmentId}:`,
-        error.message,
+        `❌ Error cancelling reminders for appointment #${appointmentId}: ${errorMessage}`,
       );
       throw error;
     }

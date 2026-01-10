@@ -17,7 +17,7 @@ export class CancelPaymentUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number, cancelledBy?: number): Promise<PaymentResponseDto> {
+  async execute(id: string, cancelledBy?: string): Promise<PaymentResponseDto> {
     const payment = await this.paymentRepository.findOne(id);
 
     if (!payment) {

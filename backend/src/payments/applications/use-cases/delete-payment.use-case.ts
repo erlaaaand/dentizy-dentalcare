@@ -11,7 +11,7 @@ export class DeletePaymentUseCase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(id: number, deletedBy?: number): Promise<void> {
+  async execute(id: string, deletedBy?: string): Promise<void> {
     const payment = await this.paymentRepository.findOne(id);
 
     if (!payment) {

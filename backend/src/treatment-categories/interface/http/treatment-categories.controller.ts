@@ -10,7 +10,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  ParseIntPipe,
   UseGuards,
   UseInterceptors,
   ClassSerializerInterceptor,
@@ -106,7 +105,7 @@ export class TreatmentCategoriesController {
     status: HttpStatus.NOT_FOUND,
     description: 'Category not found',
   })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
+  async findOne(@Param('id') id: string) {
     const data = await this.treatmentCategoriesService.findOne(id);
     return {
       statusCode: HttpStatus.OK,
@@ -134,7 +133,7 @@ export class TreatmentCategoriesController {
     description: 'Category name already exists',
   })
   async update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id') id: string,
     @Body() updateDto: UpdateTreatmentCategoryDto,
   ) {
     const data = await this.treatmentCategoriesService.update(id, updateDto);
@@ -162,7 +161,7 @@ export class TreatmentCategoriesController {
     status: HttpStatus.BAD_REQUEST,
     description: 'Cannot delete category with active treatments',
   })
-  async remove(@Param('id', ParseIntPipe) id: number) {
+  async remove(@Param('id') id: string) {
     await this.treatmentCategoriesService.remove(id);
     return {
       statusCode: HttpStatus.OK,
@@ -180,7 +179,7 @@ export class TreatmentCategoriesController {
     description: 'Category restored successfully',
     type: TreatmentCategoryResponseDto,
   })
-  async restore(@Param('id', ParseIntPipe) id: number) {
+  async restore(@Param('id') id: string) {
     const data = await this.treatmentCategoriesService.restore(id);
     return {
       statusCode: HttpStatus.OK,

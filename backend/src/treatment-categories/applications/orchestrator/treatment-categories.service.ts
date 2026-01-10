@@ -33,22 +33,22 @@ export class TreatmentCategoriesService {
     return await this.findUseCase.findAll(query);
   }
 
-  async findOne(id: number): Promise<TreatmentCategoryResponseDto> {
+  async findOne(id: string): Promise<TreatmentCategoryResponseDto> {
     return await this.findUseCase.findOne(id);
   }
 
   async update(
-    id: number,
+    id: string,
     dto: UpdateTreatmentCategoryDto,
   ): Promise<TreatmentCategoryResponseDto> {
     return await this.updateUseCase.execute(id, dto);
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: string): Promise<void> {
     return await this.deleteUseCase.execute(id);
   }
 
-  async restore(id: number): Promise<TreatmentCategoryResponseDto> {
+  async restore(id: string): Promise<TreatmentCategoryResponseDto> {
     return await this.restoreUseCase.execute(id);
   }
 }

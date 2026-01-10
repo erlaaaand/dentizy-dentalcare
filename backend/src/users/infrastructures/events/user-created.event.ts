@@ -5,7 +5,7 @@
  */
 export class UserCreatedEvent {
   constructor(
-    public readonly userId: number,
+    public readonly userId: string,
     public readonly username: string,
     public readonly nama_lengkap: string,
     public readonly roles: string[],
