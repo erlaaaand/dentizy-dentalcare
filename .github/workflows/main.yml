@@ -1,39 +1,24 @@
-name: Smart CI/CD Pipeline
+name: Production CI
 
 permissions:
   contents: read
-  pull-requests: read
 
 on:
   push:
     branches: [main]
+    paths:
+      - backend/**
+      - frontend/**
   pull_request:
     branches: [main]
+    paths:
+      - backend/**
+      - frontend/**
 
 jobs:
-  changes:
-    runs-on: ubuntu-latest
-    outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            backend:
-              - backend/**
-            frontend:
-              - frontend/**
-
   backend-lint:
     name: Backend Lint
-    needs: changes
-    if: needs.changes.outputs.backend == 'true'
+    if: contains(github.event.pull_request.changed_files || github.event.head_commit.modified, 'backend/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,16 +29,15 @@ jobs:
           cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      - working-directory: backend
-        run: npm ci
+      - run: npm ci
+        working-directory: backend
 
-      - working-directory: backend
-        run: npm run lint:check
+      - run: npm run lint:check
+        working-directory: backend
 
   frontend-lint:
     name: Frontend Lint
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
+    if: contains(github.event.pull_request.changed_files || github.event.head_commit.modified, 'frontend/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -64,8 +48,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - working-directory: frontend
-        run: npm ci
+      - run: npm ci
+        working-directory: frontend
 
-      - working-directory: frontend
-        run: npm run lint
+      - run: npm run lint
+        working-directory: frontend
