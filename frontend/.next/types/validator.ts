@@ -3,7 +3,7 @@
 // This file validates that all pages and layouts export the correct types
 
 import type { AppRoutes, LayoutRoutes, ParamMap } from "./routes.js"
-import type { ResolvingMetadata, ResolvingViewport } from "next/dist/lib/metadata/types/metadata-interface.js"
+import type { ResolvingMetadata, ResolvingViewport } from "next/types.js"
 
 type AppPageConfig<Route extends AppRoutes = AppRoutes> = {
   default: React.ComponentType<{ params: Promise<ParamMap[Route]> } & any> | ((props: { params: Promise<ParamMap[Route]> } & any) => React.ReactNode | Promise<React.ReactNode> | never | void | Promise<void>)
@@ -36,178 +36,13 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
 }
 
 
-// Validate ../../src/app/(auth)/login/page.tsx
+// Validate ../../app/page.tsx
 {
-  const handler = {} as typeof import("../../src/app/(auth)/login/page.js")
-  handler satisfies AppPageConfig<"/login">
-}
-
-// Validate ../../src/app/(dashboard)/appointments/[id]/edit/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/appointments/[id]/edit/page.js")
-  handler satisfies AppPageConfig<"/appointments/[id]/edit">
-}
-
-// Validate ../../src/app/(dashboard)/appointments/[id]/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/appointments/[id]/page.js")
-  handler satisfies AppPageConfig<"/appointments/[id]">
-}
-
-// Validate ../../src/app/(dashboard)/appointments/new/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/appointments/new/page.js")
-  handler satisfies AppPageConfig<"/appointments/new">
-}
-
-// Validate ../../src/app/(dashboard)/appointments/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/appointments/page.js")
-  handler satisfies AppPageConfig<"/appointments">
-}
-
-// Validate ../../src/app/(dashboard)/dashboard/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/dashboard/page.js")
-  handler satisfies AppPageConfig<"/dashboard">
-}
-
-// Validate ../../src/app/(dashboard)/medical-records/[id]/edit/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/medical-records/[id]/edit/page.js")
-  handler satisfies AppPageConfig<"/medical-records/[id]/edit">
-}
-
-// Validate ../../src/app/(dashboard)/medical-records/[id]/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/medical-records/[id]/page.js")
-  handler satisfies AppPageConfig<"/medical-records/[id]">
-}
-
-// Validate ../../src/app/(dashboard)/medical-records/new/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/medical-records/new/page.js")
-  handler satisfies AppPageConfig<"/medical-records/new">
-}
-
-// Validate ../../src/app/(dashboard)/medical-records/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/medical-records/page.js")
-  handler satisfies AppPageConfig<"/medical-records">
-}
-
-// Validate ../../src/app/(dashboard)/patients/[id]/edit/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/patients/[id]/edit/page.js")
-  handler satisfies AppPageConfig<"/patients/[id]/edit">
-}
-
-// Validate ../../src/app/(dashboard)/patients/[id]/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/patients/[id]/page.js")
-  handler satisfies AppPageConfig<"/patients/[id]">
-}
-
-// Validate ../../src/app/(dashboard)/patients/new/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/patients/new/page.js")
-  handler satisfies AppPageConfig<"/patients/new">
-}
-
-// Validate ../../src/app/(dashboard)/patients/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/patients/page.js")
-  handler satisfies AppPageConfig<"/patients">
-}
-
-// Validate ../../src/app/(dashboard)/profile/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/profile/page.js")
-  handler satisfies AppPageConfig<"/profile">
-}
-
-// Validate ../../src/app/(dashboard)/reports/appointments/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/reports/appointments/page.js")
-  handler satisfies AppPageConfig<"/reports/appointments">
-}
-
-// Validate ../../src/app/(dashboard)/reports/financial/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/reports/financial/page.js")
-  handler satisfies AppPageConfig<"/reports/financial">
-}
-
-// Validate ../../src/app/(dashboard)/reports/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/reports/page.js")
-  handler satisfies AppPageConfig<"/reports">
-}
-
-// Validate ../../src/app/(dashboard)/reports/patients/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/reports/patients/page.js")
-  handler satisfies AppPageConfig<"/reports/patients">
-}
-
-// Validate ../../src/app/(dashboard)/settings/backup/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/settings/backup/page.js")
-  handler satisfies AppPageConfig<"/settings/backup">
-}
-
-// Validate ../../src/app/(dashboard)/settings/clinic/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/settings/clinic/page.js")
-  handler satisfies AppPageConfig<"/settings/clinic">
-}
-
-// Validate ../../src/app/(dashboard)/settings/notifications/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/settings/notifications/page.js")
-  handler satisfies AppPageConfig<"/settings/notifications">
-}
-
-// Validate ../../src/app/(dashboard)/settings/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/settings/page.js")
-  handler satisfies AppPageConfig<"/settings">
-}
-
-// Validate ../../src/app/(dashboard)/users/[id]/edit/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/users/[id]/edit/page.js")
-  handler satisfies AppPageConfig<"/users/[id]/edit">
-}
-
-// Validate ../../src/app/(dashboard)/users/[id]/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/users/[id]/page.js")
-  handler satisfies AppPageConfig<"/users/[id]">
-}
-
-// Validate ../../src/app/(dashboard)/users/new/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/users/new/page.js")
-  handler satisfies AppPageConfig<"/users/new">
-}
-
-// Validate ../../src/app/(dashboard)/users/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/users/page.js")
-  handler satisfies AppPageConfig<"/users">
-}
-
-// Validate ../../src/app/(public)/landing/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(public)/landing/page.js")
-  handler satisfies AppPageConfig<"/landing">
-}
-
-// Validate ../../src/app/(public)/page.tsx
-{
-  const handler = {} as typeof import("../../src/app/(public)/page.js")
-  handler satisfies AppPageConfig<"/">
+  type __IsExpected<Specific extends AppPageConfig<"/">> = Specific
+  const handler = {} as typeof import("../../src/app/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
 }
 
 
@@ -216,26 +51,11 @@ type LayoutConfig<Route extends LayoutRoutes = LayoutRoutes> = {
 
 
 
-// Validate ../../src/app/(auth)/layout.tsx
+// Validate ../../app/layout.tsx
 {
-  const handler = {} as typeof import("../../src/app/(auth)/layout.js")
-  handler satisfies LayoutConfig<"/">
-}
-
-// Validate ../../src/app/(dashboard)/layout.tsx
-{
-  const handler = {} as typeof import("../../src/app/(dashboard)/layout.js")
-  handler satisfies LayoutConfig<"/">
-}
-
-// Validate ../../src/app/(public)/layout.tsx
-{
-  const handler = {} as typeof import("../../src/app/(public)/layout.js")
-  handler satisfies LayoutConfig<"/">
-}
-
-// Validate ../../src/app/layout.tsx
-{
+  type __IsExpected<Specific extends LayoutConfig<"/">> = Specific
   const handler = {} as typeof import("../../src/app/layout.js")
-  handler satisfies LayoutConfig<"/">
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
 }
