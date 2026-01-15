@@ -172,7 +172,7 @@ export function getSize(type: StorageType = 'local'): number {
         }
 
         return size;
-    } catch (error) {
+    } catch {
         return 0;
     }
 }
