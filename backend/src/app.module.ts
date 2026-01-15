@@ -30,7 +30,6 @@ import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
-    // ✅ Config Module dengan validasi
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
@@ -43,7 +42,6 @@ import { UploadsModule } from './uploads/uploads.module';
       load: [databaseConfig, jwtConfig],
     }),
 
-    // ✅ Throttling untuk rate limiting
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -55,7 +53,6 @@ import { UploadsModule } from './uploads/uploads.module';
       ],
     }),
 
-    // ✅ Caching global
     CacheModule.registerAsync({
       isGlobal: true,
       imports: [ConfigModule],
@@ -66,7 +63,6 @@ import { UploadsModule } from './uploads/uploads.module';
       }),
     }),
 
-    // ✅ Database dengan connection pooling
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -89,7 +85,6 @@ import { UploadsModule } from './uploads/uploads.module';
       }),
     }),
 
-    // ✅ Mailer dengan retry mechanism
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -109,7 +104,6 @@ import { UploadsModule } from './uploads/uploads.module';
       }),
     }),
 
-    // Modules
     UsersModule,
     RolesModule,
     PatientsModule,
@@ -124,22 +118,17 @@ import { UploadsModule } from './uploads/uploads.module';
     MedicalRecordTreatmentsModule,
     PaymentsModule,
     UploadsModule,
-    // FingerprintsModule
   ],
-  // ✅ FIX: Add HealthController here
   controllers: [HealthController],
   providers: [
-    // ✅ Global rate limiting guard
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
     },
-    // ✅ Global logging interceptor
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    // ✅ Global exception filter
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,

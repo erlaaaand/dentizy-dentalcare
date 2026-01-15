@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Smart CI/CD Pipeline
 
 on:
   push:
@@ -16,19 +16,31 @@ jobs:
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - uses: dorny/paths-filter@v2
         id: filter
         with:
           filters: |
             backend:
-              - 'backend/**'
+              - 'backend/**/*.js'
+              - 'backend/**/*.ts'
+              - 'backend/**/*.json'
+              # Abaikan file markdown/docs di folder backend
+              - '!backend/**/*.md'
             frontend:
-              - 'frontend/**'
+              - 'frontend/**/*.js'
+              - 'frontend/**/*.ts'
+              - 'frontend/**/*.tsx'
+              - 'frontend/**/*.jsx'
+              # Abaikan file markdown/docs di folder frontend
+              - '!frontend/**/*.md'
 
   backend-lint:
     needs: changes
     if: ${{ needs.changes.outputs.backend == 'true' }}
-    name: Backend Linting
+    name: Backend Linting (Strict)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -48,7 +60,7 @@ jobs:
   frontend-lint:
     needs: changes
     if: ${{ needs.changes.outputs.frontend == 'true' }}
-    name: Frontend Linting
+    name: Frontend Linting (Strict)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
