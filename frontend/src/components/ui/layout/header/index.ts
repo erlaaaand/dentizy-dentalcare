@@ -1,0 +1,12 @@
+export { default as Header } from './Header';
+export { ProfileDropdown } from './ProfileDropdown';
+export { MinimalHeader } from './MinimalHeader';
+export { DashboardHeader } from './DashboardHeader';
+export { SimpleHeader } from './SimpleHeader';
+export { HeaderSection } from './HeaderSection';
+export { HeaderTitle } from './HeaderTitle';
+export { HeaderSubtitle } from './HeaderSubtitle';
+export { ChevronIcon } from './header.icon';
+export { useDropdownAnimation } from './useDropdownAnimation';
+export * from './header.types';
+export * from './header.styles';

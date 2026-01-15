@@ -1,0 +1,226 @@
+/* Print styles for medical records and reports */
+
+@media print {
+  /* Reset page */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  @page {
+    size: A4;
+    margin: 2cm;
+  }
+  
+  /* Hide non-printable elements */
+  .no-print,
+  nav,
+  header,
+  footer,
+  .sidebar,
+  button,
+  .print-hidden {
+    display: none !important;
+  }
+  
+  /* Show only printable content */
+  .print-only {
+    display: block !important;
+  }
+  
+  /* General styles */
+  body {
+    background: white;
+    color: black;
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+  
+  /* Typography */
+  h1 {
+    font-size: 24pt;
+    font-weight: bold;
+    margin-bottom: 1em;
+    page-break-after: avoid;
+  }
+  
+  h2 {
+    font-size: 18pt;
+    font-weight: bold;
+    margin-top: 1em;
+    margin-bottom: 0.5em;
+    page-break-after: avoid;
+  }
+  
+  h3 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 0.8em;
+    margin-bottom: 0.4em;
+    page-break-after: avoid;
+  }
+  
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    page-break-inside: avoid;
+  }
+  
+  th,
+  td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+  
+  /* Medical Record specific */
+  .medical-record-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 1em;
+    margin-bottom: 1em;
+  }
+  
+  .medical-record-section {
+    margin-bottom: 1.5em;
+    page-break-inside: avoid;
+  }
+  
+  .medical-record-label {
+    font-weight: bold;
+    margin-bottom: 0.5em;
+  }
+  
+  .medical-record-content {
+    margin-left: 1em;
+    white-space: pre-wrap;
+  }
+  
+  /* Patient information */
+  .patient-info {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5em;
+    margin-bottom: 1em;
+  }
+  
+  .patient-info-item {
+    display: flex;
+    gap: 0.5em;
+  }
+  
+  .patient-info-label {
+    font-weight: bold;
+    min-width: 150px;
+  }
+  
+  /* SOAP Notes */
+  .soap-section {
+    border: 1px solid #000;
+    padding: 1em;
+    margin-bottom: 1em;
+    page-break-inside: avoid;
+  }
+  
+  .soap-title {
+    font-weight: bold;
+    font-size: 14pt;
+    margin-bottom: 0.5em;
+    border-bottom: 1px solid #000;
+    padding-bottom: 0.3em;
+  }
+  
+  .soap-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+  }
+  
+  /* Report specific */
+  .report-summary {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 1em;
+    margin-bottom: 1em;
+  }
+  
+  .report-stat {
+    display: inline-block;
+    margin-right: 2em;
+  }
+  
+  .report-stat-label {
+    font-size: 10pt;
+    color: #666;
+  }
+  
+  .report-stat-value {
+    font-size: 18pt;
+    font-weight: bold;
+  }
+  
+  /* Charts - hide interactive elements */
+  .recharts-wrapper {
+    page-break-inside: avoid;
+  }
+  
+  /* Footer */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+    border-top: 1px solid #ddd;
+    padding-top: 0.5em;
+  }
+  
+  /* Signature area */
+  .signature-area {
+    margin-top: 3em;
+    page-break-inside: avoid;
+  }
+  
+  .signature-box {
+    display: inline-block;
+    min-width: 200px;
+    text-align: center;
+    margin: 0 2em;
+  }
+  
+  .signature-line {
+    border-top: 1px solid #000;
+    margin-top: 3em;
+    padding-top: 0.5em;
+  }
+  
+  /* Page breaks */
+  .page-break {
+    page-break-after: always;
+  }
+  
+  .page-break-before {
+    page-break-before: always;
+  }
+  
+  .avoid-page-break {
+    page-break-inside: avoid;
+  }
+  
+  /* Watermark (if needed) */
+  .print-watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-45deg);
+    font-size: 80pt;
+    color: rgba(0, 0, 0, 0.05);
+    z-index: -1;
+  }
+}

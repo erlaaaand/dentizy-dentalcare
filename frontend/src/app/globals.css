@@ -1,0 +1,261 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        font-family: system-ui, sans-serif;
+    }
+
+    body {
+        @apply antialiased;
+    }
+}
+
+@layer components {
+    .sidebar-transition {
+        transition: width 0.3s ease-in-out;
+    }
+
+    .dropdown-menu {
+        display: none;
+    }
+
+    .dropdown-menu.show {
+        display: block;
+    }
+
+    .notification-panel {
+        display: none;
+    }
+
+    .notification-panel.show {
+        display: block;
+    }
+
+    /* Stats card hover effects */
+    .stats-card {
+        @apply transform transition-all duration-200;
+    }
+
+    .stats-card:hover {
+        @apply scale-105;
+    }
+
+    .stats-card:active {
+        @apply scale-95;
+    }
+
+    /* Action card hover effects */
+    .action-card {
+        @apply transform transition-all duration-200;
+    }
+
+    .action-card:hover {
+        @apply -translate-y-1 shadow-lg;
+    }
+
+    /* Navigation link styles */
+    .nav-link {
+        @apply transition-all duration-200;
+    }
+
+    .nav-link.active {
+        @apply bg-blue-600 text-white;
+    }
+
+    .nav-link:not(.active):hover {
+        @apply bg-gray-700;
+    }
+
+    /* Queue item animations */
+    .queue-item {
+        @apply transition-all duration-300;
+    }
+
+    .queue-item.serving {
+        @apply bg-green-50 border-l-4 border-green-500;
+    }
+
+    /* Activity item hover */
+    .activity-item {
+        @apply transition-colors duration-200;
+    }
+
+    .activity-item:hover {
+        @apply bg-gray-50;
+    }
+
+    /* Custom scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        @apply bg-gray-100 rounded-full;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        @apply bg-gray-400 rounded-full;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-600;
+    }
+
+    /* Loading spinner */
+    .spinner {
+        @apply animate-spin rounded-full border-2 border-gray-200 border-t-blue-600;
+    }
+
+    /* Focus styles for accessibility */
+    .focus-visible {
+        @apply focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+    }
+}
+
+@layer utilities {
+
+    /* Custom utility classes */
+    .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.10);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Animation utilities */
+    .animate-fade-in {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .animate-slide-down {
+        animation: slideDown 0.3s ease-in-out;
+    }
+
+    .animate-bounce-in {
+        animation: bounceIn 0.5s ease-in-out;
+    }
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-10px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes bounceIn {
+    0% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    70% {
+        transform: scale(0.9);
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .dark-mode-auto {
+        @apply bg-gray-900 text-gray-100;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .high-contrast {
+        @apply border-2 border-black;
+    }
+}
+
+/* Landing Page Animations */
+@layer utilities {
+    .glass {
+        @apply bg-white/10 backdrop-blur-md border-b border-white/20 shadow-lg;
+    }
+
+    .text-gradient {
+        @apply bg-clip-text text-transparent bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500;
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+
+    25% {
+        transform: translateY(-20px) rotate(5deg);
+    }
+
+    50% {
+        transform: translateY(-10px) rotate(0deg);
+    }
+
+    75% {
+        transform: translateY(-30px) rotate(-5deg);
+    }
+}
+
+.animate-float {
+    animation: float 8s ease-in-out infinite;
+}
+
+@keyframes gradient-x {
+
+    0%,
+    100% {
+        background-size: 200% 200%;
+        background-position: left center;
+    }
+
+    50% {
+        background-size: 200% 200%;
+        background-position: right center;
+    }
+}
+
+.animate-gradient-x {
+    animation: gradient-x 3s ease infinite;
+}

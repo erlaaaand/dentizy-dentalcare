@@ -1,0 +1,12 @@
+export { default as Textarea } from './Textarea';
+export { default } from './Textarea';
+export { CompactTextarea } from './CompactTextarea';
+export { FormTextarea } from './FormTextarea';
+export { DescriptionTextarea } from './DescriptionTextarea';
+export { NotesTextarea } from './NotesTextarea';
+export { ReadonlyTextarea } from './ReadonlyTextarea';
+export { AutoResizeTextarea } from './AutoResizeTextarea';
+export { FormattedTextarea } from './FormattedTextarea';
+export * from './text-area.types';
+export * from './text-area.styles';
+export * from './Icon.styles';
