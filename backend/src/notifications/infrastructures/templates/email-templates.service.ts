@@ -2,35 +2,35 @@
 import { Injectable } from '@nestjs/common';
 
 export interface ReminderEmailData {
-    patientName: string;
-    date: string;
-    time: string;
-    doctorName: string;
-    complaint?: string;
+  patientName: string;
+  date: string;
+  time: string;
+  doctorName: string;
+  complaint?: string;
 }
 
 export interface ConfirmationEmailData {
-    patientName: string;
-    date: string;
-    time: string;
-    doctorName: string;
-    appointmentId: number;
+  patientName: string;
+  date: string;
+  time: string;
+  doctorName: string;
+  appointmentId: number;
 }
 
 export interface CancellationEmailData {
-    patientName: string;
-    date: string;
-    time: string;
-    reason?: string;
+  patientName: string;
+  date: string;
+  time: string;
+  reason?: string;
 }
 
 @Injectable()
 export class EmailTemplatesService {
-    /**
-     * Generate reminder email HTML
-     */
-    getReminderTemplate(data: ReminderEmailData): string {
-        return `
+  /**
+   * Generate reminder email HTML
+   */
+  getReminderTemplate(data: ReminderEmailData): string {
+    return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -150,14 +150,15 @@ export class EmailTemplatesService {
                             <div class="detail-item">
                                 👨‍⚕️ <strong>Dokter:</strong> ${data.doctorName}
                             </div>
-                            ${data.complaint
-                ? `
+                            ${
+                              data.complaint
+                                ? `
                             <div class="detail-item">
                                 📝 <strong>Keluhan:</strong> ${data.complaint}
                             </div>
                             `
-                : ''
-            }
+                                : ''
+                            }
                         </div>
                         
                         <div class="warning">
@@ -179,13 +180,13 @@ export class EmailTemplatesService {
             </body>
             </html>
         `;
-    }
+  }
 
-    /**
-     * Generate confirmation email HTML
-     */
-    getConfirmationTemplate(data: ConfirmationEmailData): string {
-        return `
+  /**
+   * Generate confirmation email HTML
+   */
+  getConfirmationTemplate(data: ConfirmationEmailData): string {
+    return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -293,13 +294,13 @@ export class EmailTemplatesService {
             </body>
             </html>
         `;
-    }
+  }
 
-    /**
-     * Generate cancellation email HTML
-     */
-    getCancellationTemplate(data: CancellationEmailData): string {
-        return `
+  /**
+   * Generate cancellation email HTML
+   */
+  getCancellationTemplate(data: CancellationEmailData): string {
+    return `
             <!DOCTYPE html>
             <html>
             <head>
@@ -385,14 +386,15 @@ export class EmailTemplatesService {
                             <div class="detail-item">
                                 🕐 <strong>Jam:</strong> ${data.time} WIB
                             </div>
-                            ${data.reason
-                ? `
+                            ${
+                              data.reason
+                                ? `
                             <div class="detail-item">
                                 📝 <strong>Alasan:</strong> ${data.reason}
                             </div>
                             `
-                : ''
-            }
+                                : ''
+                            }
                         </div>
                         
                         <p>Jika Anda ingin membuat janji temu baru, silakan hubungi klinik kami atau daftar melalui sistem.</p>
@@ -409,13 +411,13 @@ export class EmailTemplatesService {
             </body>
             </html>
         `;
-    }
+  }
 
-    /**
-     * Generate plain text version for fallback
-     */
-    getReminderPlainText(data: ReminderEmailData): string {
-        return `
+  /**
+   * Generate plain text version for fallback
+   */
+  getReminderPlainText(data: ReminderEmailData): string {
+    return `
 Klinik Dentizy - Pengingat Janji Temu
 
 Halo, ${data.patientName}!
@@ -437,5 +439,5 @@ Tim Klinik Dentizy
 Email ini dikirim otomatis, mohon tidak membalas.
 © ${new Date().getFullYear()} Klinik Dentizy. All rights reserved.
         `.trim();
-    }
+  }
 }

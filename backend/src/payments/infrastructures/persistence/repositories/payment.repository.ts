@@ -25,7 +25,7 @@ export class PaymentRepository {
     private readonly repository: Repository<Payment>,
     private readonly invoiceGenerator: InvoiceGeneratorService,
     private readonly dataSource: DataSource,
-  ) { }
+  ) {}
 
   async create(dto: CreatePaymentDto): Promise<Payment> {
     return await this.dataSource.transaction(async (manager) => {

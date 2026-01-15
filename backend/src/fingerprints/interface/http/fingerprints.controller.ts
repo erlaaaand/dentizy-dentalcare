@@ -94,9 +94,7 @@ export class FingerprintsController {
     status: 200,
     description: 'Sidik jari berhasil dihapus',
   })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.fingerprintsService.remove(id);
   }
 

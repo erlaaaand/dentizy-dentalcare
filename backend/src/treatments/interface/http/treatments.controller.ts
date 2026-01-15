@@ -145,9 +145,7 @@ export class TreatmentsController {
     status: HttpStatus.NOT_FOUND,
     description: 'Treatment not found',
   })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<TreatmentResponseDto> {
+  async findOne(@Param('id') id: string): Promise<TreatmentResponseDto> {
     return this.getTreatmentUseCase.execute(id);
   }
 
@@ -210,9 +208,7 @@ export class TreatmentsController {
     status: HttpStatus.CONFLICT,
     description: 'Treatment cannot be deleted',
   })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<MessageResponse> {
+  async remove(@Param('id') id: string): Promise<MessageResponse> {
     await this.deleteTreatmentUseCase.execute(id);
     return { message: 'Perawatan berhasil dihapus' };
   }
@@ -236,9 +232,7 @@ export class TreatmentsController {
     status: HttpStatus.NOT_FOUND,
     description: 'Treatment not found',
   })
-  async restore(
-    @Param('id') id: string,
-  ): Promise<TreatmentResponseDto> {
+  async restore(@Param('id') id: string): Promise<TreatmentResponseDto> {
     return this.restoreTreatmentUseCase.execute(id);
   }
 
@@ -257,9 +251,7 @@ export class TreatmentsController {
     description: 'Treatment successfully activated',
     type: TreatmentResponseDto,
   })
-  async activate(
-    @Param('id') id: string,
-  ): Promise<TreatmentResponseDto> {
+  async activate(@Param('id') id: string): Promise<TreatmentResponseDto> {
     return this.updateTreatmentUseCase.execute(id, { isActive: true });
   }
 
@@ -278,9 +270,7 @@ export class TreatmentsController {
     description: 'Treatment successfully deactivated',
     type: TreatmentResponseDto,
   })
-  async deactivate(
-    @Param('id') id: string,
-  ): Promise<TreatmentResponseDto> {
+  async deactivate(@Param('id') id: string): Promise<TreatmentResponseDto> {
     return this.updateTreatmentUseCase.execute(id, { isActive: false });
   }
 }

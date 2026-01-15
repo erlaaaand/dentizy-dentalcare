@@ -154,9 +154,7 @@ export class NotificationsController {
     type: NotificationResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Notifikasi tidak ditemukan' })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<NotificationResponseDto> {
+  async findOne(@Param('id') id: string): Promise<NotificationResponseDto> {
     return this.notificationsService.findOne(id);
   }
 

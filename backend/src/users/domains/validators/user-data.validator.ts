@@ -50,7 +50,9 @@ export class UserDataValidator {
     for (const roleId of roles) {
       // Cek apakah string tersebut format UUID v4 yang valid
       if (!isUUID(roleId)) {
-        throw new BadRequestException(`Role ID '${roleId}' tidak valid (harus berupa UUID)`);
+        throw new BadRequestException(
+          `Role ID '${roleId}' tidak valid (harus berupa UUID)`,
+        );
       }
     }
   }

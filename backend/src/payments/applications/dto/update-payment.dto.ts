@@ -6,6 +6,6 @@ export class UpdatePaymentDto extends PartialType(
   OmitType(CreatePaymentDto, [
     'medicalRecordId',
     'patientId',
-    'createdBy'     // [SARAN] Creator ID tidak boleh diganti manual
+    'createdBy', // [SARAN] Creator ID tidak boleh diganti manual
   ] as const),
 ) {}

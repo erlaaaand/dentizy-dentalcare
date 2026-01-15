@@ -164,7 +164,7 @@ export class UserRepository {
   }
 
   async findRolesByIds(roleIds: string[]): Promise<Role[]> {
-    if(roleIds.length === 0) return [];
+    if (roleIds.length === 0) return [];
     return this.roleRepository.find({
       where: { id: In(roleIds) },
     });

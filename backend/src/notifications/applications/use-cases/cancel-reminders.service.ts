@@ -8,7 +8,7 @@ export class CancelRemindersService {
 
   constructor(
     private readonly notificationRepository: NotificationRepository,
-  ) { }
+  ) {}
 
   /**
    * Cancel reminders for a specific appointment
@@ -35,7 +35,8 @@ export class CancelRemindersService {
       return cancelledCount;
     } catch (error) {
       // [FIX] Type-safe error handling (menghindari penggunaan any implisit)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
 
       this.logger.error(
         `❌ Error cancelling reminders for appointment #${appointmentId}: ${errorMessage}`,

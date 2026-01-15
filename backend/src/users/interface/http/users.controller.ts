@@ -234,9 +234,7 @@ export class UsersController {
     type: UserResponseDto,
   })
   @ApiResponse({ status: 404, description: 'User tidak ditemukan' })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<UserResponseDto> {
+  async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     return this.usersService.findOne(id);
   }
 

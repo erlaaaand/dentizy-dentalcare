@@ -171,8 +171,7 @@ export class PatientRepository extends Repository<Patient> {
    * Bulk update patient status
    */
   async bulkUpdateStatus(ids: string[], isActive: boolean): Promise<void> {
-
-    if (!ids || ids.length === 0){
+    if (!ids || ids.length === 0) {
       return;
     }
 

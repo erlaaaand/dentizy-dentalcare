@@ -31,7 +31,8 @@ export class TreatmentPricingService {
   bulkPriceUpdate(
     treatments: Treatment[],
     adjustmentPercentage: number,
-  ): Map<string, number> { // [FIX] Ubah Key dari number ke string
+  ): Map<string, number> {
+    // [FIX] Ubah Key dari number ke string
 
     // [FIX] Inisialisasi Map dengan Key string
     const priceMap = new Map<string, number>();

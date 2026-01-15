@@ -186,9 +186,7 @@ export class PatientsController {
     type: PatientResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan' })
-  async findOne(
-    @Param('id') id: string,
-  ): Promise<PatientResponseDto> {
+  async findOne(@Param('id') id: string): Promise<PatientResponseDto> {
     return this.patientsService.findOne(id);
   }
 
@@ -230,9 +228,7 @@ export class PatientsController {
     },
   })
   @ApiResponse({ status: 404, description: 'Pasien tidak ditemukan' })
-  async remove(
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
+  async remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.patientsService.remove(id);
   }
 
@@ -249,9 +245,7 @@ export class PatientsController {
     description: 'Pasien berhasil diaktifkan',
     type: PatientResponseDto,
   })
-  async activatePatient(
-    @Param('id') id: string,
-  ): Promise<PatientResponseDto> {
+  async activatePatient(@Param('id') id: string): Promise<PatientResponseDto> {
     return this.patientsService.update(id, { is_active: true });
   }
 
@@ -275,9 +269,7 @@ export class PatientsController {
     status: 404,
     description: 'Pasien tidak ditemukan atau tidak dihapus',
   })
-  async restore(
-    @Param('id') id: string,
-  ): Promise<{ message: string }> {
+  async restore(@Param('id') id: string): Promise<{ message: string }> {
     return this.patientsService.restore(id);
   }
 }

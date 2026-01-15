@@ -27,7 +27,7 @@ export class CreateUserService {
     private readonly userValidation: UserValidationService,
     private readonly passwordHasher: PasswordHasherService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   async execute(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const {
