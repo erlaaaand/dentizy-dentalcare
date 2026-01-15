@@ -1,4 +1,4 @@
-import { cn } from "@/core";
+import { cn } from '@/core/utils/classnames/cn.utils';
 import { AvatarStackProps } from "./avatar.types";
 import Avatar from "./Avatar";
 import { sizeClasses } from "./avatar.styles";

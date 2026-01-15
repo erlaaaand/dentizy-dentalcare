@@ -1,45 +1,53 @@
-import { forwardRef } from 'react';
-import { cn } from '@/core';
+import React, { forwardRef } from 'react';
+import { cn } from '@/core/utils/classnames/cn.utils'; // Sesuaikan path ini dengan utility cn Anda
 import { ButtonProps } from './button.types';
+import { buttonVariants } from './button.styles';
 import { LoadingSpinner } from '../feedback/loading-spinner/LoadingSpinner';
-import { baseClasses, variantClasses, sizeClasses, roundedClasses, shadowClasses, iconOnlySizeClasses } from './button.styles';
-
-const SPINNER_SIZE_MAP = {
-    xs: 'sm',
-    sm: 'sm',
-    md: 'md',
-    lg: 'md',
-    xl: 'lg',
-} as const;
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-    ({ variant = 'primary', size = 'md', loading = false, icon, iconPosition = 'left', iconOnly = false, fullWidth = false, children, rounded = 'default', shadow = 'none', className = '', disabled, ...props }, ref) => {
-        const buttonClasses = cn(
-            baseClasses,
-            variantClasses[variant],
-            iconOnly ? iconOnlySizeClasses[size] : sizeClasses[size],
-            roundedClasses[rounded],
-            shadowClasses[shadow],
-            fullWidth && 'w-full',
-            loading && 'cursor-wait',
-            className
-        );
+  ({ 
+    className, 
+    variant, 
+    size, 
+    fullWidth, 
+    loading = false, 
+    icon, 
+    iconPosition = 'left', 
+    children, 
+    disabled, 
+    ...props 
+  }, ref) => {
+    
+    // Tentukan ukuran spinner berdasarkan ukuran tombol
+    const spinnerSize = size === 'xs' || size === 'sm' ? 'sm' : 'md';
 
-        const renderIcon = () => (loading ? <LoadingSpinner size={SPINNER_SIZE_MAP[size]} /> : icon);
+    return (
+      <button
+        ref={ref}
+        disabled={loading || disabled}
+        className={cn(buttonVariants({ variant, size, fullWidth, className }))}
+        {...props}
+      >
+        {loading ? (
+          <LoadingSpinner size={spinnerSize} className={children ? "mr-2" : ""} />
+        ) : (
+          icon && iconPosition === 'left' && (
+            <span className={cn("inline-flex shrink-0", children && "mr-2")}>
+              {icon}
+            </span>
+          )
+        )}
 
-        return (
-            <button ref={ref} className={buttonClasses} disabled={loading || disabled} {...props}>
-                <span className="absolute inset-0 overflow-hidden rounded-inherit">
-                    <span className="ripple absolute bg-white opacity-0 rounded-full transform -translate-x-1/2 -translate-y-1/2 group-hover:animate-ripple" />
-                </span>
-                <span className={cn('relative z-10 flex items-center justify-center gap-2', !iconOnly && 'w-full')}>
-                    {iconPosition === 'left' && renderIcon()}
-                    {!iconOnly && children && <span className="whitespace-nowrap truncate">{children}</span>}
-                    {iconPosition === 'right' && renderIcon()}
-                </span>
-            </button>
-        );
-    }
+        {children}
+
+        {!loading && icon && iconPosition === 'right' && (
+          <span className={cn("inline-flex shrink-0", children && "ml-2")}>
+            {icon}
+          </span>
+        )}
+      </button>
+    );
+  }
 );
 
 Button.displayName = 'Button';

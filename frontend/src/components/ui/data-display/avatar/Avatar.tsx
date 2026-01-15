@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import { cn, getInitials } from '@/core';
+import { cn } from '@/core/utils/classnames/cn.utils';
+import { getInitials } from '@/core/utils/string/string.utils';
 import { AvatarProps } from './avatar.types';
 import { getColorFromString, statusPositionClasses, sizeClasses, shapeClasses, borderClasses, shadowClasses, statusSizeClasses, statusColorClasses, getStatusBorderColor } from './avatar.styles';
 

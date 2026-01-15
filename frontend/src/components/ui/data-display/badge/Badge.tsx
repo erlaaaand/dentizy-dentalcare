@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { cn } from '@/core';
+import { cn } from '@/core/utils/classnames/cn.utils';
 import { BadgeProps } from './badge.types';
 import { iconSizeClasses, dotColors, shapeClasses, sizeClasses, gradientVariants, badgeVariants } from './badge.styles';
 

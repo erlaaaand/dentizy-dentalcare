@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/core';
+import { cn } from '@/core/utils/classnames/cn.utils';
 import { LoadingSpinnerProps } from './loading-spinner.types';
 import { sizeClasses, variantClasses, speedClasses, thicknessClasses } from './loading-spinner.styles';
 import { LoadingContainer } from './LoadingContainer';

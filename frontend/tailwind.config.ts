@@ -1,24 +1,15 @@
-/** @type {import('tailwindcss').Config} */
-module.exports = {
+import type { Config } from "tailwindcss";
+import plugin from "tailwindcss/plugin"; // Import helper plugin agar type-safe
+
+const config: Config = {
+  // Gunakan satu baris ini untuk mencakup SEMUA folder di dalam src (termasuk core, app, components, dll)
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/domains/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/lib/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/hooks/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/utils/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/stores/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/styles/**/*.{css,scss}",
+    "./src/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   darkMode: 'class',
   theme: {
     extend: {
-      // ============================================
-      // COLORS - Modern Dental Clinic Palette
-      // ============================================
       colors: {
-        // Primary Blues (Dental Theme)
         primary: {
           50: '#eff6ff',
           100: '#dbeafe',
@@ -32,8 +23,6 @@ module.exports = {
           900: '#1e3a8a',
           950: '#172554',
         },
-
-        // Secondary Teal/Green (Medical Theme)
         secondary: {
           50: '#f0fdfa',
           100: '#ccfbf1',
@@ -47,8 +36,6 @@ module.exports = {
           900: '#134e4a',
           950: '#042f2e',
         },
-
-        // Semantic Colors
         success: {
           50: '#f0fdf4',
           100: '#dcfce7',
@@ -97,8 +84,6 @@ module.exports = {
           800: '#075985',
           900: '#0c4a6e',
         },
-
-        // Extended Gray Scale
         gray: {
           50: '#f9fafb',
           100: '#f3f4f6',
@@ -112,8 +97,6 @@ module.exports = {
           900: '#111827',
           950: '#030712',
         },
-
-        // Dental Clinic Specific Colors
         dental: {
           blue: {
             light: '#e0f2fe',
@@ -129,10 +112,6 @@ module.exports = {
           ivory: '#fdf4f0',
         },
       },
-
-      // ============================================
-      // TYPOGRAPHY
-      // ============================================
       fontFamily: {
         sans: [
           'Inter',
@@ -188,10 +167,6 @@ module.exports = {
         extrabold: '800',
         black: '900',
       },
-
-      // ============================================
-      // SPACING & SIZING
-      // ============================================
       spacing: {
         '18': '4.5rem',
         '88': '22rem',
@@ -213,10 +188,6 @@ module.exports = {
         '112': '28rem',
         '128': '32rem',
       },
-
-      // ============================================
-      // ANIMATIONS & TRANSITIONS
-      // ============================================
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in-out',
         'fade-out': 'fadeOut 0.5s ease-in-out',
@@ -318,10 +289,6 @@ module.exports = {
         'bounce-in': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
-
-      // ============================================
-      // BORDER RADIUS & SHADOWS
-      // ============================================
       borderRadius: {
         '4xl': '2rem',
         '5xl': '2.5rem',
@@ -336,10 +303,6 @@ module.exports = {
         'glow-success': '0 0 20px rgba(34, 197, 94, 0.15)',
         'glow-error': '0 0 20px rgba(239, 68, 68, 0.15)',
       },
-
-      // ============================================
-      // GRID & LAYOUT
-      // ============================================
       gridTemplateColumns: {
         '13': 'repeat(13, minmax(0, 1fr))',
         '14': 'repeat(14, minmax(0, 1fr))',
@@ -352,10 +315,6 @@ module.exports = {
         'span-15': 'span 15 / span 15',
         'span-16': 'span 16 / span 16',
       },
-
-      // ============================================
-      // Z-INDEX
-      // ============================================
       zIndex: {
         '60': '60',
         '70': '70',
@@ -363,39 +322,20 @@ module.exports = {
         '90': '90',
         '100': '100',
       },
-
-      // ============================================
-      // BACKDROP & BLUR
-      // ============================================
       backdropBlur: {
         'xs': '2px',
       },
       backdropBrightness: {
         '110': '1.1',
       },
-
-      // ============================================
-      // SCROLLBAR (for custom scrollbars)
-      // ============================================
-      scrollbar: {
-        width: 'thin',
-        track: 'bg-gray-100',
-        thumb: 'bg-gray-300',
-        'thumb-hover': 'bg-gray-400',
-      },
     },
   },
-
-  // ============================================
-  // PLUGINS
-  // ============================================
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),
     require('@tailwindcss/aspect-ratio'),
     // Custom plugin for additional utilities
-    function ({ addUtilities, addComponents, theme }) {
-      // Custom utilities
+    plugin(function ({ addUtilities, addComponents }) {
       const newUtilities = {
         '.text-shadow': {
           textShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
@@ -425,7 +365,6 @@ module.exports = {
         },
       };
 
-      // Custom components
       const newComponents = {
         '.btn': {
           display: 'inline-flex',
@@ -467,15 +406,10 @@ module.exports = {
         },
       };
 
-      addUtilities(newUtilities, ['responsive', 'hover']);
+      addUtilities(newUtilities);
       addComponents(newComponents);
-    },
+    }),
   ],
-
-  // ============================================
-  // CORE PLUGINS (Optional Disabling)
-  // ============================================
-  corePlugins: {
-    // Enable all core plugins by default
-  },
 };
+
+export default config;

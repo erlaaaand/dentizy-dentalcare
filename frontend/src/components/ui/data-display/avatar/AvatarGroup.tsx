@@ -1,6 +1,6 @@
 import { AvatarGroupProps } from "./avatar.types";
 import React from "react";
-import { cn } from "@/core";
+import { cn } from '@/core/utils/classnames/cn.utils';
 import { spacingClasses, verticalSpacingClasses, sizeClasses } from "./avatar.styles";
 import { AvatarProps } from "./avatar.types";
 

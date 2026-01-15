@@ -1,5 +1,5 @@
 import { BadgeGroupProps } from './badge.types';
-import { cn } from '@/core';
+import { cn } from '@/core/utils/classnames/cn.utils';
 
 export function BadgeGroup({
     children,

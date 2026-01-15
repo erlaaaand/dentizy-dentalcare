@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/core';
+import { cn } from '@/core/utils/classnames/cn.utils';
 import { CardProps } from './card.types';
 import { paddingClasses, shadowClasses, roundedClasses, variantClasses } from './card.styles';
 

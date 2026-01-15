@@ -1,25 +1,36 @@
-import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
+import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { VariantProps } from 'class-variance-authority';
+import { buttonVariants } from './button.styles';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-    variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'warning' | 'ghost' | 'outline' | 'link';
-    size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export interface ButtonProps
+    extends ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+    /**
+     * Menampilkan loading spinner dan menonaktifkan tombol
+     */
     loading?: boolean;
+    /**
+     * Ikon opsional untuk ditampilkan
+     */
     icon?: ReactNode;
+    /**
+     * Posisi ikon (kiri atau kanan)
+     * @default 'left'
+     */
     iconPosition?: 'left' | 'right';
-    iconOnly?: boolean;
-    fullWidth?: boolean;
-    children?: ReactNode;
-    rounded?: 'default' | 'full' | 'none';
-    shadow?: 'none' | 'sm' | 'md' | 'lg';
+    /**
+     * Jika true, konten akan dirender sebagai child (berguna untuk Slot/Radix)
+     */
+    asChild?: boolean;
 }
 
 export interface ButtonGroupProps {
-    children: React.ReactNode;
+    children: ReactNode;
     orientation?: 'horizontal' | 'vertical';
     className?: string;
 }
 
-export interface IconButtonProps extends Omit<ButtonProps, 'iconOnly' | 'children'> {
+export interface IconButtonProps extends Omit<ButtonProps, 'children' | 'iconPosition'> {
     icon: ReactNode;
     'aria-label': string;
 }

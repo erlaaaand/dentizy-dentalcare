@@ -1,7 +1,7 @@
 import { StatusBadgeProps } from "./badge.types";
 import { badgeVariants } from "./badge.styles";
 import { default as Badge } from "./Badge";
-import { STATUS_LABELS } from "@/core";
+import { STATUS_LABELS } from "@/core/constants/status.constants";
 
 export function StatusBadge({ status, showDot = true, ...props }: StatusBadgeProps) {
   // Default config untuk status umum
