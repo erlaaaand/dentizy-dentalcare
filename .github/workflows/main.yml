@@ -1,79 +1,71 @@
 name: Smart CI/CD Pipeline
 
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   push:
-    branches: [ "main" ]
+    branches: [main]
   pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
 jobs:
   changes:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: dorny/paths-filter@v2
-        id: filter
+      - id: filter
+        uses: dorny/paths-filter@v3
         with:
           filters: |
             backend:
-              - 'backend/**/*.js'
-              - 'backend/**/*.ts'
-              - 'backend/**/*.json'
-              # Abaikan file markdown/docs di folder backend
-              - '!backend/**/*.md'
+              - backend/**
             frontend:
-              - 'frontend/**/*.js'
-              - 'frontend/**/*.ts'
-              - 'frontend/**/*.tsx'
-              - 'frontend/**/*.jsx'
-              # Abaikan file markdown/docs di folder frontend
-              - '!frontend/**/*.md'
+              - frontend/**
 
   backend-lint:
+    name: Backend Lint
     needs: changes
-    if: ${{ needs.changes.outputs.backend == 'true' }}
-    name: Backend Linting (Strict)
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: backend/package-lock.json
 
-      - run: npm ci
-        working-directory: backend
+      - working-directory: backend
+        run: npm ci
 
-      - run: npm run lint:check
-        working-directory: backend
+      - working-directory: backend
+        run: npm run lint:check
 
   frontend-lint:
+    name: Frontend Lint
     needs: changes
-    if: ${{ needs.changes.outputs.frontend == 'true' }}
-    name: Frontend Linting (Strict)
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: 'npm'
+          cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - run: npm ci
-        working-directory: frontend
+      - working-directory: frontend
+        run: npm ci
 
-      - run: npm run lint
-        working-directory: frontend
+      - working-directory: frontend
+        run: npm run lint
