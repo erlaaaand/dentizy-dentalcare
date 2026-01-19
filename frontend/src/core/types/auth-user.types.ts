@@ -1,9 +1,9 @@
 export interface AuthUser {
-    id: number;
+    id: string;
     email: string;
     nama_lengkap?: string;
     roles?: Array<{
-        id: number;
+        id: string;
         name: string;
         description?: string;
     }>;
