@@ -1,9 +1,9 @@
-import { AppSidebar } from "@/src/components/app-sidebar"
-import { SiteHeader } from "@/src/components/site-header"
+import { AppSidebar } from "@/src/components/dashboard-ui/app-sidebar"
+import { SiteHeader } from "@/src/components/dashboard-ui/site-header"
 import {
   SidebarInset,
   SidebarProvider,
-} from "@/src/components/ui/sidebar"
+} from "@/src/components/dashboard-ui/components/sidebar"
 
 
 export default function Page() {
