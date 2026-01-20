@@ -31,9 +31,9 @@ export class PaymentRepository {
     return await this.dataSource.transaction(async (manager) => {
       const paymentRepo = manager.getRepository(Payment);
 
-      const { totalBiaya, diskonTotal = 0, jumlahBayar } = dto;
+      const { totalBiaya = 0, jumlahBayar } = dto;
 
-      const totalAkhir = totalBiaya - diskonTotal;
+      const totalAkhir = totalBiaya;
       const kembalian = jumlahBayar - totalAkhir;
 
       const lastPayment = await this.getLastPaymentToday(manager);
@@ -171,16 +171,14 @@ export class PaymentRepository {
       }
 
       const totalBiaya = dto.totalBiaya ?? Number(existing.totalBiaya);
-      const diskonTotal = dto.diskonTotal ?? Number(existing.diskonTotal);
       const jumlahBayar = dto.jumlahBayar ?? Number(existing.jumlahBayar);
 
-      const totalAkhir = totalBiaya - diskonTotal;
+      const totalAkhir = totalBiaya;
       const kembalian = Math.max(0, jumlahBayar - totalAkhir);
 
       await paymentRepo.update(id, {
         ...dto,
         totalBiaya,
-        diskonTotal,
         jumlahBayar,
         totalAkhir,
         kembalian,

@@ -81,16 +81,6 @@ export class Payment {
     type: 'decimal',
     precision: 15,
     scale: 2,
-    default: 0,
-    name: 'diskon_total',
-    transformer: new ColumnNumericTransformer(),
-  })
-  diskonTotal: number;
-
-  @Column({
-    type: 'decimal',
-    precision: 15,
-    scale: 2,
     name: 'total_akhir',
     transformer: new ColumnNumericTransformer(),
   })
@@ -182,11 +172,10 @@ export class Payment {
   recalculate(): void {
     // Pastikan nilai numerik
     const total = Number(this.totalBiaya) || 0;
-    const diskon = Number(this.diskonTotal) || 0;
     const bayar = Number(this.jumlahBayar) || 0;
 
     // 1. Hitung Total Akhir
-    this.totalAkhir = total - diskon;
+    this.totalAkhir = total;
 
     // 2. Hitung Kembalian
     this.kembalian = Math.max(0, bayar - this.totalAkhir);

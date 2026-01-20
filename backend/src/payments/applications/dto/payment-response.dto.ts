@@ -41,9 +41,6 @@ export class PaymentResponseDto {
   @ApiProperty({ description: 'Total Biaya' })
   totalBiaya: number;
 
-  @ApiProperty({ description: 'Total Diskon' })
-  diskonTotal: number;
-
   @ApiProperty({ description: 'Total Akhir' })
   totalAkhir: number;
 

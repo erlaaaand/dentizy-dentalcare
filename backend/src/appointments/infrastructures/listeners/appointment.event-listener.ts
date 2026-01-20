@@ -7,7 +7,7 @@ import {
   AppointmentUpdatedEvent,
   AppointmentDeletedEvent,
 } from '../events';
-import { NotificationsService } from '../../../notifications/applications/orchestrator/notifications.service';
+import { EmailService } from '../../../notifications/services/email.service';
 
 /**
  * Event listener untuk appointment events
@@ -17,7 +17,7 @@ import { NotificationsService } from '../../../notifications/applications/orches
 export class AppointmentEventListener {
   private readonly logger = new Logger(AppointmentEventListener.name);
 
-  constructor(private readonly notificationsService: NotificationsService) {}
+  constructor(private readonly emailService: EmailService) {}
 
   /**
    * Handle appointment created event
@@ -31,9 +31,11 @@ export class AppointmentEventListener {
 
     if (event.shouldScheduleReminder) {
       try {
-        await this.notificationsService.scheduleAppointmentReminder(
-          event.appointment,
-        );
+        await this.emailService.sendEmail({
+          to: event.appointment.patient.email || null || '',
+          subject: 'Appointment Reminder Scheduled',
+          html: `<p>Your appointment scheduled on ${event.appointment.tanggal_janji} has been created successfully. We will send you a reminder prior to the appointment.</p>`,
+        });
         this.logger.log(
           `📧 Reminder scheduled for appointment #${event.appointment.id}`,
         );
@@ -62,7 +64,11 @@ export class AppointmentEventListener {
     );
 
     try {
-      await this.notificationsService.cancelRemindersFor(event.appointment.id);
+      await this.emailService.sendEmail({
+        to: event.appointment.patient.email || null || '',
+        subject: 'Appointment Cancelled',
+        html: `<p>Your appointment scheduled on ${event.appointment.tanggal_janji} has been cancelled.</p>`,
+      });
       this.logger.log(
         `📧 Reminders cancelled for appointment #${event.appointment.id}`,
       );
@@ -87,11 +93,19 @@ export class AppointmentEventListener {
       `✅ Appointment completed: #${event.appointment.id} by user #${event.completedBy}`,
     );
 
-    // Future enhancements:
-    // - Send completion notification to patient
-    // - Update statistics/analytics
-    // - Trigger medical record creation reminder
-    // - Update doctor performance metrics
+    try {
+      await this.emailService.sendEmail({
+        to: event.appointment.patient.email || null || '',
+        subject: 'Appointment Completed',
+        html: `<p>Thank you for attending your appointment on ${event.appointment.tanggal_janji}. We hope to see you again!</p>`,
+      });
+    } catch (error) {
+      this.logger.error(
+        `❌ Error handling completion for appointment #${event.appointment.id}:`,
+        error instanceof Error ? error.message : String(error),
+        error instanceof Error ? error.stack : undefined,
+      );
+    }
   }
 
   /**
@@ -111,18 +125,22 @@ export class AppointmentEventListener {
     if (event.isTimeUpdated) {
       try {
         // Cancel old reminder
-        await this.notificationsService.cancelRemindersFor(
-          event.appointment.id,
-        );
+        await this.emailService.sendEmail({
+          to: event.appointment.patient.email || null || '',
+          subject: 'Appointment Reminder Cancelled',
+          html: `<p>Your appointment reminder for ${event.appointment.tanggal_janji} has been cancelled.</p>`,
+        });
 
         // Schedule new reminder if applicable
         if (
           event.appointment.patient?.email &&
           event.appointment.patient?.is_registered_online
         ) {
-          await this.notificationsService.scheduleAppointmentReminder(
-            event.appointment,
-          );
+          await this.emailService.sendEmail({
+            to: event.appointment.patient.email || null || '',
+            subject: 'Appointment Reminder Scheduled',
+            html: `<p>Your appointment is scheduled for ${event.appointment.tanggal_janji}. Please be on time!</p>`,
+          });
           this.logger.log(
             `📧 Reminder rescheduled for appointment #${event.appointment.id}`,
           );
@@ -150,7 +168,11 @@ export class AppointmentEventListener {
     );
 
     try {
-      await this.notificationsService.cancelRemindersFor(event.appointmentId);
+      await this.emailService.sendEmail({
+        to: event.appointmentId.patient.email || null || '',
+        subject: 'Appointment Reminder Cancelled',
+        html: `<p>Your appointment reminder for ${event.appointmentId.patient.email} has been cancelled.</p>`,
+      });
       this.logger.log(
         `📧 Reminders cancelled for deleted appointment #${event.appointmentId}`,
       );

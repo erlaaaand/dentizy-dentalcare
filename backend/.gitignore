@@ -2,7 +2,8 @@
 /dist
 /node_modules
 /build
-/public/uploads/profile
+# Abaikan semua folder bernama __tests__ di seluruh project
+**/__tests__/
 
 # Logs
 logs

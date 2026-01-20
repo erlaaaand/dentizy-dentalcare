@@ -14,10 +14,9 @@ import {
   StatusPembayaran,
 } from '../../domains/entities/payments.entity';
 import {
-  IsValidDiscount,
   IsNotFutureDate,
   IsSufficientPayment,
-} from '../../domains/validators';
+} from '../../domains/validators/';
 
 export class CreatePaymentDto {
   @ApiProperty({ description: 'ID Rekam Medis', example: 1 })
@@ -39,24 +38,13 @@ export class CreatePaymentDto {
   tanggalPembayaran: Date;
 
   @ApiProperty({
-    description: 'Total biaya sebelum diskon',
+    description: 'Total biaya',
     example: 500000,
     minimum: 0,
   })
   @IsNumber({}, { message: 'Total biaya harus berupa angka' })
   @Min(0, { message: 'Total biaya tidak boleh negatif' })
   totalBiaya: number;
-
-  @ApiPropertyOptional({
-    description: 'Total diskon',
-    example: 50000,
-    minimum: 0,
-  })
-  @IsOptional()
-  @IsNumber({}, { message: 'Diskon harus berupa angka' })
-  @Min(0, { message: 'Diskon tidak boleh negatif' })
-  @IsValidDiscount()
-  diskonTotal?: number;
 
   @ApiProperty({
     description: 'Jumlah yang dibayarkan',

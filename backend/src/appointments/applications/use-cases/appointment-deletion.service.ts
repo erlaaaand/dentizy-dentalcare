@@ -41,7 +41,7 @@ export class AppointmentDeletionService {
       // 4. EMIT EVENT
       this.eventEmitter.emit(
         'appointment.deleted',
-        new AppointmentDeletedEvent(id, user.id),
+        new AppointmentDeletedEvent(validAppointment, user.id),
       );
 
       this.logger.log(`🗑️ Appointment #${id} deleted by user #${user.id}`);

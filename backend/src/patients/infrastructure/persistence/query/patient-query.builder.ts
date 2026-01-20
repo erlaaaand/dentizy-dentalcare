@@ -127,7 +127,7 @@ export class PatientQueryBuilder {
    */
   private applyDoctorFilter(
     qb: SelectQueryBuilder<Patient>,
-    doctorId?: number,
+    doctorId?: string,
   ): void {
     if (doctorId) {
       qb.leftJoin('patient.appointments', 'appointment')

@@ -52,7 +52,7 @@ export class UserRepository {
       password: data.password,
       roles: data.roles,
       email: data.email,
-      is_active: true,
+      is_active: false,
     });
 
     return this.repository.save(user);

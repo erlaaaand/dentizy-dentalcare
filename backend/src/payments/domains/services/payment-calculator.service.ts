@@ -12,11 +12,10 @@ export interface PaymentCalculation {
 export class PaymentCalculatorService {
   calculate(
     totalBiaya: number,
-    diskonTotal: number = 0,
     jumlahBayar: number,
     currentStatus?: StatusPembayaran,
   ): PaymentCalculation {
-    const totalAkhir = totalBiaya - diskonTotal;
+    const totalAkhir = totalBiaya;
     const kembalian = Math.max(0, jumlahBayar - totalAkhir);
 
     let statusPembayaran: StatusPembayaran;

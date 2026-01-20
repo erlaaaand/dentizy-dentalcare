@@ -37,18 +37,15 @@ export class UpdatePaymentUseCase {
     const previousStatus = payment.statusPembayaran;
 
     const totalBiaya = dto.totalBiaya ?? payment.totalBiaya;
-    const diskonTotal = dto.diskonTotal ?? payment.diskonTotal;
     const jumlahBayar = dto.jumlahBayar ?? payment.jumlahBayar;
 
     this.validatorService.validatePaymentData({
       totalBiaya: Number(totalBiaya),
-      diskonTotal: Number(diskonTotal),
       jumlahBayar: Number(jumlahBayar),
     });
 
     const calculation = this.calculatorService.calculate(
       Number(totalBiaya),
-      Number(diskonTotal),
       Number(jumlahBayar),
       payment.statusPembayaran,
     );
@@ -89,9 +86,14 @@ export class UpdatePaymentUseCase {
           updatedPayment.id,
           updatedPayment.medicalRecordId,
           updatedPayment.patientId,
+          updatedPayment.patient?.email ?? null,
+          updatedPayment.patient?.nama_lengkap ?? '',
           updatedPayment.nomorInvoice,
+          Number(updatedPayment.totalBiaya),
           Number(updatedPayment.totalAkhir),
           updatedPayment.updatedAt,
+          updatedPayment.tanggalPembayaran,
+          updatedPayment.metodePembayaran,
         ),
       );
     }

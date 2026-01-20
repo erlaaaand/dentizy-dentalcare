@@ -41,10 +41,12 @@ export class CancelPaymentUseCase {
       'payment.cancelled',
       new PaymentCancelledEvent(
         cancelledPayment.id,
-        cancelledPayment.medicalRecordId,
         cancelledPayment.nomorInvoice,
+        cancelledPayment.patient?.nama_lengkap,
+        cancelledPayment.patient?.email ?? null,
         Number(cancelledPayment.totalAkhir),
-        cancelledBy,
+        new Date(),
+        cancelledPayment.medicalRecordId,
       ),
     );
 

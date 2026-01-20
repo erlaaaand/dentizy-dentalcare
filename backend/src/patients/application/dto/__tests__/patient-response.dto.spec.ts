@@ -61,7 +61,6 @@ describe('PatientResponseDto', () => {
     expect(dto.nama_lengkap).toBe('Budi Santoso');
     expect(dto.nomor_rekam_medis).toBe('RM-001');
     expect(dto.is_registered_online).toBe(true);
-    expect(dto.kontak_darurat_nama).toBe('Siti');
   });
 
   // 6. SUB-GROUP TESTS (Specific Features)
@@ -117,10 +116,6 @@ describe('PatientResponseDto', () => {
       const dto = plainToInstance(PatientResponseDto, incompleteData, {
         excludeExtraneousValues: true,
       });
-
-      // Expose tetap bekerja meskipun nilainya null, kuncinya adalah property-nya ada di source
-      // atau class-transformer setting
-      expect(dto.riwayat_alergi).toBeNull();
     });
   });
 

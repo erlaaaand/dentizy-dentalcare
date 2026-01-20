@@ -100,10 +100,10 @@ export class SearchPatientDto {
 
   @ApiPropertyOptional()
   @IsOptional()
-  @Type(() => Number)
-  @IsNumber({}, { message: 'Doctor ID harus berupa angka' })
-  @Min(1, { message: 'Doctor ID tidak valid' })
-  doctor_id?: number;
+  @IsString()
+  @MaxLength(100, { message: 'Doctor ID maksimal 100 karakter' })
+  @Transform(({ value }) => value?.trim())
+  doctor_id?: string;
 
   @ApiPropertyOptional({ description: 'Hanya pasien aktif' })
   @IsOptional()

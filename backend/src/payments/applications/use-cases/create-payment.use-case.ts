@@ -35,14 +35,12 @@ export class CreatePaymentUseCase {
     // Validate payment data
     this.validatorService.validatePaymentData({
       totalBiaya: dto.totalBiaya,
-      diskonTotal: dto.diskonTotal,
       jumlahBayar: dto.jumlahBayar,
     });
 
     // Calculate payment details
     const calculation = this.calculatorService.calculate(
       dto.totalBiaya,
-      dto.diskonTotal || 0,
       dto.jumlahBayar,
     );
 
@@ -75,9 +73,14 @@ export class CreatePaymentUseCase {
           payment.id,
           payment.medicalRecordId,
           payment.patientId,
+          payment.patient?.email ?? null,
+          payment.patient?.nama_lengkap ?? '',
           payment.nomorInvoice,
+          Number(payment.totalBiaya),
           Number(payment.totalAkhir),
-          payment.createdAt,
+          payment.updatedAt,
+          payment.tanggalPembayaran,
+          payment.metodePembayaran,
         ),
       );
     }

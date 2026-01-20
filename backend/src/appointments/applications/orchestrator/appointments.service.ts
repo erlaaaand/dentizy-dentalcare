@@ -292,8 +292,7 @@ export class AppointmentsService {
       const hargaFix = Number(treatment.harga) || 0;
       const qty = 1;
       const subtotal = hargaFix * qty;
-      const diskon = 0;
-      const total = subtotal - diskon;
+      const total = subtotal;
 
       const mrt = queryRunner.manager.create(MedicalRecordTreatment, {
         medicalRecord: medicalRecord,
@@ -301,7 +300,6 @@ export class AppointmentsService {
         treatmentId: treatment.id, // ID sekarang string (UUID)
         jumlah: qty,
         hargaSatuan: hargaFix,
-        diskon: diskon,
         subtotal: subtotal,
         total: total,
         keterangan: treatment.namaPerawatan,
@@ -338,7 +336,6 @@ export class AppointmentsService {
       tanggalPembayaran: new Date(),
 
       totalBiaya: totalAmount,
-      diskonTotal: 0,
       totalAkhir: totalAmount,
       jumlahBayar: 0,
       kembalian: 0,

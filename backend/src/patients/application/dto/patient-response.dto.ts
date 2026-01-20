@@ -72,48 +72,11 @@ export class PatientResponseDto {
   alamat: string;
 
   @ApiProperty({
-    description: 'Riwayat alergi yang dimiliki pasien',
-    example: 'Alergi obat penicillin',
-  })
-  @Expose()
-  riwayat_alergi: string;
-
-  @ApiProperty({
-    description: 'Riwayat penyakit pasien',
-    example: 'Asma sejak kecil',
-  })
-  @Expose()
-  riwayat_penyakit: string;
-
-  @ApiProperty({
     description: 'Catatan medis khusus yang perlu diperhatikan',
     example: 'Hipertensi ringan',
   })
   @Expose()
   catatan_khusus: string;
-
-  @ApiProperty({ description: 'Golongan darah pasien', example: 'O+' })
-  @Expose()
-  golongan_darah: string;
-
-  @ApiProperty({ description: 'Pekerjaan pasien', example: 'Guru SD' })
-  @Expose()
-  pekerjaan: string;
-
-  @ApiProperty({ description: 'Nama kontak darurat', example: 'Andi Setiawan' })
-  @Expose()
-  kontak_darurat_nama: string;
-
-  @ApiProperty({ description: 'Nomor kontak darurat', example: '081234567891' })
-  @Expose()
-  kontak_darurat_nomor: string;
-
-  @ApiProperty({
-    description: 'Relasi kontak darurat dengan pasien',
-    example: 'Suami',
-  })
-  @Expose()
-  kontak_darurat_relasi: string;
 
   @ApiProperty({
     description: 'Status apakah pasien terdaftar online',

@@ -6,7 +6,7 @@ export const AUTH_CONFIG = {
     DASHBOARD_PATH: ROUTES.DASHBOARD,
     TOKEN_KEY: 'access_token',
     REFRESH_TOKEN_KEY: 'refresh_token',
-    USER_KEY: 'user',
+    USER_KEY: 'user_data',
     SESSION_TIMEOUT: 30 * 60 * 1000,
     REFRESH_BEFORE_EXPIRE: 5 * 60 * 1000,
     PASSWORD_MIN_LENGTH: 8,
