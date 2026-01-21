@@ -6,14 +6,9 @@ import { ROUTES, PROTECTED_ROUTES } from './core/constants/routes.constants';
 // CONFIGURATION
 // ============================================
 
-// Routes that should redirect to dashboard if already authenticated
 const AUTH_ROUTES = [ROUTES.LOGIN];
-
-// Public routes that don't require authentication
-// Catatan: Jangan masukkan /login di sini agar logic redirect auth berjalan
 const PUBLIC_ROUTES = [ROUTES.HOME];
 
-// Role-based access control
 const ROLE_ROUTES: Record<string, string[]> = {
     kepala_klinik: [
         ROUTES.DASHBOARD,
@@ -22,21 +17,24 @@ const ROLE_ROUTES: Record<string, string[]> = {
         ROUTES.MEDICAL_RECORDS,
         ROUTES.REPORTS,
         ROUTES.SETTINGS,
-        ROUTES.USERS
+        ROUTES.USERS,
+        ROUTES.PAYMENTS,
+        ROUTES.TREATMENTS,
+        ROUTES.PROFILE
     ],
     dokter: [
         ROUTES.DASHBOARD,
         ROUTES.APPOINTMENTS,
         ROUTES.PATIENTS,
         ROUTES.MEDICAL_RECORDS,
-        ROUTES.REPORTS,
         ROUTES.PROFILE
     ],
     staf: [
         ROUTES.DASHBOARD,
         ROUTES.APPOINTMENTS,
         ROUTES.PATIENTS,
-        ROUTES.MEDICAL_RECORDS,
+        ROUTES.PAYMENTS,
+        ROUTES.TREATMENTS,
         ROUTES.PROFILE
     ]
 };
@@ -50,77 +48,93 @@ function isProtectedRoute(pathname: string): boolean {
 }
 
 function isAuthRoute(pathname: string): boolean {
-    return AUTH_ROUTES.some(route => pathname.startsWith(route));
+    return AUTH_ROUTES.some(route => pathname === route || pathname.startsWith(route + '/'));
 }
 
 function isPublicRoute(pathname: string): boolean {
-    return PUBLIC_ROUTES.some(route => pathname.startsWith(route));
+    return PUBLIC_ROUTES.some(route => pathname === route);
 }
 
-/**
- * Verify JWT token (ROBUST VERSION)
- * Menangani format Base64Url dan Padding dengan benar agar tidak error di atob()
- */
-function verifyToken(token: string): { valid: boolean; payload?: unknown } {
+function verifyToken(token: string): { valid: boolean; payload?: Record<string, unknown> } {
     try {
         const parts = token.split('.');
         if (parts.length !== 3) {
             return { valid: false };
         }
 
-        // 1. Handle Base64Url characters
+        // Handle Base64Url encoding
         const base64Url = parts[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        
+        // Add padding
+        const paddedBase64 = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
 
-        // 2. Add Padding if needed
-        const paddedBase64 = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
-
-        // 3. Decode & Parse
+        // Decode and parse
         const jsonPayload = atob(paddedBase64);
-        const payload = JSON.parse(jsonPayload);
+        const payload = JSON.parse(jsonPayload) as Record<string, unknown>;
 
-        // 4. Check Expiration
-        if (payload.exp && Date.now() >= payload.exp * 1000) {
+        // Check expiration
+        if (typeof payload.exp === 'number' && Date.now() >= payload.exp * 1000) {
             return { valid: false };
         }
 
         return { valid: true, payload };
     } catch (error) {
-        console.error(error)
+        console.error('Token verification error:', error);
         return { valid: false };
     }
 }
 
-function extractRoles(payload: unknown): string[] {
-    if (!payload || typeof payload !== "object") return [];
-
-    const obj = payload as Record<string, unknown>;
-
-    if (Array.isArray(obj["roles"])) {
-        return (obj["roles"] as unknown[]).map((r) =>
-            typeof r === "string"
-                ? r
-                : typeof r === "object" && r !== null && "name" in r
-                ? String((r as Record<string, unknown>)["name"])
-                : ""
-        ).filter(Boolean);
+function extractRoles(payload: Record<string, unknown>): string[] {
+    // Handle array of role objects
+    if (Array.isArray(payload.roles)) {
+        return payload.roles
+            .map((r) => {
+                if (typeof r === 'string') return r;
+                if (typeof r === 'object' && r !== null && 'name' in r) {
+                    return String((r as Record<string, unknown>).name);
+                }
+                return '';
+            })
+            .filter(Boolean);
     }
 
-    if (typeof obj["role"] === "string") {
-        return [obj["role"]];
+    // Handle single role string
+    if (typeof payload.role === 'string') {
+        return [payload.role];
     }
 
     return [];
 }
 
+function normalizeRoleName(role: string): string {
+    const normalized = role.toLowerCase().replace(/\s+/g, '_');
+    
+    // Map common variations
+    if (normalized.includes('kepala') || normalized.includes('klinik') || normalized.includes('clinic')) {
+        return 'kepala_klinik';
+    }
+    if (normalized.includes('dokter') || normalized.includes('doctor')) {
+        return 'dokter';
+    }
+    if (normalized.includes('staf') || normalized.includes('staff')) {
+        return 'staf';
+    }
+    
+    return normalized;
+}
+
 function hasRouteAccess(pathname: string, roles: string[]): boolean {
+    // Normalize role names
+    const normalizedRoles = roles.map(normalizeRoleName);
+
     // Kepala klinik has access to everything
-    if (roles.includes('kepala_klinik')) {
+    if (normalizedRoles.includes('kepala_klinik')) {
         return true;
     }
 
-    // Check each role
-    for (const role of roles) {
+    // Check each normalized role
+    for (const role of normalizedRoles) {
         const allowedRoutes = ROLE_ROUTES[role] || [];
         if (allowedRoutes.some(route => pathname.startsWith(route))) {
             return true;
@@ -131,10 +145,13 @@ function hasRouteAccess(pathname: string, roles: string[]): boolean {
 }
 
 function getDefaultRoute(roles: string[]): string {
-    if (roles.includes('kepala_klinik')) return '/dashboard';
-    if (roles.includes('dokter')) return '/dashboard';
-    if (roles.includes('staf')) return '/dashboard/appointments';
-    return '/dashboard';
+    const normalizedRoles = roles.map(normalizeRoleName);
+    
+    if (normalizedRoles.includes('kepala_klinik')) return ROUTES.DASHBOARD;
+    if (normalizedRoles.includes('dokter')) return ROUTES.DASHBOARD;
+    if (normalizedRoles.includes('staf')) return ROUTES.APPOINTMENTS;
+    
+    return ROUTES.DASHBOARD;
 }
 
 // ============================================
@@ -150,23 +167,23 @@ export function middleware(request: NextRequest) {
         pathname.startsWith('/api') ||
         pathname.includes('/static/') ||
         pathname.includes('/images/') ||
-        /\.(ico|png|jpg|jpeg|svg|css|js)$/.test(pathname)
+        pathname.match(/\.(ico|png|jpg|jpeg|svg|css|js|woff|woff2|ttf|eot)$/)
     ) {
         return NextResponse.next();
     }
 
-    // 2. Get token from cookies (Name must match useAuth.ts)
+    // 2. Get token from cookies - CRITICAL FIX
     const token = request.cookies.get('access_token')?.value;
 
-    // 3. Handle Public Routes (e.g. Landing Page)
+    // 3. Handle Public Routes (Landing page, etc)
     if (isPublicRoute(pathname)) {
         return NextResponse.next();
     }
 
-    // 4. HANDLE AUTH ROUTES (Login/Register)
+    // 4. Handle Auth Routes (Login page)
     if (isAuthRoute(pathname)) {
+        // If user has valid token, redirect to dashboard
         if (token) {
-            // If user is already logged in, redirect to their default dashboard
             const { valid, payload } = verifyToken(token);
 
             if (valid && payload) {
@@ -175,53 +192,46 @@ export function middleware(request: NextRequest) {
                 return NextResponse.redirect(new URL(redirectUrl, request.url));
             }
         }
-        // If not logged in, allow access to Login page
+        // No token or invalid token, allow access to login page
         return NextResponse.next();
     }
 
-    // 5. HANDLE PROTECTED ROUTES (Dashboard, etc.)
+    // 5. Handle Protected Routes
     if (isProtectedRoute(pathname)) {
-        // A. No Token -> Redirect to Login
+        // A. No token -> Redirect to login
         if (!token) {
             const loginUrl = new URL(ROUTES.LOGIN, request.url);
-            loginUrl.searchParams.set("redirect", pathname);
+            loginUrl.searchParams.set('redirect', pathname);
             return NextResponse.redirect(loginUrl);
         }
 
-        // B. Invalid/Expired Token -> Redirect to Login & Clear Cookie
+        // B. Verify token
         const { valid, payload } = verifyToken(token);
-        if (!valid) {
-            const response = NextResponse.redirect(new URL(ROUTES.LOGIN, request.url));
-            response.cookies.delete("access_token");
+
+        // Invalid/expired token -> Clear cookie and redirect to login
+        if (!valid || !payload) {
+            const loginUrl = new URL(ROUTES.LOGIN, request.url);
+            loginUrl.searchParams.set('redirect', pathname);
+            const response = NextResponse.redirect(loginUrl);
+            response.cookies.delete('access_token');
             return response;
         }
 
-        // C. Check Role Access
+        // C. Check role-based access
         const roles = extractRoles(payload);
+        
         if (!hasRouteAccess(pathname, roles)) {
             const defaultRoute = getDefaultRoute(roles);
             return NextResponse.redirect(new URL(defaultRoute, request.url));
         }
 
-        // D. Allow Access (Inject user info to headers)
+        // D. Allow access - Add user info to headers
         const requestHeaders = new Headers(request.headers);
-
-        if (payload && typeof payload === "object") {
-            const obj = payload as Record<string, unknown>;
-
-            const userId =
-                typeof obj["sub"] === "string"
-                    ? obj["sub"]
-                    : typeof obj["id"] === "string"
-                    ? obj["id"]
-                    : "";
-
-            requestHeaders.set("x-user-id", userId);
-        } else {
-            requestHeaders.set("x-user-id", "");
-        }
-
-        requestHeaders.set("x-user-roles", roles.join(","));
+        const userId = typeof payload.sub === 'string' ? payload.sub : 
+                      typeof payload.id === 'string' ? payload.id : '';
+        
+        requestHeaders.set('x-user-id', userId);
+        requestHeaders.set('x-user-roles', roles.join(','));
 
         return NextResponse.next({
             request: {
@@ -230,7 +240,7 @@ export function middleware(request: NextRequest) {
         });
     }
 
-    // Default: Allow other requests
+    // Default: Allow
     return NextResponse.next();
 }
 

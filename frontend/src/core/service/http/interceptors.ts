@@ -1,62 +1,102 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
-import { storageService } from '../cache/storage.service';
 import { API_CONFIG } from '../../config/api.config';
 
-// 1. Buat Interface untuk mendefinisikan bentuk item di dalam queue
 interface FailedRequestQueueItem {
-  resolve: (value: string) => void; // Kita resolve dengan token baru (string)
-  reject: (error: Error) => void;     // Kita reject dengan error
+  resolve: (value: string) => void;
+  reject: (error: Error) => void;
 }
 
-// Flag untuk mencegah multiple refresh call
 let isRefreshing = false;
-
-// 2. Ganti tipe 'any[]' dengan tipe Interface array
 let failedQueue: FailedRequestQueueItem[] = [];
 
 const processQueue = (error: Error | null, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
+    } else if (token) {
+      prom.resolve(token);
     } else {
-      // Pastikan token ada sebelum resolve, atau reject jika null (safety check)
-      if (token) {
-        prom.resolve(token);
-      } else {
-        prom.reject(new Error('Token refresh failed'));
-      }
+      prom.reject(new Error('Token refresh failed'));
     }
   });
   failedQueue = [];
+};
+
+// Helper to get token from cookie
+const getTokenFromCookie = (): string | null => {
+  if (typeof document === 'undefined') return null;
+  
+  const cookies = document.cookie.split(';');
+  const tokenCookie = cookies.find(c => c.trim().startsWith('access_token='));
+  
+  if (!tokenCookie) return null;
+  
+  const token = tokenCookie.split('=')[1];
+  return token ? decodeURIComponent(token) : null;
+};
+
+// Helper to get refresh token from localStorage
+const getRefreshToken = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('refresh_token');
+};
+
+// Helper to set token in cookie
+const setTokenInCookie = (token: string) => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax; Secure`;
+};
+
+// Helper to clear auth data
+const clearAuthData = () => {
+  if (typeof document !== 'undefined') {
+    document.cookie = 'access_token=; path=/; max-age=0';
+  }
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('refresh_token');
+  }
 };
 
 export const setupInterceptors = (instance: AxiosInstance) => {
   // ===== REQUEST INTERCEPTOR =====
   instance.interceptors.request.use(
     (config) => {
-      const token = storageService.getAccessToken();
-      if (token && !config.url?.includes('/auth/refresh')) {
+      // Don't add token to auth endpoints
+      if (config.url?.includes('/auth/login') || config.url?.includes('/auth/refresh')) {
+        return config;
+      }
+
+      const token = getTokenFromCookie();
+      if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
+      
       return config;
     },
     (error) => Promise.reject(error)
   );
 
-  // ===== RESPONSE INTERCEPTOR (REFRESH TOKEN) =====
+  // ===== RESPONSE INTERCEPTOR =====
   instance.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
       const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-      if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
-        if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
-          return Promise.reject(error);
-        }
+      // If no response or no config, reject immediately
+      if (!error.response || !originalRequest) {
+        return Promise.reject(error);
+      }
 
+      // Don't retry auth endpoints
+      if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/refresh')) {
+        return Promise.reject(error);
+      }
+
+      // Handle 401 Unauthorized
+      if (error.response.status === 401 && !originalRequest._retry) {
+        // If already refreshing, queue this request
         if (isRefreshing) {
-          // 3. Tambahkan Generic <string> pada Promise agar TypeScript tahu return-nya string
-          return new Promise<string>(function (resolve, reject) {
+          return new Promise<string>((resolve, reject) => {
             failedQueue.push({ resolve, reject });
           })
             .then((token) => {
@@ -71,34 +111,62 @@ export const setupInterceptors = (instance: AxiosInstance) => {
         originalRequest._retry = true;
         isRefreshing = true;
 
-        const refreshToken = storageService.getRefreshToken();
+        const refreshToken = getRefreshToken();
 
+        // No refresh token, clear auth and reject
         if (!refreshToken) {
           isRefreshing = false;
-          storageService.clearAuth();
+          clearAuthData();
+          
+          // Redirect to login if in browser
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          
           return Promise.reject(error);
         }
 
         try {
-          const response = await axios.post(`${API_CONFIG.baseURL}/auth/refresh`, {
-            refreshToken: refreshToken,
-          });
+          // Attempt to refresh token
+          const response = await axios.post(
+            `${API_CONFIG.baseURL}/auth/refresh`,
+            { refreshToken },
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            }
+          );
 
-          const newToken = response.data?.accessToken;
-          const newRefreshToken = response.data?.refreshToken;
+          const newToken = response.data?.accessToken || response.data?.token || response.data?.access_token;
+          const newRefreshToken = response.data?.refreshToken || response.data?.refresh_token;
 
-          if (!newToken) throw new Error('Failed to refresh token');
+          if (!newToken) {
+            throw new Error('No access token in refresh response');
+          }
 
-          storageService.setAccessToken(newToken);
-          if (newRefreshToken) storageService.setRefreshToken(newRefreshToken);
+          // Update tokens
+          setTokenInCookie(newToken);
+          if (newRefreshToken) {
+            localStorage.setItem('refresh_token', newRefreshToken);
+          }
 
+          // Process queued requests
           processQueue(null, newToken);
 
+          // Retry original request
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return instance(originalRequest);
+
         } catch (refreshError) {
+          // Refresh failed, clear auth and redirect
           processQueue(refreshError as Error, null);
-          storageService.clearAll();
+          clearAuthData();
+          
+          if (typeof window !== 'undefined') {
+            window.location.href = '/login';
+          }
+          
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
