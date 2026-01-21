@@ -21,6 +21,8 @@ import { DeleteUserService } from './applications/use-cases/delete-user.service'
 import { FindUsersService } from './applications/use-cases/find-users.service';
 import { ChangePasswordService } from './applications/use-cases/change-password.service';
 import { ResetPasswordService } from './applications/use-cases/reset-password.service';
+import { ForgotPasswordService } from './applications/use-cases/forgot-password.service';
+import { AccountActivationService } from './applications/use-cases/account-activation.service';
 
 // Domain Services
 import { UserValidationService } from './domains/services/user-validation.service';
@@ -37,10 +39,16 @@ import { APP_FILTER } from '@nestjs/core';
 import { UserExceptionFilter } from './interface/filters/user-exception.filter';
 import { ValidationExceptionFilter } from './interface/filters/validation-exception.filter';
 
+// import notification module
+import { NotificationsModule } from '../notifications/notifications.module';
+import { UserCreatedListener } from './infrastructures/listeners/user-created.listener';
+import { PasswordChangedListener } from './infrastructures/listeners/password-changed.listener';
+
 @Module({
   imports: [
     forwardRef(() => AuthModule),
     TypeOrmModule.forFeature([User, Role]),
+    NotificationsModule,
     EventEmitterModule.forRoot(),
   ],
   controllers: [UsersController],
@@ -55,6 +63,8 @@ import { ValidationExceptionFilter } from './interface/filters/validation-except
     FindUsersService,
     ChangePasswordService,
     ResetPasswordService,
+    ForgotPasswordService,
+    AccountActivationService,
 
     // Domain Services
     UserValidationService,
@@ -62,6 +72,10 @@ import { ValidationExceptionFilter } from './interface/filters/validation-except
 
     // Infrastructure
     UserRepository,
+
+    // Event Listeners
+    UserCreatedListener,
+    PasswordChangedListener,
 
     // Shared Services from Auth
     PasswordHasherService,

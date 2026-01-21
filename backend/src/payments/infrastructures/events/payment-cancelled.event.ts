@@ -9,6 +9,5 @@ export class PaymentCancelledEvent {
     public readonly cancelledAt: Date,
     public readonly reason?: string,
     public readonly medicalRecordId?: string, // Jika perlu revert status
-    public readonly shouldRefund?: boolean, // Jika ada proses refund
   ) {}
 }

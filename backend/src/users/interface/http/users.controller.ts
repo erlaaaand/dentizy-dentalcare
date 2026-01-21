@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   UseGuards,
-  ParseIntPipe,
   Query,
   HttpCode,
   HttpStatus,
@@ -42,6 +41,20 @@ import { PasswordChangeResponseDto } from '../../applications/dto/password-chang
 import { User } from '../../domains/entities/user.entity';
 import { CacheInterceptor, CacheTTL } from '@nestjs/cache-manager';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { AccountActivationService } from '../../applications/use-cases/account-activation.service';
+import {
+  RequestActivationDto,
+  VerifyActivationTokenDto,
+  ActivateAccountDto,
+  CheckActivationStatusDto,
+} from '../../applications/dto/account-activation.dto';
+import {
+  RequestActivationResponseDto,
+  VerifyActivationTokenResponseDto,
+  ActivateAccountResponseDto,
+  CheckActivationStatusResponseDto,
+} from '../../applications/dto/account-activation-response.dto';
+import { ForgotPasswordService } from '../../applications/use-cases/forgot-password.service';
 
 interface PaginationMeta {
   total: number;
@@ -88,7 +101,11 @@ interface TemporaryPasswordResponse {
   description: 'Role user tidak memiliki akses ke endpoint ini',
 })
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly forgotPasswordService: ForgotPasswordService,
+    private readonly accountActivationService: AccountActivationService,
+  ) {}
 
   @Post()
   @Roles(UserRole.KEPALA_KLINIK)
@@ -356,5 +373,126 @@ export class UsersController {
     @Param('id') id: string,
   ): Promise<TemporaryPasswordResponse> {
     return this.usersService.generateTemporaryPassword(id);
+  }
+
+  @Post('activation/check-status')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Cek status aktivasi akun',
+    description: 'Mengecek apakah akun pengguna telah diaktivasi atau belum',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status aktivasi akun berhasil diperiksa',
+    type: CheckActivationStatusResponseDto,
+  })
+  async checkActivationStatus(
+    @Body() dto: CheckActivationStatusDto,
+  ): Promise<CheckActivationStatusResponseDto> {
+    return this.accountActivationService.checkActivationStatus(
+      dto.usernameOrEmail,
+    );
+  }
+
+  /**
+   * Step 1: Request activation email (user clicks "Aktivasi Akun")
+   * Public endpoint
+   */
+  @Post('activation/request')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard) // Rate limiting
+  @ApiOperation({
+    summary: 'Request email aktivasi akun',
+    description:
+      'User klik tombol "Aktivasi Akun" → sistem kirim email dengan link aktivasi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email aktivasi berhasil dikirim',
+    type: RequestActivationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Akun sudah aktif atau tidak memiliki email',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User tidak ditemukan',
+  })
+  @ApiResponse({
+    status: 429,
+    description: 'Terlalu banyak request, coba lagi nanti',
+  })
+  async requestActivation(
+    @Body() dto: RequestActivationDto,
+  ): Promise<RequestActivationResponseDto> {
+    return this.accountActivationService.sendActivationEmail(
+      dto.usernameOrEmail,
+    );
+  }
+
+  @Post('activation/resend')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @ApiOperation({
+    summary: 'Kirim ulang email aktivasi',
+    description:
+      'Jika user tidak menerima email aktivasi, kirim ulang link aktivasi.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email aktivasi berhasil dikirim ulang',
+    type: RequestActivationResponseDto,
+  })
+  async resendActivation(
+    @Body() dto: RequestActivationDto,
+  ): Promise<RequestActivationResponseDto> {
+    return this.accountActivationService.resendActivationEmail(
+      dto.usernameOrEmail,
+    );
+  }
+
+  @Post('activation/verify-token')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verifikasi token aktivasi',
+    description:
+      'Verifikasi apakah token aktivasi masih valid (untuk validasi frontend sebelum user input password)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Status token',
+    type: VerifyActivationTokenResponseDto,
+  })
+  async verifyActivationToken(
+    @Body() dto: VerifyActivationTokenDto,
+  ): Promise<VerifyActivationTokenResponseDto> {
+    return this.accountActivationService.verifyActivationToken(dto.token);
+  }
+
+  @Post('activation/activate')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @ApiOperation({
+    summary: 'Aktivasi akun dengan password baru',
+    description:
+      'User set password baru untuk mengaktifkan akun. Setelah ini, user bisa login.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Akun berhasil diaktivasi',
+    type: ActivateAccountResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Token tidak valid, sudah kedaluwarsa, atau akun sudah aktif',
+  })
+  async activateAccount(
+    @Body() dto: ActivateAccountDto,
+  ): Promise<ActivateAccountResponseDto> {
+    return this.accountActivationService.activateAccount(
+      dto.token,
+      dto.newPassword,
+    );
   }
 }

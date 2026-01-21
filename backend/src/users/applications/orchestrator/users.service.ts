@@ -13,6 +13,7 @@ import { FindUsersQueryDto } from '../dto/find-users-query.dto';
 import { UserResponseDto } from '../dto/user-response.dto';
 import { PasswordChangeResponseDto } from '../dto/password-change-response.dto';
 import { User } from '../../../users/domains/entities/user.entity';
+import { ForgotPasswordService } from '../use-cases/forgot-password.service';
 
 interface UserListResponse {
   data: UserResponseDto[];
@@ -60,6 +61,7 @@ export class UsersService {
     private readonly findUsersService: FindUsersService,
     private readonly changePasswordService: ChangePasswordService,
     private readonly resetPasswordService: ResetPasswordService,
+    private readonly forgotPasswordService: ForgotPasswordService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
@@ -139,5 +141,31 @@ export class UsersService {
   async getRecentlyCreated(limit: number = 10): Promise<UserResponseDto[]> {
     this.logger.debug(`Getting recently created users (limit: ${limit})`);
     return this.findUsersService.getRecentlyCreated(limit);
+  }
+
+  async sendOTP(
+    emailOrUsername: string,
+  ): Promise<{ message: string; email: string; expiresInMinutes: number }> {
+    this.logger.debug(`Sending OTP to: ${emailOrUsername}`);
+    return this.forgotPasswordService.sendOTP(emailOrUsername);
+  }
+
+  async verifyOTP(
+    email: string,
+    otp: string,
+  ): Promise<{ valid: boolean; message: string; resetToken?: string }> {
+    this.logger.debug(`Verifying OTP for email: ${email}`);
+    return this.forgotPasswordService.verifyOTP(email, otp);
+  }
+
+  async resetPasswordWithToken(
+    resetToken: string,
+    newPassword: string,
+  ): Promise<{ message: string }> {
+    this.logger.debug(`Resetting password with token`);
+    return this.forgotPasswordService.resetPasswordWithToken(
+      resetToken,
+      newPassword,
+    );
   }
 }

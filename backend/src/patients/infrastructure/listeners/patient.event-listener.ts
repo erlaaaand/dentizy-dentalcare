@@ -11,13 +11,11 @@ export class PatientEventListener {
   @OnEvent('patient.created')
   handlePatientCreated(event: PatientCreatedEvent) {
     this.logger.log(`Patient created: ${event.patient.nama_lengkap}`);
-    // TODO: Kirim email, websocket, dashboard update
   }
 
   @OnEvent('patient.updated')
   handlePatientUpdated(event: PatientUpdatedEvent) {
     this.logger.log(`Patient updated: ID ${event.patientId}`);
-    // TODO: Update logs, notify front-end
   }
 
   @OnEvent('patient.deleted')
@@ -25,6 +23,5 @@ export class PatientEventListener {
     this.logger.log(
       `Patient deleted: ID ${event.patientId} (${event.patientName})`,
     );
-    // TODO: Cleanup, notify dashboard
   }
 }
