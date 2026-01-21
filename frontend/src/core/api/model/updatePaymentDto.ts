@@ -12,15 +12,10 @@ export interface UpdatePaymentDto {
   /** Tanggal pembayaran */
   tanggalPembayaran?: string;
   /**
-   * Total biaya sebelum diskon
+   * Total biaya
    * @minimum 0
    */
   totalBiaya?: number;
-  /**
-   * Total diskon
-   * @minimum 0
-   */
-  diskonTotal?: number;
   /**
    * Jumlah yang dibayarkan
    * @minimum 0

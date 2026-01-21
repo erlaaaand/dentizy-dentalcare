@@ -23,7 +23,7 @@ umur_min?: number;
 umur_max?: number;
 tanggal_daftar_dari?: string;
 tanggal_daftar_sampai?: string;
-doctor_id?: number;
+doctor_id?: string;
 /**
  * Hanya pasien aktif
  */

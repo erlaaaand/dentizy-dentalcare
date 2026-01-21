@@ -6,8 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface NotificationPatientDto {
-  id: string;
-  nama_lengkap: string;
-  email: string;
+export interface ActivateAccountResponseDto {
+  message: string;
+  username: string;
 }

@@ -21,8 +21,6 @@ export interface PaymentResponseDto {
   tanggalPembayaran: string;
   /** Total Biaya */
   totalBiaya: number;
-  /** Total Diskon */
-  diskonTotal: number;
   /** Total Akhir */
   totalAkhir: number;
   /** Jumlah yang Dibayar */

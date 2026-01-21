@@ -16,5 +16,5 @@ export interface UpdateUserDto {
   /** Password baru (kosongkan jika tidak ingin mengubah) */
   password?: string;
   /** Daftar ID role pengguna */
-  roles?: number[];
+  roles?: string[];
 }

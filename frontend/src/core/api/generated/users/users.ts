@@ -25,14 +25,22 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ActivateAccountDto,
+  ActivateAccountResponseDto,
   ChangePasswordDto,
+  CheckActivationStatusDto,
+  CheckActivationStatusResponseDto,
   CreateUserDto,
   PasswordChangeResponseDto,
+  RequestActivationDto,
+  RequestActivationResponseDto,
   ResetPasswordDto,
   UpdateUserDto,
   UserResponseDto,
   UsersControllerFindAllParams,
-  UsersControllerGetRecentUsersParams
+  UsersControllerGetRecentUsersParams,
+  VerifyActivationTokenDto,
+  VerifyActivationTokenResponseDto
 } from '../../model';
 
 import { customInstance } from '../../../service/http/axiosInstance';
@@ -1298,5 +1306,510 @@ export const useUsersControllerGenerateTempPassword = <TError = void,
         TContext
       > => {
       return useMutation(getUsersControllerGenerateTempPasswordMutationOptions(options), queryClient);
+    }
+    /**
+ * Mengecek apakah akun pengguna telah diaktivasi atau belum
+ * @summary Cek status aktivasi akun
+ */
+export type usersControllerCheckActivationStatusResponse200 = {
+  data: CheckActivationStatusResponseDto
+  status: 200
+}
+
+export type usersControllerCheckActivationStatusResponse401 = {
+  data: void
+  status: 401
+}
+
+export type usersControllerCheckActivationStatusResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type usersControllerCheckActivationStatusResponseSuccess = (usersControllerCheckActivationStatusResponse200) & {
+  headers: Headers;
+};
+export type usersControllerCheckActivationStatusResponseError = (usersControllerCheckActivationStatusResponse401 | usersControllerCheckActivationStatusResponse403) & {
+  headers: Headers;
+};
+
+export type usersControllerCheckActivationStatusResponse = (usersControllerCheckActivationStatusResponseSuccess | usersControllerCheckActivationStatusResponseError)
+
+export const getUsersControllerCheckActivationStatusUrl = () => {
+
+
+  
+
+  return `/users/activation/check-status`
+}
+
+export const usersControllerCheckActivationStatus = async (checkActivationStatusDto: CheckActivationStatusDto, options?: RequestInit): Promise<usersControllerCheckActivationStatusResponse> => {
+  
+  return customInstance<usersControllerCheckActivationStatusResponse>(getUsersControllerCheckActivationStatusUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      checkActivationStatusDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerCheckActivationStatusMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>, TError,{data: CheckActivationStatusDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>, TError,{data: CheckActivationStatusDto}, TContext> => {
+
+const mutationKey = ['usersControllerCheckActivationStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>, {data: CheckActivationStatusDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerCheckActivationStatus(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerCheckActivationStatusMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>>
+    export type UsersControllerCheckActivationStatusMutationBody = CheckActivationStatusDto
+    export type UsersControllerCheckActivationStatusMutationError = void
+
+    /**
+ * @summary Cek status aktivasi akun
+ */
+export const useUsersControllerCheckActivationStatus = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>, TError,{data: CheckActivationStatusDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerCheckActivationStatus>>,
+        TError,
+        {data: CheckActivationStatusDto},
+        TContext
+      > => {
+      return useMutation(getUsersControllerCheckActivationStatusMutationOptions(options), queryClient);
+    }
+    /**
+ * User klik tombol "Aktivasi Akun" → sistem kirim email dengan link aktivasi.
+ * @summary Request email aktivasi akun
+ */
+export type usersControllerRequestActivationResponse200 = {
+  data: RequestActivationResponseDto
+  status: 200
+}
+
+export type usersControllerRequestActivationResponse400 = {
+  data: void
+  status: 400
+}
+
+export type usersControllerRequestActivationResponse401 = {
+  data: void
+  status: 401
+}
+
+export type usersControllerRequestActivationResponse403 = {
+  data: void
+  status: 403
+}
+
+export type usersControllerRequestActivationResponse404 = {
+  data: void
+  status: 404
+}
+
+export type usersControllerRequestActivationResponse429 = {
+  data: void
+  status: 429
+}
+    
+export type usersControllerRequestActivationResponseSuccess = (usersControllerRequestActivationResponse200) & {
+  headers: Headers;
+};
+export type usersControllerRequestActivationResponseError = (usersControllerRequestActivationResponse400 | usersControllerRequestActivationResponse401 | usersControllerRequestActivationResponse403 | usersControllerRequestActivationResponse404 | usersControllerRequestActivationResponse429) & {
+  headers: Headers;
+};
+
+export type usersControllerRequestActivationResponse = (usersControllerRequestActivationResponseSuccess | usersControllerRequestActivationResponseError)
+
+export const getUsersControllerRequestActivationUrl = () => {
+
+
+  
+
+  return `/users/activation/request`
+}
+
+export const usersControllerRequestActivation = async (requestActivationDto: RequestActivationDto, options?: RequestInit): Promise<usersControllerRequestActivationResponse> => {
+  
+  return customInstance<usersControllerRequestActivationResponse>(getUsersControllerRequestActivationUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      requestActivationDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerRequestActivationMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRequestActivation>>, TError,{data: RequestActivationDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerRequestActivation>>, TError,{data: RequestActivationDto}, TContext> => {
+
+const mutationKey = ['usersControllerRequestActivation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerRequestActivation>>, {data: RequestActivationDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerRequestActivation(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerRequestActivationMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerRequestActivation>>>
+    export type UsersControllerRequestActivationMutationBody = RequestActivationDto
+    export type UsersControllerRequestActivationMutationError = void
+
+    /**
+ * @summary Request email aktivasi akun
+ */
+export const useUsersControllerRequestActivation = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerRequestActivation>>, TError,{data: RequestActivationDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerRequestActivation>>,
+        TError,
+        {data: RequestActivationDto},
+        TContext
+      > => {
+      return useMutation(getUsersControllerRequestActivationMutationOptions(options), queryClient);
+    }
+    /**
+ * Jika user tidak menerima email aktivasi, kirim ulang link aktivasi.
+ * @summary Kirim ulang email aktivasi
+ */
+export type usersControllerResendActivationResponse200 = {
+  data: RequestActivationResponseDto
+  status: 200
+}
+
+export type usersControllerResendActivationResponse401 = {
+  data: void
+  status: 401
+}
+
+export type usersControllerResendActivationResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type usersControllerResendActivationResponseSuccess = (usersControllerResendActivationResponse200) & {
+  headers: Headers;
+};
+export type usersControllerResendActivationResponseError = (usersControllerResendActivationResponse401 | usersControllerResendActivationResponse403) & {
+  headers: Headers;
+};
+
+export type usersControllerResendActivationResponse = (usersControllerResendActivationResponseSuccess | usersControllerResendActivationResponseError)
+
+export const getUsersControllerResendActivationUrl = () => {
+
+
+  
+
+  return `/users/activation/resend`
+}
+
+export const usersControllerResendActivation = async (requestActivationDto: RequestActivationDto, options?: RequestInit): Promise<usersControllerResendActivationResponse> => {
+  
+  return customInstance<usersControllerResendActivationResponse>(getUsersControllerResendActivationUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      requestActivationDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerResendActivationMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerResendActivation>>, TError,{data: RequestActivationDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerResendActivation>>, TError,{data: RequestActivationDto}, TContext> => {
+
+const mutationKey = ['usersControllerResendActivation'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerResendActivation>>, {data: RequestActivationDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerResendActivation(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerResendActivationMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerResendActivation>>>
+    export type UsersControllerResendActivationMutationBody = RequestActivationDto
+    export type UsersControllerResendActivationMutationError = void
+
+    /**
+ * @summary Kirim ulang email aktivasi
+ */
+export const useUsersControllerResendActivation = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerResendActivation>>, TError,{data: RequestActivationDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerResendActivation>>,
+        TError,
+        {data: RequestActivationDto},
+        TContext
+      > => {
+      return useMutation(getUsersControllerResendActivationMutationOptions(options), queryClient);
+    }
+    /**
+ * Verifikasi apakah token aktivasi masih valid (untuk validasi frontend sebelum user input password)
+ * @summary Verifikasi token aktivasi
+ */
+export type usersControllerVerifyActivationTokenResponse200 = {
+  data: VerifyActivationTokenResponseDto
+  status: 200
+}
+
+export type usersControllerVerifyActivationTokenResponse401 = {
+  data: void
+  status: 401
+}
+
+export type usersControllerVerifyActivationTokenResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type usersControllerVerifyActivationTokenResponseSuccess = (usersControllerVerifyActivationTokenResponse200) & {
+  headers: Headers;
+};
+export type usersControllerVerifyActivationTokenResponseError = (usersControllerVerifyActivationTokenResponse401 | usersControllerVerifyActivationTokenResponse403) & {
+  headers: Headers;
+};
+
+export type usersControllerVerifyActivationTokenResponse = (usersControllerVerifyActivationTokenResponseSuccess | usersControllerVerifyActivationTokenResponseError)
+
+export const getUsersControllerVerifyActivationTokenUrl = () => {
+
+
+  
+
+  return `/users/activation/verify-token`
+}
+
+export const usersControllerVerifyActivationToken = async (verifyActivationTokenDto: VerifyActivationTokenDto, options?: RequestInit): Promise<usersControllerVerifyActivationTokenResponse> => {
+  
+  return customInstance<usersControllerVerifyActivationTokenResponse>(getUsersControllerVerifyActivationTokenUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      verifyActivationTokenDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerVerifyActivationTokenMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>, TError,{data: VerifyActivationTokenDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>, TError,{data: VerifyActivationTokenDto}, TContext> => {
+
+const mutationKey = ['usersControllerVerifyActivationToken'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>, {data: VerifyActivationTokenDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerVerifyActivationToken(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerVerifyActivationTokenMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>>
+    export type UsersControllerVerifyActivationTokenMutationBody = VerifyActivationTokenDto
+    export type UsersControllerVerifyActivationTokenMutationError = void
+
+    /**
+ * @summary Verifikasi token aktivasi
+ */
+export const useUsersControllerVerifyActivationToken = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>, TError,{data: VerifyActivationTokenDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerVerifyActivationToken>>,
+        TError,
+        {data: VerifyActivationTokenDto},
+        TContext
+      > => {
+      return useMutation(getUsersControllerVerifyActivationTokenMutationOptions(options), queryClient);
+    }
+    /**
+ * User set password baru untuk mengaktifkan akun. Setelah ini, user bisa login.
+ * @summary Aktivasi akun dengan password baru
+ */
+export type usersControllerActivateAccountResponse200 = {
+  data: ActivateAccountResponseDto
+  status: 200
+}
+
+export type usersControllerActivateAccountResponse400 = {
+  data: void
+  status: 400
+}
+
+export type usersControllerActivateAccountResponse401 = {
+  data: void
+  status: 401
+}
+
+export type usersControllerActivateAccountResponse403 = {
+  data: void
+  status: 403
+}
+    
+export type usersControllerActivateAccountResponseSuccess = (usersControllerActivateAccountResponse200) & {
+  headers: Headers;
+};
+export type usersControllerActivateAccountResponseError = (usersControllerActivateAccountResponse400 | usersControllerActivateAccountResponse401 | usersControllerActivateAccountResponse403) & {
+  headers: Headers;
+};
+
+export type usersControllerActivateAccountResponse = (usersControllerActivateAccountResponseSuccess | usersControllerActivateAccountResponseError)
+
+export const getUsersControllerActivateAccountUrl = () => {
+
+
+  
+
+  return `/users/activation/activate`
+}
+
+export const usersControllerActivateAccount = async (activateAccountDto: ActivateAccountDto, options?: RequestInit): Promise<usersControllerActivateAccountResponse> => {
+  
+  return customInstance<usersControllerActivateAccountResponse>(getUsersControllerActivateAccountUrl(),
+  {      
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      activateAccountDto,)
+  }
+);}
+
+
+
+
+export const getUsersControllerActivateAccountMutationOptions = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerActivateAccount>>, TError,{data: ActivateAccountDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof usersControllerActivateAccount>>, TError,{data: ActivateAccountDto}, TContext> => {
+
+const mutationKey = ['usersControllerActivateAccount'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof usersControllerActivateAccount>>, {data: ActivateAccountDto}> = (props) => {
+          const {data} = props ?? {};
+
+          return  usersControllerActivateAccount(data,requestOptions)
+        }
+
+
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UsersControllerActivateAccountMutationResult = NonNullable<Awaited<ReturnType<typeof usersControllerActivateAccount>>>
+    export type UsersControllerActivateAccountMutationBody = ActivateAccountDto
+    export type UsersControllerActivateAccountMutationError = void
+
+    /**
+ * @summary Aktivasi akun dengan password baru
+ */
+export const useUsersControllerActivateAccount = <TError = void,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof usersControllerActivateAccount>>, TError,{data: ActivateAccountDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof usersControllerActivateAccount>>,
+        TError,
+        {data: ActivateAccountDto},
+        TContext
+      > => {
+      return useMutation(getUsersControllerActivateAccountMutationOptions(options), queryClient);
     }
     

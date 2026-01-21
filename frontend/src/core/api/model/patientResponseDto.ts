@@ -28,22 +28,8 @@ export interface PatientResponseDto {
   no_hp: string;
   /** Alamat lengkap pasien */
   alamat: string;
-  /** Riwayat alergi yang dimiliki pasien */
-  riwayat_alergi: string;
-  /** Riwayat penyakit pasien */
-  riwayat_penyakit: string;
   /** Catatan medis khusus yang perlu diperhatikan */
   catatan_khusus: string;
-  /** Golongan darah pasien */
-  golongan_darah: string;
-  /** Pekerjaan pasien */
-  pekerjaan: string;
-  /** Nama kontak darurat */
-  kontak_darurat_nama: string;
-  /** Nomor kontak darurat */
-  kontak_darurat_nomor: string;
-  /** Relasi kontak darurat dengan pasien */
-  kontak_darurat_relasi: string;
   /** Status apakah pasien terdaftar online */
   is_registered_online: boolean;
   /** Status aktif pasien */

@@ -12,7 +12,7 @@ function LazyImage({ src, alt, isActive }: LazyImageProps) {
   return (
     <div className="relative w-full h-full">
       {!isLoaded && (
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 animate-pulse" />
+        <div className="absolute inset-0 bg-linear-to-br from-gray-200 to-gray-300 animate-pulse" />
       )}
       <img
         src={src}
@@ -49,7 +49,7 @@ export function ImageCarousel({
     <div className="relative group">
       <div className="relative rounded-2xl overflow-hidden shadow-2xl">
         {/* Image Container */}
-        <div className="relative w-full h-[500px] overflow-hidden">
+        <div className="relative w-full h-[125] overflow-hidden">
           {images.map((img, idx) => (
             <div
               key={idx}
@@ -66,7 +66,7 @@ export function ImageCarousel({
           ))}
 
           {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/50 via-black/10 to-transparent" />
 
           {/* Navigation Buttons */}
           <button

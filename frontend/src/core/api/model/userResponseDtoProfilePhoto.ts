@@ -6,7 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface NotificationDoctorDto {
-  id: string;
-  nama_lengkap: string;
-}
+/**
+ * @nullable
+ */
+export type UserResponseDtoProfilePhoto = { [key: string]: unknown } | null | null;

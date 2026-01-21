@@ -6,9 +6,9 @@
  * OpenAPI spec version: 1.0
  */
 
-export type NotificationsControllerRetryAllFailedParams = {
-/**
- * Maksimal 50
- */
-limit?: number;
-};
+export interface VerifyActivationTokenResponseDto {
+  valid: boolean;
+  message: string;
+  userId?: string;
+  email?: string;
+}

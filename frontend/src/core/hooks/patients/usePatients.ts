@@ -1,140 +1,69 @@
-import { useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
-
-// API & Models
-import {
-  usePatientsControllerFindAll,
-  usePatientsControllerCreate,
+// src/hooks/usePatients.ts
+import { 
+  usePatientsControllerFindAll, 
+  usePatientsControllerCreate, 
+  usePatientsControllerFindOne,
   usePatientsControllerUpdate,
-  usePatientsControllerRemove,
-  getPatientsControllerFindAllQueryKey,
-} from '../../api/generated/patients/patients';
-import {
-  CreatePatientDto,
-  UpdatePatientDto,
-  PatientsControllerFindAllParams,
-} from '../../api/model';
+  usePatientsControllerRemove
+} from '.././../api/generated/patients/patients';
+import { PatientQueryParams } from '../../types/patients/patient.types';
+import { useQueryClient, keepPreviousData } from '@tanstack/react-query';
 
-// Hooks & Utils
-import { useToast } from '../toasts/useToast';
-import { useDebounce } from '../utils/useDebounce';
-import { usePagination } from '../utils/usePagination';
-import { ApiErrorResponse } from '../../types/api.types';
-
-export const usePatients = () => {
-  const queryClient = useQueryClient();
-  const { showSuccess, showError } = useToast();
-
-  // --- Local State untuk Filtering ---
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const debouncedSearch = useDebounce(searchQuery, 500);
-  const { page, limit, onPageChange, onLimitChange } = usePagination();
-
-  // --- Query Params Construction ---
-  const queryParams: PatientsControllerFindAllParams = {
-    page,
-    limit,
-    search: debouncedSearch || undefined,
-    sortBy: 'nama_lengkap',          // sesuai enum PatientsControllerFindAllSortBy
-    sortOrder: 'asc',        // sesuai enum PatientsControllerFindAllSortOrder
-    jenis_kelamin: 'L',   // sesuai enum PatientsControllerFindAllJenisKelamin
-    is_active: true,
-    // search?: string;
-    // page?: number;
-    // limit?: number;
-    // sortBy?: PatientsControllerFindAllSortBy;
-    // sortOrder?: PatientsControllerFindAllSortOrder;
-    // jenis_kelamin?: PatientsControllerFindAllJenisKelamin;
-    umur_min: 0,
-    umur_max: 100,
-    tanggal_daftar_dari: '',
-    tanggal_daftar_sampai: '',
-    // doctor_id?: ''
-    };
-
-  // --- 1. Fetch List Pasien ---
-  const {
-    data: patientsData,
-    isLoading,
-    isError,
-    refetch,
-  } = usePatientsControllerFindAll(queryParams, {
+// Hook untuk mengambil list pasien
+export const usePatients = (params?: PatientQueryParams) => {
+  return usePatientsControllerFindAll(params, {
     query: {
-      placeholderData: (prev) => prev, // Keep data saat loading page baru
-    },
+      placeholderData: keepPreviousData,
+    }
   });
+};
 
-  // --- 2. Create Patient ---
+// Hook untuk detail satu pasien
+export const usePatientDetail = (id: string) => {
+  return usePatientsControllerFindOne(id, {
+    query: {
+      enabled: !!id, // Hanya fetch jika ID ada
+    }
+  });
+};
+
+// Hook untuk mutasi (Create, Update, Delete)
+export const usePatientMutations = () => {
+  const queryClient = useQueryClient();
+
   const createMutation = usePatientsControllerCreate({
     mutation: {
       onSuccess: () => {
-        showSuccess('Pasien berhasil didaftarkan');
-        queryClient.invalidateQueries({ queryKey: getPatientsControllerFindAllQueryKey(queryParams) });
-      },
-      onError: (error: AxiosError<ApiErrorResponse>) => {
-        const msg = error.response?.data?.message || 'Gagal membuat pasien';
-        showError(Array.isArray(msg) ? msg[0] : msg);
-      },
-    },
+        // Refresh list pasien setelah create
+        queryClient.invalidateQueries({ queryKey: ['/patients'] });
+      }
+    }
   });
 
-  // --- 3. Update Patient ---
   const updateMutation = usePatientsControllerUpdate({
     mutation: {
-      onSuccess: () => {
-        showSuccess('Data pasien diperbarui');
-        queryClient.invalidateQueries({ queryKey: getPatientsControllerFindAllQueryKey(queryParams) });
-      },
-      onError: (error: AxiosError<ApiErrorResponse>) => {
-        const msg = error.response?.data?.message || 'Gagal update pasien';
-        showError(Array.isArray(msg) ? msg[0] : msg);
-      },
-    },
+      onSuccess: (_, variables) => {
+        // Refresh detail pasien dan list
+        queryClient.invalidateQueries({ queryKey: ['/patients'] });
+        queryClient.invalidateQueries({ queryKey: [`/patients/${variables.id}`] });
+      }
+    }
   });
 
-  // --- 4. Delete Patient ---
   const deleteMutation = usePatientsControllerRemove({
     mutation: {
       onSuccess: () => {
-        showSuccess('Pasien dihapus');
-        queryClient.invalidateQueries({ queryKey: getPatientsControllerFindAllQueryKey(queryParams) });
-      },
-      onError: (error: AxiosError<ApiErrorResponse>) => {
-        const msg = error.response?.data?.message || 'Gagal menghapus pasien';
-        showError(Array.isArray(msg) ? msg[0] : msg);
-      },
-    },
+        queryClient.invalidateQueries({ queryKey: ['/patients'] });
+      }
+    }
   });
 
   return {
-    // Data & Status
-    patients: patientsData?.data || [],
-    meta: patientsData?.data ? { ...patientsData.data } : null, // Asumsi ada meta pagination di response
-    isLoading,
-    isError,
-    
-    // Actions
-    refetch,
-    createPatient: (data: CreatePatientDto) => createMutation.mutate({ data }),
-    updatePatient: (id: string, data: UpdatePatientDto) => updateMutation.mutate({ id, data }),
-    deletePatient: (id: string) => deleteMutation.mutate({ id }),
-    
-    // State Management Helper
-    pagination: {
-      page,
-      limit,
-      onPageChange,
-      onLimitChange,
-    },
-    search: {
-      value: searchQuery,
-      onChange: setSearchQuery,
-    },
-    
-    // Loading States untuk Button
-    isCreating: createMutation.isPending,
-    isUpdating: updateMutation.isPending,
-    isDeleting: deleteMutation.isPending,
+    createPatient: createMutation.mutate,
+    createPending: createMutation.isPending,
+    updatePatient: updateMutation.mutate,
+    updatePending: updateMutation.isPending,
+    deletePatient: deleteMutation.mutate,
+    deletePending: deleteMutation.isPending,
   };
 };

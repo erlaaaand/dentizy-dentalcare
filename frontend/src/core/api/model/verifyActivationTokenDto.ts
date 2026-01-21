@@ -6,9 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export type NotificationsControllerGetFailedNotificationsParams = {
-/**
- * Maksimal 50
- */
-limit?: number;
-};
+export interface VerifyActivationTokenDto {
+  /** Token aktivasi dari email */
+  token: string;
+}
