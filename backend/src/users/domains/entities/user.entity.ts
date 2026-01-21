@@ -52,10 +52,10 @@ export class User {
   is_active: boolean;
 
   @DeleteDateColumn() // Fitur Soft Delete bawaan TypeORM
-  deleted_at: Date;
+  deleted_at: Date | null;
 
   @Column({ type: 'text', nullable: true })
-  profile_photo: string;
+  profile_photo: string | null;
 
   @ManyToMany(() => Role, (role) => role.users, {
     cascade: true,

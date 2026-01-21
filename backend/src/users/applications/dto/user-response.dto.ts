@@ -57,5 +57,5 @@ export class UserResponseDto {
 
   @ApiProperty({ required: false, nullable: true })
   @Expose()
-  profile_photo?: string;
+  profile_photo?: string | null;
 }

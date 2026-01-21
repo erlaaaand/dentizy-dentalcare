@@ -20,7 +20,7 @@ export class UserMapper {
         })) || [],
       created_at: user.created_at,
       updated_at: user.updated_at,
-      profile_photo: user.profile_photo,
+      profile_photo: user.profile_photo || undefined,
     };
   }
 

@@ -6,7 +6,7 @@ import { TokenService } from '../../../domains/services/token.service';
 import { AuthGuard } from '@nestjs/passport';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { User } from '../../../../users/domains/entities/user.entity';
-import { UserRole } from '../../../../roles/entities/role.entity';
+import { Role, UserRole } from '../../../../roles/entities/role.entity';
 import { LoginDto } from '../../../applications/dto/login.dto';
 import { VerifyTokenDto } from '../../../applications/dto/verify-token.dto';
 import { UpdateProfileDto } from '../../../applications/dto/update-profile.dto';
@@ -40,13 +40,20 @@ describe('AuthController', () => {
   // ======================
   // MOCK DATA
   // ======================
-  const mockUser: User = {
-    id: 1,
+  const mockUser: Partial<User> = {
+    id: '550e8400-e29b-41d4-a716-446655440000',
     username: 'erland',
     nama_lengkap: 'Erland Agsya',
-    password: 'hashed_password_string', // Penting untuk dites di getProfile
-    roles: [{ id: 1, name: UserRole.DOKTER, description: 'Dokter' }],
-  } as User;
+    email: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+    is_active: true,
+    deleted_at: null,
+    profile_photo: null,
+    password: 'hashed_password_string',
+    roles: [],
+    medical_records: [],
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
