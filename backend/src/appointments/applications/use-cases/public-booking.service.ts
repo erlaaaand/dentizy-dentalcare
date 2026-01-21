@@ -64,12 +64,9 @@ export class PublicBookingService {
           email: dto.email,
         };
 
-        // Panggil PatientCreationService (sudah handle RM Generator & Retry)
         const newPatient =
           await this.patientCreationService.execute(newPatientDto);
 
-        // UPDATE PENTING: Set status ke non-aktif & flag online
-        // Kita lakukan update manual karena defaultnya active
         await this.patientRepository.update(newPatient.id, {
           is_active: false,
           is_registered_online: true,

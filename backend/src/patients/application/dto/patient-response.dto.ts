@@ -3,7 +3,10 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Gender } from '../../domains/entities/patient.entity';
 
 export class PatientResponseDto {
-  @ApiProperty({ description: 'ID unik pasien', example: 101 })
+  @ApiProperty({
+    description: 'ID unik pasien',
+    example: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
+  })
   @Expose()
   id: string;
 

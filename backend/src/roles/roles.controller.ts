@@ -1,20 +1,13 @@
 import {
   Controller,
   Get,
-  Post,
-  Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
   ParseIntPipe,
-  ValidationPipe,
   UseInterceptors,
   ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { RolesService } from './roles.service';
-import { CreateRoleDto } from './dto/create-role.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/interface/guards/roles.guard';
 import { Roles } from '../auth/interface/decorators/roles.decorator';
@@ -29,7 +22,7 @@ import {
 @ApiTags('Roles')
 @ApiBearerAuth('access-token')
 @Controller('roles')
-@UseGuards(AuthGuard('jwt'), RolesGuard) // ✅ KRITIS: Protect roles endpoint
+@UseGuards(AuthGuard('jwt'), RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiUnauthorizedResponse({ description: 'Token tidak valid atau kadaluarsa' })
 @ApiForbiddenResponse({
@@ -39,7 +32,7 @@ export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
   @Get()
-  @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK) // Staf perlu lihat roles untuk assign ke user
+  @Roles(UserRole.STAF, UserRole.KEPALA_KLINIK)
   findAll() {
     return this.rolesService.findAll();
   }
