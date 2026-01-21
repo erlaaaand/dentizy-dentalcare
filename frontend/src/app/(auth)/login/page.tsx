@@ -35,17 +35,17 @@ export default function LoginPage() {
         <div className="flex flex-col gap-2 text-center">
           <h1 className="text-2xl font-bold">Login ke Sistem</h1>
           <p className="text-balance text-sm text-muted-foreground">
-            Masukkan email dan password untuk melanjutkan
+            Masukkan username dan password untuk melanjutkan
           </p>
         </div>
         
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="username">Username</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="nama@klinik.com"
+              id="username"
+              type="username"
+              placeholder="user_name"
               required
               disabled={isLoginPending}
               value={formData.username}

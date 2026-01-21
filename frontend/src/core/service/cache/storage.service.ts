@@ -1,7 +1,7 @@
 // frontend/src/core/services/storage/storage.service.ts
 
 import { AUTH_CONFIG } from '../../config/auth.config';
-import type { AuthUser } from '../../types/auth-user.types';
+import type { AuthState } from '../../types/auth/auth.types';
 
 class StorageService {
   private safeParse<T>(value: string | null): T | null {
@@ -39,7 +39,7 @@ class StorageService {
   }
 
   // ========= USER =========
-  setUser(user: AuthUser): void {
+  setUser(user: AuthState): void {
     if (!user) {
       localStorage.removeItem(AUTH_CONFIG.USER_KEY);
       return;
@@ -47,8 +47,8 @@ class StorageService {
     localStorage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(user));
   }
 
-  getUser(): AuthUser | null {
-    return this.safeParse<AuthUser>(
+  getUser(): AuthState | null {
+    return this.safeParse<AuthState>(
       localStorage.getItem(AUTH_CONFIG.USER_KEY)
     );
   }
