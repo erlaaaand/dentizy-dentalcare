@@ -1,7 +1,6 @@
 import {
   IsArray,
   IsEmail,
-  IsNumber,
   IsOptional,
   IsString,
   MinLength,
@@ -59,11 +58,11 @@ export class UpdateUserDto {
   @ApiProperty({
     required: false,
     description: 'Daftar ID role pengguna',
-    example: [1, 2],
-    type: [Number],
+    example: ['UUID-role-lain'],
+    type: [String],
   })
   @IsOptional()
   @IsArray({ message: 'Roles harus berupa array' })
-  @IsNumber({}, { each: true, message: 'Setiap role harus berupa angka (ID)' })
+  @IsString({ each: true, message: 'Setiap role harus berupa teks' })
   roles?: string[];
 }
