@@ -2,10 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { ROUTES, PROTECTED_ROUTES } from './core/constants/routes.constants';
 
-// ============================================
-// CONFIGURATION
-// ============================================
-
 const AUTH_ROUTES = [ROUTES.LOGIN];
 const PUBLIC_ROUTES = [ROUTES.HOME];
 
@@ -39,10 +35,6 @@ const ROLE_ROUTES: Record<string, string[]> = {
     ]
 };
 
-// ============================================
-// UTILITY FUNCTIONS
-// ============================================
-
 function isProtectedRoute(pathname: string): boolean {
     return PROTECTED_ROUTES.some(route => pathname.startsWith(route));
 }
@@ -62,18 +54,13 @@ function verifyToken(token: string): { valid: boolean; payload?: Record<string, 
             return { valid: false };
         }
 
-        // Handle Base64Url encoding
         const base64Url = parts[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        
-        // Add padding
         const paddedBase64 = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
 
-        // Decode and parse
         const jsonPayload = atob(paddedBase64);
         const payload = JSON.parse(jsonPayload) as Record<string, unknown>;
 
-        // Check expiration
         if (typeof payload.exp === 'number' && Date.now() >= payload.exp * 1000) {
             return { valid: false };
         }
@@ -86,7 +73,6 @@ function verifyToken(token: string): { valid: boolean; payload?: Record<string, 
 }
 
 function extractRoles(payload: Record<string, unknown>): string[] {
-    // Handle array of role objects
     if (Array.isArray(payload.roles)) {
         return payload.roles
             .map((r) => {
@@ -99,7 +85,6 @@ function extractRoles(payload: Record<string, unknown>): string[] {
             .filter(Boolean);
     }
 
-    // Handle single role string
     if (typeof payload.role === 'string') {
         return [payload.role];
     }
@@ -110,7 +95,6 @@ function extractRoles(payload: Record<string, unknown>): string[] {
 function normalizeRoleName(role: string): string {
     const normalized = role.toLowerCase().replace(/\s+/g, '_');
     
-    // Map common variations
     if (normalized.includes('kepala') || normalized.includes('klinik') || normalized.includes('clinic')) {
         return 'kepala_klinik';
     }
@@ -125,15 +109,12 @@ function normalizeRoleName(role: string): string {
 }
 
 function hasRouteAccess(pathname: string, roles: string[]): boolean {
-    // Normalize role names
     const normalizedRoles = roles.map(normalizeRoleName);
 
-    // Kepala klinik has access to everything
     if (normalizedRoles.includes('kepala_klinik')) {
         return true;
     }
 
-    // Check each normalized role
     for (const role of normalizedRoles) {
         const allowedRoutes = ROLE_ROUTES[role] || [];
         if (allowedRoutes.some(route => pathname.startsWith(route))) {
@@ -154,14 +135,9 @@ function getDefaultRoute(roles: string[]): string {
     return ROUTES.DASHBOARD;
 }
 
-// ============================================
-// MIDDLEWARE FUNCTION
-// ============================================
-
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // 1. Skip static files and API routes
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api') ||
@@ -172,17 +148,13 @@ export function middleware(request: NextRequest) {
         return NextResponse.next();
     }
 
-    // 2. Get token from cookies - CRITICAL FIX
     const token = request.cookies.get('access_token')?.value;
 
-    // 3. Handle Public Routes (Landing page, etc)
     if (isPublicRoute(pathname)) {
         return NextResponse.next();
     }
 
-    // 4. Handle Auth Routes (Login page)
     if (isAuthRoute(pathname)) {
-        // If user has valid token, redirect to dashboard
         if (token) {
             const { valid, payload } = verifyToken(token);
 
@@ -192,23 +164,18 @@ export function middleware(request: NextRequest) {
                 return NextResponse.redirect(new URL(redirectUrl, request.url));
             }
         }
-        // No token or invalid token, allow access to login page
         return NextResponse.next();
     }
 
-    // 5. Handle Protected Routes
     if (isProtectedRoute(pathname)) {
-        // A. No token -> Redirect to login
         if (!token) {
             const loginUrl = new URL(ROUTES.LOGIN, request.url);
             loginUrl.searchParams.set('redirect', pathname);
             return NextResponse.redirect(loginUrl);
         }
 
-        // B. Verify token
         const { valid, payload } = verifyToken(token);
 
-        // Invalid/expired token -> Clear cookie and redirect to login
         if (!valid || !payload) {
             const loginUrl = new URL(ROUTES.LOGIN, request.url);
             loginUrl.searchParams.set('redirect', pathname);
@@ -217,7 +184,6 @@ export function middleware(request: NextRequest) {
             return response;
         }
 
-        // C. Check role-based access
         const roles = extractRoles(payload);
         
         if (!hasRouteAccess(pathname, roles)) {
@@ -225,7 +191,6 @@ export function middleware(request: NextRequest) {
             return NextResponse.redirect(new URL(defaultRoute, request.url));
         }
 
-        // D. Allow access - Add user info to headers
         const requestHeaders = new Headers(request.headers);
         const userId = typeof payload.sub === 'string' ? payload.sub : 
                       typeof payload.id === 'string' ? payload.id : '';
@@ -240,7 +205,6 @@ export function middleware(request: NextRequest) {
         });
     }
 
-    // Default: Allow
     return NextResponse.next();
 }
 

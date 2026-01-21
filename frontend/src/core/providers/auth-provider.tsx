@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
+import React, { createContext, useContext, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -22,11 +22,15 @@ interface AuthContextType {
 }
 
 interface LoginResponse {
+  access_token?: string;
   accessToken?: string;
   token?: string;
-  access_token?: string;
-  refreshToken?: string;
-  refresh_token?: string;
+  user?: {
+    id: string;
+    username: string;
+    nama_lengkap: string;
+    roles: string[];
+  };
 }
 
 interface ApiError {
@@ -39,17 +43,39 @@ interface ApiError {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const isClient = typeof window !== 'undefined';
+
+function isUserResponseDto(data: unknown): data is UserResponseDto {
+  if (!data || typeof data !== 'object') return false;
+  
+  const obj = data as Record<string, unknown>;
+  
+  return (
+    typeof obj.id === 'string' &&
+    typeof obj.username === 'string' &&
+    typeof obj.nama_lengkap === 'string' &&
+    Array.isArray(obj.roles) &&
+    typeof obj.created_at === 'string' &&
+    typeof obj.updated_at === 'string'
+  );
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isClient, setIsClient] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const loginAttemptRef = useRef(false);
+  const mountedRef = useRef(false);
+  const hasTokenRef = useRef(false);
 
+  // Check if we have a token
   useEffect(() => {
-    setIsClient(true);
+    if (isClient) {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(c => c.trim().startsWith('access_token='));
+      hasTokenRef.current = !!tokenCookie;
+    }
   }, []);
 
-  // Fetch User Profile
   const { 
     data: userProfileResponse, 
     isLoading: isUserLoading,
@@ -57,89 +83,102 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isError
   } = useAuthControllerGetProfile({
     query: {
-      retry: false,
+      retry: 1, // Kurangi retry
+      retryDelay: 1000,
       staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
-      enabled: isClient, // Only fetch when client-side
+      refetchOnMount: false, // Jangan refetch otomatis
+      enabled: isClient && hasTokenRef.current, // Hanya fetch jika ada token
     }
   });
 
-  // Extract user data safely - Handle both direct data and nested response
-  const user = React.useMemo(() => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  const user = useMemo(() => {
     if (!userProfileResponse) return null;
     
-    // Check if data is nested (Orval response format)
     if ('data' in userProfileResponse && userProfileResponse.data) {
-      return userProfileResponse.data as UserResponseDto;
+      const userData = userProfileResponse.data;
+      if (isUserResponseDto(userData)) {
+        return userData;
+      }
     }
     
-    // Direct data format
-    return userProfileResponse as UserResponseDto;
+    if (isUserResponseDto(userProfileResponse)) {
+      return userProfileResponse;
+    }
+    
+    return null;
   }, [userProfileResponse]);
 
-  // Handle profile fetch error (likely token expired)
   useEffect(() => {
-    if (isError && isClient) {
-      // Token might be expired, clear auth state
+    if (isError && isClient && hasTokenRef.current) {
+      console.log('❌ Token invalid, clearing auth');
       document.cookie = "access_token=; path=/; max-age=0";
+      hasTokenRef.current = false;
       queryClient.clear();
     }
-  }, [isError, isClient, queryClient]);
+  }, [isError, queryClient]);
 
-  // Mark as initialized once we've attempted to fetch user
-  useEffect(() => {
-    if (isClient && !isUserLoading) {
-      setIsInitialized(true);
-    }
-  }, [isClient, isUserLoading]);
-
-  // Login Mutation
   const { mutate: loginMutate, isPending: isLoginPending } = useAuthControllerLogin({
     mutation: {
       onSuccess: (response) => {
+        loginAttemptRef.current = false;
+        
+        console.log('🎉 Login Response:', response);
+        
         try {
-          // Handle various response formats
-          let responseData;
+          let token: string | undefined;
           
-          if ('data' in response && response.data) {
-            responseData = response.data as unknown as LoginResponse;
-          } else {
-            responseData = response as unknown as LoginResponse;
+          // Parse response yang dari backend
+          if (response && typeof response === 'object') {
+            const res = response as LoginResponse;
+            
+            // Backend mengirim access_token (underscore)
+            token = res.access_token || res.accessToken || res.token;
           }
 
-          const token = responseData.accessToken || responseData.token || responseData.access_token;
-          const refreshToken = responseData.refreshToken || responseData.refresh_token;
+          console.log('🔑 Token extracted:', token ? '***EXISTS***' : 'NOT FOUND');
 
           if (token) {
-            // Set access token cookie
-            document.cookie = `access_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+            // Set cookie dengan secure flags
+            const cookieString = `access_token=${token}; path=/; max-age=86400; SameSite=Lax${window.location.protocol === 'https:' ? '; Secure' : ''}`;
+            document.cookie = cookieString;
+            hasTokenRef.current = true;
             
-            // Store refresh token if available
-            if (refreshToken) {
-              localStorage.setItem('refresh_token', refreshToken);
-            }
+            console.log('✅ Cookie set:', document.cookie.includes('access_token'));
             
             toast.success("Login berhasil! Mengalihkan...");
             
-            // Invalidate and refetch user profile
-            queryClient.invalidateQueries({ queryKey: ['/auth/profile'] });
-            queryClient.invalidateQueries({ queryKey: ['/auth/me'] });
+            // Clear semua cache
+            queryClient.clear();
             
-            // Wait a bit for cookie to be set, then redirect
+            // Wait sebentar untuk cookie ter-set
             setTimeout(() => {
-              router.push(ROUTES.DASHBOARD);
-              router.refresh();
-            }, 300);
+              if (mountedRef.current) {
+                console.log('🚀 Redirecting to dashboard...');
+                router.push(ROUTES.DASHBOARD);
+                router.refresh();
+              }
+            }, 500);
           } else {
+            console.error('❌ No token in response:', response);
             toast.error("Token tidak ditemukan dalam respons server.");
           }
         } catch (err) {
-          console.error('Login success handler error:', err);
+          console.error('❌ Login success handler error:', err);
           toast.error("Terjadi kesalahan saat memproses login.");
         }
       },
       onError: (error: unknown) => {
-        console.error('Login error:', error);
+        loginAttemptRef.current = false;
+        console.error('❌ Login error:', error);
+        
         const apiError = error as ApiError;
         const message = apiError.response?.data?.message;
         
@@ -152,45 +191,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  // Login function
   const login = useCallback((data: LoginDto) => {
+    if (loginAttemptRef.current) {
+      console.log('⏳ Login already in progress');
+      return;
+    }
+    
+    console.log('🔐 Starting login...');
+    loginAttemptRef.current = true;
     loginMutate({ data });
   }, [loginMutate]);
 
-  // Refresh user function
   const refreshUser = useCallback(() => {
-    refetchProfile();
+    if (hasTokenRef.current) {
+      refetchProfile();
+    }
   }, [refetchProfile]);
 
-  // Logout function
   const logout = useCallback(() => {
-    // Clear cookies
     document.cookie = "access_token=; path=/; max-age=0";
-    
-    // Clear local storage
     localStorage.removeItem('refresh_token');
-    
-    // Clear all query cache
+    hasTokenRef.current = false;
     queryClient.clear();
-    
+    loginAttemptRef.current = false;
     toast.info("Anda telah logout.");
-    
-    // Redirect to login
     router.replace(ROUTES.LOGIN);
     router.refresh();
   }, [queryClient, router]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     isAuthenticated: !!user,
-    isLoading: isUserLoading || !isInitialized,
+    isLoading: isUserLoading && hasTokenRef.current, // Loading hanya jika ada token
     isLoginPending,
     login,
     logout,
     refreshUser
-  };
+  }), [user, isUserLoading, isLoginPending, login, logout, refreshUser]);
 
-  // Prevent hydration mismatch by not rendering until client-side
   if (!isClient) {
     return null;
   }

@@ -21,7 +21,6 @@ export default function LoginPage() {
     password: "",
   });
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       const targetUrl = redirectUrl || ROUTES.DASHBOARD;
@@ -32,12 +31,14 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!formData.username || !formData.password) {
       return;
     }
     
-    // Call login function
+    if (isLoginPending) {
+      return;
+    }
+    
     login(formData);
   };
 
