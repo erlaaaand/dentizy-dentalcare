@@ -1,5 +1,5 @@
 // src/components/toast/toast.store.ts
-import { ToastMessage, ToastType } from './toast.types';
+import { ToastMessage, ToastType } from '../../types/toasts/toast.types';
 
 // Tipe Listener (Fungsi yang akan dijalankan saat data berubah)
 type Listener = (toasts: ToastMessage[]) => void;

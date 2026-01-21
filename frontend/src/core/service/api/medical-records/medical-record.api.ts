@@ -6,7 +6,7 @@ import {
   medicalRecordsControllerUpdate,
   medicalRecordsControllerFindByAppointmentId
 } from '../../../api/generated/medical-records/medical-records';
-import { CreateMedicalRecordDto, UpdateMedicalRecordDto, MedicalRecordSearchParams } from '../../../types/medical-record/medical-record.types';
+import { CreateMedicalRecordDto, UpdateMedicalRecordDto, MedicalRecordSearchParams } from '../../../types/medical-records/medical-record.types';
 
 export const MedicalRecordApi = {
   findAll: async (params?: MedicalRecordSearchParams) => {

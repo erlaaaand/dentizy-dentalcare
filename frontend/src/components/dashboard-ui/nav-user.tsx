@@ -29,6 +29,8 @@ import {
 import Link from "next/dist/client/link"
 import { ROUTES } from '../../core/constants/routes.constants';
 
+import { useAuth } from "@/src/core/providers/auth-provider";
+
 export function NavUser({
   user,
 }: {
@@ -39,6 +41,7 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
+  const { logout } = useAuth();
 
   return (
     <SidebarMenu>
@@ -92,7 +95,7 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => logout()}>
               <Link href="#" className="flex w-full items-center gap-2">
                 <IconLogout />
                 Log out

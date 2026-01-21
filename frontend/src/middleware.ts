@@ -1,21 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { ROUTES } from './core/constants/routes.constants';
+import { ROUTES, PROTECTED_ROUTES } from './core/constants/routes.constants';
 
 // ============================================
 // CONFIGURATION
 // ============================================
-
-// Routes that require authentication
-const PROTECTED_ROUTES = [
-    // '/dashboard',
-    ROUTES.APPOINTMENTS,
-    ROUTES.PATIENTS,
-    ROUTES.MEDICAL_RECORDS,
-    ROUTES.REPORTS,
-    ROUTES.SETTINGS,
-    ROUTES.PROFILE
-];
 
 // Routes that should redirect to dashboard if already authenticated
 const AUTH_ROUTES = [ROUTES.LOGIN];
@@ -27,7 +16,7 @@ const PUBLIC_ROUTES = [ROUTES.HOME];
 // Role-based access control
 const ROLE_ROUTES: Record<string, string[]> = {
     kepala_klinik: [
-        // ROUTES.DASHBOARD,
+        ROUTES.DASHBOARD,
         ROUTES.APPOINTMENTS,
         ROUTES.PATIENTS,
         ROUTES.MEDICAL_RECORDS,
@@ -36,7 +25,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
         ROUTES.USERS
     ],
     dokter: [
-        // ROUTES.DASHBOARD,
+        ROUTES.DASHBOARD,
         ROUTES.APPOINTMENTS,
         ROUTES.PATIENTS,
         ROUTES.MEDICAL_RECORDS,
@@ -44,7 +33,7 @@ const ROLE_ROUTES: Record<string, string[]> = {
         ROUTES.PROFILE
     ],
     staf: [
-        // ROUTES.DASHBOARD,
+        ROUTES.DASHBOARD,
         ROUTES.APPOINTMENTS,
         ROUTES.PATIENTS,
         ROUTES.MEDICAL_RECORDS,

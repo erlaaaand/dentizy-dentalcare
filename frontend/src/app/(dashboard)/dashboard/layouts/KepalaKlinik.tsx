@@ -8,7 +8,7 @@ import {
   SidebarProvider,
 } from "@/src/components/dashboard-ui/components/sidebar"
 
-import data from "../data.json"
+// Pastikan path import data ini
 
 export function KepalaKlinikDashboard() {
   return (
@@ -20,8 +20,13 @@ export function KepalaKlinikDashboard() {
         } as React.CSSProperties
       }
     >
+      {/* 1. Sidebar Navigasi (Sudah otomatis handle User & Logout dari fix sebelumnya) */}
       <AppSidebar variant="inset" />
+      
+      {/* 2. Area Konten Utama */}
       <SidebarInset>
+        
+        {/* Header Atas (Breadcrumb, Trigger Sidebar) */}
         <SiteHeader />
         <div className="flex flex-1 flex-col">
           <div className="@container/main flex flex-1 flex-col gap-2">
@@ -30,10 +35,11 @@ export function KepalaKlinikDashboard() {
               <div className="px-4 lg:px-6">
                 <ChartAreaInteractive />
               </div>
-              <DataTable data={data} />
+              <DataTable data={[]} />
             </div>
           </div>
         </div>
+
       </SidebarInset>
     </SidebarProvider>
   )

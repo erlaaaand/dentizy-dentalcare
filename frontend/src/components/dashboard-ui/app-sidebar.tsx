@@ -2,22 +2,10 @@
 
 import * as React from "react"
 import {
-  IconChartBar,
-  IconLayoutDashboard,
-  IconStethoscope,
-  IconFileText,
-  IconHelp,
   IconInnerShadowTop,
-  IconCalendar,
-  IconCreditCard,
-  IconSearch,
-  IconSettings,
-  IconUsers,
-  IconHeartbeat
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/src/components/dashboard-ui/nav-main"
-import { NavSecondary } from "@/src/components/dashboard-ui/nav-secondary"
 import { NavUser } from "@/src/components/dashboard-ui/nav-user"
 import {
   Sidebar,
@@ -29,76 +17,47 @@ import {
   SidebarMenuItem,
 } from "@/src/components/dashboard-ui/components/sidebar"
 
-import { ROUTES } from "@/src/core/constants/routes.constants";
+import { PROTECTED_ROUTES } from "@/src/core/constants/routes.constants"
+import { useUser } from "@/src/core/hooks/auth/useAuth" // Pastikan path hook useAuth sesuai
+import { UserResponseDto } from "@/src/core/api/model" // Import Type DTO
 
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Dashboard",
-      url: ROUTES.DASHBOARD,
-      icon: IconLayoutDashboard,
-    },
-    {
-      title: "Appointments",
-      url: ROUTES.APPOINTMENTS,
-      icon: IconCalendar,
-    },
-    {
-      title: "Patients",
-      url: ROUTES.PATIENTS,
-      icon: IconStethoscope,
-    },
-    {
-      title: "Medical Records",
-      url: ROUTES.MEDICAL_RECORDS,
-      icon: IconFileText,
-    },
-    {
-      title: "User Management",
-      url: ROUTES.USERS,
-      icon: IconUsers,
-    },
-    {
-      title: "Reports and Analytics",
-      url: ROUTES.REPORTS,
-      icon: IconChartBar,
-    },
-    {
-      title: "Payments",
-      url: ROUTES.PAYMENTS,
-      icon: IconCreditCard,
-    },
-    {
-      title: "Treatments",
-      url: ROUTES.TREATMENTS,
-      icon: IconHeartbeat,
-    }
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-}
+import { getRoleKey, NAV_ITEMS } from "@/src/core/constants/navigation.constants"; // Sesuaikan path
+
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // 3. Integrasi Hook Backend
+  const { data: apiResponse, isLoading } = useUser();
+
+  // 4. Casting Data & Filtering Logic
+  const userData = React.useMemo(() => {
+    return apiResponse?.data as UserResponseDto | undefined;
+  }, [apiResponse]);
+
+  const userRole = React.useMemo(() => {
+    if (!userData?.roles) return null;
+    return getRoleKey(userData.roles[0].name);
+  }, [userData]);
+
+  // Filter Navigasi Utama berdasarkan Role
+  const filteredNavMain = React.useMemo(() => {
+    if (!userRole) return [];
+    return NAV_ITEMS.filter(item => item.roles.includes(userRole));
+  }, [userRole]);
+
+  // Siapkan objek user untuk komponen NavUser
+  const userForNav = React.useMemo(() => ({
+    name: userData?.nama_lengkap || "User",
+    email: userData?.email || "user@dentizy.com",
+    avatar: typeof userData?.profile_photo === "string"
+      ? userData.profile_photo
+      : "/avatars/default.jpg",
+  }), [userData]);
+
+
+  if (isLoading) {
+    return <Sidebar collapsible="offcanvas" {...props}><div className="p-4 text-sm">Memuat menu...</div></Sidebar>
+  }
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -108,7 +67,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
+              <a href={PROTECTED_ROUTES[0]} className="flex items-center gap-2">
                 <IconInnerShadowTop className="!size-5" />
                 <span className="text-base font-semibold">Dentizy Dentalcare</span>
               </a>
@@ -117,11 +76,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        {/* Menggunakan data yang sudah difilter (filteredNavMain) */}
+        <NavMain items={filteredNavMain} />
+        {/* <NavSecondary items={NAV_ITEMS} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        {/* Menggunakan data user asli dari backend */}
+        <NavUser user={userForNav} />
       </SidebarFooter>
     </Sidebar>
   )
