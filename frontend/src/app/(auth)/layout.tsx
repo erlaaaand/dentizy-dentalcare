@@ -1,20 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState  } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/core/providers/auth-provider";
 import { ROUTES } from "@/src/core/constants/routes.constants";
 
-export default function DashboardLayout({
+export default function AuthLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Only redirect if not loading and not authenticated
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       const currentPath = window.location.pathname;
       const loginUrl = `${ROUTES.LOGIN}?redirect=${encodeURIComponent(currentPath)}`;
@@ -22,7 +26,10 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Show loading state
+  if (!mounted) {
+    return null;
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -34,7 +41,6 @@ export default function DashboardLayout({
     );
   }
 
-  // Don't render children if not authenticated
   if (!isAuthenticated) {
     return null;
   }

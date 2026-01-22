@@ -26,7 +26,6 @@ export default function LoginPage() {
     password: ""
   });
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       const targetUrl = redirectUrl || ROUTES.DASHBOARD;
@@ -35,19 +34,15 @@ export default function LoginPage() {
   }, [isAuthenticated, redirectUrl, router]);
 
   const validateForm = (): boolean => {
-    const newErrors = {
-      username: "",
-      password: ""
-    };
-    
+    const newErrors = { username: "", password: "" };
     let isValid = true;
 
-    if (!formData.username || formData.username.trim() === "") {
+    if (!formData.username.trim()) {
       newErrors.username = "Username harus diisi";
       isValid = false;
     }
 
-    if (!formData.password || formData.password.trim() === "") {
+    if (!formData.password) {
       newErrors.password = "Password harus diisi";
       isValid = false;
     } else if (formData.password.length < 6) {
@@ -62,59 +57,28 @@ export default function LoginPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Reset errors
     setErrors({ username: "", password: "" });
     
-    // Validate form
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+    if (isLoginPending) return;
     
-    // Prevent double submission
-    if (isLoginPending) {
-      return;
-    }
-    
-    // Trim whitespace
-    const loginData: LoginDto = {
+    login({
       username: formData.username.trim(),
       password: formData.password
-    };
-    
-    // Execute login
-    login(loginData);
+    });
   };
 
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, username: value }));
-    
-    // Clear error when user types
-    if (errors.username) {
-      setErrors(prev => ({ ...prev, username: "" }));
-    }
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setFormData(prev => ({ ...prev, password: value }));
-    
-    // Clear error when user types
-    if (errors.password) {
-      setErrors(prev => ({ ...prev, password: "" }));
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isLoginPending) {
-      handleSubmit(e as unknown as React.FormEvent);
+  const handleChange = (field: keyof LoginDto) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, [field]: e.target.value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
-        {/* Logo/Brand */}
+        
         <a 
           href="#" 
           className="flex items-center gap-2 self-center font-medium"
@@ -126,7 +90,6 @@ export default function LoginPage() {
           Dentizy Dentalcare
         </a>
         
-        {/* Header */}
         <div className="flex flex-col gap-2 text-center">
           <h1 className="text-2xl font-bold">Login ke Sistem</h1>
           <p className="text-balance text-sm text-muted-foreground">
@@ -139,20 +102,17 @@ export default function LoginPage() {
           )}
         </div>
         
-        {/* Login Form */}
         <form onSubmit={handleSubmit} className="grid gap-6">
-          {/* Username Field */}
+          
           <div className="grid gap-2">
             <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               type="text"
               placeholder="masukkan username"
-              required
               disabled={isLoginPending}
               value={formData.username}
-              onChange={handleUsernameChange}
-              onKeyDown={handleKeyDown}
+              onChange={handleChange('username')}
               autoComplete="username"
               className={errors.username ? "border-red-500" : ""}
             />
@@ -161,17 +121,13 @@ export default function LoginPage() {
             )}
           </div>
           
-          {/* Password Field */}
           <div className="grid gap-2">
             <div className="flex items-center">
               <Label htmlFor="password">Password</Label>
               <a 
                 href="#" 
                 className="ml-auto text-sm underline-offset-4 hover:underline"
-                onClick={(e) => {
-                  e.preventDefault();
-                  // TODO: Implement forgot password
-                }}
+                onClick={(e) => e.preventDefault()}
               >
                 Lupa password?
               </a>
@@ -180,11 +136,9 @@ export default function LoginPage() {
               id="password"
               type="password"
               placeholder="masukkan password"
-              required
               disabled={isLoginPending}
               value={formData.password}
-              onChange={handlePasswordChange}
-              onKeyDown={handleKeyDown}
+              onChange={handleChange('password')}
               autoComplete="current-password"
               className={errors.password ? "border-red-500" : ""}
             />
@@ -193,7 +147,6 @@ export default function LoginPage() {
             )}
           </div>
           
-          {/* Submit Button */}
           <Button 
             type="submit" 
             className="w-full" 
@@ -210,7 +163,6 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        {/* Footer/Help Text */}
         <div className="text-center text-xs text-muted-foreground">
           <p>Hubungi administrator jika mengalami kesulitan login</p>
         </div>
