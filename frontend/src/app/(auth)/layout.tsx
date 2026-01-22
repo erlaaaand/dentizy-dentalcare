@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState  } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/core/providers/auth-provider";
 import { ROUTES } from "@/src/core/constants/routes.constants";
@@ -12,11 +12,6 @@ export default function AuthLayout({
 }>) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -26,7 +21,7 @@ export default function AuthLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
-  if (!mounted) {
+  if (typeof window === "undefined") {
     return null;
   }
 
