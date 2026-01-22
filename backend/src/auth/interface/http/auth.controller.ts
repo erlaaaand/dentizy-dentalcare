@@ -29,6 +29,13 @@ import { UpdateProfileDto } from '../../applications/dto/update-profile.dto';
 import { UserResponseDto } from '../../../users/applications/dto/user-response.dto';
 import { TokenService } from '../../domains/services/token.service';
 
+import { Public } from '../decorators/public.decorator'; //
+import {
+  ForgotPasswordRequestDto, // Perhatikan nama DTO-nya (sesuai file users dto)
+  VerifyOTPDto,
+  ResetPasswordWithTokenDto,
+} from '../../../users/applications/dto/forgot-password.dto';
+
 /**
  * Interface untuk response update profile yang include token
  */
@@ -206,7 +213,6 @@ export class AuthController {
       updateProfileDto,
     );
 
-    // Generate new token with updated data
     const tokenPayload = {
       userId: updatedUserDto.id,
       username: updatedUserDto.username,
@@ -215,10 +221,33 @@ export class AuthController {
 
     const newAccessToken = this.tokenService.generateToken(tokenPayload);
 
-    // Return updated user data with new token
     return {
       ...updatedUserDto,
       access_token: newAccessToken,
     };
+  }
+
+  @Post('forgot-password')
+  @Public()
+  @ApiOperation({ summary: 'Request OTP untuk reset password' })
+  async forgotPassword(@Body() dto: ForgotPasswordRequestDto) {
+    return this.usersService.sendOTP(dto.emailOrUsername);
+  }
+
+  @Post('verify-otp')
+  @Public()
+  @ApiOperation({ summary: 'Verifikasi OTP dan dapatkan Reset Token' })
+  async verifyOTP(@Body() dto: VerifyOTPDto) {
+    return this.usersService.verifyOTP(dto.email, dto.otp);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @ApiOperation({ summary: 'Set password baru menggunakan Reset Token' })
+  async resetPassword(@Body() dto: ResetPasswordWithTokenDto) {
+    return this.usersService.resetPasswordWithToken(
+      dto.resetToken,
+      dto.newPassword,
+    );
   }
 }

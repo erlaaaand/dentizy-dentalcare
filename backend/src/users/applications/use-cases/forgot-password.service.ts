@@ -1,39 +1,41 @@
 // backend/src/users/applications/use-cases/forgot-password.service.ts
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+} from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager'; // ✅ FIX: Gunakan 'import type' untuk menghindari error TS1272
 import { UserRepository } from '../../infrastructures/repositories/user.repository';
 import { EmailService } from '../../../notifications/services/email.service';
 import { EmailTemplateService } from '../../../notifications/services/email-template.service';
-import { ConfigService } from '@nestjs/config';
+import { PasswordHasherService } from '../../../auth/infrastructures/security/password-hasher.service';
 
-/**
- * Service untuk handle forgot password dengan OTP
- *
- * Flow:
- * 1. User request forgot password dengan email/username
- * 2. Generate OTP 6 digit
- * 3. Store OTP di cache/redis (dengan TTL 5 menit)
- * 4. Kirim OTP via email
- * 5. User input OTP untuk verifikasi
- * 6. Jika valid, user bisa set password baru
- */
+interface OtpCacheData {
+  otp: string;
+  attempts: number;
+}
+
 @Injectable()
 export class ForgotPasswordService {
   private readonly logger = new Logger(ForgotPasswordService.name);
-  private readonly OTP_LENGTH = 6;
-  private readonly OTP_EXPIRY_MINUTES = 5;
-
-  // In-memory storage for demo (use Redis in production)
-  private otpStore = new Map<string, { otp: string; expiresAt: number }>();
+  private readonly OTP_EXPIRY_MS = 5 * 60 * 1000; // 5 Menit (dalam milidetik)
+  private readonly RESET_TOKEN_EXPIRY_MS = 15 * 60 * 1000; // 15 Menit
+  private readonly MAX_ATTEMPTS = 3;
 
   constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly userRepository: UserRepository,
     private readonly emailService: EmailService,
     private readonly emailTemplateService: EmailTemplateService,
-    private readonly configService: ConfigService,
+    private readonly passwordHasherService: PasswordHasherService, // ✅ Inject Hasher
   ) {}
 
   /**
-   * Send OTP to user's email
+   * 1. Send OTP to user's email
    */
   async sendOTP(emailOrUsername: string): Promise<{
     message: string;
@@ -41,40 +43,40 @@ export class ForgotPasswordService {
     expiresInMinutes: number;
   }> {
     try {
-      // 1. Find user by email or username
+      // Cari User
       const user =
         await this.userRepository.findByUsernameOrEmailWithPassword(
           emailOrUsername,
         );
 
-      if (!user) {
+      if (!user || !user.email) {
+        // Security: Return fake success to prevent user enumeration
+        // Atau throw error jika kebijakan membolehkan
         throw new NotFoundException(
-          'User dengan email atau username tersebut tidak ditemukan',
+          'User tidak ditemukan atau tidak memiliki email.',
         );
       }
 
-      if (!user.email) {
-        throw new NotFoundException(
-          'User tidak memiliki email terdaftar. Silakan hubungi administrator.',
-        );
-      }
-
-      // 2. Generate OTP
+      // Generate OTP
       const otp = this.generateOTP();
 
-      // 3. Store OTP with expiry
-      const expiresAt = Date.now() + this.OTP_EXPIRY_MINUTES * 60 * 1000;
-      this.otpStore.set(user.email, { otp, expiresAt });
+      // Simpan ke Cache (Redis)
+      const cacheKey = `otp_reset:${user.email}`;
+      const otpData: OtpCacheData = { otp, attempts: 0 };
 
-      // 4. Send OTP via email
+      // Simpan dengan TTL (Time To Live)
+      await this.cacheManager.set(cacheKey, otpData, this.OTP_EXPIRY_MS);
+
+      // Siapkan Email
       const { subject, html } = this.emailTemplateService.getOTPEmail({
         to: user.email,
         name: user.nama_lengkap,
         otpCode: otp,
-        expiresInMinutes: this.OTP_EXPIRY_MINUTES,
-        subject: '', // will be set by template
+        expiresInMinutes: 5,
+        subject: '',
       });
 
+      // Kirim Email
       await this.emailService.sendEmail({
         to: user.email,
         subject,
@@ -85,13 +87,10 @@ export class ForgotPasswordService {
         `✅ OTP sent to ${this.maskEmail(user.email)} for user ${user.username}`,
       );
 
-      // Clean up expired OTPs
-      this.cleanupExpiredOTPs();
-
       return {
         message: 'Kode OTP telah dikirim ke email Anda',
         email: this.maskEmail(user.email),
-        expiresInMinutes: this.OTP_EXPIRY_MINUTES,
+        expiresInMinutes: 5,
       };
     } catch (error) {
       this.logger.error('Error sending OTP:', error);
@@ -100,48 +99,53 @@ export class ForgotPasswordService {
   }
 
   /**
-   * Verify OTP
+   * 2. Verify OTP and return Reset Token
    */
   async verifyOTP(
     email: string,
-    otp: string,
+    inputOtp: string,
   ): Promise<{
     valid: boolean;
     message: string;
     resetToken?: string;
   }> {
     try {
-      const storedOTP = this.otpStore.get(email);
+      const cacheKey = `otp_reset:${email}`;
+      const storedData = await this.cacheManager.get<OtpCacheData>(cacheKey);
 
-      if (!storedOTP) {
-        return {
-          valid: false,
-          message: 'Kode OTP tidak valid atau sudah kedaluwarsa',
-        };
+      // Validasi: Apakah OTP ada / expired?
+      if (!storedData) {
+        throw new BadRequestException(
+          'Kode OTP tidak valid atau sudah kedaluwarsa. Silakan minta kode baru.',
+        );
       }
 
-      // Check expiry
-      if (Date.now() > storedOTP.expiresAt) {
-        this.otpStore.delete(email);
-        return {
-          valid: false,
-          message: 'Kode OTP sudah kedaluwarsa. Silakan minta kode baru.',
-        };
+      // Validasi: Max Attempts
+      if (storedData.attempts >= this.MAX_ATTEMPTS) {
+        await this.cacheManager.del(cacheKey);
+        throw new BadRequestException(
+          'Terlalu banyak percobaan gagal. Silakan minta OTP baru.',
+        );
       }
 
-      // Verify OTP
-      if (storedOTP.otp !== otp) {
-        return {
-          valid: false,
-          message: 'Kode OTP salah',
-        };
+      // Validasi: Kode Cocok?
+      if (storedData.otp !== inputOtp) {
+        storedData.attempts += 1;
+        await this.cacheManager.set(cacheKey, storedData, this.OTP_EXPIRY_MS);
+        throw new BadRequestException(
+          `Kode OTP salah. Sisa percobaan: ${this.MAX_ATTEMPTS - storedData.attempts}`,
+        );
       }
 
-      // OTP valid - generate reset token
+      // SUKSES: Hapus OTP agar tidak bisa dipakai lagi
+      await this.cacheManager.del(cacheKey);
+
+      // Generate Reset Token (Temporary Token untuk tahap ubah password)
       const resetToken = this.generateResetToken(email);
 
-      // Delete OTP after successful verification
-      this.otpStore.delete(email);
+      // Simpan Reset Token ke Cache
+      const tokenKey = `reset_token:${resetToken}`;
+      await this.cacheManager.set(tokenKey, email, this.RESET_TOKEN_EXPIRY_MS);
 
       this.logger.log(
         `✅ OTP verified successfully for ${this.maskEmail(email)}`,
@@ -159,32 +163,46 @@ export class ForgotPasswordService {
   }
 
   /**
-   * Reset password using reset token (after OTP verification)
+   * 3. Reset password using reset token (Method yang hilang sebelumnya)
    */
   async resetPasswordWithToken(
     resetToken: string,
     newPassword: string,
   ): Promise<{ message: string }> {
     try {
-      // Decode reset token to get email
-      const email = this.decodeResetToken(resetToken);
+      // Ambil email dari cache berdasarkan token
+      const tokenKey = `reset_token:${resetToken}`;
+      const email = await this.cacheManager.get<string>(tokenKey);
 
-      // Find user
-      const user = await this.userRepository.findByEmail(email);
-      if (!user) {
-        throw new NotFoundException('Invalid reset token');
+      if (!email) {
+        throw new BadRequestException(
+          'Sesi reset password tidak valid atau sudah berakhir. Silakan ulangi proses verifikasi OTP.',
+        );
       }
 
-      // Update password (you should hash it first)
-      // This is handled by your existing ResetPasswordService
-      // Just return success here
+      // Cari user
+      const user = await this.userRepository.findByEmail(email);
+      if (!user) {
+        throw new NotFoundException('User tidak ditemukan');
+      }
+
+      // Hash password baru
+      const hashedPassword = await this.passwordHasherService.hash(newPassword);
+
+      // Update password user
+      user.password = hashedPassword;
+      await this.userRepository.update(user);
+
+      // Hapus token agar tidak bisa dipakai lagi (Single Use)
+      await this.cacheManager.del(tokenKey);
 
       this.logger.log(
         `✅ Password reset successfully for ${this.maskEmail(email)}`,
       );
 
       return {
-        message: 'Password berhasil direset',
+        message:
+          'Password berhasil direset. Silakan login dengan password baru.',
       };
     } catch (error) {
       this.logger.error('Error resetting password with token:', error);
@@ -192,72 +210,24 @@ export class ForgotPasswordService {
     }
   }
 
-  /**
-   * Generate 6-digit OTP
-   */
+  // --- Helper Methods ---
+
   private generateOTP(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  /**
-   * Generate reset token (temporary implementation)
-   */
   private generateResetToken(email: string): string {
-    const payload = {
-      email,
-      purpose: 'password-reset',
-      exp: Date.now() + 15 * 60 * 1000, // 15 minutes
-    };
-    return Buffer.from(JSON.stringify(payload)).toString('base64');
+    // Generate random string + timestamp base64
+    const random = Math.random().toString(36).substring(2, 15);
+    const payload = `${email}:${Date.now()}:${random}`;
+    return Buffer.from(payload).toString('base64');
   }
 
-  /**
-   * Decode reset token
-   */
-  private decodeResetToken(token: string): string {
-    try {
-      const payload = JSON.parse(Buffer.from(token, 'base64').toString());
-
-      if (Date.now() > payload.exp) {
-        throw new Error('Token expired');
-      }
-
-      return payload.email;
-    } catch (error) {
-      throw new NotFoundException('Invalid or expired reset token');
-    }
-  }
-
-  /**
-   * Mask email for privacy (e.g., j***@example.com)
-   */
   private maskEmail(email: string): string {
     const [local, domain] = email.split('@');
+    if (local.length <= 2) return `${local}***@${domain}`;
     const maskedLocal =
       local.charAt(0) + '***' + local.charAt(local.length - 1);
     return `${maskedLocal}@${domain}`;
-  }
-
-  /**
-   * Clean up expired OTPs
-   */
-  private cleanupExpiredOTPs(): void {
-    const now = Date.now();
-    for (const [email, data] of this.otpStore.entries()) {
-      if (now > data.expiresAt) {
-        this.otpStore.delete(email);
-      }
-    }
-  }
-
-  /**
-   * Get remaining OTP attempts (for rate limiting)
-   */
-  getRemainingTime(email: string): number | null {
-    const storedOTP = this.otpStore.get(email);
-    if (!storedOTP) return null;
-
-    const remaining = storedOTP.expiresAt - Date.now();
-    return remaining > 0 ? Math.ceil(remaining / 1000) : null;
   }
 }
