@@ -2285,7 +2285,8 @@
               "enum": [
                 "dijadwalkan",
                 "selesai",
-                "dibatalkan"
+                "dibatalkan",
+                "menunggu_konfirmasi"
               ],
               "type": "string"
             }

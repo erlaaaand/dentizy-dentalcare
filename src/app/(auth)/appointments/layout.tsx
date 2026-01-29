@@ -1,21 +1,14 @@
-import type { Metadata } from "next";
-import "../../globals.css";
+import type { Metadata } from "next"
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "Dashboard Page",
-};
+  title: "Manajemen Jadwal",
+  description: "Halaman manajemen jadwal kunjungan klinik",
+}
 
-export default function RootLayout({
+export default function AppointmentsLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return (
-    <html lang="en">
-      <body>
-        {children}
-      </body>
-    </html>
-  );
+  return <>{children}</>
 }

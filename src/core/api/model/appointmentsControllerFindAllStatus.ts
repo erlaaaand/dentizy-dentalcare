@@ -13,4 +13,5 @@ export const AppointmentsControllerFindAllStatus = {
   dijadwalkan: 'dijadwalkan',
   selesai: 'selesai',
   dibatalkan: 'dibatalkan',
+  menunggu_konfirmasi: 'menunggu_konfirmasi',
 } as const;

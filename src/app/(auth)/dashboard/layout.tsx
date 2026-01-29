@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/src/core/providers/auth-provider";
 import { ROUTES } from "@/src/core/constants/routes.constants";
+import { DashboardSkeleton } from "@/src/components/skeletons/dashboard-skeleton";
 
 export default function DashboardLayout({
   children,
@@ -19,12 +20,9 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Gunakan Skeleton, bukan Spinner
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!isAuthenticated) {

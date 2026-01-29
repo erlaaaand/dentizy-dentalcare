@@ -1,5 +1,6 @@
 // src/hooks/useAuth.ts
 import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { 
   useAuthControllerLogin, 
   useAuthControllerGetProfile,
@@ -43,8 +44,19 @@ export const useAuthLogout = () => {
       }
     }
   });
+};
 
-  export const useForgotPassword = () => {
-    
-  }
+export const useForgotPassword = () => {
+  return useAuthControllerForgotPassword({
+    mutation: {
+      onSuccess: () => {
+        toast.success('Link reset password berhasil dikirim ke email');
+      },
+      onError: (error) => {
+        // error bertipe unknown → aman & type-safe
+        toast.error('Gagal mengirim link reset password');
+        console.error('Forgot password error:', error);
+      }
+    }
+  });
 };

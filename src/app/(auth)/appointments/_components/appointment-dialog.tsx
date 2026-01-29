@@ -1,0 +1,405 @@
+"use client"
+
+import { useEffect, useState } from "react"
+import { useForm, Controller } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useQuery } from "@tanstack/react-query"
+import { Loader2, Check, ChevronsUpDown } from "lucide-react"
+
+import { cn } from "@/src/core/utils/classnames/cn.utils"
+import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
+import { UserApi } from "@/src/core/service/api/users/user.api"
+import { PatientService } from "@/src/core/service/api/patients/patient.api"
+
+import { Button } from "@/src/components/dashboard-ui/components/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/src/components/dialog/dialog"
+import { Input } from "@/src/components/dashboard-ui/components/input"
+import { Label } from "@/src/components/dashboard-ui/components/label"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/src/components/dashboard-ui/components/select"
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/src/components/dashboard-ui/components/command"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/src/components/dashboard-ui/components/popover"
+
+import { appointmentFormSchema, AppointmentFormValues } from "./schema"
+import {
+  AppointmentPayload,
+  StrictCreateAppointmentDto,
+  StrictUpdateAppointmentDto,
+  AppointmentResponseDto,
+  AppointmentResponseDtoStatus,
+  ApiPaginatedResponse,
+  UserResponseDto,
+  PatientResponseDto,
+} from "./types"
+
+interface AppointmentDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  initialData?: AppointmentResponseDto | null
+  onSuccess: (data: AppointmentPayload) => void
+  isSubmitting?: boolean
+}
+
+export function AppointmentDialog({
+  open,
+  onOpenChange,
+  initialData,
+  onSuccess,
+  isSubmitting = false,
+}: AppointmentDialogProps) {
+  const [openPatientCombobox, setOpenPatientCombobox] = useState(false)
+  const [searchPatient, setSearchPatient] = useState("")
+  const debouncedSearchPatient = useDebounce(searchPatient, 500)
+
+  // 1. Fetch Pasien (Searchable)
+  const { data: patientsData, isLoading: loadingPatients } = useQuery({
+    queryKey: ["patients", "search", debouncedSearchPatient],
+    queryFn: async () => {
+      const params = {
+        page: 1,
+        limit: 10,
+        ...(debouncedSearchPatient ? { search: debouncedSearchPatient } : {}),
+      }
+      const res = await PatientService.getAll(params)
+      const typedRes = res as unknown as ApiPaginatedResponse<PatientResponseDto>
+      return typedRes.data || []
+    },
+    enabled: open,
+    staleTime: 1000 * 60,
+  })
+
+  // 2. Fetch Dokter (PERBAIKAN LOGIC DISINI)
+  const { data: doctorsData, isLoading: loadingDoctors } = useQuery({
+    queryKey: ["users", "dokter-list"], // Ubah key agar tidak clash cache
+    queryFn: async () => {
+      // Ambil data user lebih banyak untuk memastikan dokter terambil semua
+      const res = await UserApi.findAll({ limit: 100 })
+      const typedRes = res as unknown as ApiPaginatedResponse<UserResponseDto>
+      
+      // Filter user yang memiliki role 'dokter' ATAU 'kepala_klinik'
+      // Menggunakan toLowerCase() agar tidak sensitif huruf besar/kecil
+      const validRoles = ["dokter", "kepala_klinik"]
+      
+      const filteredDoctors = typedRes.data.filter((u) => 
+        u.roles.some((r) => validRoles.includes(r.name.toLowerCase()))
+      )
+
+      return filteredDoctors
+    },
+    enabled: open,
+  })
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<AppointmentFormValues>({
+    resolver: zodResolver(appointmentFormSchema),
+    defaultValues: {
+      patient_id: "",
+      doctor_id: "",
+      tanggal_janji: new Date().toISOString().split("T")[0],
+      jam_janji: "",
+      keluhan: "",
+      status: AppointmentResponseDtoStatus.dijadwalkan,
+    },
+  })
+
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        reset({
+          patient_id: String(initialData.patient_id),
+          doctor_id: String(initialData.doctor_id),
+          tanggal_janji: initialData.tanggal_janji,
+          jam_janji: initialData.jam_janji,
+          keluhan: initialData.keluhan || "",
+          status: initialData.status,
+        })
+      } else {
+        reset({
+          patient_id: "",
+          doctor_id: "",
+          tanggal_janji: new Date().toISOString().split("T")[0],
+          jam_janji: "",
+          keluhan: "",
+          status: AppointmentResponseDtoStatus.dijadwalkan,
+        })
+      }
+    }
+  }, [open, initialData, reset])
+
+  const handleDialogChange = (isOpen: boolean) => {
+    if (!isOpen) {
+      setSearchPatient("")
+    }
+    onOpenChange(isOpen)
+  }
+
+  const onSubmit = (values: AppointmentFormValues) => {
+    const formattedTime = values.jam_janji.length === 5 ? `${values.jam_janji}:00` : values.jam_janji
+
+    if (initialData) {
+      const updatePayload: StrictUpdateAppointmentDto = {
+        doctor_id: Number(values.doctor_id),
+        tanggal_janji: values.tanggal_janji,
+        jam_janji: formattedTime,
+        keluhan: values.keluhan,
+        status: values.status,
+      }
+      onSuccess(updatePayload)
+    } else {
+      const createPayload: StrictCreateAppointmentDto = {
+        patient_id: Number(values.patient_id),
+        doctor_id: Number(values.doctor_id),
+        tanggal_janji: values.tanggal_janji,
+        jam_janji: formattedTime,
+        keluhan: values.keluhan,
+        status: AppointmentResponseDtoStatus.dijadwalkan,
+      }
+      onSuccess(createPayload)
+    }
+    setSearchPatient("")
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleDialogChange}>
+      <DialogContent className="sm:max-w-150 overflow-visible">
+        <DialogHeader>
+          <DialogTitle>{initialData ? "Ubah Jadwal" : "Buat Jadwal Baru"}</DialogTitle>
+          <DialogDescription>
+            {initialData
+              ? "Perbarui informasi kunjungan pasien."
+              : "Isi detail untuk membuat janji temu baru."}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            
+            {/* --- PASIEN (COMBOBOX) --- */}
+            <div className="space-y-2 flex flex-col">
+              <Label>Pasien</Label>
+              <Controller
+                name="patient_id"
+                control={control}
+                render={({ field }) => (
+                  <Popover open={openPatientCombobox} onOpenChange={setOpenPatientCombobox}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={openPatientCombobox}
+                        className={cn(
+                          "w-full justify-between",
+                          !field.value && "text-muted-foreground"
+                        )}
+                        disabled={!!initialData}
+                      >
+                        {field.value
+                          ? patientsData?.find((p) => String(p.id) === field.value)?.nama_lengkap ||
+                            (initialData?.patient_id === field.value
+                              ? initialData.patient?.nama_lengkap
+                              : "Pasien Terpilih")
+                          : "Cari Pasien..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-75 p-0" align="start">
+                      <Command shouldFilter={false}>
+                        <CommandInput
+                          placeholder="Ketik nama atau No. RM..."
+                          value={searchPatient}
+                          onValueChange={setSearchPatient}
+                        />
+                        <CommandList>
+                          {loadingPatients && (
+                            <div className="py-6 text-center text-sm text-muted-foreground flex items-center justify-center gap-2">
+                              <Loader2 className="h-4 w-4 animate-spin" /> Mencari...
+                            </div>
+                          )}
+
+                          {!loadingPatients && patientsData?.length === 0 && (
+                            <CommandEmpty>Pasien tidak ditemukan.</CommandEmpty>
+                          )}
+
+                          {!loadingPatients &&
+                            patientsData?.map((patient) => (
+                              <CommandItem
+                                key={patient.id}
+                                value={String(patient.id)}
+                                onSelect={() => {
+                                  setValue("patient_id", String(patient.id), {
+                                    shouldValidate: true,
+                                  })
+                                  setOpenPatientCombobox(false)
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    field.value === String(patient.id) ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div className="flex flex-col">
+                                  <span className="font-medium">{patient.nama_lengkap}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {patient.nomor_rekam_medis}
+                                  </span>
+                                </div>
+                              </CommandItem>
+                            ))}
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                )}
+              />
+              {errors.patient_id && (
+                <p className="text-xs text-destructive">{errors.patient_id.message}</p>
+              )}
+            </div>
+
+            {/* --- DOKTER (SELECT) --- */}
+            <div className="space-y-2">
+              <Label htmlFor="doctor_id">Dokter</Label>
+              <Controller
+                name="doctor_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    // Disable hanya jika loading, jangan disable jika data kosong (agar user bisa lihat 'no data')
+                    disabled={loadingDoctors} 
+                  >
+                    <SelectTrigger>
+                      <SelectValue 
+                        placeholder={
+                          loadingDoctors 
+                            ? "Memuat data..." 
+                            : (doctorsData?.length === 0 ? "Tidak ada dokter" : "Pilih Dokter")
+                        } 
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {doctorsData?.map((d) => (
+                        <SelectItem key={d.id} value={String(d.id)}>
+                          {d.nama_lengkap}
+                        </SelectItem>
+                      ))}
+                      {/* Tampilkan pesan jika data kosong setelah loading */}
+                      {!loadingDoctors && doctorsData?.length === 0 && (
+                         <div className="p-2 text-sm text-muted-foreground text-center">
+                            Tidak ada data dokter
+                         </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.doctor_id && (
+                <p className="text-xs text-destructive">{errors.doctor_id.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* --- INPUT TANGGAL & JAM --- */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="tanggal_janji">Tanggal Kunjungan</Label>
+              <Controller
+                name="tanggal_janji"
+                control={control}
+                render={({ field }) => <Input type="date" {...field} />}
+              />
+              {errors.tanggal_janji && (
+                <p className="text-xs text-destructive">{errors.tanggal_janji.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="jam_janji">Jam</Label>
+              <Controller
+                name="jam_janji"
+                control={control}
+                render={({ field }) => <Input type="time" {...field} />}
+              />
+              {errors.jam_janji && (
+                <p className="text-xs text-destructive">{errors.jam_janji.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="keluhan">Keluhan Utama</Label>
+            <Controller
+              name="keluhan"
+              control={control}
+              render={({ field }) => (
+                <Input placeholder="Contoh: Nyeri pada gigi geraham..." {...field} />
+              )}
+            />
+          </div>
+
+          {initialData && (
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dijadwalkan">Dijadwalkan</SelectItem>
+                      <SelectItem value="menunggu_konfirmasi">Menunggu Konfirmasi</SelectItem>
+                      <SelectItem value="selesai">Selesai</SelectItem>
+                      <SelectItem value="dibatalkan">Dibatalkan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+            </div>
+          )}
+
+          <DialogFooter className="pt-4">
+            <Button variant="outline" type="button" onClick={() => handleDialogChange(false)}>
+              Batal
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {initialData ? "Simpan Perubahan" : "Buat Jadwal"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

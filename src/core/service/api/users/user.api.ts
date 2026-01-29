@@ -6,7 +6,7 @@ import {
   usersControllerFindOne,
   usersControllerChangePassword
 } from '../../../api/generated/users/users';
-import { CreateUserDto, UpdateUserDto, ChangePasswordDto, UserQueryParams } from '../../../types/users/user.types';
+import type { CreateUserDto, UpdateUserDto, ChangePasswordDto, UserQueryParams } from '../../../types/users/user.types';
 
 export const UserApi = {
   findAll: async (params?: UserQueryParams) => await usersControllerFindAll(params),
