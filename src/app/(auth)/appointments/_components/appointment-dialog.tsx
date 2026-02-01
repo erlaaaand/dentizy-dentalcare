@@ -335,7 +335,13 @@ export function AppointmentDialog({
               <Controller
                 name="tanggal_janji"
                 control={control}
-                render={({ field }) => <Input type="date" {...field} />}
+                render={({ field }) => (
+                  <Input
+                    type="date"
+                    min={new Date().toISOString().split("T")[0]} // hari ini
+                    {...field}
+                  />
+                )}
               />
               {errors.tanggal_janji && (
                 <p className="text-xs text-destructive">{errors.tanggal_janji.message}</p>
