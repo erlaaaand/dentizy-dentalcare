@@ -9,9 +9,4 @@
 export interface ActivateAccountDto {
   /** Token aktivasi dari email */
   token: string;
-  /**
-   * Password baru, minimal 8 karakter
-   * @minLength 8
-   */
-  newPassword: string;
 }
