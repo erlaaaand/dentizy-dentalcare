@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import type {
+  PaginationState,
+} from "@tanstack/react-table"
 import {
   flexRender,
   getCoreRowModel,
   useReactTable,
   getPaginationRowModel,
-  PaginationState,
 } from "@tanstack/react-table"
 import { Plus, ListFilter, RefreshCw } from "lucide-react"
 import { toast } from "sonner"
@@ -27,23 +28,24 @@ import {
 } from "@/src/components/dashboard-ui/components/table"
 import { Toaster } from "@/src/components/dashboard-ui/components/sonner"
 
+// Core hooks
+import {
+  useAppointments,
+  useAppointmentMutations,
+} from "@/src/core/hooks/appointments/useAppointments"
+
 import { getColumns } from "./_components/columns"
 import { AppointmentDialog } from "./_components/appointment-dialog"
 import {
-  AppointmentResponseDto,
-  AppointmentPayload,
-  StrictCreateAppointmentDto,
-  StrictUpdateAppointmentDto,
-  AppointmentsControllerFindAllParams,
-  PaginatedAppointmentResponseDto,
+  type AppointmentResponseDto,
+  type AppointmentPayload,
+  type CreateAppointmentDto,
+  type UpdateAppointmentDto,
+  type AppointmentsControllerFindAllParams,
   AppointmentsControllerFindAllStatus,
 } from "./_components/types"
 
-import { AppointmentApi } from "@/src/core/service/api/appointments/appointment.api"
-
 export default function AppointmentsPage() {
-  const queryClient = useQueryClient()
-
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentResponseDto | null>(null)
   const [currentTab, setCurrentTab] = useState("all")
@@ -53,66 +55,39 @@ export default function AppointmentsPage() {
     pageSize: 10,
   })
 
-  // Menggunakan useMemo untuk parameter query agar referensi stabil
+  // ---------------------------------------------------------------------------
+  // Query params
+  // ---------------------------------------------------------------------------
   const queryParams: AppointmentsControllerFindAllParams = useMemo(
     () => ({
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
-      // ✅ Gunakan Enum khusus Controller Params, BUKAN Dto Status
-      status: currentTab === "requests" 
-        ? AppointmentsControllerFindAllStatus.menunggu_konfirmasi 
+      status: currentTab === "requests"
+        ? AppointmentsControllerFindAllStatus.menunggu_konfirmasi
         : undefined,
     }),
     [pagination.pageIndex, pagination.pageSize, currentTab]
   )
 
-  // Fetch Data dengan Type Safety
-  const { data: response, isLoading, refetch } = useQuery<PaginatedAppointmentResponseDto>({
-    queryKey: ["appointments", queryParams],
-    queryFn: async () => {
-      const res = await AppointmentApi.findAll(queryParams)
-      // Asserting type karena AppointmentApi.findAll mungkin return generic
-      return res as unknown as PaginatedAppointmentResponseDto
-    },
-  })
+  // ---------------------------------------------------------------------------
+  // Data fetching
+  // ---------------------------------------------------------------------------
+  const { data: response, isLoading, refetch } = useAppointments(queryParams)
 
-  const createMutation = useMutation({
-    mutationFn: (data: StrictCreateAppointmentDto) =>
-      AppointmentApi.create(data as unknown as Record<string, unknown>),
-    onSuccess: () => {
-      toast.success("Jadwal berhasil dibuat")
-      queryClient.invalidateQueries({ queryKey: ["appointments"] })
-      setIsDialogOpen(false)
-    },
-    onError: () => {
-      toast.error("Gagal membuat jadwal")
-    },
-  })
+  // ---------------------------------------------------------------------------
+  // Mutations
+  // ---------------------------------------------------------------------------
+  const {
+    createAppointment,
+    updateAppointment,
+    cancelAppointment,
+    isCreating,
+    isUpdating,
+  } = useAppointmentMutations()
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: StrictUpdateAppointmentDto }) =>
-      AppointmentApi.update(id, data as unknown as Record<string, unknown>),
-    onSuccess: () => {
-      toast.success("Jadwal berhasil diperbarui")
-      queryClient.invalidateQueries({ queryKey: ["appointments"] })
-      setIsDialogOpen(false)
-    },
-    onError: () => {
-      toast.error("Gagal memperbarui jadwal")
-    },
-  })
-
-  const cancelMutation = useMutation({
-    mutationFn: (id: string) => AppointmentApi.cancel(id),
-    onSuccess: () => {
-      toast.success("Jadwal berhasil dibatalkan")
-      queryClient.invalidateQueries({ queryKey: ["appointments"] })
-    },
-    onError: () => {
-      toast.error("Gagal membatalkan jadwal")
-    },
-  })
-
+  // ---------------------------------------------------------------------------
+  // Handlers
+  // ---------------------------------------------------------------------------
   const handleCreate = useCallback(() => {
     setSelectedAppointment(null)
     setIsDialogOpen(true)
@@ -125,35 +100,57 @@ export default function AppointmentsPage() {
 
   const handleCancel = useCallback(
     (data: AppointmentResponseDto) => {
-      // eslint-disable-next-line no-restricted-globals
-      if (confirm(`Apakah Anda yakin ingin membatalkan jadwal pasien ${data.patient?.nama_lengkap}?`)) {
-        cancelMutation.mutate(data.id)
+      // Menggunakan window.confirm secara eksplisit untuk menghindari restricted-globals eslint error
+      if (typeof window !== "undefined" && window.confirm(`Apakah Anda yakin ingin membatalkan jadwal pasien ${data.patient?.nama_lengkap}?`)) {
+        cancelAppointment({ id: data.id })
+          .then(() => {
+            toast.success("Jadwal berhasil dibatalkan")
+          })
+          .catch(() => {
+            toast.error("Gagal membatalkan jadwal")
+          })
       }
     },
-    [cancelMutation]
+    [cancelAppointment]
   )
 
   const handleFormSubmit = useCallback(
     (payload: AppointmentPayload) => {
       if (selectedAppointment) {
-        updateMutation.mutate({
-          id: selectedAppointment.id,
-          data: payload as StrictUpdateAppointmentDto,
-        })
+        // Assertion aman karena kita tahu payload berasal dari dialog update
+        updateAppointment({ id: selectedAppointment.id, data: payload as UpdateAppointmentDto })
+          .then(() => {
+            toast.success("Jadwal berhasil diperbarui")
+            setIsDialogOpen(false)
+          })
+          .catch(() => {
+            toast.error("Gagal memperbarui jadwal")
+          })
       } else {
-        createMutation.mutate(payload as StrictCreateAppointmentDto)
+        createAppointment({ data: payload as CreateAppointmentDto })
+          .then(() => {
+            toast.success("Jadwal berhasil dibuat")
+            setIsDialogOpen(false)
+          })
+          .catch(() => {
+            toast.error("Gagal membuat jadwal")
+          })
       }
     },
-    [selectedAppointment, updateMutation, createMutation]
+    [selectedAppointment, createAppointment, updateAppointment]
   )
 
+  // ---------------------------------------------------------------------------
+  // Table Config
+  // ---------------------------------------------------------------------------
   const columns = useMemo(
     () => getColumns({ onEdit: handleEdit, onCancel: handleCancel }),
     [handleEdit, handleCancel]
   )
 
-  const appointmentData = useMemo(() => response?.data || [], [response])
-  const pageCount = useMemo(() => response?.totalPages || 1, [response])
+  // Fallback ke array kosong jika data undefined
+  const appointmentData = useMemo(() => response?.data?.data ?? [], [response])
+  const pageCount = useMemo(() => response?.data?.totalPages ?? 1, [response])
 
   const table = useReactTable({
     data: appointmentData,
@@ -167,6 +164,24 @@ export default function AppointmentsPage() {
     onPaginationChange: setPagination,
     getPaginationRowModel: getPaginationRowModel(),
   })
+
+  // Helper render loading row
+  const renderLoading = () => (
+    <TableRow>
+      <TableCell colSpan={columns.length} className="h-24 text-center">
+        Memuat data...
+      </TableCell>
+    </TableRow>
+  )
+
+  // Helper render empty row
+  const renderEmpty = () => (
+    <TableRow>
+      <TableCell colSpan={columns.length} className="h-24 text-center">
+        Tidak ada data jadwal.
+      </TableCell>
+    </TableRow>
+  )
 
   return (
     <SidebarProvider
@@ -227,32 +242,23 @@ export default function AppointmentsPage() {
                     ))}
                   </TableHeader>
                   <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                          Memuat data...
-                        </TableCell>
-                      </TableRow>
-                    ) : table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={columns.length} className="h-24 text-center">
-                          Tidak ada data jadwal.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    {isLoading
+                      ? renderLoading()
+                      : table.getRowModel().rows?.length
+                      ? table.getRowModel().rows.map((row) => (
+                          <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      : renderEmpty()}
                   </TableBody>
                 </Table>
 
+                {/* Pagination Controls */}
                 <div className="flex items-center justify-end space-x-2 border-t px-4 py-4">
                   <span className="text-muted-foreground mr-4 text-sm">
                     Halaman {pagination.pageIndex + 1} dari {pageCount}
@@ -282,7 +288,6 @@ export default function AppointmentsPage() {
                 <p className="text-muted-foreground mb-4 text-sm">
                   Daftar di bawah ini adalah jadwal dengan status <strong>Menunggu Konfirmasi</strong>.
                 </p>
-                {/* Re-use Table Logic untuk tab requests (data sudah difilter via queryParams) */}
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -326,7 +331,7 @@ export default function AppointmentsPage() {
         onOpenChange={setIsDialogOpen}
         initialData={selectedAppointment}
         onSuccess={handleFormSubmit}
-        isSubmitting={createMutation.isPending || updateMutation.isPending}
+        isSubmitting={isCreating || isUpdating}
       />
 
       <Toaster />

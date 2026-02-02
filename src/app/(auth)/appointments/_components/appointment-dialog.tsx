@@ -42,16 +42,16 @@ import {
   PopoverTrigger,
 } from "@/src/components/dashboard-ui/components/popover"
 
-import { appointmentFormSchema, AppointmentFormValues } from "./schema"
+import { appointmentFormSchema, type AppointmentFormValues } from "./schema"
 import {
-  AppointmentPayload,
-  StrictCreateAppointmentDto,
-  StrictUpdateAppointmentDto,
-  AppointmentResponseDto,
+  type AppointmentPayload,
+  type AppointmentResponseDto,
   AppointmentResponseDtoStatus,
-  ApiPaginatedResponse,
-  UserResponseDto,
-  PatientResponseDto,
+  type CreateAppointmentDto,
+  type UpdateAppointmentDto,
+  type ApiPaginatedResponse,
+  type UserResponseDto,
+  type PatientResponseDto,
 } from "./types"
 
 interface AppointmentDialogProps {
@@ -71,10 +71,11 @@ export function AppointmentDialog({
 }: AppointmentDialogProps) {
   const [openPatientCombobox, setOpenPatientCombobox] = useState(false)
   const [searchPatient, setSearchPatient] = useState("")
+  // Mencegah debounce berjalan saat dialog tertutup
   const debouncedSearchPatient = useDebounce(searchPatient, 500)
 
   // 1. Fetch Pasien (Searchable)
-  const { data: patientsData, isLoading: loadingPatients } = useQuery({
+  const { data: patientsData, isLoading: loadingPatients } = useQuery<PatientResponseDto[]>({
     queryKey: ["patients", "search", debouncedSearchPatient],
     queryFn: async () => {
       const params = {
@@ -83,30 +84,27 @@ export function AppointmentDialog({
         ...(debouncedSearchPatient ? { search: debouncedSearchPatient } : {}),
       }
       const res = await PatientService.getAll(params)
+      // Type assertion aman: kita mengasumsikan respons API sesuai struktur generic
       const typedRes = res as unknown as ApiPaginatedResponse<PatientResponseDto>
       return typedRes.data || []
     },
-    enabled: open,
+    enabled: open, // Hanya fetch jika dialog terbuka
     staleTime: 1000 * 60,
   })
 
-  // 2. Fetch Dokter (PERBAIKAN LOGIC DISINI)
-  const { data: doctorsData, isLoading: loadingDoctors } = useQuery({
-    queryKey: ["users", "dokter-list"], // Ubah key agar tidak clash cache
+  // 2. Fetch Dokter
+  const { data: doctorsData, isLoading: loadingDoctors } = useQuery<UserResponseDto[]>({
+    queryKey: ["users", "dokter-list"],
     queryFn: async () => {
-      // Ambil data user lebih banyak untuk memastikan dokter terambil semua
       const res = await UserApi.findAll({ limit: 100 })
       const typedRes = res as unknown as ApiPaginatedResponse<UserResponseDto>
-      
-      // Filter user yang memiliki role 'dokter' ATAU 'kepala_klinik'
-      // Menggunakan toLowerCase() agar tidak sensitif huruf besar/kecil
-      const validRoles = ["dokter", "kepala_klinik"]
-      
-      const filteredDoctors = typedRes.data.filter((u) => 
-        u.roles.some((r) => validRoles.includes(r.name.toLowerCase()))
-      )
 
-      return filteredDoctors
+      const validRoles = ["dokter", "kepala_klinik"]
+
+      // Filter yang aman dengan optional chaining
+      return (typedRes.data || []).filter((u) =>
+        u.roles?.some((r) => validRoles.includes(r.name.toLowerCase()))
+      )
     },
     enabled: open,
   })
@@ -129,6 +127,7 @@ export function AppointmentDialog({
     },
   })
 
+  // Reset form saat dialog dibuka atau initialData berubah
   useEffect(() => {
     if (open) {
       if (initialData) {
@@ -149,6 +148,7 @@ export function AppointmentDialog({
           keluhan: "",
           status: AppointmentResponseDtoStatus.dijadwalkan,
         })
+        setSearchPatient("")
       }
     }
   }, [open, initialData, reset])
@@ -161,11 +161,12 @@ export function AppointmentDialog({
   }
 
   const onSubmit = (values: AppointmentFormValues) => {
+    // Pastikan format jam HH:mm:ss
     const formattedTime = values.jam_janji.length === 5 ? `${values.jam_janji}:00` : values.jam_janji
 
     if (initialData) {
-      const updatePayload: StrictUpdateAppointmentDto = {
-        doctor_id: Number(values.doctor_id),
+      const updatePayload: UpdateAppointmentDto = {
+        doctor_id: Number(values.doctor_id) || values.doctor_id, // Handle conversion if needed by BE
         tanggal_janji: values.tanggal_janji,
         jam_janji: formattedTime,
         keluhan: values.keluhan,
@@ -173,22 +174,21 @@ export function AppointmentDialog({
       }
       onSuccess(updatePayload)
     } else {
-      const createPayload: StrictCreateAppointmentDto = {
-        patient_id: Number(values.patient_id),
-        doctor_id: Number(values.doctor_id),
+      const createPayload: CreateAppointmentDto = {
+        patient_id: Number(values.patient_id) || values.patient_id,
+        doctor_id: Number(values.doctor_id) || values.doctor_id,
         tanggal_janji: values.tanggal_janji,
         jam_janji: formattedTime,
         keluhan: values.keluhan,
-        status: AppointmentResponseDtoStatus.dijadwalkan,
       }
       onSuccess(createPayload)
     }
-    setSearchPatient("")
+    // Search patient tidak di-reset di sini agar UX lebih baik jika terjadi error submit
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-150 overflow-visible">
+      <DialogContent className="sm:max-w-[600px] overflow-visible">
         <DialogHeader>
           <DialogTitle>{initialData ? "Ubah Jadwal" : "Buat Jadwal Baru"}</DialogTitle>
           <DialogDescription>
@@ -218,18 +218,18 @@ export function AppointmentDialog({
                           "w-full justify-between",
                           !field.value && "text-muted-foreground"
                         )}
-                        disabled={!!initialData}
+                        disabled={!!initialData} // Tidak bisa ganti pasien saat edit
                       >
                         {field.value
                           ? patientsData?.find((p) => String(p.id) === field.value)?.nama_lengkap ||
-                            (initialData?.patient_id === field.value
+                            (initialData?.patient_id === Number(field.value) || initialData?.patient_id === field.value
                               ? initialData.patient?.nama_lengkap
                               : "Pasien Terpilih")
                           : "Cari Pasien..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-75 p-0" align="start">
+                    <PopoverContent className="w-[280px] p-0" align="start">
                       <Command shouldFilter={false}>
                         <CommandInput
                           placeholder="Ketik nama atau No. RM..."
@@ -294,7 +294,6 @@ export function AppointmentDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    // Disable hanya jika loading, jangan disable jika data kosong (agar user bisa lihat 'no data')
                     disabled={loadingDoctors} 
                   >
                     <SelectTrigger>
@@ -312,7 +311,6 @@ export function AppointmentDialog({
                           {d.nama_lengkap}
                         </SelectItem>
                       ))}
-                      {/* Tampilkan pesan jika data kosong setelah loading */}
                       {!loadingDoctors && doctorsData?.length === 0 && (
                          <div className="p-2 text-sm text-muted-foreground text-center">
                             Tidak ada data dokter
@@ -337,8 +335,9 @@ export function AppointmentDialog({
                 control={control}
                 render={({ field }) => (
                   <Input
+                    id="tanggal_janji"
                     type="date"
-                    min={new Date().toISOString().split("T")[0]} // hari ini
+                    min={new Date().toISOString().split("T")[0]}
                     {...field}
                   />
                 )}
@@ -353,7 +352,13 @@ export function AppointmentDialog({
               <Controller
                 name="jam_janji"
                 control={control}
-                render={({ field }) => <Input type="time" {...field} />}
+                render={({ field }) => (
+                  <Input 
+                    id="jam_janji"
+                    type="time" 
+                    {...field} 
+                  />
+                )}
               />
               {errors.jam_janji && (
                 <p className="text-xs text-destructive">{errors.jam_janji.message}</p>
@@ -367,7 +372,12 @@ export function AppointmentDialog({
               name="keluhan"
               control={control}
               render={({ field }) => (
-                <Input placeholder="Contoh: Nyeri pada gigi geraham..." {...field} />
+                <Input 
+                  id="keluhan"
+                  placeholder="Contoh: Nyeri pada gigi geraham..." 
+                  {...field} 
+                  value={field.value ?? ""} 
+                />
               )}
             />
           </div>

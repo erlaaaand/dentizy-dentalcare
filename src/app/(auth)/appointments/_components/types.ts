@@ -1,45 +1,74 @@
-import {
+/**
+ * Local re-exports untuk fitur appointments.
+ *
+ * Semua domain types mengalir dari core types layer.
+ * File ini TIDAK mendefensikan ulang DTO — cukup re-export
+ * dan tambahkan helper types yang spesifik ke UI layer ini.
+ */
+
+import type {
   AppointmentResponseDto,
-  PaginatedAppointmentResponseDto,
   AppointmentResponseDtoStatus,
   AppointmentsControllerFindAllParams,
   AppointmentsControllerFindAllStatus,
-  UserResponseDto,
-  PatientResponseDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+  PaginatedAppointmentResponseDto,
 } from "@/src/core/api/model"
 
+// ---------------------------------------------------------------------------
+// Re-export core types
+// ---------------------------------------------------------------------------
 export type {
   AppointmentResponseDto,
-  PaginatedAppointmentResponseDto,
   AppointmentsControllerFindAllParams,
-  UserResponseDto,
-  PatientResponseDto,
+  PaginatedAppointmentResponseDto,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
 }
 
-export { 
+export {
   AppointmentResponseDtoStatus,
-  AppointmentsControllerFindAllStatus
+  AppointmentsControllerFindAllStatus,
 }
 
-export interface StrictCreateAppointmentDto {
-  patient_id: number
-  doctor_id: number
-  tanggal_janji: string
-  jam_janji: string
-  keluhan?: string
-  status?: AppointmentResponseDtoStatus
+// ---------------------------------------------------------------------------
+// Union type untuk onSuccess callback di dialog.
+// Page menentukan cabang (create vs update) berdasarkan ada-tidaknya
+// `selectedAppointment`, sehingga payload sudah ternarrow di masing-masing sisi.
+// ---------------------------------------------------------------------------
+export type AppointmentPayload = CreateAppointmentDto | UpdateAppointmentDto
+
+// ---------------------------------------------------------------------------
+// Types untuk fetch dokter & pasien di dialog (bukan bagian dari appointment
+// domain, tetapi dibutuhkan oleh komponen ini).
+// ---------------------------------------------------------------------------
+export interface UserRoleDto {
+  id: number
+  name: string
 }
 
-export interface StrictUpdateAppointmentDto {
-  doctor_id?: number
-  tanggal_janji?: string
-  jam_janji?: string
-  keluhan?: string
-  status?: AppointmentResponseDtoStatus
+export interface UserResponseDto {
+  id: number
+  nama_lengkap: string
+  roles: { id: number; name: string }[]
 }
 
-export type AppointmentPayload = StrictCreateAppointmentDto | StrictUpdateAppointmentDto
+export interface PatientResponseDto {
+  id: number
+  nama_lengkap: string
+  nomor_rekam_medis: string
+  nik?: string
+  is_active?: boolean
+  email?: string
+  nomor_telepon?: string
+}
 
+/**
+ * Envelope pagination generik yang dikembalikan oleh API.
+ * Dipakai untuk menormalise response PatientService & UserApi
+ * yang belum memiliki typed wrapper.
+ */
 export interface ApiPaginatedResponse<T> {
   data: T[]
   count: number

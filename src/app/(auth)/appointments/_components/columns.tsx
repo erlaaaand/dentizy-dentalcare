@@ -1,9 +1,10 @@
 "use client"
 
-import { ColumnDef } from "@tanstack/react-table"
+import { type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Clock, CalendarDays, Stethoscope } from "lucide-react"
-import { format } from "date-fns"
+import { format, isValid, parseISO } from "date-fns"
 import { id as localeId } from "date-fns/locale"
+import { toast } from "sonner" // Pastikan import toast jika ingin feedback saat copy
 
 import { Button } from "@/src/components/dashboard-ui/components/button"
 import { Badge } from "@/src/components/dashboard-ui/components/badge"
@@ -15,7 +16,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/src/components/dashboard-ui/components/dropdown-menu"
-import { AppointmentResponseDto, AppointmentResponseDtoStatus } from "./types"
+import { 
+  type AppointmentResponseDto, 
+  AppointmentResponseDtoStatus 
+} from "./types"
 
 interface ColumnProps {
   onEdit: (data: AppointmentResponseDto) => void
@@ -27,17 +31,28 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
     accessorKey: "tanggal_janji",
     header: "Waktu Kunjungan",
     cell: ({ row }) => {
-      const date = row.getValue("tanggal_janji") as string
+      // Pastikan casting aman
+      const rawDate = row.getValue("tanggal_janji")
+      const dateStr = typeof rawDate === 'string' ? rawDate : ''
       const time = row.original.jam_janji
+      
+      let formattedDate = "-"
+      if (dateStr) {
+         const parsedDate = parseISO(dateStr)
+         if (isValid(parsedDate)) {
+            formattedDate = format(parsedDate, "dd MMM yyyy", { locale: localeId })
+         }
+      }
+
       return (
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 text-sm font-medium">
             <CalendarDays className="size-3.5 text-muted-foreground" />
-            {date ? format(new Date(date), "dd MMM yyyy", { locale: localeId }) : "-"}
+            <span>{formattedDate}</span>
           </div>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Clock className="size-3.5" />
-            {time?.substring(0, 5)} WIB
+            {time ? `${time.substring(0, 5)} WIB` : "-"}
           </div>
         </div>
       )
@@ -76,7 +91,7 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
     cell: ({ row }) => {
       const status = row.original.status
       let variant: "default" | "secondary" | "destructive" | "outline" = "outline"
-      let label = status as string
+      let label = (status as string) || "-"
 
       switch (status) {
         case AppointmentResponseDtoStatus.dijadwalkan:
@@ -109,6 +124,12 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
         appointment.status !== AppointmentResponseDtoStatus.selesai &&
         appointment.status !== AppointmentResponseDtoStatus.dibatalkan
 
+      const handleCopyId = () => {
+         navigator.clipboard.writeText(String(appointment.id))
+            .then(() => toast.success("ID berhasil disalin"))
+            .catch(() => toast.error("Gagal menyalin ID"))
+      }
+
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -119,7 +140,7 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigator.clipboard.writeText(String(appointment.id))}>
+            <DropdownMenuItem onClick={handleCopyId}>
               Salin ID Jadwal
             </DropdownMenuItem>
             {isEditable && (

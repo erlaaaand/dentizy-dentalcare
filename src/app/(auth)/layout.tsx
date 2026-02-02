@@ -38,7 +38,13 @@ export default function AuthLayout({
   // --- LOGIKA SKELETON ---
   if (isLoading) {
     // Cek apakah user sedang mengakses Dashboard
-    const isDashboard = pathname?.startsWith("/dashboard") || pathname?.startsWith("/appointments");
+    const isDashboard = 
+    pathname?.startsWith("/dashboard") || 
+    pathname?.startsWith("/appointments") ||
+    pathname?.startsWith("/patients") ||
+    pathname?.startsWith("/users") ||
+    pathname?.startsWith("/medical-records") ||
+    pathname?.startsWith("/payments")
 
     if (isDashboard) {
       return <DashboardSkeleton />;
