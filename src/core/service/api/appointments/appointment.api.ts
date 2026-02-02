@@ -1,30 +1,91 @@
+/**
+ * Appointment API layer.
+ *
+ * Thin wrapper around the orval-generated controller functions.
+ * All public methods use the domain-typed DTOs from the types layer
+ * so that the rest of the app never reaches into `api/generated` directly.
+ */
+
 import {
   appointmentsControllerFindAll,
-  appointmentsControllerCreate,
   appointmentsControllerFindOne,
+  appointmentsControllerCreate,
   appointmentsControllerUpdate,
   appointmentsControllerCancel,
-  appointmentsControllerComplete
+  appointmentsControllerComplete,
+  appointmentsControllerRemove,
 } from '../../../api/generated/appointments/appointments';
-import { CreateAppointmentDto, UpdateAppointmentDto, AppointmentQueryParams } from '../../../types/appointments/appointment.types';
+
+import type {
+  AppointmentQueryParams,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+} from '../../../types/appointments/appointment.types';
 
 export const AppointmentApi = {
+  // -----------------------------------------------------------------------
+  // Queries
+  // -----------------------------------------------------------------------
+
+  /**
+   * GET /appointments
+   * Mengambil daftar appointment dengan pagination & filter.
+   */
   findAll: async (params?: AppointmentQueryParams) => {
-    return await appointmentsControllerFindAll(params);
+    return appointmentsControllerFindAll(params);
   },
+
+  /**
+   * GET /appointments/:id
+   * Mengambil detail satu appointment berdasarkan ID.
+   */
   findOne: async (id: string) => {
-    return await appointmentsControllerFindOne(id);
+    return appointmentsControllerFindOne(id);
   },
+
+  // -----------------------------------------------------------------------
+  // Mutations
+  // -----------------------------------------------------------------------
+
+  /**
+   * POST /appointments
+   * Membuat appointment baru dengan validasi waktu & conflict detection.
+   */
   create: async (data: CreateAppointmentDto) => {
-    return await appointmentsControllerCreate(data);
+    return appointmentsControllerCreate(data as unknown as Record<string, unknown>);
   },
+
+  /**
+   * PATCH /appointments/:id
+   * Update data appointment.
+   * Jika status SELESAI & ada medical_record, akan memicu transaksi rekam medis.
+   */
   update: async (id: string, data: UpdateAppointmentDto) => {
-    return await appointmentsControllerUpdate(id, data);
+    return appointmentsControllerUpdate(id, data as unknown as Record<string, unknown>);
   },
+
+  /**
+   * POST /appointments/:id/cancel
+   * Batalkan appointment.
+   * Pembatalan < 24 jam hanya diizinkan untuk Kepala Klinik.
+   */
   cancel: async (id: string) => {
-    return await appointmentsControllerCancel(id);
+    return appointmentsControllerCancel(id);
   },
+
+  /**
+   * POST /appointments/:id/complete
+   * Ubah status appointment menjadi SELESAI.
+   */
   complete: async (id: string) => {
-    return await appointmentsControllerComplete(id);
-  }
+    return appointmentsControllerComplete(id);
+  },
+
+  /**
+   * DELETE /appointments/:id
+   * Hapus appointment (hanya jika belum ada medical record).
+   */
+  remove: async (id: string) => {
+    return appointmentsControllerRemove(id);
+  },
 };
