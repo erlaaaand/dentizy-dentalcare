@@ -39,31 +39,31 @@ export const NAV_ITEMS = [
   {
     title: "Manajemen User",
     url: PROTECTED_ROUTES[4],
-    icon: Users, // tetap relevan
+    icon: Users,
     roles: ['kepala_klinik'],
   },
   {
     title: "Pendaftaran Pasien",
     url: PROTECTED_ROUTES[2],
-    icon: UserPlus, // lebih cocok untuk "registrasi"
+    icon: UserPlus,
     roles: ['staf', 'kepala_klinik'],
   },
   {
     title: "Rekam Medis",
     url: PROTECTED_ROUTES[3],
-    icon: Stethoscope, // lebih medis daripada FileText
+    icon: Stethoscope,
     roles: ['dokter', 'kepala_klinik'],
   },
   {
     title: "Jadwal & Antrean",
     url: PROTECTED_ROUTES[1],
-    icon: CalendarClock, // lebih representatif untuk jadwal
+    icon: CalendarClock,
     roles: ['staf', 'dokter', 'kepala_klinik'],
   },
   {
     title: "Pembayaran",
     url: PROTECTED_ROUTES[6],
-    icon: ReceiptText, // lebih cocok untuk transaksi/kwitansi
+    icon: ReceiptText,
     roles: ['staf', 'kepala_klinik'],
   },
   {
@@ -75,13 +75,13 @@ export const NAV_ITEMS = [
   {
     title: "Laporan",
     url: PROTECTED_ROUTES[5],
-    icon: BarChart3, // lebih visual untuk laporan/statistik
+    icon: BarChart3,
     roles: ['kepala_klinik'],
   },
   {
     title: "Pengaturan",
     url: PROTECTED_ROUTES[7],
-    icon: Settings, // sudah sesuai
+    icon: Settings,
     roles: ['kepala_klinik'],
   },
 ];

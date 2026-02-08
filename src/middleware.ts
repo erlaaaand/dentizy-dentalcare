@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { ROUTES } from './core/constants/routes.constants';
 
 const PUBLIC_ROUTES = ['/'];

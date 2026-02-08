@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { setupInterceptors } from './interceptors';
 
 const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
