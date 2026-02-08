@@ -22,9 +22,6 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
-/**
- * @summary Upload foto profil (Max 2MB, JPG/PNG)
- */
 export type uploadsControllerUploadFileResponse201 = {
   data: void
   status: 201
@@ -45,21 +42,14 @@ export const getUploadsControllerUploadFileUrl = () => {
   return `/uploads/profile-photo`
 }
 
-export const uploadsControllerUploadFile = async (fileBlob: {
-  file?: Blob;
-}, options?: RequestInit): Promise<uploadsControllerUploadFileResponse> => {
-    const formData = new FormData();
-if(uploadsControllerUploadFileBody.file !== undefined) {
- formData.append(`file`, uploadsControllerUploadFileBody.file);
- }
-
+export const uploadsControllerUploadFile = async ( options?: RequestInit): Promise<uploadsControllerUploadFileResponse> => {
+  
   return customInstance<uploadsControllerUploadFileResponse>(getUploadsControllerUploadFileUrl(),
   {      
     ...options,
     method: 'POST'
-    ,
-    body: 
-      formData,
+    
+    
   }
 );}
 
@@ -67,12 +57,8 @@ if(uploadsControllerUploadFileBody.file !== undefined) {
 
 
 export const getUploadsControllerUploadFileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
-  file?: Blob;
-}}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
-  file?: Blob;
-}}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext> => {
 
 const mutationKey = ['uploadsControllerUploadFile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -86,12 +72,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, {data: {
-  file?: Blob;
-}}> = (props) => {
-          const {data} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, void> = () => {
+          
 
-          return  uploadsControllerUploadFile(data,requestOptions)
+          return  uploadsControllerUploadFile(requestOptions)
         }
 
 
@@ -102,24 +86,15 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UploadsControllerUploadFileMutationResult = NonNullable<Awaited<ReturnType<typeof uploadsControllerUploadFile>>>
-    export type UploadsControllerUploadFileMutationBody = {
-  file?: Blob;
-}
+    
     export type UploadsControllerUploadFileMutationError = unknown
 
-    /**
- * @summary Upload foto profil (Max 2MB, JPG/PNG)
- */
-export const useUploadsControllerUploadFile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
-  file?: Blob;
-}}, TContext>, request?: SecondParameter<typeof customInstance>}
+    export const useUploadsControllerUploadFile = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof uploadsControllerUploadFile>>,
         TError,
-        {data: {
-  file?: Blob;
-}},
+        void,
         TContext
       > => {
       return useMutation(getUploadsControllerUploadFileMutationOptions(options), queryClient);
