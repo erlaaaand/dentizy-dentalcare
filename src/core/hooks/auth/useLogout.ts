@@ -2,53 +2,48 @@
 
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { ROUTES } from "@/src/core/constants/routes.constants";
 import { toast } from "sonner";
-import { useAuthLogout } from "./useAuth";
+import { ROUTES } from "@/src/core/constants/routes.constants";
+import { authService } from "@/src/core/service/api/auth/auth.api";
 
 /**
  * Hook untuk logout dengan cleanup lengkap
- * Menggabungkan API logout dengan client-side cleanup
+ * Menggunakan auth service untuk konsistensi
  */
 export const useLogout = () => {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { mutateAsync: logoutMutation } = useAuthLogout();
 
   const logout = async () => {
     try {
       // 1. Panggil API logout untuk invalidate token di server
       try {
-        await logoutMutation();
+        await authService.logout();
       } catch (apiError) {
         // Lanjutkan cleanup meskipun API gagal
         console.warn('API logout failed, continuing with client cleanup:', apiError);
       }
 
-      // 2. Hapus access token dari cookie
-      document.cookie = "access_token=; path=/; max-age=0; SameSite=Strict";
+      // 2. Clear auth data (cookies & localStorage)
+      authService.clearAuthData();
       
-      // 3. Hapus refresh token dari localStorage
-      localStorage.removeItem('refresh_token');
-      
-      // 4. Clear semua cache React Query
+      // 3. Clear semua cache React Query
       queryClient.clear();
       
-      // 5. Tampilkan notifikasi
+      // 4. Tampilkan notifikasi
       toast.info("Anda telah logout");
       
-      // 6. Redirect ke halaman login
+      // 5. Redirect ke halaman login
       router.replace(ROUTES.LOGIN);
       
-      // 7. Force refresh untuk clear state
+      // 6. Force refresh untuk clear state
       router.refresh();
     } catch (error) {
       console.error('Logout error:', error);
       toast.error("Terjadi kesalahan saat logout");
       
       // Tetap lakukan cleanup minimal
-      document.cookie = "access_token=; path=/; max-age=0";
-      localStorage.removeItem('refresh_token');
+      authService.clearAuthData();
       queryClient.clear();
       router.replace(ROUTES.LOGIN);
     }
@@ -68,8 +63,7 @@ export const useForceLogout = () => {
   const forceLogout = () => {
     try {
       // Cleanup client-side saja
-      document.cookie = "access_token=; path=/; max-age=0; SameSite=Strict";
-      localStorage.removeItem('refresh_token');
+      authService.clearAuthData();
       queryClient.clear();
       
       toast.info("Sesi Anda telah berakhir");
@@ -84,4 +78,59 @@ export const useForceLogout = () => {
   };
 
   return forceLogout;
+};
+
+/**
+ * Hook untuk logout dengan confirmation
+ */
+export const useLogoutWithConfirmation = () => {
+  const logout = useLogout();
+
+  const logoutWithConfirmation = async (confirmCallback?: () => Promise<boolean>) => {
+    try {
+      // If confirmation callback provided, call it
+      if (confirmCallback) {
+        const confirmed = await confirmCallback();
+        if (!confirmed) {
+          return false;
+        }
+      }
+
+      await logout();
+      return true;
+    } catch (error) {
+      console.error('Logout with confirmation error:', error);
+      return false;
+    }
+  };
+
+  return logoutWithConfirmation;
+};
+
+/**
+ * Hook untuk auto logout saat token expired
+ */
+export const useAutoLogout = () => {
+  const forceLogout = useForceLogout();
+  const queryClient = useQueryClient();
+
+  const checkAndLogout = () => {
+    const token = authService.getTokenFromCookie();
+    
+    if (!token) {
+      forceLogout();
+      return;
+    }
+
+    // Check if token is expired
+    if (authService.isTokenExpired(token)) {
+      authService.clearAuthData();
+      queryClient.clear();
+      
+      toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
+      forceLogout();
+    }
+  };
+
+  return checkAndLogout;
 };

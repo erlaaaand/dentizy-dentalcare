@@ -1,229 +1,133 @@
 import { useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import {
-  useMedicalRecordsControllerCreate,
-  useMedicalRecordsControllerFindAll,
-  useMedicalRecordsControllerSearch,
-  useMedicalRecordsControllerFindByAppointmentId,
-  useMedicalRecordsControllerGetDoctorStats,
-  useMedicalRecordsControllerFindOne,
-  useMedicalRecordsControllerUpdate,
-  useMedicalRecordsControllerRemove,
-  useMedicalRecordsControllerRestore,
-  useMedicalRecordsControllerHardDelete,
-  getMedicalRecordsControllerFindAllQueryKey,
-  getMedicalRecordsControllerSearchQueryKey,
-  getMedicalRecordsControllerGetDoctorStatsQueryKey
-} from '../../api/generated/medical-records/medical-records';
-
+import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
+import { medicalRecordsService } from '../../service/api/medical-records/medical-record.api';
 import type {
   MedicalRecordQueryParams,
   MedicalRecordSearchParams,
-  DoctorStatsParams
+  DoctorStatsParams,
+  CreateMedicalRecordDto,
+  UpdateMedicalRecordDto,
 } from '../../types/medical-records/medical-record.types';
 
-/**
- * Hook untuk mendapatkan daftar rekam medis dengan pagination
- */
-export const useMedicalRecords = (params?: MedicalRecordQueryParams) => {
-  return useMedicalRecordsControllerFindAll(params, {
-    query: {
-      placeholderData: keepPreviousData,
-      staleTime: 30 * 1000, // 30 detik
-      retry: 1
-    }
-  });
-};
+// ==================== QUERY HOOKS ====================
 
-/**
- * Hook untuk mendapatkan detail rekam medis berdasarkan ID
- */
-export const useMedicalRecord = (id: string) => {
-  return useMedicalRecordsControllerFindOne(id, {
-    query: {
-      enabled: !!id,
-      staleTime: 60 * 1000, // 1 menit
-      retry: 1
-    }
-  });
-};
+export const useMedicalRecords = createQueryHook({
+  queryKey: (params?: MedicalRecordQueryParams) => 
+    medicalRecordsService.getListQueryKey(params),
+  queryFn: (params) => medicalRecordsService.findAll(params),
+  options: {
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
+    retry: 1
+  },
+});
 
-/**
- * Hook untuk pencarian rekam medis
- */
-export const useMedicalRecordSearch = (params?: MedicalRecordSearchParams) => {
-  return useMedicalRecordsControllerSearch(params, {
-    query: {
-      enabled: !!params && Object.keys(params).length > 0,
-      placeholderData: keepPreviousData,
-      staleTime: 30 * 1000
-    }
-  });
-};
+export const useMedicalRecord = createQueryHook({
+  queryKey: (id?: string) => medicalRecordsService.getDetailQueryKey(id!),
+  queryFn: (id) => medicalRecordsService.findOne(id!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+    retry: 1
+  },
+});
 
-/**
- * Hook untuk mendapatkan rekam medis berdasarkan appointment ID
- */
-export const useMedicalRecordByAppointment = (appointmentId: string) => {
-  return useMedicalRecordsControllerFindByAppointmentId(appointmentId, {
-    query: {
-      enabled: !!appointmentId,
-      staleTime: 60 * 1000,
-      retry: 1
-    }
-  });
-};
+export const useMedicalRecordSearch = createQueryHook({
+  queryKey: (params?: MedicalRecordSearchParams) => 
+    medicalRecordsService.getSearchQueryKey(params),
+  queryFn: (params) => medicalRecordsService.search(params!),
+  options: {
+    enabled: false,
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000
+  },
+});
 
-/**
- * Hook untuk mendapatkan statistik dokter
- */
-export const useDoctorStats = (params?: DoctorStatsParams) => {
-  return useMedicalRecordsControllerGetDoctorStats(params, {
-    query: {
-      staleTime: 5 * 60 * 1000, // 5 menit
-      placeholderData: keepPreviousData
-    }
-  });
-};
+export const useMedicalRecordByAppointment = createQueryHook({
+  queryKey: (appointmentId?: string) => 
+    ['/medical-records/by-appointment', appointmentId],
+  queryFn: (appointmentId) => medicalRecordsService.findByAppointmentId(appointmentId!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+    retry: 1
+  },
+});
 
-/**
- * Hook untuk membuat rekam medis baru
- */
-export const useCreateMedicalRecord = () => {
-  const queryClient = useQueryClient();
+export const useDoctorStats = createQueryHook({
+  queryKey: (params?: DoctorStatsParams) => 
+    medicalRecordsService.getDoctorStatsQueryKey(params),
+  queryFn: (params) => medicalRecordsService.getDoctorStats(params),
+  options: {
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData
+  },
+});
 
-  return useMedicalRecordsControllerCreate({
-    mutation: {
-      onSuccess: (response) => {
-        if (response.status === 201) {
-          toast.success('Rekam medis berhasil dibuat');
-          
-          // Invalidate related queries
-          queryClient.invalidateQueries({
-            queryKey: getMedicalRecordsControllerFindAllQueryKey()
-          });
-          queryClient.invalidateQueries({
-            queryKey: ['/appointments']
-          });
-        }
-      },
-      onError: (error) => {
-        toast.error('Gagal membuat rekam medis');
-        console.error('Create medical record error:', error);
-      }
-    }
-  });
-};
+// ==================== MUTATION HOOKS ====================
 
-/**
- * Hook untuk update rekam medis
- */
-export const useUpdateMedicalRecord = () => {
-  const queryClient = useQueryClient();
+export const useCreateMedicalRecord = createMutationHook({
+  mutationFn: (data: CreateMedicalRecordDto) => 
+    medicalRecordsService.create(data),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Rekam medis berhasil dibuat');
+    medicalRecordsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal membuat rekam medis');
+  }
+});
 
-  return useMedicalRecordsControllerUpdate({
-    mutation: {
-      onSuccess: (response, { id }) => {
-        if (response.status === 200) {
-          toast.success('Rekam medis berhasil diperbarui');
-          
-          // Invalidate specific record and list
-          queryClient.invalidateQueries({
-            queryKey: ['/medical-records', id]
-          });
-          queryClient.invalidateQueries({
-            queryKey: getMedicalRecordsControllerFindAllQueryKey()
-          });
-        }
-      },
-      onError: (error) => {
-        toast.error('Gagal memperbarui rekam medis');
-        console.error('Update medical record error:', error);
-      }
-    }
-  });
-};
+export const useUpdateMedicalRecord = createMutationHook({
+  mutationFn: ({ id, data }: { id: string; data: UpdateMedicalRecordDto }) =>
+    medicalRecordsService.update(id, data),
+  onSuccess: (_, { id }, queryClient) => {
+    toast.success('Rekam medis berhasil diperbarui');
+    medicalRecordsService.invalidateDetail(queryClient, id);
+    medicalRecordsService.invalidateList(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memperbarui rekam medis');
+  }
+});
 
-/**
- * Hook untuk soft delete rekam medis
- */
-export const useRemoveMedicalRecord = () => {
-  const queryClient = useQueryClient();
+export const useRemoveMedicalRecord = createMutationHook({
+  mutationFn: (id: string) => medicalRecordsService.remove(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Rekam medis berhasil dihapus');
+    medicalRecordsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal menghapus rekam medis');
+  }
+});
 
-  return useMedicalRecordsControllerRemove({
-    mutation: {
-      onSuccess: (response) => {
-        if (response.status === 200) {
-          toast.success('Rekam medis berhasil dihapus');
-          
-          queryClient.invalidateQueries({
-            queryKey: ['/medical-records']
-          });
-        }
-      },
-      onError: (error) => {
-        toast.error('Gagal menghapus rekam medis. Anda mungkin tidak memiliki izin.');
-        console.error('Remove medical record error:', error);
-      }
-    }
-  });
-};
+export const useRestoreMedicalRecord = createMutationHook({
+  mutationFn: (id: string) => medicalRecordsService.restore(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Rekam medis berhasil dipulihkan');
+    medicalRecordsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memulihkan rekam medis');
+  }
+});
 
-/**
- * Hook untuk restore rekam medis yang di-soft delete
- */
-export const useRestoreMedicalRecord = () => {
-  const queryClient = useQueryClient();
+export const useHardDeleteMedicalRecord = createMutationHook({
+  mutationFn: (id: string) => medicalRecordsService.hardDelete(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Rekam medis berhasil dihapus permanen');
+    medicalRecordsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal menghapus permanen rekam medis');
+  }
+});
 
-  return useMedicalRecordsControllerRestore({
-    mutation: {
-      onSuccess: (response) => {
-        if (response.status === 200) {
-          toast.success('Rekam medis berhasil dipulihkan');
-          
-          queryClient.invalidateQueries({
-            queryKey: ['/medical-records']
-          });
-        }
-      },
-      onError: (error) => {
-        toast.error('Gagal memulihkan rekam medis. Anda mungkin tidak memiliki izin.');
-        console.error('Restore medical record error:', error);
-      }
-    }
-  });
-};
+// ==================== COMBINED MUTATIONS HOOK ====================
 
-/**
- * Hook untuk hard delete rekam medis (permanent)
- * PERHATIAN: Aksi ini tidak dapat dibatalkan!
- */
-export const useHardDeleteMedicalRecord = () => {
-  const queryClient = useQueryClient();
-
-  return useMedicalRecordsControllerHardDelete({
-    mutation: {
-      onSuccess: (response) => {
-        if (response.status === 204) {
-          toast.success('Rekam medis berhasil dihapus permanen');
-          
-          queryClient.invalidateQueries({
-            queryKey: ['/medical-records']
-          });
-        }
-      },
-      onError: (error) => {
-        toast.error('Gagal menghapus permanen rekam medis. Anda mungkin tidak memiliki izin.');
-        console.error('Hard delete medical record error:', error);
-      }
-    }
-  });
-};
-
-/**
- * Hook gabungan untuk semua mutations medical record
- */
-export const useMedicalRecordMutations = () => {
+export function useMedicalRecordMutations() {
   const create = useCreateMedicalRecord();
   const update = useUpdateMedicalRecord();
   const remove = useRemoveMedicalRecord();
@@ -231,69 +135,69 @@ export const useMedicalRecordMutations = () => {
   const hardDelete = useHardDeleteMedicalRecord();
 
   return {
-    // Mutation functions
-    createMedicalRecord: create.mutate,
-    createMedicalRecordAsync: create.mutateAsync,
-    updateMedicalRecord: update.mutate,
-    updateMedicalRecordAsync: update.mutateAsync,
-    removeMedicalRecord: remove.mutate,
-    removeMedicalRecordAsync: remove.mutateAsync,
-    restoreMedicalRecord: restore.mutate,
-    restoreMedicalRecordAsync: restore.mutateAsync,
-    hardDeleteMedicalRecord: hardDelete.mutate,
-    hardDeleteMedicalRecordAsync: hardDelete.mutateAsync,
-
-    // Loading states
+    create: create.mutate,
+    createAsync: create.mutateAsync,
+    update: update.mutate,
+    updateAsync: update.mutateAsync,
+    remove: remove.mutate,
+    removeAsync: remove.mutateAsync,
+    restore: restore.mutate,
+    restoreAsync: restore.mutateAsync,
+    hardDelete: hardDelete.mutate,
+    hardDeleteAsync: hardDelete.mutateAsync,
+    
     isCreating: create.isPending,
     isUpdating: update.isPending,
     isRemoving: remove.isPending,
     isRestoring: restore.isPending,
     isHardDeleting: hardDelete.isPending,
     
-    // Any mutation in progress
-    isMutating: create.isPending || update.isPending || remove.isPending || 
-                restore.isPending || hardDelete.isPending,
-
-    // Error states
+    isMutating: 
+      create.isPending || 
+      update.isPending || 
+      remove.isPending || 
+      restore.isPending || 
+      hardDelete.isPending,
+    
     createError: create.error,
     updateError: update.error,
     removeError: remove.error,
     restoreError: restore.error,
-    hardDeleteError: hardDelete.error
+    hardDeleteError: hardDelete.error,
+    
+    resetCreate: create.reset,
+    resetUpdate: update.reset,
+    resetRemove: remove.reset,
+    resetRestore: restore.reset,
+    resetHardDelete: hardDelete.reset,
   };
-};
+}
 
-/**
- * Hook untuk invalidate semua queries medical record
- */
-export const useInvalidateMedicalRecords = () => {
+// ==================== UTILITY HOOKS ====================
+
+export function usePrefetchMedicalRecord() {
   const queryClient = useQueryClient();
-
+  
   return {
-    invalidateAll: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['/medical-records']
-      });
-    },
-    invalidateList: (params?: MedicalRecordQueryParams) => {
-      queryClient.invalidateQueries({
-        queryKey: getMedicalRecordsControllerFindAllQueryKey(params)
-      });
-    },
-    invalidateSearch: (params?: MedicalRecordSearchParams) => {
-      queryClient.invalidateQueries({
-        queryKey: getMedicalRecordsControllerSearchQueryKey(params)
-      });
-    },
-    invalidateStats: (params?: DoctorStatsParams) => {
-      queryClient.invalidateQueries({
-        queryKey: getMedicalRecordsControllerGetDoctorStatsQueryKey(params)
-      });
-    },
-    invalidateOne: (id: string) => {
-      queryClient.invalidateQueries({
-        queryKey: ['/medical-records', id]
-      });
-    }
+    prefetchList: (params?: MedicalRecordQueryParams) =>
+      medicalRecordsService.prefetchList(queryClient, params),
+    prefetchDetail: (id: string) =>
+      medicalRecordsService.prefetchDetail(queryClient, id),
   };
-};
+}
+
+export function useInvalidateMedicalRecords() {
+  const queryClient = useQueryClient();
+  
+  return {
+    invalidateAll: () => medicalRecordsService.invalidateAll(queryClient),
+    invalidateList: (params?: MedicalRecordQueryParams) => 
+      medicalRecordsService.invalidateList(queryClient, params),
+    invalidateDetail: (id: string) => 
+      medicalRecordsService.invalidateDetail(queryClient, id),
+    invalidateSearch: (params?: MedicalRecordSearchParams) =>
+      medicalRecordsService.invalidateSearch(queryClient, params),
+    invalidateStats: (params?: DoctorStatsParams) =>
+      medicalRecordsService.invalidateStats(queryClient, params),
+  };
+}

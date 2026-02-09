@@ -1,121 +1,193 @@
 import { useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import {
-  useTreatmentsControllerFindAll,
-  useTreatmentsControllerCreate,
-  useTreatmentsControllerUpdate,
-  useTreatmentsControllerRemove,
-  useTreatmentsControllerRestore,
-  useTreatmentsControllerActivate,
-  useTreatmentsControllerDeactivate,
-  useTreatmentsControllerFindOne,
-  useTreatmentsControllerFindByKode
-} from '../../api/generated/treatments/treatments';
-import type { TreatmentQueryParams } from '../../types/treatments/treatment.types';
+import { toast } from 'sonner';
+import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
+import { treatmentsService } from '../../service/api/treatments/treatment.api';
+import type {
+  TreatmentQueryParams,
+  CreateTreatmentDto,
+  UpdateTreatmentDto,
+} from '../../types/treatments/treatment.types';
 
-/**
- * Hook untuk mendapatkan daftar treatments dengan pagination dan filter
- */
-export const useTreatments = (params?: TreatmentQueryParams) => {
-  return useTreatmentsControllerFindAll(params, {
-    query: { placeholderData: keepPreviousData }
-  });
-};
+// ==================== QUERY HOOKS ====================
 
-/**
- * Hook untuk mendapatkan detail treatment berdasarkan ID
- */
-export const useTreatmentDetail = (id: number) => {
-  return useTreatmentsControllerFindOne(id, {
-    query: { enabled: !!id }
-  });
-};
+export const useTreatments = createQueryHook({
+  queryKey: (params?: TreatmentQueryParams) => 
+    treatmentsService.getListQueryKey(params),
+  queryFn: (params) => treatmentsService.findAll(params),
+  options: {
+    placeholderData: keepPreviousData,
+    staleTime: 30 * 1000,
+  },
+});
 
-/**
- * Hook untuk mendapatkan treatment berdasarkan kode
- */
-export const useTreatmentByKode = (kode: string) => {
-  return useTreatmentsControllerFindByKode(kode, {
-    query: { enabled: !!kode && kode.length > 0 }
-  });
-};
+export const useTreatment = createQueryHook({
+  queryKey: (id?: number) => treatmentsService.getDetailQueryKey(id!),
+  queryFn: (id) => treatmentsService.findOne(id!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+  },
+});
 
-/**
- * Hook untuk semua operasi mutasi treatment
- */
-export const useTreatmentMutations = () => {
-  const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['/treatments'] });
+export const useTreatmentByKode = createQueryHook({
+  queryKey: (kode?: string) => treatmentsService.getByKodeQueryKey(kode!),
+  queryFn: (kode) => treatmentsService.findByKode(kode!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+  },
+});
 
-  const create = useTreatmentsControllerCreate({ 
-    mutation: { onSuccess: invalidate } 
-  });
-  
-  const update = useTreatmentsControllerUpdate({ 
-    mutation: { onSuccess: invalidate } 
-  });
-  
-  const remove = useTreatmentsControllerRemove({ 
-    mutation: { onSuccess: invalidate } 
-  });
+// ==================== MUTATION HOOKS ====================
 
-  const restore = useTreatmentsControllerRestore({
-    mutation: { onSuccess: invalidate }
-  });
-  
-  const activate = useTreatmentsControllerActivate({ 
-    mutation: { onSuccess: invalidate } 
-  });
-  
-  const deactivate = useTreatmentsControllerDeactivate({ 
-    mutation: { onSuccess: invalidate } 
-  });
+export const useCreateTreatment = createMutationHook({
+  mutationFn: (data: CreateTreatmentDto) => treatmentsService.create(data),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Treatment berhasil dibuat');
+    treatmentsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal membuat treatment');
+  }
+});
+
+export const useUpdateTreatment = createMutationHook({
+  mutationFn: ({ id, data }: { id: number; data: UpdateTreatmentDto }) =>
+    treatmentsService.update(id, data),
+  onSuccess: (_, { id }, queryClient) => {
+    toast.success('Treatment berhasil diperbarui');
+    treatmentsService.invalidateDetail(queryClient, id);
+    treatmentsService.invalidateList(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memperbarui treatment');
+  }
+});
+
+export const useRemoveTreatment = createMutationHook({
+  mutationFn: (id: number) => treatmentsService.remove(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Treatment berhasil dihapus');
+    treatmentsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal menghapus treatment');
+  }
+});
+
+export const useRestoreTreatment = createMutationHook({
+  mutationFn: (id: number) => treatmentsService.restore(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Treatment berhasil dipulihkan');
+    treatmentsService.invalidateAll(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memulihkan treatment');
+  }
+});
+
+export const useActivateTreatment = createMutationHook({
+  mutationFn: (id: number) => treatmentsService.activate(id),
+  onSuccess: (data, id, queryClient) => {
+    toast.success('Treatment berhasil diaktifkan');
+    treatmentsService.optimisticUpdate(queryClient, id, (old) => ({
+      ...old,
+      isActive: true,
+    }));
+    treatmentsService.invalidateList(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal mengaktifkan treatment');
+  }
+});
+
+export const useDeactivateTreatment = createMutationHook({
+  mutationFn: (id: number) => treatmentsService.deactivate(id),
+  onSuccess: (data, id, queryClient) => {
+    toast.success('Treatment berhasil dinonaktifkan');
+    treatmentsService.optimisticUpdate(queryClient, id, (old) => ({
+      ...old,
+      isActive: false,
+    }));
+    treatmentsService.invalidateList(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal menonaktifkan treatment');
+  }
+});
+
+// ==================== COMBINED MUTATIONS HOOK ====================
+
+export function useTreatmentMutations() {
+  const create = useCreateTreatment();
+  const update = useUpdateTreatment();
+  const remove = useRemoveTreatment();
+  const restore = useRestoreTreatment();
+  const activate = useActivateTreatment();
+  const deactivate = useDeactivateTreatment();
 
   return {
-    createTreatment: create.mutate,
-    createTreatmentAsync: create.mutateAsync,
-    updateTreatment: update.mutate,
-    updateTreatmentAsync: update.mutateAsync,
-    deleteTreatment: remove.mutate,
-    deleteTreatmentAsync: remove.mutateAsync,
-    restoreTreatment: restore.mutate,
-    restoreTreatmentAsync: restore.mutateAsync,
-    activateTreatment: activate.mutate,
-    activateTreatmentAsync: activate.mutateAsync,
-    deactivateTreatment: deactivate.mutate,
-    deactivateTreatmentAsync: deactivate.mutateAsync,
+    create: create.mutate,
+    createAsync: create.mutateAsync,
+    update: update.mutate,
+    updateAsync: update.mutateAsync,
+    remove: remove.mutate,
+    removeAsync: remove.mutateAsync,
+    restore: restore.mutate,
+    restoreAsync: restore.mutateAsync,
+    activate: activate.mutate,
+    activateAsync: activate.mutateAsync,
+    deactivate: deactivate.mutate,
+    deactivateAsync: deactivate.mutateAsync,
+
     isCreating: create.isPending,
     isUpdating: update.isPending,
-    isDeleting: remove.isPending,
+    isRemoving: remove.isPending,
     isRestoring: restore.isPending,
     isActivating: activate.isPending,
     isDeactivating: deactivate.isPending,
-  };
-};
+    
+    isMutating: 
+      create.isPending || 
+      update.isPending || 
+      remove.isPending || 
+      restore.isPending || 
+      activate.isPending || 
+      deactivate.isPending,
 
-/**
- * Hook untuk toggle status aktif treatment
- * @param onSuccess - Callback function setelah berhasil toggle status
- */
-export const useTreatmentStatusToggle = (onSuccess?: () => void) => {
-  const queryClient = useQueryClient();
-  const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ['/treatments'] });
-    onSuccess?.();
+    createError: create.error,
+    updateError: update.error,
+    removeError: remove.error,
+    restoreError: restore.error,
+    activateError: activate.error,
+    deactivateError: deactivate.error,
+    
+    resetCreate: create.reset,
+    resetUpdate: update.reset,
+    resetRemove: remove.reset,
+    resetRestore: restore.reset,
+    resetActivate: activate.reset,
+    resetDeactivate: deactivate.reset,
   };
+}
 
-  const activate = useTreatmentsControllerActivate({ 
-    mutation: { onSuccess: invalidate } 
-  });
-  
-  const deactivate = useTreatmentsControllerDeactivate({ 
-    mutation: { onSuccess: invalidate } 
-  });
+// ==================== STATUS TOGGLE HOOK ====================
+
+export function useTreatmentStatusToggle(onSuccess?: () => void) {
+  const activate = useActivateTreatment();
+  const deactivate = useDeactivateTreatment();
 
   const toggleStatus = async (id: number, isActive: boolean) => {
-    if (isActive) {
-      return activate.mutateAsync({ id });
-    } else {
-      return deactivate.mutateAsync({ id });
+    try {
+      if (isActive) {
+        await activate.mutateAsync(id);
+      } else {
+        await deactivate.mutateAsync(id);
+      }
+      onSuccess?.();
+    } catch (error) {
+      // Error sudah di-handle di mutation hook
+      throw error;
     }
   };
 
@@ -123,4 +195,31 @@ export const useTreatmentStatusToggle = (onSuccess?: () => void) => {
     toggleStatus,
     isToggling: activate.isPending || deactivate.isPending,
   };
-};
+}
+
+// ==================== UTILITY HOOKS ====================
+
+export function usePrefetchTreatment() {
+  const queryClient = useQueryClient();
+  
+  return {
+    prefetchList: (params?: TreatmentQueryParams) =>
+      treatmentsService.prefetchList(queryClient, params),
+    prefetchDetail: (id: number) =>
+      treatmentsService.prefetchDetail(queryClient, id),
+  };
+}
+
+export function useInvalidateTreatments() {
+  const queryClient = useQueryClient();
+  
+  return {
+    invalidateAll: () => treatmentsService.invalidateAll(queryClient),
+    invalidateList: (params?: TreatmentQueryParams) => 
+      treatmentsService.invalidateList(queryClient, params),
+    invalidateDetail: (id: number) => 
+      treatmentsService.invalidateDetail(queryClient, id),
+    invalidateByKode: (kode: string) =>
+      treatmentsService.invalidateByKode(queryClient, kode),
+  };
+}

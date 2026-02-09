@@ -1,23 +1,70 @@
-// src/core/hooks/useUploads.ts
-import { useUploadsControllerUploadFile } from "@/src/core/api/generated/uploads/uploads"
-import type { UploadsControllerUploadFileMutationResult } from "@/src/core/api/generated/uploads/uploads.ts"
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { createMutationHook } from '../../service/base/use-query-factory';
+import { uploadsService, uploadsHelpers } from '../../service/api/uploads/uploads.api';
 
-export const useUploads = () => {
-  /**
-   * Hook untuk upload file foto profil
-   */
-  const uploadFile = useUploadsControllerUploadFile({
-    mutation: {
-      onSuccess: (data: UploadsControllerUploadFileMutationResult) => {
-        console.log("Upload berhasil:", data)
-      },
-      onError: (error) => {
-        console.error("Upload gagal:", error)
-      },
-    },
-  })
+// ==================== MUTATION HOOKS ====================
+
+export const useUploadProfilePhoto = createMutationHook({
+  mutationFn: (file: File) => uploadsService.uploadProfilePhoto(file),
+  onSuccess: () => {
+    toast.success('Foto profil berhasil diupload');
+  },
+  onError: () => {
+    toast.error('Gagal mengupload foto profil');
+  }
+});
+
+// ==================== UPLOAD HOOK WITH VALIDATION ====================
+
+export function useFileUpload() {
+  const upload = useUploadProfilePhoto();
+
+  const uploadWithValidation = async (
+    file: File,
+    options?: {
+      maxSizeMB?: number;
+      compress?: boolean;
+      maxWidth?: number;
+      quality?: number;
+    }
+  ) => {
+    // Validate and prepare file
+    const validation = await uploadsHelpers.validateAndPrepareFile(file, options);
+
+    if (!validation.valid) {
+      toast.error(validation.error);
+      return { success: false, error: validation.error };
+    }
+
+    try {
+      const result = await upload.mutateAsync(validation.file!);
+      return { success: true, data: result };
+    } catch (error) {
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Upload failed' 
+      };
+    }
+  };
 
   return {
-    uploadFile,
-  }
+    upload: uploadWithValidation,
+    uploadRaw: upload.mutate,
+    uploadRawAsync: upload.mutateAsync,
+    isUploading: upload.isPending,
+    error: upload.error,
+    reset: upload.reset,
+    helpers: uploadsHelpers
+  };
+}
+
+// ==================== UTILITY HOOKS ====================
+
+export function useInvalidateUploads() {
+  const queryClient = useQueryClient();
+  
+  return {
+    invalidateAll: () => uploadsService.invalidateAll(queryClient),
+  };
 }

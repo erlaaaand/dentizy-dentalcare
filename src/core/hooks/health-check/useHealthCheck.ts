@@ -1,144 +1,60 @@
-import { useCallback } from 'react';
-import type { QueryClient } from '@tanstack/react-query';
-import {
-  useHealthControllerCheck,
-  useHealthControllerCheckDetails,
-  useHealthControllerLiveness,
-  useHealthControllerReadiness,
-  healthCheckApi,
-  healthCheckHelpers,
-  getHealthControllerCheckQueryKey,
-  getHealthControllerCheckDetailsQueryKey,
-  getHealthControllerLivenessQueryKey,
-  getHealthControllerReadinessQueryKey
-} from '../../service/api/health-check/health-check.api';
+import { useQueryClient } from '@tanstack/react-query';
+import { createQueryHook } from '../../service/base/use-query-factory';
+import { healthCheckService, healthCheckHelpers } from '../../service/api/health-check/health-check.api';
 
-import type {
-  HealthCheckResponse,
-  DetailedHealthCheckResponse,
-  HealthStatus
-} from '../../types/health-check/health-check.types';
+// ==================== QUERY HOOKS ====================
 
-/**
- * Hook untuk basic health check
- */
-export const useHealthCheck = () => {
-  const query = useHealthControllerCheck();
+export const useHealthCheck = createQueryHook({
+  queryKey: () => healthCheckService.getBasicHealthQueryKey(),
+  queryFn: () => healthCheckService.checkBasicHealth(),
+  options: {
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000, // Refetch every minute
+  },
+});
 
-  const healthData = query.data?.data as HealthCheckResponse | undefined;
+export const useDetailedHealthCheck = createQueryHook({
+  queryKey: () => healthCheckService.getDetailedHealthQueryKey(),
+  queryFn: () => healthCheckService.checkDetailedHealth(),
+  options: {
+    staleTime: 30 * 1000,
+    refetchInterval: 60 * 1000,
+  },
+});
 
-  return {
-    ...query,
-    healthData,
-    isHealthy: healthData ? healthCheckHelpers.isHealthy(healthData.status) : false,
-    isDegraded: healthData ? healthCheckHelpers.isDegraded(healthData.status) : false,
-    isUnhealthy: healthData ? healthCheckHelpers.isUnhealthy(healthData.status) : false,
-    statusColor: healthData
-      ? healthCheckHelpers.getStatusColor(healthData.status)
-      : 'gray',
-    statusLabel: healthData
-      ? healthCheckHelpers.getStatusLabel(healthData.status)
-      : 'Unknown'
-  };
-};
+export const useLivenessCheck = createQueryHook({
+  queryKey: () => healthCheckService.getLivenessQueryKey(),
+  queryFn: () => healthCheckService.checkLiveness(),
+  options: {
+    staleTime: 30 * 1000,
+    retry: 3,
+  },
+});
 
-/**
- * Hook untuk detailed health check (DB & Memory)
- */
-export const useDetailedHealthCheck = () => {
-  const query = useHealthControllerCheckDetails();
+export const useReadinessCheck = createQueryHook({
+  queryKey: () => healthCheckService.getReadinessQueryKey(),
+  queryFn: () => healthCheckService.checkReadiness(),
+  options: {
+    staleTime: 30 * 1000,
+    retry: 3,
+  },
+});
 
-  const detailedHealthData = query.data?.data as DetailedHealthCheckResponse | undefined;
+// ==================== MONITORING HOOK ====================
 
-  return {
-    ...query,
-    detailedHealthData,
-    isHealthy: detailedHealthData
-      ? healthCheckHelpers.isHealthy(detailedHealthData.status)
-      : false
-  };
-};
-
-/**
- * Hook untuk liveness probe (Kubernetes)
- */
-export const useLivenessCheck = () => {
-  const query = useHealthControllerLiveness();
-
-  return {
-    ...query,
-    isAlive: query.isSuccess
-  };
-};
-
-/**
- * Hook untuk readiness probe (Kubernetes)
- */
-export const useReadinessCheck = () => {
-  const query = useHealthControllerReadiness();
-
-  return {
-    ...query,
-    isReady: query.isSuccess
-  };
-};
-
-/**
- * Hook untuk health check actions
- */
-export const useHealthCheckActions = (queryClient: QueryClient) => {
-  const invalidateAll = useCallback(async () => {
-    await healthCheckApi.invalidateAll(queryClient);
-  }, [queryClient]);
-
-  const prefetchHealthCheck = useCallback(async () => {
-    await healthCheckApi.prefetchHealthCheck(queryClient);
-  }, [queryClient]);
-
-  const checkBasicHealth = useCallback(async () => {
-    return await healthCheckApi.checkBasicHealth();
-  }, []);
-
-  const checkDetailedHealth = useCallback(async () => {
-    return await healthCheckApi.checkDetailedHealth();
-  }, []);
-
-  const checkLiveness = useCallback(async () => {
-    return await healthCheckApi.checkLiveness();
-  }, []);
-
-  const checkReadiness = useCallback(async () => {
-    return await healthCheckApi.checkReadiness();
-  }, []);
-
-  return {
-    invalidateAll,
-    prefetchHealthCheck,
-    checkBasicHealth,
-    checkDetailedHealth,
-    checkLiveness,
-    checkReadiness
-  };
-};
-
-/**
- * Hook untuk monitoring health status dengan polling
- */
-export const useHealthMonitoring = (options?: {
+export function useHealthMonitoring(options?: {
   enabled?: boolean;
   refetchInterval?: number;
-}) => {
+}) {
   const { enabled = true, refetchInterval = 30000 } = options || {};
 
-  const healthQuery = useHealthControllerCheck({
-    query: {
-      enabled,
-      refetchInterval,
-      refetchIntervalInBackground: true
-    }
+  const healthQuery = useHealthCheck(undefined, {
+    enabled,
+    refetchInterval,
+    refetchIntervalInBackground: true
   });
 
-  const healthData = healthQuery.data?.data as HealthCheckResponse | undefined;
+  const healthData = healthQuery.data;
 
   return {
     ...healthQuery,
@@ -146,24 +62,41 @@ export const useHealthMonitoring = (options?: {
     status: healthData?.status,
     isHealthy: healthData ? healthCheckHelpers.isHealthy(healthData.status) : false,
     isDegraded: healthData ? healthCheckHelpers.isDegraded(healthData.status) : false,
-    isUnhealthy: healthData ? healthCheckHelpers.isUnhealthy(healthData.status) : false
+    isUnhealthy: healthData ? healthCheckHelpers.isUnhealthy(healthData.status) : false,
+    statusColor: healthData 
+      ? healthCheckHelpers.getStatusColor(healthData.status)
+      : 'gray',
+    statusLabel: healthData
+      ? healthCheckHelpers.getStatusLabel(healthData.status)
+      : 'Unknown',
+    statusIcon: healthData
+      ? healthCheckHelpers.getStatusIcon(healthData.status)
+      : '?'
   };
-};
+}
 
-/**
- * Hook untuk mendapatkan query keys
- */
-export const useHealthCheckQueryKeys = () => {
+// ==================== UTILITY HOOKS ====================
+
+export function usePrefetchHealthCheck() {
+  const queryClient = useQueryClient();
+  
   return {
-    healthCheck: getHealthControllerCheckQueryKey(),
-    detailedHealth: getHealthControllerCheckDetailsQueryKey(),
-    liveness: getHealthControllerLivenessQueryKey(),
-    readiness: getHealthControllerReadinessQueryKey()
+    prefetchBasic: () => healthCheckService.prefetchHealthCheck(queryClient),
+    prefetchDetailed: () => healthCheckService.prefetchDetailedHealth(queryClient),
   };
-};
+}
 
-// Export helpers untuk digunakan di luar hooks
+export function useInvalidateHealthCheck() {
+  const queryClient = useQueryClient();
+  
+  return {
+    invalidateAll: () => healthCheckService.invalidateAll(queryClient),
+    invalidateBasic: () => healthCheckService.invalidateBasicHealth(queryClient),
+    invalidateDetailed: () => healthCheckService.invalidateDetailedHealth(queryClient),
+    invalidateLiveness: () => healthCheckService.invalidateLiveness(queryClient),
+    invalidateReadiness: () => healthCheckService.invalidateReadiness(queryClient),
+  };
+}
+
+// Export helpers
 export { healthCheckHelpers };
-
-// Export types
-export type { HealthCheckResponse, DetailedHealthCheckResponse, HealthStatus };
