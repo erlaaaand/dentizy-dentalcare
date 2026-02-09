@@ -1,3 +1,4 @@
+import { BaseService } from '../../base/base.service';
 import type { QueryClient } from '@tanstack/react-query';
 import {
   healthControllerCheck,
@@ -21,7 +22,7 @@ import type {
   ServiceHealth
 } from '../../../types/health-check/health-check.types';
 
-// Re-export generated hooks
+// Re-export hooks
 export {
   useHealthControllerCheck,
   useHealthControllerCheckDetails,
@@ -37,7 +38,7 @@ export {
   getHealthControllerReadinessQueryKey
 };
 
-// Re-export generated functions
+// Re-export functions
 export {
   healthControllerCheck,
   healthControllerCheckDetails,
@@ -45,42 +46,33 @@ export {
   healthControllerReadiness
 };
 
-// Custom API calls with typed responses
-export const healthCheckApi = {
-  /**
-   * Cek status dasar aplikasi
-   */
+class HealthCheckService extends BaseService {
+  // ==================== QUERIES ====================
+  
   async checkBasicHealth(): Promise<HealthCheckResponse> {
     const response = await healthControllerCheck();
     return response.data as HealthCheckResponse;
-  },
-
-  /**
-   * Cek kesehatan detail (DB & Memory)
-   */
-  async checkDetailedHealth(): Promise<DetailedHealthCheckResponse> {
-  const response = await healthControllerCheckDetails();
-
-  const typedResponse = response as unknown as { data: DetailedHealthCheckResponse } | DetailedHealthCheckResponse;
-
-  if ("data" in typedResponse) {
-    return typedResponse.data;
   }
 
-  return typedResponse;
-},
+  async checkDetailedHealth(): Promise<DetailedHealthCheckResponse> {
+    const response = await healthControllerCheckDetails();
+    
+    const typedResponse = response as unknown as { 
+      data: DetailedHealthCheckResponse 
+    } | DetailedHealthCheckResponse;
 
-  /**
-   * Liveness Probe untuk Kubernetes
-   */
+    if ("data" in typedResponse) {
+      return typedResponse.data;
+    }
+
+    return typedResponse;
+  }
+
   async checkLiveness(): Promise<{ status: HealthStatus }> {
     await healthControllerLiveness();
     return { status: 'healthy' };
-  },
+  }
 
-  /**
-   * Readiness Probe untuk Kubernetes
-   */
   async checkReadiness(): Promise<{ status: HealthStatus; ready: boolean }> {
     try {
       await healthControllerReadiness();
@@ -88,35 +80,66 @@ export const healthCheckApi = {
     } catch {
       return { status: 'unhealthy', ready: false };
     }
-  },
-
-  /**
-   * Invalidate all health check queries
-   */
-  invalidateAll(queryClient: QueryClient): Promise<void> {
-    return queryClient.invalidateQueries({
-      predicate: (query) => {
-        const queryKey = query.queryKey;
-        return (
-          Array.isArray(queryKey) &&
-          queryKey.length > 0 &&
-          typeof queryKey[0] === 'string' &&
-          queryKey[0].startsWith('/health')
-        );
-      }
-    });
-  },
-
-  /**
-   * Prefetch health check data
-   */
-  async prefetchHealthCheck(queryClient: QueryClient): Promise<void> {
-    await queryClient.prefetchQuery({
-      queryKey: getHealthControllerCheckQueryKey(),
-      queryFn: () => healthControllerCheck()
-    });
   }
-};
+
+  // ==================== QUERY KEYS ====================
+  
+  getBasicHealthQueryKey() {
+    return getHealthControllerCheckQueryKey();
+  }
+
+  getDetailedHealthQueryKey() {
+    return getHealthControllerCheckDetailsQueryKey();
+  }
+
+  getLivenessQueryKey() {
+    return getHealthControllerLivenessQueryKey();
+  }
+
+  getReadinessQueryKey() {
+    return getHealthControllerReadinessQueryKey();
+  }
+
+  // ==================== CACHE UTILITIES ====================
+  
+  invalidateBasicHealth(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, this.getBasicHealthQueryKey());
+  }
+
+  invalidateDetailedHealth(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, this.getDetailedHealthQueryKey());
+  }
+
+  invalidateLiveness(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, this.getLivenessQueryKey());
+  }
+
+  invalidateReadiness(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, this.getReadinessQueryKey());
+  }
+
+  invalidateAll(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, ['/health'] as const);
+  }
+
+  async prefetchHealthCheck(queryClient: QueryClient) {
+    return this.prefetchQuery(
+      queryClient,
+      this.getBasicHealthQueryKey(),
+      () => this.checkBasicHealth()
+    );
+  }
+
+  async prefetchDetailedHealth(queryClient: QueryClient) {
+    return this.prefetchQuery(
+      queryClient,
+      this.getDetailedHealthQueryKey(),
+      () => this.checkDetailedHealth()
+    );
+  }
+}
+
+export const healthCheckService = new HealthCheckService();
 
 // Helper functions
 export const healthCheckHelpers = {
@@ -180,7 +203,64 @@ export const healthCheckHelpers = {
       unhealthy: 'Tidak Sehat'
     };
     return labels[status];
+  },
+
+  /**
+   * Get status icon
+   */
+  getStatusIcon(status: HealthStatus): string {
+    const icons: Record<HealthStatus, string> = {
+      healthy: '✓',
+      degraded: '⚠',
+      unhealthy: '✗'
+    };
+    return icons[status];
+  },
+
+  /**
+   * Format uptime for display
+   */
+  formatUptime(seconds: number): string {
+    const days = Math.floor(seconds / 86400);
+    const hours = Math.floor((seconds % 86400) / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days}d`);
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    
+    return parts.length > 0 ? parts.join(' ') : '<1m';
+  },
+
+  /**
+   * Format response time
+   */
+  formatResponseTime(ms: number): string {
+    if (ms < 1000) {
+      return `${Math.round(ms)}ms`;
+    }
+    return `${(ms / 1000).toFixed(2)}s`;
+  },
+
+  /**
+   * Check if service needs attention
+   */
+  needsAttention(service: ServiceHealth): boolean {
+    return service.status !== 'healthy';
+  },
+
+  /**
+   * Get critical services
+   */
+  getCriticalServices(services: Record<string, ServiceHealth>): ServiceHealth[] {
+    return Object.values(services).filter(s => s.status === 'unhealthy');
+  },
+
+  /**
+   * Get degraded services
+   */
+  getDegradedServices(services: Record<string, ServiceHealth>): ServiceHealth[] {
+    return Object.values(services).filter(s => s.status === 'degraded');
   }
 };
-
-export type { HealthCheckResponse, DetailedHealthCheckResponse, HealthStatus, ServiceHealth };

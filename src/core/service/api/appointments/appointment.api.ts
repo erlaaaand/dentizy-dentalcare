@@ -19,7 +19,7 @@ import type {
   PaginatedAppointmentResponseDto,
 } from '../../../types/appointments/appointment.types';
 
-export class AppointmentsService extends BaseService {
+export class AppointmentsApi extends BaseService {
   // ==================== QUERIES ====================
   
   /**
@@ -96,14 +96,14 @@ export class AppointmentsService extends BaseService {
    * Invalidate all appointment lists
    */
   invalidateList(queryClient: QueryClient, params?: AppointmentQueryParams) {
-    return this.invalidateQueries(queryClient, this.getListQueryKey(params));
+    return this.invalidateQueries(queryClient, [...this.getListQueryKey(params)]);
   }
 
   /**
    * Invalidate specific appointment detail
    */
   invalidateDetail(queryClient: QueryClient, id: string) {
-    return this.invalidateQueries(queryClient, this.getDetailQueryKey(id));
+    return this.invalidateQueries(queryClient, [...this.getDetailQueryKey(id)]);
   }
 
   /**
@@ -119,7 +119,7 @@ export class AppointmentsService extends BaseService {
   async prefetchList(queryClient: QueryClient, params?: AppointmentQueryParams) {
     return this.prefetchQuery(
       queryClient,
-      this.getListQueryKey(params),
+      [...this.getListQueryKey(params)],
       () => this.findAll(params)
     );
   }
@@ -130,7 +130,7 @@ export class AppointmentsService extends BaseService {
   async prefetchDetail(queryClient: QueryClient, id: string) {
     return this.prefetchQuery(
       queryClient,
-      this.getDetailQueryKey(id),
+      [...this.getDetailQueryKey(id)],
       () => this.findOne(id)
     );
   }
@@ -143,7 +143,7 @@ export class AppointmentsService extends BaseService {
     id: string,
     updater: (old: AppointmentResponseDto) => AppointmentResponseDto
   ) {
-    const queryKey = this.getDetailQueryKey(id);
+    const queryKey = [...this.getDetailQueryKey(id)];
     const previousData = this.getQueryData<AppointmentResponseDto>(queryClient, queryKey);
     
     if (previousData) {
@@ -154,4 +154,4 @@ export class AppointmentsService extends BaseService {
   }
 }
 
-export const appointmentsService = new AppointmentsService();
+export const appointmentsApi = new AppointmentsApi();
