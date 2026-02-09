@@ -28,8 +28,6 @@ export interface PatientResponseDto {
   no_hp: string;
   /** Alamat lengkap pasien */
   alamat: string;
-  /** Catatan medis khusus yang perlu diperhatikan */
-  catatan_khusus: string;
   /** Status apakah pasien terdaftar online */
   is_registered_online: boolean;
   /** Status aktif pasien */
@@ -40,4 +38,6 @@ export interface PatientResponseDto {
   created_at: string;
   /** Tanggal terakhir data pasien diperbarui */
   updated_at: string;
+  /** Tanggal dihapus data pasien */
+  deleted_at: string;
 }

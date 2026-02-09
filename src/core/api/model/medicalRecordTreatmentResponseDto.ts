@@ -28,5 +28,6 @@ export interface MedicalRecordTreatmentResponseDto {
   keterangan?: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string;
   treatment?: TreatmentDetailDto;
 }

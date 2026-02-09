@@ -434,7 +434,7 @@ export type medicalRecordTreatmentsControllerFindByMedicalRecordIdResponseError 
 
 export type medicalRecordTreatmentsControllerFindByMedicalRecordIdResponse = (medicalRecordTreatmentsControllerFindByMedicalRecordIdResponseSuccess | medicalRecordTreatmentsControllerFindByMedicalRecordIdResponseError)
 
-export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdUrl = (medicalRecordId: number,) => {
+export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdUrl = (medicalRecordId: string,) => {
 
 
   
@@ -442,7 +442,7 @@ export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdUrl = (med
   return `/medical-record-treatments/medical-record/${medicalRecordId}`
 }
 
-export const medicalRecordTreatmentsControllerFindByMedicalRecordId = async (medicalRecordId: number, options?: RequestInit): Promise<medicalRecordTreatmentsControllerFindByMedicalRecordIdResponse> => {
+export const medicalRecordTreatmentsControllerFindByMedicalRecordId = async (medicalRecordId: string, options?: RequestInit): Promise<medicalRecordTreatmentsControllerFindByMedicalRecordIdResponse> => {
   
   return customInstance<medicalRecordTreatmentsControllerFindByMedicalRecordIdResponse>(getMedicalRecordTreatmentsControllerFindByMedicalRecordIdUrl(medicalRecordId),
   {      
@@ -457,14 +457,14 @@ export const medicalRecordTreatmentsControllerFindByMedicalRecordId = async (med
 
 
 
-export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: string,) => {
     return [
     `/medical-record-treatments/medical-record/${medicalRecordId}`
     ] as const;
     }
 
     
-export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -488,7 +488,7 @@ export type MedicalRecordTreatmentsControllerFindByMedicalRecordIdQueryError = v
 
 
 export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>,
           TError,
@@ -498,7 +498,7 @@ export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData 
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>,
           TError,
@@ -508,7 +508,7 @@ export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData 
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -516,7 +516,7 @@ export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData 
  */
 
 export function useMedicalRecordTreatmentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -557,7 +557,7 @@ export type medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponseEr
 
 export type medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponse = (medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponseSuccess | medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponseError)
 
-export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdUrl = (medicalRecordId: number,) => {
+export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdUrl = (medicalRecordId: string,) => {
 
 
   
@@ -565,7 +565,7 @@ export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdUrl = 
   return `/medical-record-treatments/medical-record/${medicalRecordId}/total`
 }
 
-export const medicalRecordTreatmentsControllerGetTotalByMedicalRecordId = async (medicalRecordId: number, options?: RequestInit): Promise<medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponse> => {
+export const medicalRecordTreatmentsControllerGetTotalByMedicalRecordId = async (medicalRecordId: string, options?: RequestInit): Promise<medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponse> => {
   
   return customInstance<medicalRecordTreatmentsControllerGetTotalByMedicalRecordIdResponse>(getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdUrl(medicalRecordId),
   {      
@@ -580,14 +580,14 @@ export const medicalRecordTreatmentsControllerGetTotalByMedicalRecordId = async 
 
 
 
-export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryKey = (medicalRecordId?: string,) => {
     return [
     `/medical-record-treatments/medical-record/${medicalRecordId}/total`
     ] as const;
     }
 
     
-export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -611,7 +611,7 @@ export type MedicalRecordTreatmentsControllerGetTotalByMedicalRecordIdQueryError
 
 
 export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>,
           TError,
@@ -621,7 +621,7 @@ export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TD
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>,
           TError,
@@ -631,7 +631,7 @@ export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TD
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -639,7 +639,7 @@ export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TD
  */
 
 export function useMedicalRecordTreatmentsControllerGetTotalByMedicalRecordId<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerGetTotalByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -685,7 +685,7 @@ export type medicalRecordTreatmentsControllerFindOneResponseError = (medicalReco
 
 export type medicalRecordTreatmentsControllerFindOneResponse = (medicalRecordTreatmentsControllerFindOneResponseSuccess | medicalRecordTreatmentsControllerFindOneResponseError)
 
-export const getMedicalRecordTreatmentsControllerFindOneUrl = (id: number,) => {
+export const getMedicalRecordTreatmentsControllerFindOneUrl = (id: string,) => {
 
 
   
@@ -693,7 +693,7 @@ export const getMedicalRecordTreatmentsControllerFindOneUrl = (id: number,) => {
   return `/medical-record-treatments/${id}`
 }
 
-export const medicalRecordTreatmentsControllerFindOne = async (id: number, options?: RequestInit): Promise<medicalRecordTreatmentsControllerFindOneResponse> => {
+export const medicalRecordTreatmentsControllerFindOne = async (id: string, options?: RequestInit): Promise<medicalRecordTreatmentsControllerFindOneResponse> => {
   
   return customInstance<medicalRecordTreatmentsControllerFindOneResponse>(getMedicalRecordTreatmentsControllerFindOneUrl(id),
   {      
@@ -708,14 +708,14 @@ export const medicalRecordTreatmentsControllerFindOne = async (id: number, optio
 
 
 
-export const getMedicalRecordTreatmentsControllerFindOneQueryKey = (id?: number,) => {
+export const getMedicalRecordTreatmentsControllerFindOneQueryKey = (id?: string,) => {
     return [
     `/medical-record-treatments/${id}`
     ] as const;
     }
 
     
-export const getMedicalRecordTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getMedicalRecordTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -739,7 +739,7 @@ export type MedicalRecordTreatmentsControllerFindOneQueryError = void
 
 
 export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>,
           TError,
@@ -749,7 +749,7 @@ export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<Retu
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>,
           TError,
@@ -759,7 +759,7 @@ export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<Retu
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -767,7 +767,7 @@ export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<Retu
  */
 
 export function useMedicalRecordTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -818,7 +818,7 @@ export type medicalRecordTreatmentsControllerUpdateResponseError = (medicalRecor
 
 export type medicalRecordTreatmentsControllerUpdateResponse = (medicalRecordTreatmentsControllerUpdateResponseSuccess | medicalRecordTreatmentsControllerUpdateResponseError)
 
-export const getMedicalRecordTreatmentsControllerUpdateUrl = (id: number,) => {
+export const getMedicalRecordTreatmentsControllerUpdateUrl = (id: string,) => {
 
 
   
@@ -826,7 +826,7 @@ export const getMedicalRecordTreatmentsControllerUpdateUrl = (id: number,) => {
   return `/medical-record-treatments/${id}`
 }
 
-export const medicalRecordTreatmentsControllerUpdate = async (id: number,
+export const medicalRecordTreatmentsControllerUpdate = async (id: string,
     updateMedicalRecordTreatmentDto: UpdateMedicalRecordTreatmentDto, options?: RequestInit): Promise<medicalRecordTreatmentsControllerUpdateResponse> => {
   
   return customInstance<medicalRecordTreatmentsControllerUpdateResponse>(getMedicalRecordTreatmentsControllerUpdateUrl(id),
@@ -843,8 +843,8 @@ export const medicalRecordTreatmentsControllerUpdate = async (id: number,
 
 
 export const getMedicalRecordTreatmentsControllerUpdateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: string;data: UpdateMedicalRecordTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: string;data: UpdateMedicalRecordTreatmentDto}, TContext> => {
 
 const mutationKey = ['medicalRecordTreatmentsControllerUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -858,7 +858,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, {id: number;data: UpdateMedicalRecordTreatmentDto}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, {id: string;data: UpdateMedicalRecordTreatmentDto}> = (props) => {
           const {id,data} = props ?? {};
 
           return  medicalRecordTreatmentsControllerUpdate(id,data,requestOptions)
@@ -879,11 +879,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update perawatan rekam medis
  */
 export const useMedicalRecordTreatmentsControllerUpdate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: number;data: UpdateMedicalRecordTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>, TError,{id: string;data: UpdateMedicalRecordTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof medicalRecordTreatmentsControllerUpdate>>,
         TError,
-        {id: number;data: UpdateMedicalRecordTreatmentDto},
+        {id: string;data: UpdateMedicalRecordTreatmentDto},
         TContext
       > => {
       return useMutation(getMedicalRecordTreatmentsControllerUpdateMutationOptions(options), queryClient);
@@ -920,7 +920,7 @@ export type medicalRecordTreatmentsControllerRemoveResponseError = (medicalRecor
 
 export type medicalRecordTreatmentsControllerRemoveResponse = (medicalRecordTreatmentsControllerRemoveResponseSuccess | medicalRecordTreatmentsControllerRemoveResponseError)
 
-export const getMedicalRecordTreatmentsControllerRemoveUrl = (id: number,) => {
+export const getMedicalRecordTreatmentsControllerRemoveUrl = (id: string,) => {
 
 
   
@@ -928,7 +928,7 @@ export const getMedicalRecordTreatmentsControllerRemoveUrl = (id: number,) => {
   return `/medical-record-treatments/${id}`
 }
 
-export const medicalRecordTreatmentsControllerRemove = async (id: number, options?: RequestInit): Promise<medicalRecordTreatmentsControllerRemoveResponse> => {
+export const medicalRecordTreatmentsControllerRemove = async (id: string, options?: RequestInit): Promise<medicalRecordTreatmentsControllerRemoveResponse> => {
   
   return customInstance<medicalRecordTreatmentsControllerRemoveResponse>(getMedicalRecordTreatmentsControllerRemoveUrl(id),
   {      
@@ -943,8 +943,8 @@ export const medicalRecordTreatmentsControllerRemove = async (id: number, option
 
 
 export const getMedicalRecordTreatmentsControllerRemoveMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['medicalRecordTreatmentsControllerRemove'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -958,7 +958,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  medicalRecordTreatmentsControllerRemove(id,requestOptions)
@@ -979,11 +979,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Hapus perawatan rekam medis (soft delete)
  */
 export const useMedicalRecordTreatmentsControllerRemove = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof medicalRecordTreatmentsControllerRemove>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getMedicalRecordTreatmentsControllerRemoveMutationOptions(options), queryClient);

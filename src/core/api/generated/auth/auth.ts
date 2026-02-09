@@ -30,6 +30,7 @@ import type {
   ResetPasswordWithTokenDto,
   UpdateProfileDto,
   VerifyOTPDto,
+  VerifyOTPResponseDto,
   VerifyTokenDto
 } from '../../model';
 
@@ -630,12 +631,12 @@ export const useAuthControllerUpdateMyProfile = <TError = void,
     /**
  * @summary Request OTP untuk reset password
  */
-export type authControllerForgotPasswordResponse201 = {
-  data: void
-  status: 201
+export type authControllerForgotPasswordResponse200 = {
+  data: unknown
+  status: 200
 }
     
-export type authControllerForgotPasswordResponseSuccess = (authControllerForgotPasswordResponse201) & {
+export type authControllerForgotPasswordResponseSuccess = (authControllerForgotPasswordResponse200) & {
   headers: Headers;
 };
 ;
@@ -715,7 +716,7 @@ export const useAuthControllerForgotPassword = <TError = unknown,
  * @summary Verifikasi OTP dan dapatkan Reset Token
  */
 export type authControllerVerifyOTPResponse201 = {
-  data: void
+  data: VerifyOTPResponseDto
   status: 201
 }
     
@@ -798,12 +799,12 @@ export const useAuthControllerVerifyOTP = <TError = unknown,
     /**
  * @summary Set password baru menggunakan Reset Token
  */
-export type authControllerResetPasswordResponse201 = {
-  data: void
-  status: 201
+export type authControllerResetPasswordResponse200 = {
+  data: unknown
+  status: 200
 }
     
-export type authControllerResetPasswordResponseSuccess = (authControllerResetPasswordResponse201) & {
+export type authControllerResetPasswordResponseSuccess = (authControllerResetPasswordResponse200) & {
   headers: Headers;
 };
 ;

@@ -18,5 +18,6 @@ export interface TreatmentResponseDto {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+  deletedAt: string;
   category?: CategoryInfoDto;
 }

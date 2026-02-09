@@ -22,8 +22,11 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 
+/**
+ * @summary Upload foto profil ke Cloudinary
+ */
 export type uploadsControllerUploadFileResponse201 = {
-  data: void
+  data: unknown
   status: 201
 }
     
@@ -42,14 +45,21 @@ export const getUploadsControllerUploadFileUrl = () => {
   return `/uploads/profile-photo`
 }
 
-export const uploadsControllerUploadFile = async ( options?: RequestInit): Promise<uploadsControllerUploadFileResponse> => {
-  
+export const uploadsControllerUploadFile = async (fileBlob: {
+  file?: Blob;
+}, options?: RequestInit): Promise<uploadsControllerUploadFileResponse> => {
+    const formData = new FormData();
+if(uploadsControllerUploadFileBody.file !== undefined) {
+ formData.append(`file`, uploadsControllerUploadFileBody.file);
+ }
+
   return customInstance<uploadsControllerUploadFileResponse>(getUploadsControllerUploadFileUrl(),
   {      
     ...options,
     method: 'POST'
-    
-    
+    ,
+    body: 
+      formData,
   }
 );}
 
@@ -57,8 +67,12 @@ export const uploadsControllerUploadFile = async ( options?: RequestInit): Promi
 
 
 export const getUploadsControllerUploadFileMutationOptions = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
+  file?: Blob;
+}}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
+  file?: Blob;
+}}, TContext> => {
 
 const mutationKey = ['uploadsControllerUploadFile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -72,10 +86,12 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, void> = () => {
-          
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, {data: {
+  file?: Blob;
+}}> = (props) => {
+          const {data} = props ?? {};
 
-          return  uploadsControllerUploadFile(requestOptions)
+          return  uploadsControllerUploadFile(data,requestOptions)
         }
 
 
@@ -86,15 +102,24 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type UploadsControllerUploadFileMutationResult = NonNullable<Awaited<ReturnType<typeof uploadsControllerUploadFile>>>
-    
+    export type UploadsControllerUploadFileMutationBody = {
+  file?: Blob;
+}
     export type UploadsControllerUploadFileMutationError = unknown
 
-    export const useUploadsControllerUploadFile = <TError = unknown,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,void, TContext>, request?: SecondParameter<typeof customInstance>}
+    /**
+ * @summary Upload foto profil ke Cloudinary
+ */
+export const useUploadsControllerUploadFile = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadsControllerUploadFile>>, TError,{data: {
+  file?: Blob;
+}}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof uploadsControllerUploadFile>>,
         TError,
-        void,
+        {data: {
+  file?: Blob;
+}},
         TContext
       > => {
       return useMutation(getUploadsControllerUploadFileMutationOptions(options), queryClient);

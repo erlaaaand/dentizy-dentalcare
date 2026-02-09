@@ -22,4 +22,6 @@ export interface TreatmentCategoryResponseDto {
   createdAt: string;
   /** Tanggal diupdate */
   updatedAt: string;
+  /** Tanggal dihapus */
+  deletedAt: string;
 }

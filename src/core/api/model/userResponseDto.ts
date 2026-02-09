@@ -5,6 +5,7 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import type { UserResponseDtoDeletedAt } from './userResponseDtoDeletedAt';
 import type { UserResponseDtoProfilePhoto } from './userResponseDtoProfilePhoto';
 import type { UserRoleDto } from './userRoleDto';
 
@@ -18,6 +19,10 @@ export interface UserResponseDto {
   roles: UserRoleDto[];
   created_at: string;
   updated_at: string;
+  /** @nullable */
+  deleted_at?: UserResponseDtoDeletedAt;
+  /** Status aktif user */
+  is_active: boolean;
   /** @nullable */
   profile_photo?: UserResponseDtoProfilePhoto;
 }
