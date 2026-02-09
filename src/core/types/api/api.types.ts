@@ -1,23 +1,44 @@
-/**
- * Tipe standar untuk handling response yang mungkin 'unknown' dari Orval
- * Gunakan ini untuk type casting yang aman.
- */
-
-// Interface untuk Response Login (sesuaikan dengan output backend Anda)
-export interface AuthTokenResponse {
-  accessToken: string;
-  refreshToken: string;
+export interface ApiResponse<T> {
+  data: T;
+  status: number;
+  headers: Record<string, string>;
 }
 
-// Interface standar untuk error API
-export interface ApiErrorResponse {
+export interface ApiError {
+  message: string;
   statusCode: number;
-  message: string | string[];
-  error: string;
-  timestamp?: string;
+  errors?: Record<string, string[]>;
+  timestamp: string;
 }
 
-// Helper type untuk opsi query React Query agar tidak redundan
-export type QueryEnabled = {
-  enabled?: boolean;
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
+export interface PaginationParams {
+  page?: number;
+  limit?: number;
+}
+
+export interface SortParams {
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+}
+
+export interface QueryParams extends PaginationParams, SortParams {
+  search?: string;
+}
+
+export type MutationResult<T> = {
+  data?: T;
+  error?: Error;
+  isLoading: boolean;
+  isSuccess: boolean;
+  isError: boolean;
 };

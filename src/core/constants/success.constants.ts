@@ -3,6 +3,8 @@ export const SUCCESS_MESSAGES = {
   LOGIN_SUCCESS: 'Login berhasil',
   LOGOUT_SUCCESS: 'Logout berhasil',
   PASSWORD_CHANGED: 'Password berhasil diubah',
+  ACTIVATION_SUCCESS: 'Akun berhasil diaktifkan',
+  OTP_SENT: 'Kode OTP telah dikirim ke email Anda',
 
   // CRUD Operations
   CREATE_SUCCESS: 'Data berhasil dibuat',
@@ -19,6 +21,10 @@ export const SUCCESS_MESSAGES = {
   // Patients
   PATIENT_CREATED: 'Pasien berhasil didaftarkan',
   PATIENT_UPDATED: 'Data pasien berhasil diperbarui',
+
+  // Payments
+  PAYMENT_PROCESSED: 'Pembayaran berhasil diproses',
+  PAYMENT_CANCELLED: 'Pembayaran telah dibatalkan',
 
   // Medical Records
   MEDICAL_RECORD_CREATED: 'Rekam medis berhasil dibuat',

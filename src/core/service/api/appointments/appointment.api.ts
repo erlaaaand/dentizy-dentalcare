@@ -1,11 +1,4 @@
-/**
- * Appointment API layer.
- *
- * Thin wrapper around the orval-generated controller functions.
- * All public methods use the domain-typed DTOs from the types layer
- * so that the rest of the app never reaches into `api/generated` directly.
- */
-
+import { BaseService } from '../../base/base.service';
 import {
   appointmentsControllerFindAll,
   appointmentsControllerFindOne,
@@ -14,78 +7,151 @@ import {
   appointmentsControllerCancel,
   appointmentsControllerComplete,
   appointmentsControllerRemove,
+  getAppointmentsControllerFindAllQueryKey,
+  getAppointmentsControllerFindOneQueryKey,
 } from '../../../api/generated/appointments/appointments';
-
+import type { QueryClient } from '@tanstack/react-query';
 import type {
   AppointmentQueryParams,
   CreateAppointmentDto,
   UpdateAppointmentDto,
+  AppointmentResponseDto,
+  PaginatedAppointmentResponseDto,
 } from '../../../types/appointments/appointment.types';
 
-export const AppointmentApi = {
-  // -----------------------------------------------------------------------
-  // Queries
-  // -----------------------------------------------------------------------
+export class AppointmentsService extends BaseService {
+  // ==================== QUERIES ====================
+  
+  /**
+   * Get all appointments with filters
+   */
+  async findAll(params?: AppointmentQueryParams) {
+    const response = await appointmentsControllerFindAll(params);
+    return response.data as PaginatedAppointmentResponseDto;
+  }
 
   /**
-   * GET /appointments
-   * Mengambil daftar appointment dengan pagination & filter.
+   * Get single appointment by ID
    */
-  findAll: async (params?: AppointmentQueryParams) => {
-    return appointmentsControllerFindAll(params);
-  },
+  async findOne(id: string) {
+    const response = await appointmentsControllerFindOne(id);
+    return response.data as AppointmentResponseDto;
+  }
+
+  // ==================== MUTATIONS ====================
+  
+  /**
+   * Create new appointment
+   */
+  async create(data: CreateAppointmentDto) {
+    const response = await appointmentsControllerCreate({ data });
+    return response.data as AppointmentResponseDto;
+  }
 
   /**
-   * GET /appointments/:id
-   * Mengambil detail satu appointment berdasarkan ID.
+   * Update existing appointment
    */
-  findOne: async (id: string) => {
-    return appointmentsControllerFindOne(id);
-  },
-
-  // -----------------------------------------------------------------------
-  // Mutations
-  // -----------------------------------------------------------------------
+  async update(id: string, data: UpdateAppointmentDto) {
+    const response = await appointmentsControllerUpdate(id, { data });
+    return response.data as AppointmentResponseDto;
+  }
 
   /**
-   * POST /appointments
-   * Membuat appointment baru dengan validasi waktu & conflict detection.
+   * Complete appointment
    */
-  create: async (data: CreateAppointmentDto) => {
-    return appointmentsControllerCreate(data as unknown as Record<string, unknown>);
-  },
+  async complete(id: string) {
+    const response = await appointmentsControllerComplete(id);
+    return response.data as AppointmentResponseDto;
+  }
 
   /**
-   * PATCH /appointments/:id
-   * Update data appointment.
-   * Jika status SELESAI & ada medical_record, akan memicu transaksi rekam medis.
+   * Cancel appointment
    */
-  update: async (id: string, data: UpdateAppointmentDto) => {
-    return appointmentsControllerUpdate(id, data as unknown as Record<string, unknown>);
-  },
+  async cancel(id: string) {
+    const response = await appointmentsControllerCancel(id);
+    return response.data as AppointmentResponseDto;
+  }
 
   /**
-   * POST /appointments/:id/cancel
-   * Batalkan appointment.
-   * Pembatalan < 24 jam hanya diizinkan untuk Kepala Klinik.
+   * Delete appointment
    */
-  cancel: async (id: string) => {
-    return appointmentsControllerCancel(id);
-  },
+  async remove(id: string) {
+    const response = await appointmentsControllerRemove(id);
+    return response;
+  }
+
+  // ==================== QUERY KEYS ====================
+  
+  getListQueryKey(params?: AppointmentQueryParams) {
+    return getAppointmentsControllerFindAllQueryKey(params);
+  }
+
+  getDetailQueryKey(id: string) {
+    return getAppointmentsControllerFindOneQueryKey(id);
+  }
+
+  // ==================== CACHE UTILITIES ====================
+  
+  /**
+   * Invalidate all appointment lists
+   */
+  invalidateList(queryClient: QueryClient, params?: AppointmentQueryParams) {
+    return this.invalidateQueries(queryClient, this.getListQueryKey(params));
+  }
 
   /**
-   * POST /appointments/:id/complete
-   * Ubah status appointment menjadi SELESAI.
+   * Invalidate specific appointment detail
    */
-  complete: async (id: string) => {
-    return appointmentsControllerComplete(id);
-  },
+  invalidateDetail(queryClient: QueryClient, id: string) {
+    return this.invalidateQueries(queryClient, this.getDetailQueryKey(id));
+  }
 
   /**
-   * DELETE /appointments/:id
-   * Hapus appointment (hanya jika belum ada medical record).
+   * Invalidate all appointment queries
    */
-  remove: async (id: string) => {
-    return appointmentsControllerRemove(id);
-  },
-};
+  invalidateAll(queryClient: QueryClient) {
+    return this.invalidateQueries(queryClient, ['/appointments']);
+  }
+
+  /**
+   * Prefetch appointment list
+   */
+  async prefetchList(queryClient: QueryClient, params?: AppointmentQueryParams) {
+    return this.prefetchQuery(
+      queryClient,
+      this.getListQueryKey(params),
+      () => this.findAll(params)
+    );
+  }
+
+  /**
+   * Prefetch appointment detail
+   */
+  async prefetchDetail(queryClient: QueryClient, id: string) {
+    return this.prefetchQuery(
+      queryClient,
+      this.getDetailQueryKey(id),
+      () => this.findOne(id)
+    );
+  }
+
+  /**
+   * Optimistic update for appointment
+   */
+  optimisticUpdate(
+    queryClient: QueryClient,
+    id: string,
+    updater: (old: AppointmentResponseDto) => AppointmentResponseDto
+  ) {
+    const queryKey = this.getDetailQueryKey(id);
+    const previousData = this.getQueryData<AppointmentResponseDto>(queryClient, queryKey);
+    
+    if (previousData) {
+      this.setQueryData(queryClient, queryKey, updater(previousData));
+    }
+    
+    return previousData;
+  }
+}
+
+export const appointmentsService = new AppointmentsService();

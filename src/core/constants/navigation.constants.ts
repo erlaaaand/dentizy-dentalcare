@@ -10,12 +10,11 @@ import {
   HeartPulse 
 } from "lucide-react";
 
-import { PROTECTED_ROUTES} from "./routes.constants";
+import { PROTECTED_ROUTES } from "./routes.constants";
+import { ROLES } from './role.constants';
 
-// 1. Definisikan Role Key yang konsisten dengan Middleware Anda
 export type RoleKey = 'kepala_klinik' | 'dokter' | 'staf';
 
-// 2. Helper untuk Normalisasi Role dari Backend
 export const getRoleKey = (roleName?: string): RoleKey | null => {
   if (!roleName) return null;
   
@@ -27,61 +26,15 @@ export const getRoleKey = (roleName?: string): RoleKey | null => {
   return 'staf';
 };
 
-// 3. Konfigurasi Menu Navigasi (Sesuai UI Anda)
 export const NAV_ITEMS = [
-  {
-    title: "Dashboard",
-    url: PROTECTED_ROUTES[0],
-    icon: LayoutDashboard,
-    isActive: true,
-    roles: ['kepala_klinik', 'dokter', 'staf'],
-  },
-  {
-    title: "Manajemen User",
-    url: PROTECTED_ROUTES[4],
-    icon: Users,
-    roles: ['kepala_klinik'],
-  },
-  {
-    title: "Pendaftaran Pasien",
-    url: PROTECTED_ROUTES[2],
-    icon: UserPlus,
-    roles: ['staf', 'kepala_klinik'],
-  },
-  {
-    title: "Rekam Medis",
-    url: PROTECTED_ROUTES[3],
-    icon: Stethoscope,
-    roles: ['dokter', 'kepala_klinik'],
-  },
-  {
-    title: "Jadwal & Antrean",
-    url: PROTECTED_ROUTES[1],
-    icon: CalendarClock,
-    roles: ['staf', 'dokter', 'kepala_klinik'],
-  },
-  {
-    title: "Pembayaran",
-    url: PROTECTED_ROUTES[6],
-    icon: ReceiptText,
-    roles: ['staf', 'kepala_klinik'],
-  },
-  {
-    title: "Pelayanan",
-    url: PROTECTED_ROUTES[8],
-    icon: HeartPulse,
-    roles: ['kepala_klinik', 'staf']
-  },
-  {
-    title: "Laporan",
-    url: PROTECTED_ROUTES[5],
-    icon: BarChart3,
-    roles: ['kepala_klinik'],
-  },
-  {
-    title: "Pengaturan",
-    url: PROTECTED_ROUTES[7],
-    icon: Settings,
-    roles: ['kepala_klinik'],
-  },
+  { title: "Dashboard", url: PROTECTED_ROUTES[0], icon: LayoutDashboard, roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF] },
+  { title: "Jadwal & Antrean", url: PROTECTED_ROUTES[1], icon: CalendarClock, roles: [ROLES.STAF, ROLES.DOKTER, ROLES.KEPALA_KLINIK] },
+  { title: "Pendaftaran Pasien", url: PROTECTED_ROUTES[2], icon: UserPlus, roles: [ROLES.STAF, ROLES.KEPALA_KLINIK] },
+  { title: "Rekam Medis", url: PROTECTED_ROUTES[3], icon: Stethoscope, roles: [ROLES.DOKTER, ROLES.KEPALA_KLINIK] },
+  { title: "Manajemen User", url: PROTECTED_ROUTES[4], icon: Users, roles: [ROLES.KEPALA_KLINIK] },
+  { title: "Laporan", url: PROTECTED_ROUTES[5], icon: BarChart3, roles: [ROLES.KEPALA_KLINIK] },
+  { title: "Pembayaran", url: PROTECTED_ROUTES[6], icon: ReceiptText, roles: [ROLES.STAF, ROLES.KEPALA_KLINIK] },
+  { title: "Profil", url: PROTECTED_ROUTES[7], icon: Settings, roles: [ROLES.KEPALA_KLINIK, ROLES.DOKTER, ROLES.STAF] }, // Profile biasanya Settings-like icon
+  { title: "Pengaturan", url: PROTECTED_ROUTES[8], icon: Settings, roles: [ROLES.KEPALA_KLINIK] },
+  { title: "Pelayanan", url: PROTECTED_ROUTES[9], icon: HeartPulse, roles: [ROLES.KEPALA_KLINIK, ROLES.STAF] },
 ];

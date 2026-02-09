@@ -8,6 +8,7 @@ export const PERMISSIONS = {
   USERS_VIEW: 'users:view',
   USERS_UPDATE: 'users:update',
   USERS_DELETE: 'users:delete',
+  USERS_ACTIVATE: 'users:activate',
 
   AUTH_CREATE: 'auth:create',
   AUTH_VIEW: 'auth:view',
@@ -35,11 +36,13 @@ export const PERMISSIONS = {
   MEDICAL_RECORDS_VIEW: 'medical-records:view',
   MEDICAL_RECORDS_UPDATE: 'medical-records:update',
   MEDICAL_RECORDS_DELETE: 'medical-records:delete',
+  MEDICAL_RECORDS_RESTORE: 'medical-records:restore',
 
   TREATMENTS_CREATE: 'treatments:create',
   TREATMENTS_VIEW: 'treatments:view',
   TREATMENTS_UPDATE: 'treatments:update',
   TREATMENTS_DELETE: 'treatments:delete',
+  TREATMENTS_ACTIVATE: 'treatments:activate',
 
   TREATMENT_CATEGORIES_CREATE: 'treatment-categories:create',
   TREATMENT_CATEGORIES_VIEW: 'treatment-categories:view',
@@ -55,6 +58,7 @@ export const PERMISSIONS = {
   PAYMENTS_VIEW: 'payments:view',
   PAYMENTS_UPDATE: 'payments:update',
   PAYMENTS_DELETE: 'payments:delete',
+  PAYMENTS_REVENUE_VIEW: 'payments:revenue:view',
 
   UPLOADS_CREATE: 'uploads:create',
 } as const;
@@ -66,10 +70,11 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.APPOINTMENTS_VIEW,
     PERMISSIONS.APPOINTMENTS_UPDATE,
     PERMISSIONS.PATIENTS_VIEW,
-    PERMISSIONS.PATIENTS_UPDATE,
     PERMISSIONS.MEDICAL_RECORDS_VIEW,
     PERMISSIONS.MEDICAL_RECORDS_CREATE,
     PERMISSIONS.MEDICAL_RECORDS_UPDATE,
+    PERMISSIONS.MEDICAL_RECORD_TREATMENTS_VIEW,
+    PERMISSIONS.MEDICAL_RECORD_TREATMENTS_CREATE,
   ],
 
   [ROLES.STAF]: [
@@ -79,5 +84,7 @@ export const ROLE_PERMISSIONS = {
     PERMISSIONS.PATIENTS_VIEW,
     PERMISSIONS.PATIENTS_CREATE,
     PERMISSIONS.PATIENTS_UPDATE,
+    PERMISSIONS.PAYMENTS_VIEW,
+    PERMISSIONS.PAYMENTS_CREATE,
   ],
 } as const;

@@ -1,61 +1,118 @@
 export const API_ENDPOINTS = {
-  // Auth
   AUTH: {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
     REFRESH: '/auth/refresh',
     PROFILE: '/auth/me',
-    VERIFY: '/auth/verify',
+    VERIFY: '/auth/verify', 
+    FORGOT_PASSWORD: '/auth/forgot-password', 
+    VERIFY_OTP: '/auth/verify-otp',
+    RESET_PASSWORD: '/auth/reset-password', 
   },
-  
-  // Appointments
-  APPOINTMENTS: {
-    BASE: '/appointments',
-    BY_ID: (id: number) => `/appointments/${id}`,
-    COMPLETE: (id: number) => `/appointments/${id}/complete`,
-    CANCEL: (id: number) => `/appointments/${id}/cancel`,
-  },
-  
-  // Patients
-  PATIENTS: {
-    BASE: '/patients',
-    BY_ID: (id: number) => `/patients/${id}`,
-    BY_NIK: (nik: string) => `/patients/by-nik/${nik}`,
-    BY_MR: (number: string) => `/patients/by-medical-record/${number}`,
-    SEARCH: '/patients/search',
-    STATISTICS: '/patients/statistics',
-    RESTORE: (id: number) => `/patients/${id}/restore`,
-  },
-  
-  // Medical Records
-  MEDICAL_RECORDS: {
-    BASE: '/medical-records',
-    BY_ID: (id: number) => `/medical-records/${id}`,
-    BY_APPOINTMENT: (id: number) => `/medical-records/by-appointment/${id}`,
-    SEARCH: '/medical-records/search',
-    RESTORE: (id: number) => `/medical-records/${id}/restore`,
-    HARD_DELETE: (id: number) => `/medical-records/${id}/permanent`,
-  },
-  
-  // Users
+
   USERS: {
     BASE: '/users',
-    BY_ID: (id: number) => `/users/${id}`,
-    CHANGE_PASSWORD: '/users/change-password',
-    RESET_PASSWORD: (id: number) => `/users/${id}/reset-password`,
-    CHECK_USERNAME: (username: string) => `/users/check-username/${username}`,
-    RECENT: '/users/recent',
+    BY_ID: (id: string) => `/users/${id}`,
     STATISTICS: '/users/statistics',
+    RECENT: '/users/recent',
+    CHECK_USERNAME: (username: string) => `/users/check-username/${username}`,
+    CHANGE_PASSWORD: '/users/change-password',
+    ADMIN_RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
+    GENERATE_TEMP_PASSWORD: (id: string) => `/users/${id}/generate-temp-password`,
+    ACTIVATION: {
+      CHECK_STATUS: '/users/activation/check-status',
+      REQUEST: '/users/activation/request',
+      RESEND: '/users/activation/resend',
+      VERIFY_TOKEN: '/users/activation/verify-token',
+      ACTIVATE: '/users/activation/activate',
+    },
   },
-  
-  // Notifications
+
+  PATIENTS: {
+    BASE: '/patients',
+    BY_ID: (id: string) => `/patients/${id}`,
+    SEARCH: '/patients/search',
+    STATISTICS: '/patients/statistics',
+    BY_MR: (string: string) => `/patients/by-medical-record/${string}`,
+    BY_NIK: (nik: string) => `/patients/by-nik/${nik}`,
+    BY_DOCTOR: (doctorId: string) => `/patients/by-doctor/${doctorId}`,
+    ACTIVATE: (id: string) => `/patients/${id}/activate`,
+    RESTORE: (id: string) => `/patients/${id}/restore`,
+  },
+
+  APPOINTMENTS: {
+    BASE: '/appointments',
+    BY_ID: (id: string) => `/appointments/${id}`,
+    COMPLETE: (id: string) => `/appointments/${id}/complete`,
+    CANCEL: (id: string) => `/appointments/${id}/cancel`,
+    PUBLIC: {
+      DOCTORS: '/public/appointments/doctors',
+      BOOK: '/public/appointments/book',
+    },
+  },
+
+  MEDICAL_RECORDS: {
+    BASE: '/medical-records',
+    BY_ID: (id: string) => `/medical-records/${id}`, 
+    SEARCH: '/medical-records/search',
+    BY_APPOINTMENT: (id: string) => `/medical-records/by-appointment/${id}`, 
+    DOCTOR_STATS: '/medical-records/stats/doctors',
+    RESTORE: (id: string) => `/medical-records/${id}/restore`,
+    HARD_DELETE: (id: string) => `/medical-records/${id}/permanent`,
+  },
+
+  TREATMENTS: {
+    BASE: '/treatments',
+    BY_ID: (id: string) => `/treatments/${id}`, 
+    BY_CODE: (code: string) => `/treatments/kode/${code}`,
+    ACTIVATE: (id: string) => `/treatments/${id}/activate`,
+    DEACTIVATE: (id: string) => `/treatments/${id}/deactivate`, 
+    RESTORE: (id: string) => `/treatments/${id}/restore`,
+    CATEGORIES: {
+      BASE: '/treatment-categories',
+      BY_ID: (id: string) => `/treatment-categories/${id}`,
+      RESTORE: (id: string) => `/treatment-categories/${id}/restore`,
+    },
+  },
+
+  MR_TREATMENTS: {
+    BASE: '/medical-record-treatments',
+    BY_ID: (id: string) => `/medical-record-treatments/${id}`, 
+    TOP_STATS: '/medical-record-treatments/stats/top-treatments',
+    BY_MR_ID: (mrId: string) => `/medical-record-treatments/medical-record/${mrId}`,
+    TOTAL_BY_MR_ID: (mrId: string) => `/medical-record-treatments/medical-record/${mrId}/total`, 
+  },
+
+  PAYMENTS: {
+    BASE: '/payments',
+    BY_ID: (id: string) => `/payments/${id}`,
+    PROCESS: (id: string) => `/payments/${id}/process`, 
+    CANCEL: (id: string) => `/payments/${id}/cancel`, 
+    BY_INVOICE: (inv: string) => `/payments/invoice/${inv}`,
+    BY_MR: (mrId: string) => `/payments/medical-record/${mrId}`,
+    BY_PATIENT: (patientId: string) => `/payments/patient/${patientId}`, 
+    STATISTICS: '/payments/statistics', 
+    REVENUE: '/payments/revenue',
+    REVENUE_PERIOD: '/payments/revenue/period',
+  },
+
   NOTIFICATIONS: {
     BASE: '/notifications',
-    BY_ID: (id: number) => `/notifications/${id}`,
-    STATISTICS: '/notifications/statistics',
-    FAILED: '/notifications/failed',
-    RETRY: (id: number) => `/notifications/${id}/retry`,
-    RETRY_ALL: '/notifications/retry-all-failed',
+  },
+
+  ROLES: {
+    BASE: '/roles',
+    BY_ID: (id: string) => `/roles/${id}`,
+  },
+
+  UPLOADS: {
+    PROFILE_PHOTO: '/uploads/profile-photo',
+  },
+  HEALTH: {
+    BASE: '/health',
+    DETAILS: '/health/details', 
+    LIVE: '/health/live', 
+    READY: '/health/ready',
   },
 } as const;
 

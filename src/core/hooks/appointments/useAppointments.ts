@@ -1,160 +1,159 @@
-/**
- * Appointment hooks.
- *
- * Consumes the orval-generated React-Query hooks and re-exports them
- * under stable, domain-friendly names.  Cache invalidation is
- * centralised in `useAppointmentMutations` so every mutation
- * automatically keeps the list & detail queries fresh.
- */
+import { useQueryClient } from '@tanstack/react-query';
+import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
+import { appointmentsService } from '../../service/api/appointments/appointment.api';
+import type {
+  AppointmentQueryParams,
+  CreateAppointmentDto,
+  UpdateAppointmentDto,
+} from '../../types/appointments/appointment.types';
 
-import { useQueryClient, keepPreviousData } from '@tanstack/react-query';
+// ==================== QUERY HOOKS ====================
 
-import {
-  useAppointmentsControllerFindAll,
-  useAppointmentsControllerFindOne,
-  useAppointmentsControllerCreate,
-  useAppointmentsControllerUpdate,
-  useAppointmentsControllerCancel,
-  useAppointmentsControllerComplete,
-  useAppointmentsControllerRemove,
-  getAppointmentsControllerFindAllQueryKey,
-  getAppointmentsControllerFindOneQueryKey,
-} from '../../api/generated/appointments/appointments';
+export const useAppointments = createQueryHook({
+  queryKey: (params?: AppointmentQueryParams) => 
+    appointmentsService.getListQueryKey(params),
+  queryFn: (params) => appointmentsService.findAll(params),
+  options: {
+    staleTime: 30 * 1000, // 30 seconds
+  },
+});
 
-import type { AppointmentQueryParams } from '../../types/appointments/appointment.types';
+export const useAppointment = createQueryHook({
+  queryKey: (id?: string) => appointmentsService.getDetailQueryKey(id!),
+  queryFn: (id) => appointmentsService.findOne(id!),
+  options: {
+    enabled: false, // Manually enabled when id provided
+    staleTime: 60 * 1000, // 1 minute
+  },
+});
 
-// ---------------------------------------------------------------------------
-// Query key helpers – re-exported so components can use them for
-// manual invalidation or optimistic updates if needed.
-// ---------------------------------------------------------------------------
-export { getAppointmentsControllerFindAllQueryKey as appointmentListQueryKey };
-export { getAppointmentsControllerFindOneQueryKey as appointmentDetailQueryKey };
+// ==================== MUTATION HOOKS ====================
 
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
+export const useCreateAppointment = createMutationHook({
+  mutationFn: (data: CreateAppointmentDto) => 
+    appointmentsService.create(data),
+  onSuccess: (_, __, queryClient) => {
+    appointmentsService.invalidateAll(queryClient);
+  },
+});
 
-/**
- * Hook untuk mengambil daftar appointment dengan pagination & filter.
- * Menggunakan `keepPreviousData` agar UI tidak flash kosong saat
- * perpagination atau perubahan filter.
- */
-export const useAppointments = (params?: AppointmentQueryParams) => {
-  return useAppointmentsControllerFindAll(params, {
-    query: {
-      placeholderData: keepPreviousData,
-    },
-  });
-};
+export const useUpdateAppointment = createMutationHook({
+  mutationFn: ({ id, data }: { id: string; data: UpdateAppointmentDto }) =>
+    appointmentsService.update(id, data),
+  onSuccess: (_, { id }, queryClient) => {
+    appointmentsService.invalidateDetail(queryClient, id);
+    appointmentsService.invalidateList(queryClient);
+  },
+});
 
-/**
- * Hook untuk mengambil detail satu appointment berdasarkan ID.
- * Query otomatis disabled ketika `id` kosong / undefined.
- */
-export const useAppointmentById = (id: string | undefined) => {
-  return useAppointmentsControllerFindOne(id ?? '', {
-    query: {
-      enabled: !!id,
-    },
-  });
-};
+export const useCompleteAppointment = createMutationHook({
+  mutationFn: (id: string) => appointmentsService.complete(id),
+  onSuccess: (data, id, queryClient) => {
+    // Optimistic update
+    appointmentsService.optimisticUpdate(queryClient, id, (old) => ({
+      ...old,
+      status: 'selesai' as const,
+    }));
+    
+    appointmentsService.invalidateList(queryClient);
+  },
+});
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
+export const useCancelAppointment = createMutationHook({
+  mutationFn: (id: string) => appointmentsService.cancel(id),
+  onSuccess: (data, id, queryClient) => {
+    // Optimistic update
+    appointmentsService.optimisticUpdate(queryClient, id, (old) => ({
+      ...old,
+      status: 'dibatalkan' as const,
+    }));
+    
+    appointmentsService.invalidateList(queryClient);
+  },
+});
 
-/**
- * Hook gabungan semua mutasi appointment.
- *
- * Setiap mutasi yang berhasil akan otomatis menginvalidasi:
- *  - seluruh cache list (`/appointments`)
- *  - cache detail spesifik (`/appointments/:id`) – untuk update, cancel,
- *    complete, dan remove.
- *
- * Ini memastikan UI selalu sinkron tanpa perlu refetch manual di masing-
- * masing komponen.
- */
-export const useAppointmentMutations = () => {
-  const queryClient = useQueryClient();
+export const useDeleteAppointment = createMutationHook({
+  mutationFn: (id: string) => appointmentsService.remove(id),
+  onSuccess: (_, id, queryClient) => {
+    appointmentsService.removeQueries(queryClient, appointmentsService.getDetailQueryKey(id));
+    appointmentsService.invalidateList(queryClient);
+  },
+});
 
-  /** Invalidasi seluruh list appointment. */
-  const invalidateList = () =>
-    queryClient.invalidateQueries({
-      queryKey: getAppointmentsControllerFindAllQueryKey(),
-    });
+// ==================== COMBINED MUTATIONS HOOK ====================
 
-  /** Invalidasi detail appointment tertentu sekaligus list. */
-  const invalidateById = (id: string) => {
-    queryClient.invalidateQueries({
-      queryKey: getAppointmentsControllerFindOneQueryKey(id),
-    });
-    invalidateList();
-  };
+export function useAppointmentMutations() {
+  const create = useCreateAppointment();
+  const update = useUpdateAppointment();
+  const complete = useCompleteAppointment();
+  const cancel = useCancelAppointment();
+  const remove = useDeleteAppointment();
 
-  // --- Create -----------------------------------------------------------
-  const create = useAppointmentsControllerCreate({
-    mutation: {
-      onSuccess: invalidateList,
-    },
-  });
-
-  // --- Update -----------------------------------------------------------
-  const update = useAppointmentsControllerUpdate({
-    mutation: {
-      onSuccess: (_data, variables) => invalidateById(variables.id),
-    },
-  });
-
-  // --- Cancel -----------------------------------------------------------
-  const cancel = useAppointmentsControllerCancel({
-    mutation: {
-      onSuccess: (_data, variables) => invalidateById(variables.id),
-    },
-  });
-
-  // --- Complete ---------------------------------------------------------
-  const complete = useAppointmentsControllerComplete({
-    mutation: {
-      onSuccess: (_data, variables) => invalidateById(variables.id),
-    },
-  });
-
-  // --- Remove -----------------------------------------------------------
-  const remove = useAppointmentsControllerRemove({
-    mutation: {
-      onSuccess: (_data, variables) => {
-        // Detail query tidak perlu diinvalidasi karena record sudah terhapus;
-        // cukup buang dari cache dan invalidasi list.
-        queryClient.removeQueries({
-          queryKey: getAppointmentsControllerFindOneQueryKey(variables.id),
-        });
-        invalidateList();
-      },
-    },
-  });
-
-  // --- Exposed interface ------------------------------------------------
   return {
     // Mutation functions
-    createAppointment: create.mutateAsync,
-    updateAppointment: update.mutateAsync,
-    cancelAppointment: cancel.mutateAsync,
-    completeAppointment: complete.mutateAsync,
-    removeAppointment: remove.mutateAsync,
-
+    create: create.mutate,
+    createAsync: create.mutateAsync,
+    update: update.mutate,
+    updateAsync: update.mutateAsync,
+    complete: complete.mutate,
+    completeAsync: complete.mutateAsync,
+    cancel: cancel.mutate,
+    cancelAsync: cancel.mutateAsync,
+    remove: remove.mutate,
+    removeAsync: remove.mutateAsync,
+    
     // Loading states
     isCreating: create.isPending,
     isUpdating: update.isPending,
-    isCancelling: cancel.isPending,
     isCompleting: complete.isPending,
-    isRemoving: remove.isPending,
-
-    // Derived: true selama mutasi apa pun sedang berjalan
-    isMutating:
-      create.isPending ||
-      update.isPending ||
-      cancel.isPending ||
-      complete.isPending ||
+    isCancelling: cancel.isPending,
+    isDeleting: remove.isPending,
+    
+    // Combined loading
+    isMutating: 
+      create.isPending || 
+      update.isPending || 
+      complete.isPending || 
+      cancel.isPending || 
       remove.isPending,
+    
+    // Error states
+    createError: create.error,
+    updateError: update.error,
+    completeError: complete.error,
+    cancelError: cancel.error,
+    deleteError: remove.error,
+    
+    // Reset functions
+    resetCreate: create.reset,
+    resetUpdate: update.reset,
+    resetComplete: complete.reset,
+    resetCancel: cancel.reset,
+    resetDelete: remove.reset,
   };
-};
+}
+
+// ==================== UTILITY HOOKS ====================
+
+export function usePrefetchAppointment() {
+  const queryClient = useQueryClient();
+  
+  return {
+    prefetchList: (params?: AppointmentQueryParams) =>
+      appointmentsService.prefetchList(queryClient, params),
+    prefetchDetail: (id: string) =>
+      appointmentsService.prefetchDetail(queryClient, id),
+  };
+}
+
+export function useInvalidateAppointments() {
+  const queryClient = useQueryClient();
+  
+  return {
+    invalidateAll: () => appointmentsService.invalidateAll(queryClient),
+    invalidateList: (params?: AppointmentQueryParams) => 
+      appointmentsService.invalidateList(queryClient, params),
+    invalidateDetail: (id: string) => 
+      appointmentsService.invalidateDetail(queryClient, id),
+  };
+}
