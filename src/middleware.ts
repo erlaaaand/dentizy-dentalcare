@@ -29,7 +29,6 @@ function verifyToken(token: string): { valid: boolean; payload?: Record<string, 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
-    // Skip assets
     if (
         pathname.startsWith('/_next') ||
         pathname.startsWith('/api') ||
@@ -75,7 +74,9 @@ export function middleware(request: NextRequest) {
         return response;
     }
 
-    return NextResponse.next();
+    const response = NextResponse.next();
+    response.headers.set('x-middleware-cache', 'no-cache');
+    return response;
 }
 
 export const config = {
