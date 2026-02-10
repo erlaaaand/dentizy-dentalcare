@@ -14,7 +14,7 @@ import {
   SidebarMenuItem,
 } from "@/src/components/dashboard-ui/components/sidebar"
 import { ROUTES } from "@/src/core/constants/routes.constants"
-import { useAuth } from "@/src/core/providers/auth-provider"
+import { useAuth } from "@/src/core/providers/AuthProvider"
 import { getRoleKey, NAV_ITEMS } from "@/src/core/constants/navigation.constants"
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {

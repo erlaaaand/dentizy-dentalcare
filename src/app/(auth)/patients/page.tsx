@@ -29,7 +29,7 @@ import {
 import { Toaster } from "@/src/components/dashboard-ui/components/sonner"
 
 // Hooks & Services
-import { useAuth } from "@/src/core/providers/auth-provider"
+import { useAuth } from "@/src/core/providers/AuthProvider"
 import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
 import { PatientService } from "@/src/core/service/api/patients/patient.api"
 

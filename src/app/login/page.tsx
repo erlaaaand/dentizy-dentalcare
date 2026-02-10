@@ -1,77 +1,64 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useAuth } from "@/src/core/providers/auth-provider";
-import { LoginDto } from "@/src/core/api/model";
-import { Button } from "@/src/components/dashboard-ui/components/button";
-import { Input } from "@/src/components/dashboard-ui/components/input";
-import { Label } from "@/src/components/dashboard-ui/components/label";
-import { IconInnerShadowTop } from "@tabler/icons-react";
-import { ROUTES } from "@/src/core/constants/routes.constants";
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useAuthLogin } from '@/src/core/hooks/auth/mutations';
+import { toast } from 'sonner';
+import { Button } from '@/src/components/login-ui/button';
+import { Input } from '@/src/components/login-ui/input';
+import { Label } from '@/src/components/login-ui/label';
+import { IconInnerShadowTop, IconEye, IconEyeOff } from '@tabler/icons-react'; // Tambahkan IconEye & IconEyeOff
+import type { LoginDto } from '@/src/core/types/auth/auth.types';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoginPending, isAuthenticated } = useAuth();
   const searchParams = useSearchParams();
-  const redirectUrl = searchParams.get('redirect');
   
+  const { mutateAsync: loginAsync, isPending: isLoginPending } = useAuthLogin();
+
   const [formData, setFormData] = useState<LoginDto>({
-    username: "",
-    password: "",
-  });
-  
-  const [errors, setErrors] = useState({
-    username: "",
-    password: ""
+    username: '',
+    password: '',
   });
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      const targetUrl = redirectUrl || ROUTES.DASHBOARD;
-      router.replace(targetUrl);
-    }
-  }, [isAuthenticated, redirectUrl, router]);
+  // State untuk kontrol visibilitas password
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
 
-  const validateForm = (): boolean => {
-    const newErrors = { username: "", password: "" };
-    let isValid = true;
-
-    if (!formData.username.trim()) {
-      newErrors.username = "Username harus diisi";
-      isValid = false;
-    }
-
-    if (!formData.password) {
-      newErrors.password = "Password harus diisi";
-      isValid = false;
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password minimal 6 karakter";
-      isValid = false;
-    }
-
-    setErrors(newErrors);
-    return isValid;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    setErrors({ username: "", password: "" });
-    
-    if (!validateForm()) return;
-    if (isLoginPending) return;
-    
-    login({
-      username: formData.username.trim(),
-      password: formData.password
-    });
-  };
+  const redirectUrl = searchParams.get('callbackUrl');
+  const callbackUrl = redirectUrl || '/dashboard';
 
   const handleChange = (field: keyof LoginDto) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [field]: e.target.value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
+    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    if (errors[field as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const newErrors: typeof errors = {};
+    if (!formData.username) newErrors.username = 'Username wajib diisi';
+    if (!formData.password) newErrors.password = 'Password wajib diisi';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      await loginAsync(formData);
+      router.push(callbackUrl);
+      router.refresh();
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Kredensial yang Anda masukkan salah.';
+
+      toast.error('Login Gagal', {
+        description: errorMessage,
+      });
     }
   };
 
@@ -132,16 +119,30 @@ export default function LoginPage() {
                 Lupa password?
               </a>
             </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="masukkan password"
-              disabled={isLoginPending}
-              value={formData.password}
-              onChange={handleChange('password')}
-              autoComplete="current-password"
-              className={errors.password ? "border-red-500" : ""}
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"} // Dinamis berdasarkan state
+                placeholder="masukkan password"
+                disabled={isLoginPending}
+                value={formData.password}
+                onChange={handleChange('password')}
+                autoComplete="current-password"
+                className={`pr-10 ${errors.password ? "border-red-500" : ""}`} // Beri padding kanan untuk icon
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowPassword(!showPassword)}
+                disabled={isLoginPending}
+              >
+                {showPassword ? (
+                  <IconEyeOff className="size-4" />
+                ) : (
+                  <IconEye className="size-4" />
+                )}
+              </button>
+            </div>
             {errors.password && (
               <p className="text-xs text-red-500">{errors.password}</p>
             )}

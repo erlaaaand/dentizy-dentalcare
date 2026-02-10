@@ -29,7 +29,7 @@ import {
 import Link from "next/dist/client/link"
 import { ROUTES } from '../../core/constants/routes.constants';
 
-import { useAuth } from "@/src/core/providers/auth-provider";
+import { useAuth } from "@/src/core/providers/AuthProvider";
 
 export function NavUser({
   user,

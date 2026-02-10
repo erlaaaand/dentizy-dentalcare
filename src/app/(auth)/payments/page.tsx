@@ -27,7 +27,7 @@ import {
 } from "@/src/components/dashboard-ui/components/table"
 
 // Hooks & Services
-import { useAuth } from "@/src/core/providers/auth-provider"
+import { useAuth } from "@/src/core/providers/AuthProvider"
 import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
 import { PaymentApi } from "@/src/core/service/api/payments/payments.api"
 

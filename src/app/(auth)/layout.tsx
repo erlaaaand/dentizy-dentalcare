@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { useAuth } from "@/src/core/providers/auth-provider";
+import { useAuth } from "@/src/core/providers/AuthProvider";
 import { ROUTES } from "@/src/core/constants/routes.constants";
 import { Skeleton } from "@/src/components/dashboard-ui/components/skeleton"; 
 import { DashboardSkeleton } from "@/src/components/skeletons/dashboard-skeleton"; 
