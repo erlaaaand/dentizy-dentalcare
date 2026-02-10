@@ -5,8 +5,27 @@
  * API Documentation untuk Sistem Manajemen Klinik Gigi
  * OpenAPI spec version: 1.0
  */
+import type { UpdatePatientDtoJenisKelamin } from './updatePatientDtoJenisKelamin';
 
 export interface UpdatePatientDto {
+  /** Nomor rekam medis pasien */
+  nomor_rekam_medis?: string;
+  /** Nomor Induk Kependudukan (NIK) */
+  nik?: string;
+  /** Nama lengkap pasien */
+  nama_lengkap?: string;
+  /** Tanggal lahir pasien */
+  tanggal_lahir?: string;
+  /** Alamat pasien */
+  alamat?: string;
+  /** Email pasien */
+  email?: string;
+  /** Nomor HP pasien */
+  no_hp?: string;
+  /** Jenis kelamin pasien */
+  jenis_kelamin?: UpdatePatientDtoJenisKelamin;
+  /** Status registrasi online pasien */
+  is_registered_online?: boolean;
   /** Status aktif pasien */
   is_active?: boolean;
 }

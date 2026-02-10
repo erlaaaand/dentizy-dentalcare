@@ -14,7 +14,8 @@ export interface CreatePatientDto {
   nik?: string;
   email?: string;
   no_hp?: string;
-  tanggal_lahir?: string;
+  /** Tanggal Lahir (YYYY-MM-DD) */
+  tanggal_lahir: string;
   jenis_kelamin?: CreatePatientDtoJenisKelamin;
   alamat?: string;
 }

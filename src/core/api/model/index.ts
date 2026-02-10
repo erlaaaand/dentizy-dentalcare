@@ -108,6 +108,7 @@ export * from './updateAppointmentDto';
 export * from './updateMedicalRecordDto';
 export * from './updateMedicalRecordTreatmentDto';
 export * from './updatePatientDto';
+export * from './updatePatientDtoJenisKelamin';
 export * from './updatePaymentDto';
 export * from './updatePaymentDtoMetodePembayaran';
 export * from './updatePaymentDtoStatusPembayaran';
