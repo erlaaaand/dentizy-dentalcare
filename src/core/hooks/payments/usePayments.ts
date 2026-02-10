@@ -21,10 +21,9 @@ import {
   getPaymentsControllerFindByPatientIdQueryKey
 } from '../../api/generated/payments/payments';
 
-import {
-    paymentsApi,
-    paymentsHelpers,
-} from '../../service/api/payments/payments.api'
+import { PaymentsCacheManager } from '../../service/api/payments/cache/cache.manager'
+import { paymentsService } from '../../service/api/payments/payments.api'
+import { paymentsHelpers } from '../../service/api/payments/helpers/payment.helper';
 
 import type {
   PaymentResponseDto,
@@ -41,6 +40,8 @@ import type {
   ProcessPaymentFormData,
   PaymentValidation
 } from '../../types/payments/payments.types';
+
+const cacheManager = new PaymentsCacheManager();
 
 /**
  * Hook untuk mendapatkan daftar payments
@@ -75,7 +76,7 @@ export const usePayments = (
  * Hook untuk mendapatkan single payment
  */
 export const usePayment = (
-  id: number,
+  id: string,
   options?: {
     enabled?: boolean;
   }
@@ -93,7 +94,7 @@ export const usePayment = (
   return {
     ...query,
     payment,
-    status: payment ? paymentsApi.getPaymentStatus(payment) : undefined
+    status: payment ? paymentsHelpers.getPaymentStatus(payment) : undefined
   };
 };
 
@@ -124,7 +125,7 @@ export const usePaymentByInvoice = (
  * Hook untuk mencari payment by medical record
  */
 export const usePaymentByMedicalRecord = (
-  medicalRecordId: number,
+  medicalRecordId: string,
   options?: {
     enabled?: boolean;
   }
@@ -147,7 +148,7 @@ export const usePaymentByMedicalRecord = (
  * Hook untuk mendapatkan payment history by patient
  */
 export const usePaymentsByPatient = (
-  patientId: number,
+  patientId: string,
   params?: PaymentsControllerFindByPatientIdParams,
   options?: {
     enabled?: boolean;
@@ -177,7 +178,7 @@ export const useProcessPayment = () => {
   const mutation = usePaymentsControllerProcess();
 
   const processPayment = useCallback(
-    async (id: number, data: ProcessPaymentDto) => {
+    async (id: string, data: ProcessPaymentDto) => {
       const response = await mutation.mutateAsync({ id, data });
       return response.data;
     },
@@ -219,7 +220,7 @@ export const useUpdatePayment = () => {
   const mutation = usePaymentsControllerUpdate();
 
   const updatePayment = useCallback(
-    async (id: number, data: UpdatePaymentDto) => {
+    async (id: string, data: UpdatePaymentDto) => {
       const response = await mutation.mutateAsync({ id, data });
       return response.data;
     },
@@ -240,7 +241,7 @@ export const useCancelPayment = () => {
   const mutation = usePaymentsControllerCancel();
 
   const cancelPayment = useCallback(
-    async (id: number) => {
+    async (id: string) => {
       const response = await mutation.mutateAsync({ id });
       return response.data;
     },
@@ -261,7 +262,7 @@ export const useDeletePayment = () => {
   const mutation = usePaymentsControllerRemove();
 
   const deletePayment = useCallback(
-    async (id: number) => {
+    async (id: string) => {
       await mutation.mutateAsync({ id });
     },
     [mutation]
@@ -351,12 +352,12 @@ export const useRevenueByPeriod = (
  */
 export const usePaymentValidation = () => {
   const validate = useCallback((data: CreatePaymentFormData): PaymentValidation => {
-    return paymentsApi.validatePayment(data);
+    return cacheManager.validatePayment(data);
   }, []);
 
   const calculateKembalian = useCallback(
     (totalBiaya: number, jumlahBayar: number): number => {
-      return paymentsApi.calculateKembalian(totalBiaya, jumlahBayar);
+      return paymentsService.calculateKembalian(totalBiaya, jumlahBayar);
     },
     []
   );
@@ -372,11 +373,11 @@ export const usePaymentValidation = () => {
  */
 export const usePaymentActions = (queryClient: QueryClient) => {
   const invalidateAll = useCallback(async () => {
-    await paymentsApi.invalidateAll(queryClient);
+    await paymentsService.invalidateAll(queryClient);
   }, [queryClient]);
 
   const invalidateOne = useCallback(
-    async (id: number) => {
+    async (id: string) => {
       await queryClient.invalidateQueries({
         queryKey: getPaymentsControllerFindOneQueryKey(id)
       });
@@ -410,7 +411,7 @@ export const usePaymentCashierFlow = (queryClient: QueryClient) => {
 
   const processCashierPayment = useCallback(
     async (
-      id: number,
+      id: string,
       data: ProcessPaymentFormData
     ): Promise<{
       success: boolean;
@@ -420,7 +421,7 @@ export const usePaymentCashierFlow = (queryClient: QueryClient) => {
     }> => {
       try {
         // Calculate change
-        const payment = await paymentsApi.processPayment(id, data);
+        const payment = await paymentsService.processPayment(id, data);
         const kembalian = calculateKembalian(
           payment.totalBiaya,
           data.jumlah_bayar
@@ -486,7 +487,7 @@ export const usePaymentCRUD = (queryClient: QueryClient) => {
 
   const update = useCallback(
     async (
-      id: number,
+      id: string,
       data: UpdatePaymentFormData
     ): Promise<{
       success: boolean;
@@ -505,7 +506,7 @@ export const usePaymentCRUD = (queryClient: QueryClient) => {
   );
 
   const remove = useCallback(
-    async (id: number): Promise<{
+    async (id: string): Promise<{
       success: boolean;
       error?: Error;
     }> => {
@@ -521,7 +522,7 @@ export const usePaymentCRUD = (queryClient: QueryClient) => {
   );
 
   const cancel = useCallback(
-    async (id: number): Promise<{
+    async (id: string): Promise<{
       success: boolean;
       data?: PaymentResponseDto;
       error?: Error;
@@ -558,7 +559,7 @@ export const usePaymentQueryKeys = () => {
     return getPaymentsControllerFindAllQueryKey(params);
   }, []);
 
-  const getOneKey = useCallback((id: number) => {
+  const getOneKey = useCallback((id: string) => {
     return getPaymentsControllerFindOneQueryKey(id);
   }, []);
 
@@ -566,12 +567,12 @@ export const usePaymentQueryKeys = () => {
     return getPaymentsControllerFindByNomorInvoiceQueryKey(nomorInvoice);
   }, []);
 
-  const getByMedicalRecordKey = useCallback((medicalRecordId: number) => {
+  const getByMedicalRecordKey = useCallback((medicalRecordId: string) => {
     return getPaymentsControllerFindByMedicalRecordIdQueryKey(medicalRecordId);
   }, []);
 
   const getByPatientKey = useCallback(
-    (patientId: number, params?: PaymentsControllerFindByPatientIdParams) => {
+    (patientId: string, params?: PaymentsControllerFindByPatientIdParams) => {
       return getPaymentsControllerFindByPatientIdQueryKey(patientId, params);
     },
     []
