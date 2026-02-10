@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
-import { appointmentsApi } from '../../service/api/appointments/appointment.api';
+import { appointmentsService } from '../../service/api/appointments/appointment.api';
+import { AppointmentsCacheManager } from '../../service/api/appointments/cache/cache.manager'
 import type {
   AppointmentQueryParams,
   CreateAppointmentDto,
@@ -9,18 +10,20 @@ import type {
 
 // ==================== QUERY HOOKS ====================
 
+const cacheManager = new AppointmentsCacheManager();
+
 export const useAppointments = createQueryHook({
   queryKey: (params?: AppointmentQueryParams) => 
-    appointmentsApi.getListQueryKey(params),
-  queryFn: (params) => appointmentsApi.findAll(params),
+    cacheManager.getListQueryKey(params),
+  queryFn: (params) => appointmentsService.findAll(params),
   options: {
     staleTime: 30 * 1000, // 30 seconds
   },
 });
 
 export const useAppointment = createQueryHook({
-  queryKey: (id?: string) => appointmentsApi.getDetailQueryKey(id!),
-  queryFn: (id) => appointmentsApi.findOne(id!),
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
+  queryFn: (id) => appointmentsService.findOne(id!),
   options: {
     enabled: false, // Manually enabled when id provided
     staleTime: 60 * 1000, // 1 minute
@@ -31,54 +34,55 @@ export const useAppointment = createQueryHook({
 
 export const useCreateAppointment = createMutationHook({
   mutationFn: (data: CreateAppointmentDto) => 
-    appointmentsApi.create(data),
+    appointmentsService.create(data),
   onSuccess: (_, __, queryClient) => {
-    appointmentsApi.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
   },
 });
 
 export const useUpdateAppointment = createMutationHook({
   mutationFn: ({ id, data }: { id: string; data: UpdateAppointmentDto }) =>
-    appointmentsApi.update(id, data),
+    appointmentsService.update(id, data),
   onSuccess: (_, { id }, queryClient) => {
-    appointmentsApi.invalidateDetail(queryClient, id);
-    appointmentsApi.invalidateList(queryClient);
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
   },
 });
 
 export const useCompleteAppointment = createMutationHook({
-  mutationFn: (id: string) => appointmentsApi.complete(id),
+  mutationFn: (id: string) => appointmentsService.complete(id),
   onSuccess: (data, id, queryClient) => {
     // Optimistic update
-    appointmentsApi.optimisticUpdate(queryClient, id, (old) => ({
+    cacheManager.optimisticUpdate(queryClient, id, (old) => ({
       ...old,
       status: 'selesai' as const,
     }));
     
-    appointmentsApi.invalidateList(queryClient);
+    cacheManager.invalidateList(queryClient);
   },
 });
 
 export const useCancelAppointment = createMutationHook({
-  mutationFn: (id: string) => appointmentsApi.cancel(id),
+  mutationFn: (id: string) => appointmentsService.cancel(id),
   onSuccess: (data, id, queryClient) => {
     // Optimistic update
-    appointmentsApi.optimisticUpdate(queryClient, id, (old) => ({
+    cacheManager.optimisticUpdate(queryClient, id, (old) => ({
       ...old,
       status: 'dibatalkan' as const,
     }));
     
-    appointmentsApi.invalidateList(queryClient);
+    cacheManager.invalidateList(queryClient);
   },
 });
 
 export const useDeleteAppointment = createMutationHook({
-  mutationFn: (id: string) => appointmentsApi.remove(id),
+  mutationFn: (id: string) => appointmentsService.remove(id),
   onSuccess: (_, id, queryClient) => {
-    appointmentsApi.removeQueries(queryClient, [...appointmentsApi.getDetailQueryKey(id)]);
-    appointmentsApi.invalidateList(queryClient);
+    cacheManager.removeDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
   },
 });
+
 
 // ==================== COMBINED MUTATIONS HOOK ====================
 
@@ -140,9 +144,9 @@ export function usePrefetchAppointment() {
   
   return {
     prefetchList: (params?: AppointmentQueryParams) =>
-      appointmentsApi.prefetchList(queryClient, params),
+      cacheManager.prefetchList(queryClient, params),
     prefetchDetail: (id: string) =>
-      appointmentsApi.prefetchDetail(queryClient, id),
+      cacheManager.prefetchDetail(queryClient, id),
   };
 }
 
@@ -150,10 +154,10 @@ export function useInvalidateAppointments() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => appointmentsApi.invalidateAll(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
     invalidateList: (params?: AppointmentQueryParams) => 
-      appointmentsApi.invalidateList(queryClient, params),
+      cacheManager.invalidateList(queryClient, params),
     invalidateDetail: (id: string) => 
-      appointmentsApi.invalidateDetail(queryClient, id),
+      cacheManager.invalidateDetail(queryClient, id),
   };
 }

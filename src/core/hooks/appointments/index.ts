@@ -11,4 +11,4 @@ export {
   useInvalidateAppointments,
 } from './useAppointments';
 
-export { appointmentsApi } from '../../service/api/appointments/appointment.api';
+export { appointmentsService } from '../../service/api/appointments/appointment.api';

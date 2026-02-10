@@ -1,7 +1,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createMutationHook } from '../../service/base/use-query-factory';
-import { uploadsService, uploadsHelpers } from '../../service/api/uploads/uploads.api';
+import { uploadsService } from '../../service/api/uploads/uploads.api';
+import { uploadsHelpers } from '../../service/api/uploads/helpers/uploads.helpers';
+import { UploadsCacheManager } from '../../service/api/uploads/cache/cache.manager';
+
+const cacheManager = new UploadsCacheManager();
 
 // ==================== MUTATION HOOKS ====================
 
@@ -65,6 +69,6 @@ export function useInvalidateUploads() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => uploadsService.invalidateAll(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
   };
 }

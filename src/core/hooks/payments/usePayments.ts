@@ -1,600 +1,273 @@
-import { useCallback } from 'react';
-import type { QueryClient } from '@tanstack/react-query';
-import {
-  usePaymentsControllerProcess,
-  usePaymentsControllerCreate,
-  usePaymentsControllerFindAll,
-  usePaymentsControllerFindByNomorInvoice,
-  usePaymentsControllerFindByMedicalRecordId,
-  usePaymentsControllerFindByPatientId,
-  usePaymentsControllerGetStatistics,
-  usePaymentsControllerGetTotalRevenue,
-  usePaymentsControllerGetRevenueByPeriod,
-  usePaymentsControllerFindOne,
-  usePaymentsControllerUpdate,
-  usePaymentsControllerRemove,
-  usePaymentsControllerCancel,
-  getPaymentsControllerFindAllQueryKey,
-  getPaymentsControllerFindOneQueryKey,
-  getPaymentsControllerFindByNomorInvoiceQueryKey,
-  getPaymentsControllerFindByMedicalRecordIdQueryKey,
-  getPaymentsControllerFindByPatientIdQueryKey
-} from '../../api/generated/payments/payments';
-
-import { PaymentsCacheManager } from '../../service/api/payments/cache/cache.manager'
-import { paymentsService } from '../../service/api/payments/payments.api'
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
+import { paymentsService } from '../../service/api/payments/payments.api';
 import { paymentsHelpers } from '../../service/api/payments/helpers/payment.helper';
-
+import { paymentsValidators } from '../../service/api/payments/validators/payments.validators';
+import { PaymentsCacheManager } from '../../service/api/payments/cache/cache.manager';
 import type {
-  PaymentResponseDto,
   CreatePaymentDto,
   UpdatePaymentDto,
   ProcessPaymentDto,
+  PaymentValidation,
+  CreatePaymentFormData,
   PaymentsControllerFindAllParams,
   PaymentsControllerFindByPatientIdParams,
   PaymentsControllerGetRevenueByPeriodParams,
   PaymentsControllerGetStatisticsParams,
   PaymentsControllerGetTotalRevenueParams,
-  CreatePaymentFormData,
-  UpdatePaymentFormData,
-  ProcessPaymentFormData,
-  PaymentValidation
 } from '../../types/payments/payments.types';
+
 
 const cacheManager = new PaymentsCacheManager();
 
-/**
- * Hook untuk mendapatkan daftar payments
- */
-export const usePayments = (
-  params?: PaymentsControllerFindAllParams,
-  options?: {
-    enabled?: boolean;
-    refetchOnMount?: boolean;
-  }
-) => {
-  const { enabled = true, refetchOnMount = true } = options || {};
+export const usePayments = createQueryHook({
+  queryKey: (params?: PaymentsControllerFindAllParams) =>
+    cacheManager.getListQueryKey(params),
+  queryFn: (params) => paymentsService.findAll(params),
+  options: {
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    retry: 1,
+  },
+});
 
-  const query = usePaymentsControllerFindAll(params, {
-    query: {
-      enabled,
-      refetchOnMount,
-      staleTime: 1 * 60 * 1000 // 1 minute
-    }
-  });
+export const usePayment = createQueryHook({
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
+  queryFn: (id) => paymentsService.findOne(id!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+    retry: 1,
+  },
+});
 
-  const payments = query.data?.data || [];
+export const usePaymentByInvoice = createQueryHook({
+  queryKey: (nomorInvoice?: string) =>
+    cacheManager.getByInvoiceQueryKey(nomorInvoice!),
+  queryFn: (nomorInvoice) => paymentsService.findByInvoice(nomorInvoice!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+    retry: 1,
+  },
+});
+
+export const usePaymentByMedicalRecord = createQueryHook({
+  queryKey: (medicalRecordId?: string) =>
+    cacheManager.getByMedicalRecordIdQueryKey(medicalRecordId!),
+  queryFn: (medicalRecordId) => paymentsService.findByMedicalRecordId(medicalRecordId!),
+  options: {
+    enabled: false,
+    staleTime: 60 * 1000,
+    retry: 1,
+  },
+});
+
+export const usePaymentsByPatient = createQueryHook({
+  queryKey: (params?: { patientId?: string } & PaymentsControllerFindByPatientIdParams) => {
+    if (!params?.patientId) return [];
+    return cacheManager.getByPatientIdQueryKey(params.patientId);
+  },
+  queryFn: (params?: { patientId?: string } & PaymentsControllerFindByPatientIdParams) => {
+    if (!params?.patientId) throw new Error('patientId wajib ada');
+    return paymentsService.findByPatientId(params.patientId);
+  },
+  options: {
+    enabled: false,
+    placeholderData: keepPreviousData,
+    staleTime: 60 * 1000,
+    retry: 1,
+  },
+});
+
+export const usePaymentStatistics = createQueryHook({
+  queryKey: (_params?: PaymentsControllerGetStatisticsParams) =>
+    cacheManager.getStatisticsQueryKey(),
+  queryFn: () => paymentsService.getStatistics(),
+  options: {
+    staleTime: 5 * 60 * 1000,
+  },
+});
+
+export const useTotalRevenue = createQueryHook({
+  queryKey: (params?: PaymentsControllerGetTotalRevenueParams) =>
+    cacheManager.getTotalRevenueQueryKey(params),
+  queryFn: (params) => paymentsService.getTotalRevenue(params),
+  options: {
+    staleTime: 5 * 60 * 1000,
+  },
+});
+
+export const useRevenueByPeriod = createQueryHook({
+  queryKey: (params?: PaymentsControllerGetRevenueByPeriodParams) =>
+    cacheManager.getRevenueByPeriodQueryKey(params),
+  queryFn: (params) => paymentsService.getRevenueByPeriod(params!),
+  options: {
+    enabled: false,
+    staleTime: 5 * 60 * 1000,
+  },
+});
+
+export const useCreatePayment = createMutationHook({
+  mutationFn: (data: CreatePaymentDto) => paymentsService.create(data),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Pembayaran berhasil dibuat');
+    cacheManager.invalidateAll(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal membuat pembayaran');
+  },
+});
+
+export const useUpdatePayment = createMutationHook({
+  mutationFn: ({ id, data }: { id: string; data: UpdatePaymentDto }) =>
+    paymentsService.update(id, data),
+  onSuccess: (_, { id }, queryClient) => {
+    toast.success('Pembayaran berhasil diperbarui');
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memperbarui pembayaran');
+  },
+});
+
+export const useProcessPayment = createMutationHook({
+  mutationFn: ({ id, data }: { id: string; data: ProcessPaymentDto }) =>
+    paymentsService.processPayment(id, data),
+  onSuccess: (_, { id }, queryClient) => {
+    toast.success('Pembayaran berhasil diproses');
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal memproses pembayaran');
+  },
+});
+
+export const useCancelPayment = createMutationHook({
+  mutationFn: (id: string) => paymentsService.cancel(id),
+  onSuccess: (_, id, queryClient) => {
+    toast.success('Pembayaran berhasil dibatalkan');
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal membatalkan pembayaran');
+  },
+});
+
+export const useRemovePayment = createMutationHook({
+  mutationFn: (id: string) => paymentsService.remove(id),
+  onSuccess: (_, __, queryClient) => {
+    toast.success('Pembayaran berhasil dihapus');
+    cacheManager.invalidateAll(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
+  },
+  onError: () => {
+    toast.error('Gagal menghapus pembayaran');
+  },
+});
+
+export function usePaymentValidation() {
+  return {
+    validateCreate: (data: CreatePaymentFormData): PaymentValidation =>
+      paymentsValidators.validateCreate(data),
+    validateUpdate: (data: Partial<CreatePaymentFormData>): PaymentValidation =>
+      paymentsValidators.validateUpdate(data),
+    calculateKembalian: (totalBiaya: number, jumlahBayar: number): number =>
+      paymentsHelpers.calculateKembalian(totalBiaya, jumlahBayar),
+  };
+}
+
+export function usePaymentMutations() {
+  const create = useCreatePayment();
+  const update = useUpdatePayment();
+  const process = useProcessPayment();
+  const cancel = useCancelPayment();
+  const remove = useRemovePayment();
 
   return {
-    ...query,
-    payments,
-    totalPayments: payments.length
+    create: create.mutate,
+    createAsync: create.mutateAsync,
+    update: update.mutate,
+    updateAsync: update.mutateAsync,
+    process: process.mutate,
+    processAsync: process.mutateAsync,
+    cancel: cancel.mutate,
+    cancelAsync: cancel.mutateAsync,
+    remove: remove.mutate,
+    removeAsync: remove.mutateAsync,
+
+    isCreating: create.isPending,
+    isUpdating: update.isPending,
+    isProcessing: process.isPending,
+    isCancelling: cancel.isPending,
+    isRemoving: remove.isPending,
+
+    isMutating:
+      create.isPending ||
+      update.isPending ||
+      process.isPending ||
+      cancel.isPending ||
+      remove.isPending,
+
+    createError: create.error,
+    updateError: update.error,
+    processError: process.error,
+    cancelError: cancel.error,
+    removeError: remove.error,
+
+    resetCreate: create.reset,
+    resetUpdate: update.reset,
+    resetProcess: process.reset,
+    resetCancel: cancel.reset,
+    resetRemove: remove.reset,
   };
-};
+}
 
-/**
- * Hook untuk mendapatkan single payment
- */
-export const usePayment = (
-  id: string,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerFindOne(id, {
-    query: {
-      enabled: enabled && !!id
-    }
-  });
-
-  const payment = query.data?.data;
+export function usePrefetchPayments() {
+  const queryClient = useQueryClient();
 
   return {
-    ...query,
-    payment,
-    status: payment ? paymentsHelpers.getPaymentStatus(payment) : undefined
+    prefetchList: (params?: PaymentsControllerFindAllParams) =>
+      cacheManager.prefetchList(queryClient, params),
+    prefetchDetail: (id: string) =>
+      cacheManager.prefetchDetail(queryClient, id),
+    prefetchStatistics: () =>
+      cacheManager.prefetchStatistics(queryClient),
   };
-};
+}
 
-/**
- * Hook untuk mencari payment by invoice
- */
-export const usePaymentByInvoice = (
-  nomorInvoice: string,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerFindByNomorInvoice(nomorInvoice, {
-    query: {
-      enabled: enabled && !!nomorInvoice
-    }
-  });
+export function useInvalidatePayments() {
+  const queryClient = useQueryClient();
 
   return {
-    ...query,
-    payment: query.data?.data
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
+    invalidateList: (params?: PaymentsControllerFindAllParams) =>
+      cacheManager.invalidateList(queryClient, params),
+    invalidateDetail: (id: string) =>
+      cacheManager.invalidateDetail(queryClient, id),
+    invalidateByInvoice: (nomorInvoice: string) =>
+      cacheManager.invalidateByInvoice(queryClient, nomorInvoice),
+    invalidateByMedicalRecord: (medicalRecordId: string) =>
+      cacheManager.invalidateByMedicalRecordId(queryClient, medicalRecordId),
+    invalidateByPatient: (patientId: string) =>
+      cacheManager.invalidateByPatientId(queryClient, patientId),
+    invalidateStatistics: () =>
+      cacheManager.invalidateStatistics(queryClient),
   };
-};
+}
 
-/**
- * Hook untuk mencari payment by medical record
- */
-export const usePaymentByMedicalRecord = (
-  medicalRecordId: string,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerFindByMedicalRecordId(medicalRecordId, {
-    query: {
-      enabled: enabled && !!medicalRecordId
-    }
-  });
-
-  return {
-    ...query,
-    payment: query.data?.data
-  };
-};
-
-/**
- * Hook untuk mendapatkan payment history by patient
- */
-export const usePaymentsByPatient = (
-  patientId: string,
-  params?: PaymentsControllerFindByPatientIdParams,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerFindByPatientId(patientId, params, {
-    query: {
-      enabled: enabled && !!patientId
-    }
-  });
-
-  const payments = query.data?.data || [];
-
-  return {
-    ...query,
-    payments,
-    totalPayments: payments.length
-  };
-};
-
-/**
- * Hook untuk process payment (cashier)
- */
-export const useProcessPayment = () => {
-  const mutation = usePaymentsControllerProcess();
-
-  const processPayment = useCallback(
-    async (id: string, data: ProcessPaymentDto) => {
-      const response = await mutation.mutateAsync({ id, data });
-      return response.data;
-    },
-    [mutation]
-  );
-
-  return {
-    ...mutation,
-    processPayment,
-    isProcessing: mutation.isPending
-  };
-};
-
-/**
- * Hook untuk create payment
- */
-export const useCreatePayment = () => {
-  const mutation = usePaymentsControllerCreate();
-
-  const createPayment = useCallback(
-    async (data: CreatePaymentDto) => {
-      const response = await mutation.mutateAsync({ data });
-      return response.data;
-    },
-    [mutation]
-  );
-
-  return {
-    ...mutation,
-    createPayment,
-    isCreating: mutation.isPending
-  };
-};
-
-/**
- * Hook untuk update payment
- */
-export const useUpdatePayment = () => {
-  const mutation = usePaymentsControllerUpdate();
-
-  const updatePayment = useCallback(
-    async (id: string, data: UpdatePaymentDto) => {
-      const response = await mutation.mutateAsync({ id, data });
-      return response.data;
-    },
-    [mutation]
-  );
-
-  return {
-    ...mutation,
-    updatePayment,
-    isUpdating: mutation.isPending
-  };
-};
-
-/**
- * Hook untuk cancel payment
- */
-export const useCancelPayment = () => {
-  const mutation = usePaymentsControllerCancel();
-
-  const cancelPayment = useCallback(
-    async (id: string) => {
-      const response = await mutation.mutateAsync({ id });
-      return response.data;
-    },
-    [mutation]
-  );
-
-  return {
-    ...mutation,
-    cancelPayment,
-    isCancelling: mutation.isPending
-  };
-};
-
-/**
- * Hook untuk delete payment
- */
-export const useDeletePayment = () => {
-  const mutation = usePaymentsControllerRemove();
-
-  const deletePayment = useCallback(
-    async (id: string) => {
-      await mutation.mutateAsync({ id });
-    },
-    [mutation]
-  );
-
-  return {
-    ...mutation,
-    deletePayment,
-    isDeleting: mutation.isPending
-  };
-};
-
-/**
- * Hook untuk payment statistics
- */
-export const usePaymentStatistics = (
-  params?: PaymentsControllerGetStatisticsParams,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerGetStatistics(params, {
-    query: {
-      enabled,
-      staleTime: 5 * 60 * 1000 // 5 minutes
-    }
-  });
-
-  return {
-    ...query,
-    statistics: query.data?.data
-  };
-};
-
-/**
- * Hook untuk total revenue
- */
-export const useTotalRevenue = (
-  params?: PaymentsControllerGetTotalRevenueParams,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerGetTotalRevenue(params, {
-    query: {
-      enabled,
-      staleTime: 5 * 60 * 1000 // 5 minutes
-    }
-  });
-
-  return {
-    ...query,
-    totalRevenue: query.data?.data
-  };
-};
-
-/**
- * Hook untuk revenue by period
- */
-export const useRevenueByPeriod = (
-  params: PaymentsControllerGetRevenueByPeriodParams,
-  options?: {
-    enabled?: boolean;
-  }
-) => {
-  const { enabled = true } = options || {};
-
-  const query = usePaymentsControllerGetRevenueByPeriod(params, {
-    query: {
-      enabled,
-      staleTime: 5 * 60 * 1000 // 5 minutes
-    }
-  });
-
-  return {
-    ...query,
-    revenueByPeriod: query.data?.data
-  };
-};
-
-/**
- * Hook untuk payment validation
- */
-export const usePaymentValidation = () => {
-  const validate = useCallback((data: CreatePaymentFormData): PaymentValidation => {
-    return cacheManager.validatePayment(data);
-  }, []);
-
-  const calculateKembalian = useCallback(
-    (totalBiaya: number, jumlahBayar: number): number => {
-      return paymentsService.calculateKembalian(totalBiaya, jumlahBayar);
-    },
-    []
-  );
-
-  return {
-    validate,
-    calculateKembalian
-  };
-};
-
-/**
- * Hook untuk payment actions
- */
-export const usePaymentActions = (queryClient: QueryClient) => {
-  const invalidateAll = useCallback(async () => {
-    await paymentsService.invalidateAll(queryClient);
-  }, [queryClient]);
-
-  const invalidateOne = useCallback(
-    async (id: string) => {
-      await queryClient.invalidateQueries({
-        queryKey: getPaymentsControllerFindOneQueryKey(id)
-      });
-    },
-    [queryClient]
-  );
-
-  const invalidateByInvoice = useCallback(
-    async (nomorInvoice: string) => {
-      await queryClient.invalidateQueries({
-        queryKey: getPaymentsControllerFindByNomorInvoiceQueryKey(nomorInvoice)
-      });
-    },
-    [queryClient]
-  );
-
-  return {
-    invalidateAll,
-    invalidateOne,
-    invalidateByInvoice
-  };
-};
-
-/**
- * Hook untuk complete payment flow (cashier)
- */
-export const usePaymentCashierFlow = (queryClient: QueryClient) => {
-  const { processPayment, isProcessing } = useProcessPayment();
-  const { calculateKembalian } = usePaymentValidation();
-  const { invalidateAll } = usePaymentActions(queryClient);
-
-  const processCashierPayment = useCallback(
-    async (
-      id: string,
-      data: ProcessPaymentFormData
-    ): Promise<{
-      success: boolean;
-      data?: PaymentResponseDto;
-      kembalian?: number;
-      error?: Error;
-    }> => {
-      try {
-        // Calculate change
-        const payment = await paymentsService.processPayment(id, data);
-        const kembalian = calculateKembalian(
-          payment.totalBiaya,
-          data.jumlah_bayar
-        );
-
-        // Invalidate queries
-        await invalidateAll();
-
-        return {
-          success: true,
-          data: payment,
-          kembalian
-        };
-      } catch (error) {
-        return {
-          success: false,
-          error: error as Error
-        };
-      }
-    },
-    [processPayment, calculateKembalian, invalidateAll]
-  );
-
-  return {
-    processCashierPayment,
-    isProcessing
-  };
-};
-
-/**
- * Hook untuk complete CRUD flow
- */
-export const usePaymentCRUD = (queryClient: QueryClient) => {
-  const { createPayment, isCreating } = useCreatePayment();
-  const { updatePayment, isUpdating } = useUpdatePayment();
-  const { deletePayment, isDeleting } = useDeletePayment();
-  const { cancelPayment, isCancelling } = useCancelPayment();
-  const { invalidateAll } = usePaymentActions(queryClient);
-  const { validate } = usePaymentValidation();
-
-  const create = useCallback(
-    async (data: CreatePaymentFormData): Promise<{
-      success: boolean;
-      data?: PaymentResponseDto;
-      validation?: PaymentValidation;
-      error?: Error;
-    }> => {
-      const validation = validate(data);
-      if (!validation.isValid) {
-        return { success: false, validation };
-      }
-
-      try {
-        const result = await createPayment(data);
-        await invalidateAll();
-        return { success: true, data: result ?? undefined};
-      } catch (error) {
-        return { success: false, error: error as Error };
-      }
-    },
-    [createPayment, validate, invalidateAll]
-  );
-
-  const update = useCallback(
-    async (
-      id: string,
-      data: UpdatePaymentFormData
-    ): Promise<{
-      success: boolean;
-      data?: PaymentResponseDto;
-      error?: Error;
-    }> => {
-      try {
-        const result = await updatePayment(id, data);
-        await invalidateAll();
-        return { success: true, data: result ?? undefined };
-      } catch (error) {
-        return { success: false, error: error as Error };
-      }
-    },
-    [updatePayment, invalidateAll]
-  );
-
-  const remove = useCallback(
-    async (id: string): Promise<{
-      success: boolean;
-      error?: Error;
-    }> => {
-      try {
-        await deletePayment(id);
-        await invalidateAll();
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: error as Error };
-      }
-    },
-    [deletePayment, invalidateAll]
-  );
-
-  const cancel = useCallback(
-    async (id: string): Promise<{
-      success: boolean;
-      data?: PaymentResponseDto;
-      error?: Error;
-    }> => {
-      try {
-        const result = await cancelPayment(id);
-        await invalidateAll();
-        return { success: true, data: result ?? undefined };
-      } catch (error) {
-        return { success: false, error: error as Error };
-      }
-    },
-    [cancelPayment, invalidateAll]
-  );
-
-  return {
-    create,
-    update,
-    remove,
-    cancel,
-    isCreating,
-    isUpdating,
-    isDeleting,
-    isCancelling,
-    isLoading: isCreating || isUpdating || isDeleting || isCancelling
-  };
-};
-
-/**
- * Hook untuk query keys
- */
-export const usePaymentQueryKeys = () => {
-  const getListKey = useCallback((params?: PaymentsControllerFindAllParams) => {
-    return getPaymentsControllerFindAllQueryKey(params);
-  }, []);
-
-  const getOneKey = useCallback((id: string) => {
-    return getPaymentsControllerFindOneQueryKey(id);
-  }, []);
-
-  const getByInvoiceKey = useCallback((nomorInvoice: string) => {
-    return getPaymentsControllerFindByNomorInvoiceQueryKey(nomorInvoice);
-  }, []);
-
-  const getByMedicalRecordKey = useCallback((medicalRecordId: string) => {
-    return getPaymentsControllerFindByMedicalRecordIdQueryKey(medicalRecordId);
-  }, []);
-
-  const getByPatientKey = useCallback(
-    (patientId: string, params?: PaymentsControllerFindByPatientIdParams) => {
-      return getPaymentsControllerFindByPatientIdQueryKey(patientId, params);
-    },
-    []
-  );
-
-  return {
-    getListKey,
-    getOneKey,
-    getByInvoiceKey,
-    getByMedicalRecordKey,
-    getByPatientKey
-  };
-};
-
-// Export helpers
+// Export helpers & types
 export { paymentsHelpers };
-
-// Export types
 export type {
-  PaymentResponseDto,
   CreatePaymentDto,
   UpdatePaymentDto,
   ProcessPaymentDto,
-  PaymentValidation
+  PaymentValidation,
 };

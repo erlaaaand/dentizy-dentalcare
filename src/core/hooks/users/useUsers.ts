@@ -1,7 +1,7 @@
 import { useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
-import { usersService } from '../../service/api/users/user.api';
+import { usersService } from '../../service/api/users/users.api';
 import type {
   UserQueryParams,
   RecentUsersParams,

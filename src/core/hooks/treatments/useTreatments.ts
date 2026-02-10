@@ -7,12 +7,15 @@ import type {
   CreateTreatmentDto,
   UpdateTreatmentDto,
 } from '../../types/treatments/treatment.types';
+import { TreatmentsCacheManager } from '../../service/api/treatments';
+
+const cacheManager = new TreatmentsCacheManager();
 
 // ==================== QUERY HOOKS ====================
 
 export const useTreatments = createQueryHook({
   queryKey: (params?: TreatmentQueryParams) => 
-    treatmentsService.getListQueryKey(params),
+    cacheManager.getListQueryKey(params),
   queryFn: (params) => treatmentsService.findAll(params),
   options: {
     placeholderData: keepPreviousData,
@@ -21,7 +24,7 @@ export const useTreatments = createQueryHook({
 });
 
 export const useTreatment = createQueryHook({
-  queryKey: (id?: number) => treatmentsService.getDetailQueryKey(id!),
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
   queryFn: (id) => treatmentsService.findOne(id!),
   options: {
     enabled: false,
@@ -30,7 +33,7 @@ export const useTreatment = createQueryHook({
 });
 
 export const useTreatmentByKode = createQueryHook({
-  queryKey: (kode?: string) => treatmentsService.getByKodeQueryKey(kode!),
+  queryKey: (kode?: string) => cacheManager.getByKodeQueryKey(kode!),
   queryFn: (kode) => treatmentsService.findByKode(kode!),
   options: {
     enabled: false,
@@ -44,7 +47,7 @@ export const useCreateTreatment = createMutationHook({
   mutationFn: (data: CreateTreatmentDto) => treatmentsService.create(data),
   onSuccess: (_, __, queryClient) => {
     toast.success('Treatment berhasil dibuat');
-    treatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
   },
   onError: () => {
     toast.error('Gagal membuat treatment');
@@ -52,12 +55,12 @@ export const useCreateTreatment = createMutationHook({
 });
 
 export const useUpdateTreatment = createMutationHook({
-  mutationFn: ({ id, data }: { id: number; data: UpdateTreatmentDto }) =>
+  mutationFn: ({ id, data }: { id: string; data: UpdateTreatmentDto }) =>
     treatmentsService.update(id, data),
   onSuccess: (_, { id }, queryClient) => {
     toast.success('Treatment berhasil diperbarui');
-    treatmentsService.invalidateDetail(queryClient, id);
-    treatmentsService.invalidateList(queryClient);
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
   },
   onError: () => {
     toast.error('Gagal memperbarui treatment');
@@ -65,10 +68,10 @@ export const useUpdateTreatment = createMutationHook({
 });
 
 export const useRemoveTreatment = createMutationHook({
-  mutationFn: (id: number) => treatmentsService.remove(id),
+  mutationFn: (id: string) => treatmentsService.remove(id),
   onSuccess: (_, __, queryClient) => {
     toast.success('Treatment berhasil dihapus');
-    treatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
   },
   onError: () => {
     toast.error('Gagal menghapus treatment');
@@ -76,10 +79,10 @@ export const useRemoveTreatment = createMutationHook({
 });
 
 export const useRestoreTreatment = createMutationHook({
-  mutationFn: (id: number) => treatmentsService.restore(id),
+  mutationFn: (id: string) => treatmentsService.restore(id),
   onSuccess: (_, __, queryClient) => {
     toast.success('Treatment berhasil dipulihkan');
-    treatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
   },
   onError: () => {
     toast.error('Gagal memulihkan treatment');
@@ -87,14 +90,14 @@ export const useRestoreTreatment = createMutationHook({
 });
 
 export const useActivateTreatment = createMutationHook({
-  mutationFn: (id: number) => treatmentsService.activate(id),
-  onSuccess: (data, id, queryClient) => {
+  mutationFn: (id: string) => treatmentsService.activate(id),
+  onSuccess: (_data, id, queryClient) => {
     toast.success('Treatment berhasil diaktifkan');
-    treatmentsService.optimisticUpdate(queryClient, id, (old) => ({
+    cacheManager.optimisticUpdate(queryClient, id, (old) => ({
       ...old,
       isActive: true,
     }));
-    treatmentsService.invalidateList(queryClient);
+    cacheManager.invalidateList(queryClient);
   },
   onError: () => {
     toast.error('Gagal mengaktifkan treatment');
@@ -102,14 +105,14 @@ export const useActivateTreatment = createMutationHook({
 });
 
 export const useDeactivateTreatment = createMutationHook({
-  mutationFn: (id: number) => treatmentsService.deactivate(id),
-  onSuccess: (data, id, queryClient) => {
+  mutationFn: (id: string) => treatmentsService.deactivate(id),
+  onSuccess: (_data, id, queryClient) => {
     toast.success('Treatment berhasil dinonaktifkan');
-    treatmentsService.optimisticUpdate(queryClient, id, (old) => ({
+    cacheManager.optimisticUpdate(queryClient, id, (old) => ({
       ...old,
       isActive: false,
     }));
-    treatmentsService.invalidateList(queryClient);
+    cacheManager.invalidateList(queryClient);
   },
   onError: () => {
     toast.error('Gagal menonaktifkan treatment');
@@ -177,7 +180,7 @@ export function useTreatmentStatusToggle(onSuccess?: () => void) {
   const activate = useActivateTreatment();
   const deactivate = useDeactivateTreatment();
 
-  const toggleStatus = async (id: number, isActive: boolean) => {
+  const toggleStatus = async (id: string, isActive: boolean) => {
     try {
       if (isActive) {
         await activate.mutateAsync(id);
@@ -204,9 +207,9 @@ export function usePrefetchTreatment() {
   
   return {
     prefetchList: (params?: TreatmentQueryParams) =>
-      treatmentsService.prefetchList(queryClient, params),
-    prefetchDetail: (id: number) =>
-      treatmentsService.prefetchDetail(queryClient, id),
+      cacheManager.prefetchList(queryClient, params),
+    prefetchDetail: (id: string) =>
+      cacheManager.prefetchDetail(queryClient, id),
   };
 }
 
@@ -214,12 +217,12 @@ export function useInvalidateTreatments() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => treatmentsService.invalidateAll(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
     invalidateList: (params?: TreatmentQueryParams) => 
-      treatmentsService.invalidateList(queryClient, params),
-    invalidateDetail: (id: number) => 
-      treatmentsService.invalidateDetail(queryClient, id),
+      cacheManager.invalidateList(queryClient, params),
+    invalidateDetail: (id: string) => 
+      cacheManager.invalidateDetail(queryClient, id),
     invalidateByKode: (kode: string) =>
-      treatmentsService.invalidateByKode(queryClient, kode),
+      cacheManager.invalidateByKode(queryClient, kode),
   };
 }

@@ -1,12 +1,17 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createQueryHook } from '../../service/base/use-query-factory';
-import { healthCheckService, healthCheckHelpers } from '../../service/api/health-check/health-check.api';
+import { healthCheckService } from '../../service/api/health-check/health-check.api';
+import { HealthCacheManager } from '../../service/api/health-check/cache/cache.manager';
+import { HealthHelper } from '../../service/api/health-check/helpers/health.helper';
+
+const cacheManager = new HealthCacheManager();
+const healthHelper = new HealthHelper();
 
 // ==================== QUERY HOOKS ====================
 
 export const useHealthCheck = createQueryHook({
-  queryKey: () => healthCheckService.getBasicHealthQueryKey(),
-  queryFn: () => healthCheckService.checkBasicHealth(),
+  queryKey: () => cacheManager.getBasicHealthQueryKey(),
+  queryFn: () => cacheManager.checkBasicHealth(),
   options: {
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000, // Refetch every minute
@@ -14,8 +19,8 @@ export const useHealthCheck = createQueryHook({
 });
 
 export const useDetailedHealthCheck = createQueryHook({
-  queryKey: () => healthCheckService.getDetailedHealthQueryKey(),
-  queryFn: () => healthCheckService.checkDetailedHealth(),
+  queryKey: () => cacheManager.getDetailedHealthQueryKey(),
+  queryFn: () => cacheManager.checkDetailedHealth(),
   options: {
     staleTime: 30 * 1000,
     refetchInterval: 60 * 1000,
@@ -23,7 +28,7 @@ export const useDetailedHealthCheck = createQueryHook({
 });
 
 export const useLivenessCheck = createQueryHook({
-  queryKey: () => healthCheckService.getLivenessQueryKey(),
+  queryKey: () => cacheManager.getLivenessQueryKey(),
   queryFn: () => healthCheckService.checkLiveness(),
   options: {
     staleTime: 30 * 1000,
@@ -32,7 +37,7 @@ export const useLivenessCheck = createQueryHook({
 });
 
 export const useReadinessCheck = createQueryHook({
-  queryKey: () => healthCheckService.getReadinessQueryKey(),
+  queryKey: () => cacheManager.getReadinessQueryKey(),
   queryFn: () => healthCheckService.checkReadiness(),
   options: {
     staleTime: 30 * 1000,
@@ -60,17 +65,17 @@ export function useHealthMonitoring(options?: {
     ...healthQuery,
     healthData,
     status: healthData?.status,
-    isHealthy: healthData ? healthCheckHelpers.isHealthy(healthData.status) : false,
-    isDegraded: healthData ? healthCheckHelpers.isDegraded(healthData.status) : false,
-    isUnhealthy: healthData ? healthCheckHelpers.isUnhealthy(healthData.status) : false,
+    isHealthy: healthData ? healthHelper.isHealthy(healthData.status) : false,
+    isDegraded: healthData ? healthHelper.isDegraded(healthData.status) : false,
+    isUnhealthy: healthData ? healthHelper.isUnhealthy(healthData.status) : false,
     statusColor: healthData 
-      ? healthCheckHelpers.getStatusColor(healthData.status)
+      ? healthHelper.getStatusColor(healthData.status)
       : 'gray',
     statusLabel: healthData
-      ? healthCheckHelpers.getStatusLabel(healthData.status)
+      ? healthHelper.getStatusLabel(healthData.status)
       : 'Unknown',
     statusIcon: healthData
-      ? healthCheckHelpers.getStatusIcon(healthData.status)
+      ? healthHelper.getStatusIcon(healthData.status)
       : '?'
   };
 }
@@ -81,8 +86,8 @@ export function usePrefetchHealthCheck() {
   const queryClient = useQueryClient();
   
   return {
-    prefetchBasic: () => healthCheckService.prefetchHealthCheck(queryClient),
-    prefetchDetailed: () => healthCheckService.prefetchDetailedHealth(queryClient),
+    prefetchBasic: () => cacheManager.prefetchHealthCheck(queryClient),
+    prefetchDetailed: () => cacheManager.prefetchDetailedHealth(queryClient),
   };
 }
 
@@ -90,13 +95,13 @@ export function useInvalidateHealthCheck() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => healthCheckService.invalidateAll(queryClient),
-    invalidateBasic: () => healthCheckService.invalidateBasicHealth(queryClient),
-    invalidateDetailed: () => healthCheckService.invalidateDetailedHealth(queryClient),
-    invalidateLiveness: () => healthCheckService.invalidateLiveness(queryClient),
-    invalidateReadiness: () => healthCheckService.invalidateReadiness(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
+    invalidateBasic: () => cacheManager.invalidateBasicHealth(queryClient),
+    invalidateDetailed: () => cacheManager.invalidateDetailedHealth(queryClient),
+    invalidateLiveness: () => cacheManager.invalidateLiveness(queryClient),
+    invalidateReadiness: () => cacheManager.invalidateReadiness(queryClient),
   };
 }
 
 // Export helpers
-export { healthCheckHelpers };
+export { healthHelper };

@@ -2,6 +2,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createQueryHook, createMutationHook } from '../../service/base/use-query-factory';
 import { authService } from '../../service/api/auth/auth.api';
+import { AuthCacheManager } from '../../service/api/auth/cache/cache.manager';
+import { AuthTokenManager } from '../../service/api/auth/helpers/token.manager';
 import type {
   LoginDto,
   VerifyTokenDto,
@@ -11,10 +13,13 @@ import type {
   ResetPasswordWithTokenDto,
 } from '../../types/auth/auth.types';
 
+const cacheManager = new AuthCacheManager();
+const tokenManager = new AuthTokenManager();
+
 // ==================== QUERY HOOKS ====================
 
 export const useUserProfile = createQueryHook({
-  queryKey: () => authService.getProfileQueryKey(),
+  queryKey: () => cacheManager.getProfileQueryKey(),
   queryFn: () => authService.getProfile(),
   options: {
     retry: false,
@@ -46,11 +51,11 @@ export const useAuthLogin = createMutationHook({
                  responseData.data?.token;
     
     if (token) {
-      authService.setTokenInCookie(token);
+      tokenManager.setTokenInCookie(token);
     }
     
     toast.success('Login berhasil');
-    authService.invalidateProfile(queryClient);
+    cacheManager.invalidateProfile(queryClient);
   },
   onError: () => {
     toast.error('Login gagal. Periksa username dan password Anda.');
@@ -61,7 +66,7 @@ export const useAuthRefresh = createMutationHook({
   mutationFn: () => authService.refresh(),
   onSuccess: (response) => {
     if (response.access_token) {
-      authService.setTokenInCookie(response.access_token);
+      tokenManager.setTokenInCookie(response.access_token);
     }
   },
   onError: (error) => {
@@ -76,13 +81,13 @@ export const useAuthVerify = createMutationHook({
 export const useAuthLogout = createMutationHook({
   mutationFn: () => authService.logout(),
   onSuccess: (_, __, queryClient) => {
-    authService.clearAuthData();
+    tokenManager.clearAuthData();
     queryClient.clear();
     toast.info('Anda telah logout');
   },
   onError: (error, __, queryClient) => {
     console.error('Logout error:', error);
-    authService.clearAuthData();
+    tokenManager.clearAuthData();
     queryClient.clear();
   }
 });
@@ -91,7 +96,7 @@ export const useUpdateProfile = createMutationHook({
   mutationFn: (data: UpdateProfileDto) => authService.updateProfile(data),
   onSuccess: (_, __, queryClient) => {
     toast.success('Profil berhasil diperbarui');
-    authService.invalidateProfile(queryClient);
+    cacheManager.invalidateProfile(queryClient);
   },
   onError: () => {
     toast.error('Gagal memperbarui profil');
@@ -184,7 +189,7 @@ export function usePrefetchAuth() {
   const queryClient = useQueryClient();
   
   return {
-    prefetchProfile: () => authService.prefetchProfile(queryClient),
+    prefetchProfile: () => cacheManager.prefetchProfile(queryClient),
   };
 }
 
@@ -192,7 +197,7 @@ export function useInvalidateAuth() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => authService.invalidateAll(queryClient),
-    invalidateProfile: () => authService.invalidateProfile(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
+    invalidateProfile: () => cacheManager.invalidateProfile(queryClient),
   };
 }

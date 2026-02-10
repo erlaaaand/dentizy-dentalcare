@@ -9,11 +9,14 @@ import type {
   CreatePatientDto,
   UpdatePatientDto,
 } from '../../types/patients/patient.types';
+import { PatientsCacheManager } from '../../service/api/patients/cache/cache.manager';
 
+
+const cacheManager = new PatientsCacheManager();
 
 export const usePatients = createQueryHook({
   queryKey: (params?: PatientQueryParams) => 
-    patientsService.getListQueryKey(params),
+    cacheManager.getListQueryKey(params),
   queryFn: (params) => patientsService.findAll(params),
   options: {
     placeholderData: keepPreviousData,
@@ -23,7 +26,7 @@ export const usePatients = createQueryHook({
 });
 
 export const usePatient = createQueryHook({
-  queryKey: (id?: string) => patientsService.getDetailQueryKey(id!),
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
   queryFn: (id) => patientsService.findOne(id!),
   options: {
     enabled: false,
@@ -34,7 +37,7 @@ export const usePatient = createQueryHook({
 
 export const usePatientSearch = createQueryHook({
   queryKey: (params?: PatientSearchParams) => 
-    patientsService.getSearchQueryKey(params),
+    cacheManager.getSearchQueryKey(params),
   queryFn: (params) => patientsService.search(params),
   options: {
     enabled: false,
@@ -44,7 +47,7 @@ export const usePatientSearch = createQueryHook({
 });
 
 export const usePatientStatistics = createQueryHook({
-  queryKey: () => patientsService.getStatisticsQueryKey(),
+  queryKey: () => cacheManager.getStatisticsQueryKey(),
   queryFn: () => patientsService.getStatistics(),
   options: {
     staleTime: 5 * 60 * 1000,
@@ -53,7 +56,7 @@ export const usePatientStatistics = createQueryHook({
 
 export const usePatientByMedicalRecordNumber = createQueryHook({
   queryKey: (number?: string) => 
-    patientsService.getByMedicalRecordNumberQueryKey(number!),
+    cacheManager.getByMedicalRecordNumberQueryKey(number!),
   queryFn: (number) => patientsService.findByMedicalRecordNumber(number!),
   options: {
     enabled: false,
@@ -64,7 +67,7 @@ export const usePatientByMedicalRecordNumber = createQueryHook({
 
 export const usePatientByNik = createQueryHook({
   queryKey: (nik?: string) => 
-    patientsService.getByNikQueryKey(nik!),
+    cacheManager.getByNikQueryKey(nik!),
   queryFn: (nik) => patientsService.findByNik(nik!),
   options: {
     enabled: false,
@@ -78,7 +81,7 @@ export const usePatientsByDoctor = createQueryHook({
     if (!params?.doctorId) {
       return [];
     }
-    return patientsService.getByDoctorQueryKey(params.doctorId, params);
+    return cacheManager.getByDoctorQueryKey(params.doctorId, params);
   },
   queryFn: (params?: { doctorId?: string } & PatientByDoctorParams) => {
     if (!params?.doctorId) {
@@ -97,8 +100,8 @@ export const useCreatePatient = createMutationHook({
   mutationFn: (data: CreatePatientDto) => patientsService.create(data),
   onSuccess: (_, __, queryClient) => {
     toast.success('Pasien berhasil didaftarkan');
-    patientsService.invalidateAll(queryClient);
-    patientsService.invalidateStatistics(queryClient);
+    cacheManager.invalidateAll(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
   },
   onError: () => {
     toast.error('Gagal mendaftarkan pasien');
@@ -110,8 +113,8 @@ export const useUpdatePatient = createMutationHook({
     patientsService.update(id, data),
   onSuccess: (_, { id }, queryClient) => {
     toast.success('Data pasien berhasil diperbarui');
-    patientsService.invalidateDetail(queryClient, id);
-    patientsService.invalidateList(queryClient);
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
   },
   onError: () => {
     toast.error('Gagal memperbarui data pasien');
@@ -122,8 +125,8 @@ export const useRemovePatient = createMutationHook({
   mutationFn: (id: string) => patientsService.remove(id),
   onSuccess: (_, __, queryClient) => {
     toast.success('Pasien berhasil dihapus');
-    patientsService.invalidateAll(queryClient);
-    patientsService.invalidateStatistics(queryClient);
+    cacheManager.invalidateAll(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
   },
   onError: () => {
     toast.error('Gagal menghapus pasien');
@@ -134,9 +137,9 @@ export const useActivatePatient = createMutationHook({
   mutationFn: (id: string) => patientsService.activate(id),
   onSuccess: (_, id, queryClient) => {
     toast.success('Pasien berhasil diaktifkan');
-    patientsService.invalidateDetail(queryClient, id);
-    patientsService.invalidateList(queryClient);
-    patientsService.invalidateStatistics(queryClient);
+    cacheManager.invalidateDetail(queryClient, id);
+    cacheManager.invalidateList(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
   },
   onError: () => {
     toast.error('Gagal mengaktifkan pasien');
@@ -147,8 +150,8 @@ export const useRestorePatient = createMutationHook({
   mutationFn: (id: string) => patientsService.restore(id),
   onSuccess: (_, __, queryClient) => {
     toast.success('Pasien berhasil dipulihkan');
-    patientsService.invalidateAll(queryClient);
-    patientsService.invalidateStatistics(queryClient);
+    cacheManager.invalidateAll(queryClient);
+    cacheManager.invalidateStatistics(queryClient);
   },
   onError: () => {
     toast.error('Gagal memulihkan pasien');
@@ -206,9 +209,9 @@ export function usePrefetchPatient() {
   
   return {
     prefetchList: (params?: PatientQueryParams) =>
-      patientsService.prefetchList(queryClient, params),
+      cacheManager.prefetchList(queryClient, params),
     prefetchDetail: (id: string) =>
-      patientsService.prefetchDetail(queryClient, id),
+      cacheManager.prefetchDetail(queryClient, id),
   };
 }
 
@@ -216,14 +219,14 @@ export function useInvalidatePatients() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => patientsService.invalidateAll(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
     invalidateList: (params?: PatientQueryParams) => 
-      patientsService.invalidateList(queryClient, params),
+      cacheManager.invalidateList(queryClient, params),
     invalidateDetail: (id: string) => 
-      patientsService.invalidateDetail(queryClient, id),
+      cacheManager.invalidateDetail(queryClient, id),
     invalidateSearch: (params?: PatientSearchParams) =>
-      patientsService.invalidateSearch(queryClient, params),
+      cacheManager.invalidateSearch(queryClient, params),
     invalidateStatistics: () =>
-      patientsService.invalidateStatistics(queryClient),
+      cacheManager.invalidateStatistics(queryClient),
   };
 }

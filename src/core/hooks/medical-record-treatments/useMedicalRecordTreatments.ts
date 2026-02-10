@@ -8,12 +8,15 @@ import type {
   CreateMedicalRecordTreatmentDto,
   UpdateMedicalRecordTreatmentDto,
 } from '../../types/medical-record-treatments/medical-record-treatments.types';
+import { MedicalRecordTreatmentsCacheManager } from '../../service/api/medical-record-treatments/cache/cache.manager';
+
+const cacheManager = new MedicalRecordTreatmentsCacheManager();
 
 // ==================== QUERY HOOKS ====================
 
 export const useMedicalRecordTreatments = createQueryHook({
   queryKey: (params?: MedicalRecordTreatmentQueryParams) => 
-    medicalRecordTreatmentsService.getListQueryKey(params),
+    cacheManager.getListQueryKey(params),
   queryFn: (params) => medicalRecordTreatmentsService.findAll(params),
   options: {
     placeholderData: keepPreviousData,
@@ -22,7 +25,7 @@ export const useMedicalRecordTreatments = createQueryHook({
 });
 
 export const useMedicalRecordTreatment = createQueryHook({
-  queryKey: (id?: number) => medicalRecordTreatmentsService.getDetailQueryKey(id!),
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
   queryFn: (id) => medicalRecordTreatmentsService.findOne(id!),
   options: {
     enabled: false,
@@ -31,8 +34,8 @@ export const useMedicalRecordTreatment = createQueryHook({
 });
 
 export const useMedicalRecordTreatmentsByRecordId = createQueryHook({
-  queryKey: (medicalRecordId?: number) => 
-    medicalRecordTreatmentsService.getByMedicalRecordIdQueryKey(medicalRecordId!),
+  queryKey: (medicalRecordId?: string) => 
+    cacheManager.getByMedicalRecordIdQueryKey(medicalRecordId!),
   queryFn: (medicalRecordId) => 
     medicalRecordTreatmentsService.findByMedicalRecordId(medicalRecordId!),
   options: {
@@ -42,8 +45,8 @@ export const useMedicalRecordTreatmentsByRecordId = createQueryHook({
 });
 
 export const useMedicalRecordTreatmentTotal = createQueryHook({
-  queryKey: (medicalRecordId?: number) => 
-    medicalRecordTreatmentsService.getTotalByMedicalRecordIdQueryKey(medicalRecordId!),
+  queryKey: (medicalRecordId?: string) => 
+    cacheManager.getTotalByMedicalRecordIdQueryKey(medicalRecordId!),
   queryFn: (medicalRecordId) => 
     medicalRecordTreatmentsService.getTotalByMedicalRecordId(medicalRecordId!),
   options: {
@@ -54,7 +57,7 @@ export const useMedicalRecordTreatmentTotal = createQueryHook({
 
 export const useTopTreatments = createQueryHook({
   queryKey: (params?: TopTreatmentsParams) => 
-    medicalRecordTreatmentsService.getTopTreatmentsQueryKey(params),
+    cacheManager.getTopTreatmentsQueryKey(params),
   queryFn: (params) => medicalRecordTreatmentsService.getTopTreatments(params),
   options: {
     staleTime: 5 * 60 * 1000,
@@ -68,11 +71,11 @@ export const useCreateMedicalRecordTreatment = createMutationHook({
     medicalRecordTreatmentsService.create(data),
   onSuccess: (data, __, queryClient) => {
     toast.success('Treatment berhasil ditambahkan');
-    medicalRecordTreatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
     
     if (data.medicalRecordId) {
-      medicalRecordTreatmentsService.invalidateByMedicalRecordId(queryClient, data.medicalRecordId);
-      medicalRecordTreatmentsService.invalidateTotalByMedicalRecordId(queryClient, data.medicalRecordId);
+      cacheManager.invalidateByMedicalRecordId(queryClient, data.medicalRecordId);
+      cacheManager.invalidateTotalByMedicalRecordId(queryClient, data.medicalRecordId);
     }
   },
   onError: () => {
@@ -81,15 +84,15 @@ export const useCreateMedicalRecordTreatment = createMutationHook({
 });
 
 export const useUpdateMedicalRecordTreatment = createMutationHook({
-  mutationFn: ({ id, data }: { id: number; data: UpdateMedicalRecordTreatmentDto }) =>
+  mutationFn: ({ id, data }: { id: string; data: UpdateMedicalRecordTreatmentDto }) =>
     medicalRecordTreatmentsService.update(id, data),
   onSuccess: (data, __, queryClient) => {
     toast.success('Treatment berhasil diperbarui');
-    medicalRecordTreatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
     
     if (data.medicalRecordId) {
-      medicalRecordTreatmentsService.invalidateByMedicalRecordId(queryClient, data.medicalRecordId);
-      medicalRecordTreatmentsService.invalidateTotalByMedicalRecordId(queryClient, data.medicalRecordId);
+      cacheManager.invalidateByMedicalRecordId(queryClient, data.medicalRecordId);
+      cacheManager.invalidateTotalByMedicalRecordId(queryClient, data.medicalRecordId);
     }
   },
   onError: () => {
@@ -98,10 +101,10 @@ export const useUpdateMedicalRecordTreatment = createMutationHook({
 });
 
 export const useRemoveMedicalRecordTreatment = createMutationHook({
-  mutationFn: (id: number) => medicalRecordTreatmentsService.remove(id),
+  mutationFn: (id: string) => medicalRecordTreatmentsService.remove(id),
   onSuccess: (_, __, queryClient) => {
     toast.success('Treatment berhasil dihapus');
-    medicalRecordTreatmentsService.invalidateAll(queryClient);
+    cacheManager.invalidateAll(queryClient);
   },
   onError: () => {
     toast.error('Gagal menghapus treatment');
@@ -141,8 +144,7 @@ export function useMedicalRecordTreatmentMutations() {
 
 // ==================== MEDICAL RECORD MANAGER HOOK ====================
 
-export function useMedicalRecordTreatmentManager(medicalRecordId: number) {
-  const queryClient = useQueryClient();
+export function useMedicalRecordTreatmentManager(medicalRecordId: string) {
   
   const treatments = useMedicalRecordTreatmentsByRecordId(medicalRecordId, {
     enabled: !!medicalRecordId
@@ -181,11 +183,11 @@ export function usePrefetchMedicalRecordTreatment() {
   
   return {
     prefetchList: (params?: MedicalRecordTreatmentQueryParams) =>
-      medicalRecordTreatmentsService.prefetchList(queryClient, params),
-    prefetchDetail: (id: number) =>
-      medicalRecordTreatmentsService.prefetchDetail(queryClient, id),
-    prefetchByMedicalRecordId: (medicalRecordId: number) =>
-      medicalRecordTreatmentsService.prefetchByMedicalRecordId(queryClient, medicalRecordId),
+      cacheManager.prefetchList(queryClient, params),
+    prefetchDetail: (id: string) =>
+      cacheManager.prefetchDetail(queryClient, id),
+    prefetchByMedicalRecordId: (medicalRecordId: string) =>
+      cacheManager.prefetchByMedicalRecordId(queryClient, medicalRecordId),
   };
 }
 
@@ -193,16 +195,16 @@ export function useInvalidateMedicalRecordTreatments() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => medicalRecordTreatmentsService.invalidateAll(queryClient),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
     invalidateList: (params?: MedicalRecordTreatmentQueryParams) => 
-      medicalRecordTreatmentsService.invalidateList(queryClient, params),
-    invalidateDetail: (id: number) => 
-      medicalRecordTreatmentsService.invalidateDetail(queryClient, id),
-    invalidateByMedicalRecordId: (medicalRecordId: number) =>
-      medicalRecordTreatmentsService.invalidateByMedicalRecordId(queryClient, medicalRecordId),
-    invalidateTotalByMedicalRecordId: (medicalRecordId: number) =>
-      medicalRecordTreatmentsService.invalidateTotalByMedicalRecordId(queryClient, medicalRecordId),
+      cacheManager.invalidateList(queryClient, params),
+    invalidateDetail: (id: string) => 
+      cacheManager.invalidateDetail(queryClient, id),
+    invalidateByMedicalRecordId: (medicalRecordId: string) =>
+      cacheManager.invalidateByMedicalRecordId(queryClient, medicalRecordId),
+    invalidateTotalByMedicalRecordId: (medicalRecordId: string) =>
+      cacheManager.invalidateTotalByMedicalRecordId(queryClient, medicalRecordId),
     invalidateTopTreatments: (params?: TopTreatmentsParams) =>
-      medicalRecordTreatmentsService.invalidateTopTreatments(queryClient, params),
+      cacheManager.invalidateTopTreatments(queryClient, params),
   };
 }

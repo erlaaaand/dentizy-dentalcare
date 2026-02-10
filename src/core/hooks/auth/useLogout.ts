@@ -5,6 +5,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ROUTES } from "@/src/core/constants/routes.constants";
 import { authService } from "@/src/core/service/api/auth/auth.api";
+import { AuthTokenManager } from '../../service/api/auth/helpers/token.manager';
+
+const tokenManager = new AuthTokenManager();
 
 /**
  * Hook untuk logout dengan cleanup lengkap
@@ -25,7 +28,7 @@ export const useLogout = () => {
       }
 
       // 2. Clear auth data (cookies & localStorage)
-      authService.clearAuthData();
+      tokenManager.clearAuthData();
       
       // 3. Clear semua cache React Query
       queryClient.clear();
@@ -43,7 +46,7 @@ export const useLogout = () => {
       toast.error("Terjadi kesalahan saat logout");
       
       // Tetap lakukan cleanup minimal
-      authService.clearAuthData();
+      tokenManager.clearAuthData();
       queryClient.clear();
       router.replace(ROUTES.LOGIN);
     }
@@ -63,7 +66,7 @@ export const useForceLogout = () => {
   const forceLogout = () => {
     try {
       // Cleanup client-side saja
-      authService.clearAuthData();
+      tokenManager.clearAuthData();
       queryClient.clear();
       
       toast.info("Sesi Anda telah berakhir");
@@ -115,7 +118,7 @@ export const useAutoLogout = () => {
   const queryClient = useQueryClient();
 
   const checkAndLogout = () => {
-    const token = authService.getTokenFromCookie();
+    const token = tokenManager.getTokenFromCookie();
     
     if (!token) {
       forceLogout();
@@ -123,8 +126,8 @@ export const useAutoLogout = () => {
     }
 
     // Check if token is expired
-    if (authService.isTokenExpired(token)) {
-      authService.clearAuthData();
+    if (tokenManager.isTokenExpired(token)) {
+      tokenManager.clearAuthData();
       queryClient.clear();
       
       toast.error("Sesi Anda telah berakhir. Silakan login kembali.");
