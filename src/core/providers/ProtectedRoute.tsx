@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '@/src/core/providers/auth-provider';
+import { useAuth } from '@/src/core/providers/AuthProvider';
 import { ROUTES } from '@/src/core/constants/routes.constants';
 import { getRoleKey } from '@/src/core/constants/navigation.constants';
 
