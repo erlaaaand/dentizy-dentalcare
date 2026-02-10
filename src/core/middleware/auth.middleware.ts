@@ -1,5 +1,5 @@
 // frontend/src/core/middleware/auth.middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { ROUTES, PUBLIC_ROUTES } from '../constants/routes.constants';
 
 export function authMiddleware(request: NextRequest) {

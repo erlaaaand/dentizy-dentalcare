@@ -1,7 +1,7 @@
 // frontend/src/core/middleware/api.middleware.ts
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { errorHandler } from '../../core/errors/error.handler';
-import { ApiError } from '../../core/errors/api.error';
+import type { ApiError } from '../../core/errors/api.error';
 
 export async function apiMiddleware(
     request: NextRequest,
