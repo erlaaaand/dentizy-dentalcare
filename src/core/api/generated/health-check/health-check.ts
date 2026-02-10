@@ -142,7 +142,7 @@ export function useHealthControllerCheck<TData = Awaited<ReturnType<typeof healt
  * @summary Cek kesehatan detail (DB & Memory)
  */
 export type healthControllerCheckDetailsResponse200 = {
-  data: void
+  data: unknown
   status: 200
 }
     

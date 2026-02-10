@@ -71,7 +71,7 @@ export type paymentsControllerProcessResponseError = (paymentsControllerProcessR
 
 export type paymentsControllerProcessResponse = (paymentsControllerProcessResponseSuccess | paymentsControllerProcessResponseError)
 
-export const getPaymentsControllerProcessUrl = (id: number,) => {
+export const getPaymentsControllerProcessUrl = (id: string,) => {
 
 
   
@@ -79,7 +79,7 @@ export const getPaymentsControllerProcessUrl = (id: number,) => {
   return `/payments/${id}/process`
 }
 
-export const paymentsControllerProcess = async (id: number,
+export const paymentsControllerProcess = async (id: string,
     processPaymentDto: ProcessPaymentDto, options?: RequestInit): Promise<paymentsControllerProcessResponse> => {
   
   return customInstance<paymentsControllerProcessResponse>(getPaymentsControllerProcessUrl(id),
@@ -96,8 +96,8 @@ export const paymentsControllerProcess = async (id: number,
 
 
 export const getPaymentsControllerProcessMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: string;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: string;data: ProcessPaymentDto}, TContext> => {
 
 const mutationKey = ['paymentsControllerProcess'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -111,7 +111,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerProcess>>, {id: number;data: ProcessPaymentDto}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerProcess>>, {id: string;data: ProcessPaymentDto}> = (props) => {
           const {id,data} = props ?? {};
 
           return  paymentsControllerProcess(id,data,requestOptions)
@@ -132,11 +132,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Proses Pembayaran (Kasir)
  */
 export const usePaymentsControllerProcess = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: number;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerProcess>>, TError,{id: string;data: ProcessPaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof paymentsControllerProcess>>,
         TError,
-        {id: number;data: ProcessPaymentDto},
+        {id: string;data: ProcessPaymentDto},
         TContext
       > => {
       return useMutation(getPaymentsControllerProcessMutationOptions(options), queryClient);
@@ -541,7 +541,7 @@ export type paymentsControllerFindByMedicalRecordIdResponseError = (paymentsCont
 
 export type paymentsControllerFindByMedicalRecordIdResponse = (paymentsControllerFindByMedicalRecordIdResponseSuccess | paymentsControllerFindByMedicalRecordIdResponseError)
 
-export const getPaymentsControllerFindByMedicalRecordIdUrl = (medicalRecordId: number,) => {
+export const getPaymentsControllerFindByMedicalRecordIdUrl = (medicalRecordId: string,) => {
 
 
   
@@ -549,7 +549,7 @@ export const getPaymentsControllerFindByMedicalRecordIdUrl = (medicalRecordId: n
   return `/payments/medical-record/${medicalRecordId}`
 }
 
-export const paymentsControllerFindByMedicalRecordId = async (medicalRecordId: number, options?: RequestInit): Promise<paymentsControllerFindByMedicalRecordIdResponse> => {
+export const paymentsControllerFindByMedicalRecordId = async (medicalRecordId: string, options?: RequestInit): Promise<paymentsControllerFindByMedicalRecordIdResponse> => {
   
   return customInstance<paymentsControllerFindByMedicalRecordIdResponse>(getPaymentsControllerFindByMedicalRecordIdUrl(medicalRecordId),
   {      
@@ -564,14 +564,14 @@ export const paymentsControllerFindByMedicalRecordId = async (medicalRecordId: n
 
 
 
-export const getPaymentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: number,) => {
+export const getPaymentsControllerFindByMedicalRecordIdQueryKey = (medicalRecordId?: string,) => {
     return [
     `/payments/medical-record/${medicalRecordId}`
     ] as const;
     }
 
     
-export const getPaymentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getPaymentsControllerFindByMedicalRecordIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -595,7 +595,7 @@ export type PaymentsControllerFindByMedicalRecordIdQueryError = void
 
 
 export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>,
           TError,
@@ -605,7 +605,7 @@ export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<Retur
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>,
           TError,
@@ -615,7 +615,7 @@ export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<Retur
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -623,7 +623,7 @@ export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<Retur
  */
 
 export function usePaymentsControllerFindByMedicalRecordId<TData = Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError = void>(
- medicalRecordId: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ medicalRecordId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByMedicalRecordId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -665,7 +665,7 @@ export type paymentsControllerFindByPatientIdResponseError = (paymentsController
 
 export type paymentsControllerFindByPatientIdResponse = (paymentsControllerFindByPatientIdResponseSuccess | paymentsControllerFindByPatientIdResponseError)
 
-export const getPaymentsControllerFindByPatientIdUrl = (patientId: number,
+export const getPaymentsControllerFindByPatientIdUrl = (patientId: string,
     params?: PaymentsControllerFindByPatientIdParams,) => {
   const normalizedParams = new URLSearchParams();
 
@@ -681,7 +681,7 @@ export const getPaymentsControllerFindByPatientIdUrl = (patientId: number,
   return stringifiedParams.length > 0 ? `/payments/patient/${patientId}?${stringifiedParams}` : `/payments/patient/${patientId}`
 }
 
-export const paymentsControllerFindByPatientId = async (patientId: number,
+export const paymentsControllerFindByPatientId = async (patientId: string,
     params?: PaymentsControllerFindByPatientIdParams, options?: RequestInit): Promise<paymentsControllerFindByPatientIdResponse> => {
   
   return customInstance<paymentsControllerFindByPatientIdResponse>(getPaymentsControllerFindByPatientIdUrl(patientId,params),
@@ -697,7 +697,7 @@ export const paymentsControllerFindByPatientId = async (patientId: number,
 
 
 
-export const getPaymentsControllerFindByPatientIdQueryKey = (patientId?: number,
+export const getPaymentsControllerFindByPatientIdQueryKey = (patientId?: string,
     params?: PaymentsControllerFindByPatientIdParams,) => {
     return [
     `/payments/patient/${patientId}`, ...(params ? [params] : [])
@@ -705,7 +705,7 @@ export const getPaymentsControllerFindByPatientIdQueryKey = (patientId?: number,
     }
 
     
-export const getPaymentsControllerFindByPatientIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(patientId: number,
+export const getPaymentsControllerFindByPatientIdQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(patientId: string,
     params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
@@ -730,7 +730,7 @@ export type PaymentsControllerFindByPatientIdQueryError = void
 
 
 export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
- patientId: number,
+ patientId: string,
     params: undefined |  PaymentsControllerFindByPatientIdParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>,
@@ -741,7 +741,7 @@ export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
- patientId: number,
+ patientId: string,
     params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>,
@@ -752,7 +752,7 @@ export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
- patientId: number,
+ patientId: string,
     params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -761,7 +761,7 @@ export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<
  */
 
 export function usePaymentsControllerFindByPatientId<TData = Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError = void>(
- patientId: number,
+ patientId: string,
     params?: PaymentsControllerFindByPatientIdParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindByPatientId>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -1202,7 +1202,7 @@ export type paymentsControllerFindOneResponseError = (paymentsControllerFindOneR
 
 export type paymentsControllerFindOneResponse = (paymentsControllerFindOneResponseSuccess | paymentsControllerFindOneResponseError)
 
-export const getPaymentsControllerFindOneUrl = (id: number,) => {
+export const getPaymentsControllerFindOneUrl = (id: string,) => {
 
 
   
@@ -1210,7 +1210,7 @@ export const getPaymentsControllerFindOneUrl = (id: number,) => {
   return `/payments/${id}`
 }
 
-export const paymentsControllerFindOne = async (id: number, options?: RequestInit): Promise<paymentsControllerFindOneResponse> => {
+export const paymentsControllerFindOne = async (id: string, options?: RequestInit): Promise<paymentsControllerFindOneResponse> => {
   
   return customInstance<paymentsControllerFindOneResponse>(getPaymentsControllerFindOneUrl(id),
   {      
@@ -1225,14 +1225,14 @@ export const paymentsControllerFindOne = async (id: number, options?: RequestIni
 
 
 
-export const getPaymentsControllerFindOneQueryKey = (id?: number,) => {
+export const getPaymentsControllerFindOneQueryKey = (id?: string,) => {
     return [
     `/payments/${id}`
     ] as const;
     }
 
     
-export const getPaymentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getPaymentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -1256,7 +1256,7 @@ export type PaymentsControllerFindOneQueryError = void
 
 
 export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindOne>>,
           TError,
@@ -1266,7 +1266,7 @@ export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof p
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof paymentsControllerFindOne>>,
           TError,
@@ -1276,7 +1276,7 @@ export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof p
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -1284,7 +1284,7 @@ export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof p
  */
 
 export function usePaymentsControllerFindOne<TData = Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof paymentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -1336,7 +1336,7 @@ export type paymentsControllerUpdateResponseError = (paymentsControllerUpdateRes
 
 export type paymentsControllerUpdateResponse = (paymentsControllerUpdateResponseSuccess | paymentsControllerUpdateResponseError)
 
-export const getPaymentsControllerUpdateUrl = (id: number,) => {
+export const getPaymentsControllerUpdateUrl = (id: string,) => {
 
 
   
@@ -1344,7 +1344,7 @@ export const getPaymentsControllerUpdateUrl = (id: number,) => {
   return `/payments/${id}`
 }
 
-export const paymentsControllerUpdate = async (id: number,
+export const paymentsControllerUpdate = async (id: string,
     updatePaymentDto: UpdatePaymentDto, options?: RequestInit): Promise<paymentsControllerUpdateResponse> => {
   
   return customInstance<paymentsControllerUpdateResponse>(getPaymentsControllerUpdateUrl(id),
@@ -1361,8 +1361,8 @@ export const paymentsControllerUpdate = async (id: number,
 
 
 export const getPaymentsControllerUpdateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: string;data: UpdatePaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: string;data: UpdatePaymentDto}, TContext> => {
 
 const mutationKey = ['paymentsControllerUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1376,7 +1376,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerUpdate>>, {id: number;data: UpdatePaymentDto}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerUpdate>>, {id: string;data: UpdatePaymentDto}> = (props) => {
           const {id,data} = props ?? {};
 
           return  paymentsControllerUpdate(id,data,requestOptions)
@@ -1397,11 +1397,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Mengupdate pembayaran
  */
 export const usePaymentsControllerUpdate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: number;data: UpdatePaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerUpdate>>, TError,{id: string;data: UpdatePaymentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof paymentsControllerUpdate>>,
         TError,
-        {id: number;data: UpdatePaymentDto},
+        {id: string;data: UpdatePaymentDto},
         TContext
       > => {
       return useMutation(getPaymentsControllerUpdateMutationOptions(options), queryClient);
@@ -1439,7 +1439,7 @@ export type paymentsControllerRemoveResponseError = (paymentsControllerRemoveRes
 
 export type paymentsControllerRemoveResponse = (paymentsControllerRemoveResponseSuccess | paymentsControllerRemoveResponseError)
 
-export const getPaymentsControllerRemoveUrl = (id: number,) => {
+export const getPaymentsControllerRemoveUrl = (id: string,) => {
 
 
   
@@ -1447,7 +1447,7 @@ export const getPaymentsControllerRemoveUrl = (id: number,) => {
   return `/payments/${id}`
 }
 
-export const paymentsControllerRemove = async (id: number, options?: RequestInit): Promise<paymentsControllerRemoveResponse> => {
+export const paymentsControllerRemove = async (id: string, options?: RequestInit): Promise<paymentsControllerRemoveResponse> => {
   
   return customInstance<paymentsControllerRemoveResponse>(getPaymentsControllerRemoveUrl(id),
   {      
@@ -1462,8 +1462,8 @@ export const paymentsControllerRemove = async (id: number, options?: RequestInit
 
 
 export const getPaymentsControllerRemoveMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['paymentsControllerRemove'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1477,7 +1477,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerRemove>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerRemove>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  paymentsControllerRemove(id,requestOptions)
@@ -1498,11 +1498,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Menghapus pembayaran (soft delete)
  */
 export const usePaymentsControllerRemove = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof paymentsControllerRemove>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getPaymentsControllerRemoveMutationOptions(options), queryClient);
@@ -1545,7 +1545,7 @@ export type paymentsControllerCancelResponseError = (paymentsControllerCancelRes
 
 export type paymentsControllerCancelResponse = (paymentsControllerCancelResponseSuccess | paymentsControllerCancelResponseError)
 
-export const getPaymentsControllerCancelUrl = (id: number,) => {
+export const getPaymentsControllerCancelUrl = (id: string,) => {
 
 
   
@@ -1553,7 +1553,7 @@ export const getPaymentsControllerCancelUrl = (id: number,) => {
   return `/payments/${id}/cancel`
 }
 
-export const paymentsControllerCancel = async (id: number, options?: RequestInit): Promise<paymentsControllerCancelResponse> => {
+export const paymentsControllerCancel = async (id: string, options?: RequestInit): Promise<paymentsControllerCancelResponse> => {
   
   return customInstance<paymentsControllerCancelResponse>(getPaymentsControllerCancelUrl(id),
   {      
@@ -1568,8 +1568,8 @@ export const paymentsControllerCancel = async (id: number, options?: RequestInit
 
 
 export const getPaymentsControllerCancelMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['paymentsControllerCancel'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1583,7 +1583,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerCancel>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof paymentsControllerCancel>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  paymentsControllerCancel(id,requestOptions)
@@ -1604,11 +1604,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Membatalkan pembayaran
  */
 export const usePaymentsControllerCancel = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof paymentsControllerCancel>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof paymentsControllerCancel>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getPaymentsControllerCancelMutationOptions(options), queryClient);
