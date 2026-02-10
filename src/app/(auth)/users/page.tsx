@@ -29,7 +29,7 @@ import { Toaster } from "@/src/components/dashboard-ui/components/sonner"
 
 // Hooks & Services
 import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
-import { UserApi } from "@/src/core/service/api/users/user.api"
+import { UserApi } from "@/src/core/service/api/users/users.api"
 
 // Components & Types
 import { getColumns } from "./_components/columns"
