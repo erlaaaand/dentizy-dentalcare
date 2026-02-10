@@ -1,27 +1,97 @@
-import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 
+/**
+ * Base Service Class
+ * Provides common functionality for all API services
+ * 
+ * This class contains shared methods for:
+ * - Query cache management
+ * - Query data manipulation
+ * - Common patterns used across services
+ */
 export abstract class BaseService {
-  protected invalidateQueries(queryClient: QueryClient, queryKey: readonly unknown[]) {
-    return queryClient.invalidateQueries({ queryKey: queryKey as QueryKey });
+  /**
+   * Invalidate queries matching the given query key
+   */
+  protected invalidateQueries(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): Promise<void> {
+    return queryClient.invalidateQueries({ queryKey });
   }
 
-  protected prefetchQuery<T>(
-    queryClient: QueryClient, 
-    queryKey: readonly unknown[], 
+  /**
+   * Prefetch a query
+   */
+  protected async prefetchQuery<T>(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[],
     queryFn: () => Promise<T>
-  ) {
-    return queryClient.prefetchQuery({ queryKey: queryKey as QueryKey, queryFn });
+  ): Promise<void> {
+    await queryClient.prefetchQuery({
+      queryKey,
+      queryFn
+    });
   }
 
-  public removeQueries(queryClient: QueryClient, queryKey: readonly unknown[]) {
-    return queryClient.removeQueries({ queryKey: queryKey as QueryKey });
+  /**
+   * Get query data from cache
+   */
+  protected getQueryData<T>(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): T | undefined {
+    return queryClient.getQueryData<T>(queryKey);
   }
 
-  protected setQueryData<T>(queryClient: QueryClient, queryKey: readonly unknown[], data: T) {
-    return queryClient.setQueryData(queryKey as QueryKey, data);
+  /**
+   * Set query data in cache
+   */
+  protected setQueryData<T>(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[],
+    data: T
+  ): void {
+    queryClient.setQueryData<T>(queryKey, data);
   }
 
-  protected getQueryData<T>(queryClient: QueryClient, queryKey: readonly unknown[]): T | undefined {
-    return queryClient.getQueryData(queryKey as QueryKey);
+  /**
+   * Remove queries from cache
+   */
+  protected removeQueries(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): void {
+    queryClient.removeQueries({ queryKey });
+  }
+
+  /**
+   * Cancel queries
+   */
+  protected async cancelQueries(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): Promise<void> {
+    await queryClient.cancelQueries({ queryKey });
+  }
+
+  /**
+   * Reset queries
+   */
+  protected async resetQueries(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): Promise<void> {
+    await queryClient.resetQueries({ queryKey });
+  }
+
+  /**
+   * Refetch queries
+   */
+  protected async refetchQueries(
+    queryClient: QueryClient,
+    queryKey: readonly unknown[]
+  ): Promise<void> {
+    await queryClient.refetchQueries({ queryKey });
   }
 }

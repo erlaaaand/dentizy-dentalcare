@@ -7,10 +7,8 @@ import {
   appointmentsControllerCancel,
   appointmentsControllerComplete,
   appointmentsControllerRemove,
-  getAppointmentsControllerFindAllQueryKey,
-  getAppointmentsControllerFindOneQueryKey,
 } from '../../../api/generated/appointments/appointments';
-import type { QueryClient } from '@tanstack/react-query';
+
 import type {
   AppointmentQueryParams,
   CreateAppointmentDto,
@@ -18,140 +16,41 @@ import type {
   AppointmentResponseDto,
   PaginatedAppointmentResponseDto,
 } from '../../../types/appointments/appointment.types';
+export class AppointmentsService extends BaseService {
 
-export class AppointmentsApi extends BaseService {
-  // ==================== QUERIES ====================
-  
-  /**
-   * Get all appointments with filters
-   */
-  async findAll(params?: AppointmentQueryParams) {
+  async findAll(params?: AppointmentQueryParams): Promise<PaginatedAppointmentResponseDto> {
     const response = await appointmentsControllerFindAll(params);
     return response.data as PaginatedAppointmentResponseDto;
   }
 
-  /**
-   * Get single appointment by ID
-   */
-  async findOne(id: string) {
+  async findOne(id: string): Promise<AppointmentResponseDto> {
     const response = await appointmentsControllerFindOne(id);
     return response.data as AppointmentResponseDto;
   }
 
-  // ==================== MUTATIONS ====================
-  
-  /**
-   * Create new appointment
-   */
-  async create(data: CreateAppointmentDto) {
+  async create(data: CreateAppointmentDto): Promise<AppointmentResponseDto> {
     const response = await appointmentsControllerCreate({ data });
     return response.data as AppointmentResponseDto;
   }
 
-  /**
-   * Update existing appointment
-   */
-  async update(id: string, data: UpdateAppointmentDto) {
+  async update(id: string, data: UpdateAppointmentDto): Promise<AppointmentResponseDto> {
     const response = await appointmentsControllerUpdate(id, { data });
     return response.data as AppointmentResponseDto;
   }
 
-  /**
-   * Complete appointment
-   */
-  async complete(id: string) {
+  async complete(id: string): Promise<AppointmentResponseDto> {
     const response = await appointmentsControllerComplete(id);
     return response.data as AppointmentResponseDto;
   }
 
-  /**
-   * Cancel appointment
-   */
-  async cancel(id: string) {
+  async cancel(id: string): Promise<AppointmentResponseDto> {
     const response = await appointmentsControllerCancel(id);
     return response.data as AppointmentResponseDto;
   }
 
-  /**
-   * Delete appointment
-   */
-  async remove(id: string) {
-    const response = await appointmentsControllerRemove(id);
-    return response;
-  }
-
-  // ==================== QUERY KEYS ====================
-  
-  getListQueryKey(params?: AppointmentQueryParams) {
-    return getAppointmentsControllerFindAllQueryKey(params);
-  }
-
-  getDetailQueryKey(id: string) {
-    return getAppointmentsControllerFindOneQueryKey(id);
-  }
-
-  // ==================== CACHE UTILITIES ====================
-  
-  /**
-   * Invalidate all appointment lists
-   */
-  invalidateList(queryClient: QueryClient, params?: AppointmentQueryParams) {
-    return this.invalidateQueries(queryClient, [...this.getListQueryKey(params)]);
-  }
-
-  /**
-   * Invalidate specific appointment detail
-   */
-  invalidateDetail(queryClient: QueryClient, id: string) {
-    return this.invalidateQueries(queryClient, [...this.getDetailQueryKey(id)]);
-  }
-
-  /**
-   * Invalidate all appointment queries
-   */
-  invalidateAll(queryClient: QueryClient) {
-    return this.invalidateQueries(queryClient, ['/appointments']);
-  }
-
-  /**
-   * Prefetch appointment list
-   */
-  async prefetchList(queryClient: QueryClient, params?: AppointmentQueryParams) {
-    return this.prefetchQuery(
-      queryClient,
-      [...this.getListQueryKey(params)],
-      () => this.findAll(params)
-    );
-  }
-
-  /**
-   * Prefetch appointment detail
-   */
-  async prefetchDetail(queryClient: QueryClient, id: string) {
-    return this.prefetchQuery(
-      queryClient,
-      [...this.getDetailQueryKey(id)],
-      () => this.findOne(id)
-    );
-  }
-
-  /**
-   * Optimistic update for appointment
-   */
-  optimisticUpdate(
-    queryClient: QueryClient,
-    id: string,
-    updater: (old: AppointmentResponseDto) => AppointmentResponseDto
-  ) {
-    const queryKey = [...this.getDetailQueryKey(id)];
-    const previousData = this.getQueryData<AppointmentResponseDto>(queryClient, queryKey);
-    
-    if (previousData) {
-      this.setQueryData(queryClient, queryKey, updater(previousData));
-    }
-    
-    return previousData;
+  async remove(id: string): Promise<void> {
+    await appointmentsControllerRemove(id);
   }
 }
 
-export const appointmentsApi = new AppointmentsApi();
+export const appointmentsService = new AppointmentsService();

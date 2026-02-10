@@ -435,7 +435,7 @@ export type treatmentsControllerFindOneResponseError = (treatmentsControllerFind
 
 export type treatmentsControllerFindOneResponse = (treatmentsControllerFindOneResponseSuccess | treatmentsControllerFindOneResponseError)
 
-export const getTreatmentsControllerFindOneUrl = (id: number,) => {
+export const getTreatmentsControllerFindOneUrl = (id: string,) => {
 
 
   
@@ -443,7 +443,7 @@ export const getTreatmentsControllerFindOneUrl = (id: number,) => {
   return `/treatments/${id}`
 }
 
-export const treatmentsControllerFindOne = async (id: number, options?: RequestInit): Promise<treatmentsControllerFindOneResponse> => {
+export const treatmentsControllerFindOne = async (id: string, options?: RequestInit): Promise<treatmentsControllerFindOneResponse> => {
   
   return customInstance<treatmentsControllerFindOneResponse>(getTreatmentsControllerFindOneUrl(id),
   {      
@@ -458,14 +458,14 @@ export const treatmentsControllerFindOne = async (id: number, options?: RequestI
 
 
 
-export const getTreatmentsControllerFindOneQueryKey = (id?: number,) => {
+export const getTreatmentsControllerFindOneQueryKey = (id?: string,) => {
     return [
     `/treatments/${id}`
     ] as const;
     }
 
     
-export const getTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getTreatmentsControllerFindOneQueryOptions = <TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -489,7 +489,7 @@ export type TreatmentsControllerFindOneQueryError = void
 
 
 export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
- id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof treatmentsControllerFindOne>>,
           TError,
@@ -499,7 +499,7 @@ export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof treatmentsControllerFindOne>>,
           TError,
@@ -509,7 +509,7 @@ export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -517,7 +517,7 @@ export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof
  */
 
 export function useTreatmentsControllerFindOne<TData = Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError = void>(
- id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ id: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof treatmentsControllerFindOne>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient 
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -573,7 +573,7 @@ export type treatmentsControllerUpdateResponseError = (treatmentsControllerUpdat
 
 export type treatmentsControllerUpdateResponse = (treatmentsControllerUpdateResponseSuccess | treatmentsControllerUpdateResponseError)
 
-export const getTreatmentsControllerUpdateUrl = (id: number,) => {
+export const getTreatmentsControllerUpdateUrl = (id: string,) => {
 
 
   
@@ -581,7 +581,7 @@ export const getTreatmentsControllerUpdateUrl = (id: number,) => {
   return `/treatments/${id}`
 }
 
-export const treatmentsControllerUpdate = async (id: number,
+export const treatmentsControllerUpdate = async (id: string,
     updateTreatmentDto: UpdateTreatmentDto, options?: RequestInit): Promise<treatmentsControllerUpdateResponse> => {
   
   return customInstance<treatmentsControllerUpdateResponse>(getTreatmentsControllerUpdateUrl(id),
@@ -598,8 +598,8 @@ export const treatmentsControllerUpdate = async (id: number,
 
 
 export const getTreatmentsControllerUpdateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: string;data: UpdateTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: string;data: UpdateTreatmentDto}, TContext> => {
 
 const mutationKey = ['treatmentsControllerUpdate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -613,7 +613,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, {id: number;data: UpdateTreatmentDto}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, {id: string;data: UpdateTreatmentDto}> = (props) => {
           const {id,data} = props ?? {};
 
           return  treatmentsControllerUpdate(id,data,requestOptions)
@@ -634,11 +634,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Update treatment
  */
 export const useTreatmentsControllerUpdate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: number;data: UpdateTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerUpdate>>, TError,{id: string;data: UpdateTreatmentDto}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof treatmentsControllerUpdate>>,
         TError,
-        {id: number;data: UpdateTreatmentDto},
+        {id: string;data: UpdateTreatmentDto},
         TContext
       > => {
       return useMutation(getTreatmentsControllerUpdateMutationOptions(options), queryClient);
@@ -680,7 +680,7 @@ export type treatmentsControllerRemoveResponseError = (treatmentsControllerRemov
 
 export type treatmentsControllerRemoveResponse = (treatmentsControllerRemoveResponseSuccess | treatmentsControllerRemoveResponseError)
 
-export const getTreatmentsControllerRemoveUrl = (id: number,) => {
+export const getTreatmentsControllerRemoveUrl = (id: string,) => {
 
 
   
@@ -688,7 +688,7 @@ export const getTreatmentsControllerRemoveUrl = (id: number,) => {
   return `/treatments/${id}`
 }
 
-export const treatmentsControllerRemove = async (id: number, options?: RequestInit): Promise<treatmentsControllerRemoveResponse> => {
+export const treatmentsControllerRemove = async (id: string, options?: RequestInit): Promise<treatmentsControllerRemoveResponse> => {
   
   return customInstance<treatmentsControllerRemoveResponse>(getTreatmentsControllerRemoveUrl(id),
   {      
@@ -703,8 +703,8 @@ export const treatmentsControllerRemove = async (id: number, options?: RequestIn
 
 
 export const getTreatmentsControllerRemoveMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['treatmentsControllerRemove'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -718,7 +718,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRemove>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRemove>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  treatmentsControllerRemove(id,requestOptions)
@@ -739,11 +739,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Soft delete treatment
  */
 export const useTreatmentsControllerRemove = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRemove>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof treatmentsControllerRemove>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getTreatmentsControllerRemoveMutationOptions(options), queryClient);
@@ -780,7 +780,7 @@ export type treatmentsControllerRestoreResponseError = (treatmentsControllerRest
 
 export type treatmentsControllerRestoreResponse = (treatmentsControllerRestoreResponseSuccess | treatmentsControllerRestoreResponseError)
 
-export const getTreatmentsControllerRestoreUrl = (id: number,) => {
+export const getTreatmentsControllerRestoreUrl = (id: string,) => {
 
 
   
@@ -788,7 +788,7 @@ export const getTreatmentsControllerRestoreUrl = (id: number,) => {
   return `/treatments/${id}/restore`
 }
 
-export const treatmentsControllerRestore = async (id: number, options?: RequestInit): Promise<treatmentsControllerRestoreResponse> => {
+export const treatmentsControllerRestore = async (id: string, options?: RequestInit): Promise<treatmentsControllerRestoreResponse> => {
   
   return customInstance<treatmentsControllerRestoreResponse>(getTreatmentsControllerRestoreUrl(id),
   {      
@@ -803,8 +803,8 @@ export const treatmentsControllerRestore = async (id: number, options?: RequestI
 
 
 export const getTreatmentsControllerRestoreMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['treatmentsControllerRestore'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -818,7 +818,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRestore>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerRestore>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  treatmentsControllerRestore(id,requestOptions)
@@ -839,11 +839,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Restore soft deleted treatment
  */
 export const useTreatmentsControllerRestore = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerRestore>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof treatmentsControllerRestore>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getTreatmentsControllerRestoreMutationOptions(options), queryClient);
@@ -875,7 +875,7 @@ export type treatmentsControllerActivateResponseError = (treatmentsControllerAct
 
 export type treatmentsControllerActivateResponse = (treatmentsControllerActivateResponseSuccess | treatmentsControllerActivateResponseError)
 
-export const getTreatmentsControllerActivateUrl = (id: number,) => {
+export const getTreatmentsControllerActivateUrl = (id: string,) => {
 
 
   
@@ -883,7 +883,7 @@ export const getTreatmentsControllerActivateUrl = (id: number,) => {
   return `/treatments/${id}/activate`
 }
 
-export const treatmentsControllerActivate = async (id: number, options?: RequestInit): Promise<treatmentsControllerActivateResponse> => {
+export const treatmentsControllerActivate = async (id: string, options?: RequestInit): Promise<treatmentsControllerActivateResponse> => {
   
   return customInstance<treatmentsControllerActivateResponse>(getTreatmentsControllerActivateUrl(id),
   {      
@@ -898,8 +898,8 @@ export const treatmentsControllerActivate = async (id: number, options?: Request
 
 
 export const getTreatmentsControllerActivateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['treatmentsControllerActivate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -913,7 +913,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerActivate>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerActivate>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  treatmentsControllerActivate(id,requestOptions)
@@ -934,11 +934,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Activate treatment
  */
 export const useTreatmentsControllerActivate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerActivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof treatmentsControllerActivate>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getTreatmentsControllerActivateMutationOptions(options), queryClient);
@@ -970,7 +970,7 @@ export type treatmentsControllerDeactivateResponseError = (treatmentsControllerD
 
 export type treatmentsControllerDeactivateResponse = (treatmentsControllerDeactivateResponseSuccess | treatmentsControllerDeactivateResponseError)
 
-export const getTreatmentsControllerDeactivateUrl = (id: number,) => {
+export const getTreatmentsControllerDeactivateUrl = (id: string,) => {
 
 
   
@@ -978,7 +978,7 @@ export const getTreatmentsControllerDeactivateUrl = (id: number,) => {
   return `/treatments/${id}/deactivate`
 }
 
-export const treatmentsControllerDeactivate = async (id: number, options?: RequestInit): Promise<treatmentsControllerDeactivateResponse> => {
+export const treatmentsControllerDeactivate = async (id: string, options?: RequestInit): Promise<treatmentsControllerDeactivateResponse> => {
   
   return customInstance<treatmentsControllerDeactivateResponse>(getTreatmentsControllerDeactivateUrl(id),
   {      
@@ -993,8 +993,8 @@ export const treatmentsControllerDeactivate = async (id: number, options?: Reque
 
 
 export const getTreatmentsControllerDeactivateMutationOptions = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: string}, TContext> => {
 
 const mutationKey = ['treatmentsControllerDeactivate'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -1008,7 +1008,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, {id: number}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, {id: string}> = (props) => {
           const {id} = props ?? {};
 
           return  treatmentsControllerDeactivate(id,requestOptions)
@@ -1029,11 +1029,11 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
  * @summary Deactivate treatment
  */
 export const useTreatmentsControllerDeactivate = <TError = void,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customInstance>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof treatmentsControllerDeactivate>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient): UseMutationResult<
         Awaited<ReturnType<typeof treatmentsControllerDeactivate>>,
         TError,
-        {id: number},
+        {id: string},
         TContext
       > => {
       return useMutation(getTreatmentsControllerDeactivateMutationOptions(options), queryClient);

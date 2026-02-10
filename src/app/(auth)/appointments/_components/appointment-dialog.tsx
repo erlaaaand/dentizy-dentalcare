@@ -8,7 +8,7 @@ import { Loader2, Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/src/core/utils/classnames/cn.utils"
 import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
-import { UserApi } from "@/src/core/service/api/users/user.api"
+import { UserApi } from "@/src/core/service/api/users/users.api"
 import { PatientService } from "@/src/core/service/api/patients/patient.api"
 
 import { Button } from "@/src/components/dashboard-ui/components/button"

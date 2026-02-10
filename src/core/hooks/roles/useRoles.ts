@@ -1,11 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { createQueryHook } from '../../service/base/use-query-factory';
 import { rolesService } from '../../service/api/roles/roles.api';
+import { RolesCacheManager } from '../../service/api/roles';
+
+const cacheManager = new RolesCacheManager();
 
 // ==================== QUERY HOOKS ====================
 
 export const useRoles = createQueryHook({
-  queryKey: () => rolesService.getListQueryKey(),
+  queryKey: () => cacheManager.getListQueryKey(),
   queryFn: () => rolesService.findAll(),
   options: {
     staleTime: 10 * 60 * 1000, // 10 minutes - roles rarely change
@@ -13,7 +16,7 @@ export const useRoles = createQueryHook({
 });
 
 export const useRole = createQueryHook({
-  queryKey: (id?: string) => rolesService.getDetailQueryKey(id!),
+  queryKey: (id?: string) => cacheManager.getDetailQueryKey(id!),
   queryFn: (id) => rolesService.findOne(id!),
   options: {
     enabled: false,
@@ -27,8 +30,8 @@ export function usePrefetchRole() {
   const queryClient = useQueryClient();
   
   return {
-    prefetchList: () => rolesService.prefetchList(queryClient),
-    prefetchDetail: (id: string) => rolesService.prefetchDetail(queryClient, id),
+    prefetchList: () => cacheManager.prefetchList(queryClient),
+    prefetchDetail: (id: string) => cacheManager.prefetchDetail(queryClient, id),
   };
 }
 
@@ -36,9 +39,9 @@ export function useInvalidateRoles() {
   const queryClient = useQueryClient();
   
   return {
-    invalidateAll: () => rolesService.invalidateAll(queryClient),
-    invalidateList: () => rolesService.invalidateList(queryClient),
-    invalidateDetail: (id: string) => rolesService.invalidateDetail(queryClient, id),
+    invalidateAll: () => cacheManager.invalidateAll(queryClient),
+    invalidateList: () => cacheManager.invalidateList(queryClient),
+    invalidateDetail: (id: string) => cacheManager.invalidateDetail(queryClient, id),
   };
 }
 
