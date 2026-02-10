@@ -11,6 +11,12 @@ import {
   getPaymentsControllerFindOneQueryKey
 } from '../../../../api/generated/payments/payments';
 
+import type {
+  PaymentsControllerFindAllParams,
+  PaymentsControllerGetTotalRevenueParams,
+  PaymentsControllerGetRevenueByPeriodParams,
+} from '../../../../types/payments/payments.types';
+
 import { paymentsService } from '../payments.api';
 
 /**
@@ -22,7 +28,7 @@ export class PaymentsCacheManager extends BaseService {
   /**
    * Get list query key
    */
-  getListQueryKey(params?: undefined) {
+  getListQueryKey(params?: PaymentsControllerFindAllParams) {
     return getPaymentsControllerFindAllQueryKey(params);
   }
 
@@ -64,21 +70,21 @@ export class PaymentsCacheManager extends BaseService {
   /**
    * Get total revenue query key
    */
-  getTotalRevenueQueryKey(params?: undefined) {
+  getTotalRevenueQueryKey(params?: PaymentsControllerGetTotalRevenueParams) {
     return getPaymentsControllerGetTotalRevenueQueryKey(params);
   }
 
   /**
    * Get revenue by period query key
    */
-  getRevenueByPeriodQueryKey(params?: undefined) {
+  getRevenueByPeriodQueryKey(params?: PaymentsControllerGetRevenueByPeriodParams) {
     return getPaymentsControllerGetRevenueByPeriodQueryKey(params);
   }
 
   /**
    * Invalidate list
    */
-  invalidateList(queryClient: QueryClient, params?: undefined): Promise<void> {
+  invalidateList(queryClient: QueryClient, params?: PaymentsControllerFindAllParams): Promise<void> {
     return this.invalidateQueries(queryClient, this.getListQueryKey(params));
   }
 
@@ -120,14 +126,14 @@ export class PaymentsCacheManager extends BaseService {
   /**
    * Invalidate total revenue
    */
-  invalidateTotalRevenue(queryClient: QueryClient, params?: undefined): Promise<void> {
+  invalidateTotalRevenue(queryClient: QueryClient, params?: PaymentsControllerGetTotalRevenueParams): Promise<void> {
     return this.invalidateQueries(queryClient, this.getTotalRevenueQueryKey(params));
   }
 
   /**
    * Invalidate revenue by period
    */
-  invalidateRevenueByPeriod(queryClient: QueryClient, params?: undefined): Promise<void> {
+  invalidateRevenueByPeriod(queryClient: QueryClient, params?: PaymentsControllerGetRevenueByPeriodParams): Promise<void> {
     return this.invalidateQueries(queryClient, this.getRevenueByPeriodQueryKey(params));
   }
 
@@ -151,7 +157,7 @@ export class PaymentsCacheManager extends BaseService {
   /**
    * Prefetch list
    */
-  async prefetchList(queryClient: QueryClient, params?: undefined): Promise<void> {
+  async prefetchList(queryClient: QueryClient, params?: PaymentsControllerFindAllParams): Promise<void> {
     await this.prefetchQuery(
       queryClient,
       this.getListQueryKey(params),

@@ -22,6 +22,7 @@ import type {
   PaymentResponseDto,
   PaymentsControllerGetRevenueByPeriodParams,
   PaymentsControllerFindAllParams,
+  PaymentsControllerGetTotalRevenueParams
 } from '../../../types/payments/payments.types';
 
 /**
@@ -109,7 +110,7 @@ export class PaymentsService extends BaseService {
   /**
    * Get total revenue
    */
-  async getTotalRevenue(params?: undefined): Promise<unknown> {
+  async getTotalRevenue(params?: PaymentsControllerGetTotalRevenueParams): Promise<unknown> {
     const response = await paymentsControllerGetTotalRevenue(params);
     return response.data;
   }
