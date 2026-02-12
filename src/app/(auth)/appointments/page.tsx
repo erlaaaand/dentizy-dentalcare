@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import type {
-  PaginationState,
-} from "@tanstack/react-table"
 import {
+  type PaginationState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -28,26 +26,22 @@ import {
 } from "@/src/components/dashboard-ui/components/table"
 import { Toaster } from "@/src/components/dashboard-ui/components/sonner"
 
-// Core hooks
-import {
-  useAppointments,
-  useAppointmentMutations,
-} from "@/src/core/hooks/appointments/useAppointments"
+// Core hooks and providers
+import { useAppointments } from "@/src/core/hooks/appointments/useAppointments"
+import { useAppointmentContext } from "@/src/core/providers"
 
 import { getColumns } from "./_components/columns"
-import { AppointmentDialog } from "./_components/appointment-dialog"
+import { AppointmentDialog, type AppointmentPayload } from "./_components/appointment-dialog"
 import {
   type AppointmentResponseDto,
-  type AppointmentPayload,
   type CreateAppointmentDto,
   type UpdateAppointmentDto,
   type AppointmentsControllerFindAllParams,
-  AppointmentsControllerFindAllStatus,
-} from "./_components/types"
+} from "@/src/core/types/appointments/appointment.types"
 
 export default function AppointmentsPage() {
+  const { selectedAppointment, setSelectedAppointment, mutations } = useAppointmentContext()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentResponseDto | null>(null)
   const [currentTab, setCurrentTab] = useState("all")
 
   const [pagination, setPagination] = useState<PaginationState>({
@@ -55,39 +49,19 @@ export default function AppointmentsPage() {
     pageSize: 10,
   })
 
-  // ---------------------------------------------------------------------------
-  // Query params
-  // ---------------------------------------------------------------------------
   const queryParams: AppointmentsControllerFindAllParams = useMemo(
     () => ({
       page: pagination.pageIndex + 1,
       limit: pagination.pageSize,
       status: currentTab === "requests"
-        ? AppointmentsControllerFindAllStatus.menunggu_konfirmasi
+        ? "menunggu_konfirmasi"
         : undefined,
     }),
     [pagination.pageIndex, pagination.pageSize, currentTab]
   )
 
-  // ---------------------------------------------------------------------------
-  // Data fetching
-  // ---------------------------------------------------------------------------
   const { data: response, isLoading, refetch } = useAppointments(queryParams)
 
-  // ---------------------------------------------------------------------------
-  // Mutations
-  // ---------------------------------------------------------------------------
-  const {
-    createAppointment,
-    updateAppointment,
-    cancelAppointment,
-    isCreating,
-    isUpdating,
-  } = useAppointmentMutations()
-
-  // ---------------------------------------------------------------------------
-  // Handlers
-  // ---------------------------------------------------------------------------
   const handleCreate = useCallback(() => {
     setSelectedAppointment(null)
     setIsDialogOpen(true)
@@ -102,7 +76,7 @@ export default function AppointmentsPage() {
     (data: AppointmentResponseDto) => {
       // Menggunakan window.confirm secara eksplisit untuk menghindari restricted-globals eslint error
       if (typeof window !== "undefined" && window.confirm(`Apakah Anda yakin ingin membatalkan jadwal pasien ${data.patient?.nama_lengkap}?`)) {
-        cancelAppointment({ id: data.id })
+        mutations.cancelAsync(data.id)
           .then(() => {
             toast.success("Jadwal berhasil dibatalkan")
           })
@@ -111,14 +85,13 @@ export default function AppointmentsPage() {
           })
       }
     },
-    [cancelAppointment]
+    [mutations]
   )
 
   const handleFormSubmit = useCallback(
     (payload: AppointmentPayload) => {
       if (selectedAppointment) {
-        // Assertion aman karena kita tahu payload berasal dari dialog update
-        updateAppointment({ id: selectedAppointment.id, data: payload as UpdateAppointmentDto })
+        mutations.updateAsync({ id: selectedAppointment.id, data: payload as UpdateAppointmentDto })
           .then(() => {
             toast.success("Jadwal berhasil diperbarui")
             setIsDialogOpen(false)
@@ -127,7 +100,7 @@ export default function AppointmentsPage() {
             toast.error("Gagal memperbarui jadwal")
           })
       } else {
-        createAppointment({ data: payload as CreateAppointmentDto })
+        mutations.createAsync(payload as CreateAppointmentDto)
           .then(() => {
             toast.success("Jadwal berhasil dibuat")
             setIsDialogOpen(false)
@@ -137,20 +110,16 @@ export default function AppointmentsPage() {
           })
       }
     },
-    [selectedAppointment, createAppointment, updateAppointment]
+    [selectedAppointment, mutations]
   )
 
-  // ---------------------------------------------------------------------------
-  // Table Config
-  // ---------------------------------------------------------------------------
   const columns = useMemo(
     () => getColumns({ onEdit: handleEdit, onCancel: handleCancel }),
     [handleEdit, handleCancel]
   )
 
-  // Fallback ke array kosong jika data undefined
-  const appointmentData = useMemo(() => response?.data?.data ?? [], [response])
-  const pageCount = useMemo(() => response?.data?.totalPages ?? 1, [response])
+  const appointmentData = useMemo(() => response?.data ?? [], [response])
+  const pageCount = useMemo(() => response?.totalPages ?? 1, [response])
 
   const table = useReactTable({
     data: appointmentData,
@@ -165,7 +134,6 @@ export default function AppointmentsPage() {
     getPaginationRowModel: getPaginationRowModel(),
   })
 
-  // Helper render loading row
   const renderLoading = () => (
     <TableRow>
       <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -174,7 +142,6 @@ export default function AppointmentsPage() {
     </TableRow>
   )
 
-  // Helper render empty row
   const renderEmpty = () => (
     <TableRow>
       <TableCell colSpan={columns.length} className="h-24 text-center">
@@ -245,7 +212,7 @@ export default function AppointmentsPage() {
                     {isLoading
                       ? renderLoading()
                       : table.getRowModel().rows?.length
-                      ? table.getRowModel().rows.map((row) => (
+                        ? table.getRowModel().rows.map((row) => (
                           <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                             {row.getVisibleCells().map((cell) => (
                               <TableCell key={cell.id}>
@@ -254,7 +221,7 @@ export default function AppointmentsPage() {
                             ))}
                           </TableRow>
                         ))
-                      : renderEmpty()}
+                        : renderEmpty()}
                   </TableBody>
                 </Table>
 
@@ -331,7 +298,7 @@ export default function AppointmentsPage() {
         onOpenChange={setIsDialogOpen}
         initialData={selectedAppointment}
         onSuccess={handleFormSubmit}
-        isSubmitting={isCreating || isUpdating}
+        isSubmitting={mutations.isCreating || mutations.isUpdating}
       />
 
       <Toaster />

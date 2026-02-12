@@ -3,13 +3,12 @@
 import { useEffect, useState } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useQuery } from "@tanstack/react-query"
 import { Loader2, Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/src/core/utils/classnames/cn.utils"
 import { useDebounce } from "@/src/core/hooks/utils/useDebounce"
-import { UserApi } from "@/src/core/service/api/users/users.api"
-import { PatientService } from "@/src/core/service/api/patients/patient.api"
+import { useUsers } from "@/src/core/hooks/users/useUsers"
+import { usePatients } from "@/src/core/hooks/patients/usePatients"
 
 import { Button } from "@/src/components/dashboard-ui/components/button"
 import {
@@ -44,15 +43,29 @@ import {
 
 import { appointmentFormSchema, type AppointmentFormValues } from "./schema"
 import {
-  type AppointmentPayload,
   type AppointmentResponseDto,
-  AppointmentResponseDtoStatus,
   type CreateAppointmentDto,
   type UpdateAppointmentDto,
-  type ApiPaginatedResponse,
-  type UserResponseDto,
-  type PatientResponseDto,
-} from "./types"
+} from "@/src/core/types/appointments/appointment.types"
+import type { UserResponseDto } from "@/src/core/types/users/user.types"
+import type { PatientResponseDto } from "@/src/core/types/patients/patient.types"
+
+// Helper type for payload
+export type AppointmentPayload = CreateAppointmentDto | UpdateAppointmentDto
+
+// Interface for API Paginated Response (matches what backend returns)
+interface ApiPaginatedResponse<T> {
+  data: T[]
+  meta?: {
+    total: number
+    page: number
+    limit: number
+    totalPages: number
+  }
+  // Include other possible properties if backend structure varies
+  count?: number
+  totalPages?: number
+}
 
 interface AppointmentDialogProps {
   open: boolean
@@ -74,40 +87,27 @@ export function AppointmentDialog({
   // Mencegah debounce berjalan saat dialog tertutup
   const debouncedSearchPatient = useDebounce(searchPatient, 500)
 
-  // 1. Fetch Pasien (Searchable)
-  const { data: patientsData, isLoading: loadingPatients } = useQuery<PatientResponseDto[]>({
-    queryKey: ["patients", "search", debouncedSearchPatient],
-    queryFn: async () => {
-      const params = {
-        page: 1,
-        limit: 10,
-        ...(debouncedSearchPatient ? { search: debouncedSearchPatient } : {}),
-      }
-      const res = await PatientService.getAll(params)
-      // Type assertion aman: kita mengasumsikan respons API sesuai struktur generic
-      const typedRes = res as unknown as ApiPaginatedResponse<PatientResponseDto>
-      return typedRes.data || []
-    },
-    enabled: open, // Hanya fetch jika dialog terbuka
-    staleTime: 1000 * 60,
+  // 1. Fetch Pasien (Searchable via usePatients)
+  // usePatients returns PatientPaginatedResponse which has data: PatientResponseDto[]
+  const { data: consumersResponse, isLoading: loadingPatients } = usePatients({
+    page: 1,
+    limit: 10,
+    search: debouncedSearchPatient || undefined,
   })
+
+  // consumersResponse is already typed as PatientPaginatedResponse
+  const patientsData: PatientResponseDto[] = consumersResponse?.data || []
 
   // 2. Fetch Dokter
-  const { data: doctorsData, isLoading: loadingDoctors } = useQuery<UserResponseDto[]>({
-    queryKey: ["users", "dokter-list"],
-    queryFn: async () => {
-      const res = await UserApi.findAll({ limit: 100 })
-      const typedRes = res as unknown as ApiPaginatedResponse<UserResponseDto>
-
-      const validRoles = ["dokter", "kepala_klinik"]
-
-      // Filter yang aman dengan optional chaining
-      return (typedRes.data || []).filter((u) =>
-        u.roles?.some((r) => validRoles.includes(r.name.toLowerCase()))
-      )
-    },
-    enabled: open,
+  const { data: doctorsResponse, isLoading: loadingDoctors } = useUsers({
+    limit: 100,
   })
+
+  // Cast doctorsResponse to expected shape since useUsers returns unknown
+  // We filter by roles 'dokter' or 'kepala_klinik'
+  const doctorsData = ((doctorsResponse as ApiPaginatedResponse<UserResponseDto>)?.data || []).filter((u: UserResponseDto) =>
+    u.roles?.some((r) => ["dokter", "kepala_klinik"].includes(r.name.toLowerCase()))
+  )
 
   const {
     control,
@@ -123,33 +123,32 @@ export function AppointmentDialog({
       tanggal_janji: new Date().toISOString().split("T")[0],
       jam_janji: "",
       keluhan: "",
-      status: AppointmentResponseDtoStatus.dijadwalkan,
+      status: "dijadwalkan",
     },
   })
 
   // Reset form saat dialog dibuka atau initialData berubah
   useEffect(() => {
-    if (open) {
-      if (initialData) {
-        reset({
-          patient_id: String(initialData.patient_id),
-          doctor_id: String(initialData.doctor_id),
-          tanggal_janji: initialData.tanggal_janji,
-          jam_janji: initialData.jam_janji,
-          keluhan: initialData.keluhan || "",
-          status: initialData.status,
-        })
-      } else {
-        reset({
-          patient_id: "",
-          doctor_id: "",
-          tanggal_janji: new Date().toISOString().split("T")[0],
-          jam_janji: "",
-          keluhan: "",
-          status: AppointmentResponseDtoStatus.dijadwalkan,
-        })
-        setSearchPatient("")
-      }
+    if (!open) return
+
+    if (initialData) {
+      reset({
+        patient_id: String(initialData.patient_id),
+        doctor_id: String(initialData.doctor_id),
+        tanggal_janji: initialData.tanggal_janji,
+        jam_janji: initialData.jam_janji,
+        keluhan: initialData.keluhan || "",
+        status: initialData.status,
+      })
+    } else {
+      reset({
+        patient_id: "",
+        doctor_id: "",
+        tanggal_janji: new Date().toISOString().split("T")[0],
+        jam_janji: "",
+        keluhan: "",
+        status: "dijadwalkan",
+      })
     }
   }, [open, initialData, reset])
 
@@ -166,7 +165,7 @@ export function AppointmentDialog({
 
     if (initialData) {
       const updatePayload: UpdateAppointmentDto = {
-        doctor_id: Number(values.doctor_id) || values.doctor_id, // Handle conversion if needed by BE
+        doctor_id: String(values.doctor_id),
         tanggal_janji: values.tanggal_janji,
         jam_janji: formattedTime,
         keluhan: values.keluhan,
@@ -175,20 +174,19 @@ export function AppointmentDialog({
       onSuccess(updatePayload)
     } else {
       const createPayload: CreateAppointmentDto = {
-        patient_id: Number(values.patient_id) || values.patient_id,
-        doctor_id: Number(values.doctor_id) || values.doctor_id,
+        patient_id: String(values.patient_id),
+        doctor_id: String(values.doctor_id),
         tanggal_janji: values.tanggal_janji,
         jam_janji: formattedTime,
         keluhan: values.keluhan,
       }
       onSuccess(createPayload)
     }
-    // Search patient tidak di-reset di sini agar UX lebih baik jika terjadi error submit
   }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="sm:max-w-[600px] overflow-visible">
+      <DialogContent className="sm:max-w-150 overflow-visible">
         <DialogHeader>
           <DialogTitle>{initialData ? "Ubah Jadwal" : "Buat Jadwal Baru"}</DialogTitle>
           <DialogDescription>
@@ -200,7 +198,7 @@ export function AppointmentDialog({
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-2">
           <div className="grid grid-cols-2 gap-4">
-            
+
             {/* --- PASIEN (COMBOBOX) --- */}
             <div className="space-y-2 flex flex-col">
               <Label>Pasien</Label>
@@ -221,15 +219,15 @@ export function AppointmentDialog({
                         disabled={!!initialData} // Tidak bisa ganti pasien saat edit
                       >
                         {field.value
-                          ? patientsData?.find((p) => String(p.id) === field.value)?.nama_lengkap ||
-                            (initialData?.patient_id === Number(field.value) || initialData?.patient_id === field.value
-                              ? initialData.patient?.nama_lengkap
-                              : "Pasien Terpilih")
+                          ? patientsData.find((p) => String(p.id) === field.value)?.nama_lengkap ||
+                          (initialData?.patient_id === String(field.value)
+                            ? initialData.patient?.nama_lengkap
+                            : "Pasien Terpilih")
                           : "Cari Pasien..."}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[280px] p-0" align="start">
+                    <PopoverContent className="w-70 p-0" align="start">
                       <Command shouldFilter={false}>
                         <CommandInput
                           placeholder="Ketik nama atau No. RM..."
@@ -243,12 +241,12 @@ export function AppointmentDialog({
                             </div>
                           )}
 
-                          {!loadingPatients && patientsData?.length === 0 && (
+                          {!loadingPatients && patientsData.length === 0 && (
                             <CommandEmpty>Pasien tidak ditemukan.</CommandEmpty>
                           )}
 
                           {!loadingPatients &&
-                            patientsData?.map((patient) => (
+                            patientsData.map((patient) => (
                               <CommandItem
                                 key={patient.id}
                                 value={String(patient.id)}
@@ -268,7 +266,7 @@ export function AppointmentDialog({
                                 <div className="flex flex-col">
                                   <span className="font-medium">{patient.nama_lengkap}</span>
                                   <span className="text-xs text-muted-foreground">
-                                    {patient.nomor_rekam_medis}
+                                    {patient.nomor_rekam_medis || patient.email}
                                   </span>
                                 </div>
                               </CommandItem>
@@ -294,27 +292,27 @@ export function AppointmentDialog({
                   <Select
                     onValueChange={field.onChange}
                     value={field.value}
-                    disabled={loadingDoctors} 
+                    disabled={loadingDoctors}
                   >
                     <SelectTrigger>
-                      <SelectValue 
+                      <SelectValue
                         placeholder={
-                          loadingDoctors 
-                            ? "Memuat data..." 
-                            : (doctorsData?.length === 0 ? "Tidak ada dokter" : "Pilih Dokter")
-                        } 
+                          loadingDoctors
+                            ? "Memuat data..."
+                            : (doctorsData.length === 0 ? "Tidak ada dokter" : "Pilih Dokter")
+                        }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {doctorsData?.map((d) => (
+                      {doctorsData.map((d) => (
                         <SelectItem key={d.id} value={String(d.id)}>
                           {d.nama_lengkap}
                         </SelectItem>
                       ))}
-                      {!loadingDoctors && doctorsData?.length === 0 && (
-                         <div className="p-2 text-sm text-muted-foreground text-center">
-                            Tidak ada data dokter
-                         </div>
+                      {!loadingDoctors && doctorsData.length === 0 && (
+                        <div className="p-2 text-sm text-muted-foreground text-center">
+                          Tidak ada data dokter
+                        </div>
                       )}
                     </SelectContent>
                   </Select>
@@ -353,10 +351,10 @@ export function AppointmentDialog({
                 name="jam_janji"
                 control={control}
                 render={({ field }) => (
-                  <Input 
+                  <Input
                     id="jam_janji"
-                    type="time" 
-                    {...field} 
+                    type="time"
+                    {...field}
                   />
                 )}
               />
@@ -372,11 +370,11 @@ export function AppointmentDialog({
               name="keluhan"
               control={control}
               render={({ field }) => (
-                <Input 
+                <Input
                   id="keluhan"
-                  placeholder="Contoh: Nyeri pada gigi geraham..." 
-                  {...field} 
-                  value={field.value ?? ""} 
+                  placeholder="Contoh: Nyeri pada gigi geraham..."
+                  {...field}
+                  value={field.value ?? ""}
                 />
               )}
             />

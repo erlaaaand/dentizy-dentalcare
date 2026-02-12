@@ -4,7 +4,7 @@ import { type ColumnDef } from "@tanstack/react-table"
 import { MoreHorizontal, Clock, CalendarDays, Stethoscope } from "lucide-react"
 import { format, isValid, parseISO } from "date-fns"
 import { id as localeId } from "date-fns/locale"
-import { toast } from "sonner" // Pastikan import toast jika ingin feedback saat copy
+import { toast } from "sonner"
 
 import { Button } from "@/src/components/dashboard-ui/components/button"
 import { Badge } from "@/src/components/dashboard-ui/components/badge"
@@ -16,10 +16,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/src/components/dashboard-ui/components/dropdown-menu"
-import { 
-  type AppointmentResponseDto, 
-  AppointmentResponseDtoStatus 
-} from "./types"
+import {
+  type AppointmentResponseDto,
+} from "@/src/core/types/appointments/appointment.types"
 
 interface ColumnProps {
   onEdit: (data: AppointmentResponseDto) => void
@@ -35,13 +34,13 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
       const rawDate = row.getValue("tanggal_janji")
       const dateStr = typeof rawDate === 'string' ? rawDate : ''
       const time = row.original.jam_janji
-      
+
       let formattedDate = "-"
       if (dateStr) {
-         const parsedDate = parseISO(dateStr)
-         if (isValid(parsedDate)) {
-            formattedDate = format(parsedDate, "dd MMM yyyy", { locale: localeId })
-         }
+        const parsedDate = parseISO(dateStr)
+        if (isValid(parsedDate)) {
+          formattedDate = format(parsedDate, "dd MMM yyyy", { locale: localeId })
+        }
       }
 
       return (
@@ -94,16 +93,16 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
       let label = (status as string) || "-"
 
       switch (status) {
-        case AppointmentResponseDtoStatus.dijadwalkan:
+        case "dijadwalkan":
           variant = "outline"
           break
-        case AppointmentResponseDtoStatus.selesai:
+        case "selesai":
           variant = "default"
           break
-        case AppointmentResponseDtoStatus.dibatalkan:
+        case "dibatalkan":
           variant = "destructive"
           break
-        case AppointmentResponseDtoStatus.menunggu_konfirmasi:
+        case "menunggu_konfirmasi":
           variant = "secondary"
           label = "Menunggu Konfirmasi"
           break
@@ -121,13 +120,13 @@ export const getColumns = ({ onEdit, onCancel }: ColumnProps): ColumnDef<Appoint
     cell: ({ row }) => {
       const appointment = row.original
       const isEditable =
-        appointment.status !== AppointmentResponseDtoStatus.selesai &&
-        appointment.status !== AppointmentResponseDtoStatus.dibatalkan
+        appointment.status !== "selesai" &&
+        appointment.status !== "dibatalkan"
 
       const handleCopyId = () => {
-         navigator.clipboard.writeText(String(appointment.id))
-            .then(() => toast.success("ID berhasil disalin"))
-            .catch(() => toast.error("Gagal menyalin ID"))
+        navigator.clipboard.writeText(String(appointment.id))
+          .then(() => toast.success("ID berhasil disalin"))
+          .catch(() => toast.error("Gagal menyalin ID"))
       }
 
       return (

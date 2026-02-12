@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import type { ReactNode } from "react"
+import { AppointmentProvider } from "@/src/core/providers"
 
 export const metadata: Metadata = {
   title: "Manajemen Jadwal",
@@ -11,5 +12,9 @@ export default function AppointmentsLayout({
 }: {
   children: ReactNode
 }) {
-  return <>{children}</>
+  return (
+    <AppointmentProvider>
+      {children}
+    </AppointmentProvider>
+  )
 }
